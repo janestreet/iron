@@ -1,0 +1,4 @@
+This directory contains a small collection of ready-made repos, with global &
+local .fe files in place. Tests can copy these directories to save work making
+simple test cases.
+

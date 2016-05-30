@@ -1,0 +1,63 @@
+  $ start_test
+
+Creating a feature with some review, and a current session for the seconder:
+
+  $ setup_repo_and_root a
+  $ fe enable -add-whole-feature-reviewer seconder,user1
+  $ echo aa > a; touch b; hg add b; hg commit -m b
+  $ feature_to_server root -fake-valid
+  $ fe internal session mark-file root b -for seconder -reason reason
+  $ fe internal catch-up mark-file root b -for seconder
+  $ fe session show
+  Reviewing root to e6cbcddb31ff.
+  2 files to review: 3 lines total
+     [ ] 2 a
+     [ ] 1 b
+  $ fe session show -for seconder
+  Reviewing root to e6cbcddb31ff.
+  1 files to review (1 already reviewed): 3 lines total
+     [ ] 2 a
+     [X] 1 b
+
+And breaking the feature:
+
+  $ echo '<<<<<<' > a; hg commit -m a
+  $ feature_to_server root -fake-valid
+
+And now, the owner sees the error. He also sees his existing session:
+
+  $ fe review -for seconder -reason reason | head -n 1
+  root
+  $ fe todo
+  CRs and review line counts:
+  |------------------|
+  | feature | review |
+  |---------+--------|
+  | root    |      3 |
+  |------------------|
+  
+  Features you own:
+  |--------------------------------------|
+  | feature | tip | #left | next step    |
+  |---------+-----+-------+--------------|
+  | root    | <<< | error | fix problems |
+  |--------------------------------------|
+
+The seconder also sees his old session, but not the error:
+
+  $ fe review -for seconder -reason reason | head -n 1
+  root
+  $ fe todo -for seconder
+  CRs and review line counts:
+  |------------------|
+  | feature | review |
+  |---------+--------|
+  | root    |      2 |
+  |------------------|
+
+And user1 has neither review nor error in the todo:
+
+  $ fe review -for user1 -reason reason \
+  >     |& matches "cannot create review session -- the feature has problems that need to be fixed"
+  [1]
+  $ fe todo -for user1

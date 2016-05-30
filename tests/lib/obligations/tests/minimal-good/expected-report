@@ -1,0 +1,20 @@
+((.fe/obligations-global.sexp
+  ((build_projections (base)) (fewer_than_min_reviewers false) (followers ())
+   (is_read_by_whole_feature_reviewers true) (more_than_max_reviewers false)
+   (owner user1) (review_obligation (All_of (user1 user2 user3)))
+   (scrutiny_level 85) (scrutiny_name high)))
+ (.fe/obligations-repo.sexp
+  ((build_projections (base)) (fewer_than_min_reviewers false) (followers ())
+   (is_read_by_whole_feature_reviewers true) (more_than_max_reviewers false)
+   (owner user1) (review_obligation (All_of (user1 user2 user3)))
+   (scrutiny_level 85) (scrutiny_name high)))
+ (.fe.sexp
+  ((build_projections (base)) (fewer_than_min_reviewers false) (followers ())
+   (is_read_by_whole_feature_reviewers true) (more_than_max_reviewers false)
+   (owner user1) (review_obligation (All_of (user1 user2 user3)))
+   (scrutiny_level 85) (scrutiny_name high)))
+ (d1/Readme
+  ((build_projections (base)) (fewer_than_min_reviewers false) (followers ())
+   (is_read_by_whole_feature_reviewers true) (more_than_max_reviewers false)
+   (owner user1) (review_obligation (All_of (user1 user2 user3)))
+   (scrutiny_level 85) (scrutiny_name high))))

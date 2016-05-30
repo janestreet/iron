@@ -1,0 +1,14 @@
+* Some observations on the contents of .projections
+---------------------------------------------------  
+First, note that make-projections seems to be a bit of a black box; there's
+no written spec for the files that it creates that I can find. So the
+.projection-based cr-compatibility obligation front end was written by means
+of some poking and prodding it to see what it does.
+
+Some things that I have observed:
++ The union of build-info/*/all for all dirs but leftover is *exactly*
+  .projections/all.
++ build-info/leftover/all has no intersection with .projections/all.
++ But the contents of build-info/leftover/all are all in the hg manifest.
++ as is the contents of every build-info/*/all file.
++ No files in deprecated/ appear in .projections/all.

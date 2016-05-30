@@ -1,0 +1,39 @@
+module Stable = struct
+  open! Core.Stable
+  open! Import_stable
+
+  module V1 = struct
+
+    type t =
+      { base : Rev.Stable.V1.t
+      ; tip  : Rev.Stable.V1.t
+      }
+    [@@deriving bin_io, sexp]
+
+    module Compare_by_hash = struct
+      type nonrec t = t =
+        { base : Rev.Compare_by_hash.t
+        ; tip  : Rev.Compare_by_hash.t
+        }
+      [@@deriving compare]
+    end
+
+    include (Compare_by_hash : (module type of Compare_by_hash with type t := t))
+  end
+end
+
+open! Core.Std
+open! Import
+
+module T = struct
+  include Stable.V1
+  let hash t =
+    Hashtbl.hash
+      (Rev.Compare_by_hash.hash t.base, Rev.Compare_by_hash.hash t.tip)
+  ;;
+end
+
+include T
+include Comparable.Make(T)
+include Hashable.Make(T)
+

@@ -1,0 +1,35 @@
+module Stable = struct
+
+  open Import_stable
+
+  module Action = struct
+    module V1 = struct
+      type t =
+        { feature_path : Feature_path.V1.t
+        ; for_or_all   : [ `User of User_name.V1.t | `All_users ]
+        }
+      [@@deriving bin_io, fields, sexp]
+
+      let to_model t = t
+    end
+  end
+
+  module Reaction = struct
+    module V1 = struct
+      type t = Cr_comment.V1.t list Or_error.V1.t
+      [@@deriving bin_io, sexp]
+
+      let of_model t = t
+    end
+  end
+
+end
+
+include Iron_versioned_rpc.Make
+    (struct let name = "get-crs" end)
+    (struct let version = 1 end)
+    (Stable.Action.V1)
+    (Stable.Reaction.V1)
+
+module Action   = Stable.Action.V1
+module Reaction = Stable.Reaction.V1

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e -u -o pipefail
+
+fe_bin=/j/office/app/fe/prod/bin
+fe=$fe_bin/fe
+
+if [ -r "$(hg root)"/.fe/obligations-repo.sexp ]; then
+    if $fe obligations check; then
+        true
+    else
+        code=$?
+        cat 1>&2 <<EOF
+
+Please see 'http://docs/app/fe/dot-fe.html'.
+EOF
+        exit $code
+    fi
+fi

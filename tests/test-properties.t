@@ -1,0 +1,47 @@
+  $ start_test
+
+Adding one property
+
+  $ setup_repo_and_root a
+  $ fe show | grep prop
+  [1]
+  $ fe change -set-property prop1=value1
+  $ fe show | grep prop
+  | prop1                   | value1                  |
+  $ fe show -prop prop1
+  value1
+
+  $ fe show -prop no-such-prop |& matches "undefined property"
+  [1]
+
+Checking persistence
+
+  $ fe-server stop
+  $ fe-server start
+  $ fe show | grep prop
+  | prop1                   | value1                  |
+
+Several properties in the same feature
+
+  $ fe change -set-property prop2=value2
+  $ fe change -set-property prop3=value3
+  $ fe show | grep prop
+  | prop1                   | value1                  |
+  | prop2                   | value2                  |
+  | prop3                   | value3                  |
+
+Removing properties
+
+  $ fe change -remove-property prop2,prop1
+  $ fe show | grep prop
+  | prop3                   | value3                  |
+  $ fe change -remove-property prop3,no-such-prop |& matches "unknown properties"
+  [1]
+  $ fe show | grep prop
+  | prop3                   | value3                  |
+
+Overwriting properties
+
+  $ fe change -set-property prop3=value3-again
+  $ fe show | grep prop
+  | prop3                   | value3-again            |

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+source $(dirname $0)/common
+
+command=$1; shift
+
+fe admin server $command \
+    -appdir $IRON_APPDIR \
+    -mode $IRON_MODE "$@" \
+    ;
+
+if [ $command = start ]; then
+    can_ping=false
+    for i in {1..10}; do
+        if fe tools ping &> /dev/null; then
+            can_ping=true
+            break
+        fi
+        sleep 0.5
+    done
+    if ! $can_ping; then
+        die "unable to ping fe server"
+    fi
+fi
+
+if [ $command = stop ]; then
+    can_ping=true
+    for i in {1..20}; do
+        if ! fe tools ping &> /dev/null; then
+            can_ping=false
+            break
+        fi
+        sleep 0.5
+    done
+    if $can_ping; then
+        die "unable to stop fe server"
+    fi
+fi

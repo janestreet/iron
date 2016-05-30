@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source $(dirname $0)/common
+
+PATH=$(dirname $0)/broken_hg:"$PATH" $FE_EXE "$@"

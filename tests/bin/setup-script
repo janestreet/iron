@@ -1,0 +1,8 @@
+#!/bin/bash
+
+source $(dirname $0)/bin/common
+source $(dirname $0)/bin/prepare
+
+export HG_BINARY=$(FE_EXE=$FE_EXE_BEFORE_COPY fe internal hg-path)
+
+cd $IRON_TEST_DIR

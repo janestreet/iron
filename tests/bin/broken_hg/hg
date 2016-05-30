@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo >&2 "Wrongly calling the hg from the PATH: $@"
+exit 10 # let's avoid exit 1, since we sometimes ignore it

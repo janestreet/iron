@@ -3,7 +3,6 @@ open Async.Std
 open Import
 
 
-
 let name_filter_diffs ~which_files (diff4s : Diff4.t list) =
   match which_files with
   | `All -> diff4s  (* No -file arguments means select everything *)

@@ -983,38 +983,17 @@ let context ?(default=12) () =
         Option.value (Client_config.Cmd.context client_config) ~default)
 ;;
 
-(* Split string at commas, then parse the pieces.  Does no whitespace stripping -- if the
-   user went to the trouble of making an arg with whitespace, we parse it.
-
-   Note that the grammar of infix-delimited lists is ambiguous for the case of the empty
-   string.  Is it the empty list, or the singleton list of the empty string?  We resolve
-   the ambiguity here in favor of the empty list. *)
-let parse_comma_delim_list item_of_string string =
-  if String.is_empty string
-  then []
-  else List.map (String.split string ~on:',') ~f:item_of_string
-;;
-
 let email_address_list_arg_type =
-  Arg_type.create (parse_comma_delim_list Email_address.of_string)
+  Arg_type.comma_separated (Arg_type.create Email_address.of_string)
 ;;
 
 let comma_delim_list_arg_type of_string complete =
-  let parse = parse_comma_delim_list of_string in
-  Arg_type.create parse ~complete:(fun univ_map ~part ->
-    try
-      match List.rev (String.split part ~on:',') with
-      | [] | [ "" ] -> complete univ_map ~part
-      | car :: cdr ->
-        (* prepend "" to get a trailing comma *)
-        let prefix = String.concat ~sep:"," (List.rev ("" :: cdr)) in
-        let completions = complete univ_map ~part:car in
-        List.filter_map completions ~f:(fun completion ->
-          if List.mem cdr completion then None else Some (prefix ^ completion))
+  Arg_type.comma_separated (Arg_type.create of_string ~complete:(fun univ_map ~part ->
+    try complete univ_map ~part
     with exn ->
       completion_problem
         (Error.create "please report this bug in Iron completion"
-           exn [%sexp_of: exn]))
+           exn [%sexp_of: exn])))
 ;;
 
 let enum_list_arg_type (type a) (m : a Enum.t) =
@@ -1067,13 +1046,10 @@ let users_option ~switch =
     ~f:(Option.map ~f:User_name.Set.of_list)
 ;;
 
-let property_list_of_string = parse_comma_delim_list Fn.id
-
 
 let properties_option ~switch ~verb =
-  map ~f:(Option.map ~f:property_list_of_string)
-    (flag switch (optional string)
-       ~doc:(sprintf "ATTR[,ATTR...] %s user-defined properties" verb))
+  flag switch (optional (Arg_type.comma_separated string))
+    ~doc:(sprintf "ATTR[,ATTR...] %s user-defined properties" verb)
 ;;
 
 let property_values_flag ~switch =

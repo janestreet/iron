@@ -78,8 +78,6 @@ module type T = sig
 
   val params : 'a t list -> 'a list t
 
-  val parse_comma_delim_list : (string -> 'a) -> string -> 'a list
-
   val enum_anon      : string -> 'a Enum.t -> 'a t
   val enum_anon_list : string -> 'a Enum.t -> 'a list  t
 

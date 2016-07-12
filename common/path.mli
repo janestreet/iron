@@ -69,7 +69,7 @@ module Abspath : sig
 
   val dev_null : t
 
-  val program_started_in : t
+  val program_started_in : t Or_error.t
 
   val append : t -> Relpath.t -> t
 
@@ -168,6 +168,8 @@ val with_temp_dir
    Does not eliminate .. elements in the path; see kill_dotdots.
 *)
 val resolve : t -> relative_to:Abspath.t -> Abspath.t
+
+val resolve_relative_to_program_started_in : t -> Abspath.t
 
 module Stable : sig
   module V1 : Stable_without_comparator with type t = t

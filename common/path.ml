@@ -290,11 +290,7 @@ module Abspath = struct
   ;;
 
   let program_started_in =
-    match Unix.getcwd () with
-    | string -> of_string string
-    | exception _ ->
-      Unix.chdir "/";
-      root
+    Or_error.try_with (fun () -> Unix.getcwd () |> of_string)
   ;;
 
   let dev_null = of_string "/dev/null"
@@ -595,6 +591,12 @@ let kill_dotdots p1 =
 let resolve t ~relative_to =
   match t with
   | Relpath rel -> Abspath.append relative_to rel
+  | Abspath abs -> abs
+;;
+
+let resolve_relative_to_program_started_in t =
+  match t with
+  | Relpath rel -> Abspath.append (ok_exn Abspath.program_started_in) rel
   | Abspath abs -> abs
 ;;
 

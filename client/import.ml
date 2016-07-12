@@ -2,6 +2,7 @@ open! Core.Std
 open! Async.Std
 
 include (Iron_common.Std : module type of struct include Iron_common.Std end
+         with module Abspath := Iron_common.Std.Abspath
          with module Command := Iron_common.Std.Command)
 include Iron_obligations.Std
 include Iron_hg.Std
@@ -9,6 +10,18 @@ include Iron_protocol
 
 module Command_rpc = Async_extended.Std.Command_rpc
 module Iron_command_rpc = Iron.Iron_command_rpc
+
+module Abspath = struct
+  include Iron_common.Std.Abspath
+
+  let program_started_in =
+    match program_started_in with
+    | Ok path -> path
+    | Error (_ : Error.t) ->
+      Core.Std.Unix.chdir "/";
+      root
+  ;;
+end
 
 module Command = struct
   include (Iron_common.Std.Command :

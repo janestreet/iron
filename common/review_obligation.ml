@@ -243,7 +243,8 @@ let%test_module _ = (module struct
 
   let t_generator =
     let open Generator in
-    recursive (fun t ->
+    recursive (fun f ~size ->
+      let smaller_t = if size = 0 then None else Some (f ~size:(size - 1)) in
       let all_of = map (users_generator ()) ~f:(fun users -> All_of users) in
       let at_least_wide =
         let open Monad_infix in
@@ -254,9 +255,16 @@ let%test_module _ = (module struct
         >>| fun k ->
         At_least_wide (k, users)
       in
-      let or_wide = map ~f:(fun ts -> Or_wide ts) (List.gen' ~length:(`At_least 1) t) in
-      let and_ = map ~f:(fun ts -> And ts) (List.gen t) in
-      filter_map (union [all_of; at_least_wide; or_wide; and_])
+      let or_wide =
+        Option.map smaller_t ~f:(fun t ->
+          map ~f:(fun ts -> Or_wide ts) (List.gen' ~length:(`At_least 1) t))
+      in
+      let and_ =
+        Option.map smaller_t ~f:(fun t ->
+          map ~f:(fun ts -> And ts) (List.gen t))
+      in
+      filter_map
+        (union (List.filter_opt [Some all_of; Some at_least_wide; or_wide; and_]))
         ~f:(fun t -> Option.try_with (fun () -> invariant t; t)))
   ;;
 

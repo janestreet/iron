@@ -18,7 +18,7 @@ let path_in_repo_arg_type =
     | Ok repo_root ->
       Repo_root.relativize_exn repo_root
         (Abspath.kill_dotdots
-           (Path.resolve (Path.of_string file) ~relative_to:Abspath.program_started_in)))
+           (Path.resolve_relative_to_program_started_in (Path.of_string file))))
 ;;
 
 let path_in_repo_anons = "FILE" %: path_in_repo_arg_type
@@ -135,7 +135,7 @@ let create_catch_up_for_me =
 
 let resolved_file_path_arg_type =
   Arg_type.file (fun string ->
-    Path.resolve (Path.of_string string) ~relative_to:Abspath.program_started_in)
+    Path.resolve_relative_to_program_started_in (Path.of_string string))
 ;;
 
 let resolved_file_path = anon ("FILE" %: resolved_file_path_arg_type)
@@ -985,15 +985,18 @@ let context ?(default=12) () =
 
 let email_address_list_arg_type =
   Arg_type.comma_separated (Arg_type.create Email_address.of_string)
+    ~strip_whitespace:true
+    ~unique_values:true
 ;;
 
 let comma_delim_list_arg_type of_string complete =
-  Arg_type.comma_separated (Arg_type.create of_string ~complete:(fun univ_map ~part ->
-    try complete univ_map ~part
-    with exn ->
-      completion_problem
-        (Error.create "please report this bug in Iron completion"
-           exn [%sexp_of: exn])))
+  Arg_type.comma_separated ~strip_whitespace:false ~unique_values:true
+    (Arg_type.create of_string ~complete:(fun univ_map ~part ->
+       try complete univ_map ~part
+       with exn ->
+         completion_problem
+           (Error.create "please report this bug in Iron completion"
+              exn [%sexp_of: exn])))
 ;;
 
 let enum_list_arg_type (type a) (m : a Enum.t) =
@@ -1048,8 +1051,9 @@ let users_option ~switch =
 
 
 let properties_option ~switch ~verb =
-  flag switch (optional (Arg_type.comma_separated string))
-    ~doc:(sprintf "ATTR[,ATTR...] %s user-defined properties" verb)
+  flag switch ~doc:(sprintf "ATTR[,ATTR...] %s user-defined properties" verb)
+    (optional
+       (Arg_type.comma_separated string ~strip_whitespace:true ~unique_values:true))
 ;;
 
 let property_values_flag ~switch =

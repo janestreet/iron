@@ -118,8 +118,7 @@ are expected to be found.
              else
                let%map files = Deferred.List.map files ~f:(fun file ->
                  let file =
-                   Path.resolve (Path.of_string file)
-                     ~relative_to:Abspath.program_started_in
+                   Path.resolve_relative_to_program_started_in (Path.of_string file)
                  in
                  match%map Abspath.file_exists_exn file with
                  | true  -> Ok file

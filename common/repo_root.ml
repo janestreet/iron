@@ -21,6 +21,10 @@ let to_string_hum t =
   | None -> to_string t
 ;;
 
+let not_in_repo sexp =
+  error_s [%sexp "not inside an hg repo", (sexp : Sexp.t)]
+;;
+
 (* Don't skip over a .hg that isn't a directory or can't be read.  Note that it's not
    worth checking now to see if the root is readable & a directory -- the check would
    essentially be repeated when we use the root (by the system call) -- a file system is a
@@ -34,13 +38,16 @@ let containing_root_blocking =
       | Error _ ->
         match Abspath.parent path with
         | Some path -> loop path
-        | None      -> error "not inside an hg repo" start [%sexp_of: Abspath.t]
+        | None      -> not_in_repo [%sexp (start : Abspath.t)]
     in
     loop start
 ;;
 
 let program_started_in =
-  containing_root_blocking ~human_readable:"local repo" Abspath.program_started_in
+  match Abspath.program_started_in with
+  | Error err -> not_in_repo [%sexp (err : Error.t)]
+  | Ok started_in ->
+    containing_root_blocking ~human_readable:"local repo" started_in
 ;;
 
 let of_abspath ?human_readable path = { path; human_readable }

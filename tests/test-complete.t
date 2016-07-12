@@ -153,8 +153,17 @@ We complete all the way, above, because only root/foo1 is archived, not root/foo
   user2
   user3
 
+Trailing comma if there is a single completion string:
+
   $ completion-test fe change feature -add-owners user2,un
   user2,unix-login-for-testing
+  user2,unix-login-for-testing,
+
+Same if the name is complete already.
+
+  $ completion-test fe change feature -add-owners user2,user3
+  user2,user3
+  user2,user3,
 
 Don't repeat completions:
 

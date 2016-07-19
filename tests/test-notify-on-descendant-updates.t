@@ -33,9 +33,12 @@ Show the current event subscriptions.
 
   $ fe internal event-subscriptions show \
   >   | sexp change '(bottomup (seq (try (rewrite (query @X) (query <query>))) (try (rewrite (opened_at @X) (opened_at <time>)))))'
-  (((feature_only_subscriptions ())
-    (feature_and_descendants_subscriptions
-     ((root/parent (1 unix-login-for-testing)))))
+  (((metric_updates
+     ((metric_name_subscriptions ()) (feature_path_subscriptions ())))
+    (feature_updates
+     ((feature_only_subscriptions ())
+      (feature_and_descendants_subscriptions
+       ((root/parent (1 unix-login-for-testing)))))))
    ((max_subscriptions_global 500) (current_count_global 1)
     (max_subscriptions_per_user 50)
     (current_count_by_user ((unix-login-for-testing 1)))
@@ -74,9 +77,12 @@ Unarchive a feature so that it re-enters the subtree.
   $ cat-then-truncate
   Updates_in_subtree
 
-Rename the parent feature and verify that the pipe closes.
+Rename the parent feature and verify that the pipe closes.  We wait on
+[root/parent] to address the following race condition: by the time [fe rename]
+returns, the initial subscriber may not have seen the last renamed event.
 
   $ fe rename root/parent root/renamed-parent
+  $ wait ${dump_process_pid}
   $ cat-then-truncate
   Renamed
   Process Exited
@@ -88,7 +94,11 @@ Clean up the dump file.
 And finally check that the event-subscriptions structure get cleaned up:
 
   $ fe internal event-subscriptions show
-  (((feature_only_subscriptions ()) (feature_and_descendants_subscriptions ()))
+  (((metric_updates
+     ((metric_name_subscriptions ()) (feature_path_subscriptions ())))
+    (feature_updates
+     ((feature_only_subscriptions ())
+      (feature_and_descendants_subscriptions ()))))
    ((max_subscriptions_global 500) (current_count_global 0)
     (max_subscriptions_per_user 50) (current_count_by_user ())
     (subscriptions ())))

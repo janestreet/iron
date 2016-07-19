@@ -6,8 +6,8 @@ Creating a feature with some review, and a current session for the seconder:
   $ fe enable -add-whole-feature-reviewer seconder,user1
   $ echo aa > a; touch b; hg add b; hg commit -m b
   $ feature_to_server root -fake-valid
-  $ fe internal session mark-file root b -for seconder -reason reason
-  $ fe internal catch-up mark-file root b -for seconder
+  $ fe session  mark-file root b -for seconder -reason reason
+  $ fe catch-up mark-file root b -for seconder
   $ fe session show
   Reviewing root to e6cbcddb31ff.
   2 files to review: 3 lines total
@@ -26,8 +26,6 @@ And breaking the feature:
 
 And now, the owner sees the error. He also sees his existing session:
 
-  $ fe review -for seconder -reason reason | head -n 1
-  root
   $ fe todo
   CRs and review line counts:
   |------------------|
@@ -45,9 +43,13 @@ And now, the owner sees the error. He also sees his existing session:
 
 The seconder also sees his old session, but not the error:
 
-  $ fe review -for seconder -reason reason | head -n 1
-  root
-  $ fe todo -for seconder
+  $ IRON_USER=seconder fe session show
+  Reviewing root to e6cbcddb31ff.
+  1 files to review (1 already reviewed): 3 lines total
+     [ ] 2 a
+     [X] 1 b
+
+  $ IRON_USER=seconder fe todo
   CRs and review line counts:
   |------------------|
   | feature | review |
@@ -57,7 +59,7 @@ The seconder also sees his old session, but not the error:
 
 And user1 has neither review nor error in the todo:
 
-  $ fe review -for user1 -reason reason \
+  $ IRON_USER=user1 fe review \
   >     |& matches "cannot create review session -- the feature has problems that need to be fixed"
   [1]
   $ fe todo -for user1

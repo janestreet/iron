@@ -15,6 +15,7 @@ module Type : sig
     | Archived_feature_path
     | Feature_path
     | Feature_path_with_catch_up
+    | Metric_name
     | Remote_repo_path
     | Root_feature_path
     | User_info of Which_user_info.t

@@ -83,22 +83,8 @@ Helper function for checking whether various sets of reviewers satisfy a reviewe
   >     fi
   > }
 
-Tests.
+Just checks a few cases.  More tests are implemented as OCaml unit tests in [reviewed_by.ml].
 
-  $ check "None"
-  yes: 
-  yes: user1
-  yes: user2
-  yes: user3
-  yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(All_of (Users))"
-  yes: 
-  yes: user1
-  yes: user2
-  yes: user3
-  yes: user1 user2
-  yes: user1 user2 user3
   $ check "(All_of (Users user1))"
    no: 
   yes: user1
@@ -106,6 +92,7 @@ Tests.
    no: user3
   yes: user1 user2
   yes: user1 user2 user3
+
   $ check "(Or)"
   ("invalid .fe.sexp file"
    (.fe.sexp:3:13 "[Or] must have at least one clause"))
@@ -115,113 +102,13 @@ Tests.
    no: user3
    no: user1 user2
    no: user1 user2 user3
-  $ check "(Or (All_of (Users user1)))"
-   no: 
-  yes: user1
-   no: user2
-   no: user3
-  yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(Or (All_of (Users user1)) (All_of (Users user2)))"
-   no: 
-  yes: user1
-  yes: user2
-   no: user3
-  yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(And)"
-  yes: 
-  yes: user1
-  yes: user2
-  yes: user3
-  yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(And (All_of (Users user1)))"
-   no: 
-  yes: user1
-   no: user2
-   no: user3
-  yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(And (All_of (Users user1)) (All_of (Users user2)))"
-   no: 
-   no: user1
-   no: user2
-   no: user3
-  yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(At_least 0 of_ (Users))"
-  ("invalid .fe.sexp file" (.fe.sexp:3:13 "[At_least] must get positive int"))
-   no: 
-   no: user1
-   no: user2
-   no: user3
-   no: user1 user2
-   no: user1 user2 user3
-  $ check "(At_least 1 of_ (Users))"
-  ("invalid .fe.sexp file" (.fe.sexp:3:13 "unsatisfiable [At_least]"))
-   no: 
-   no: user1
-   no: user2
-   no: user3
-   no: user1 user2
-   no: user1 user2 user3
-  $ check "(At_least 1 of_ (Users user1))"
-   no: 
-  yes: user1
-   no: user2
-   no: user3
-  yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(At_least 2 of_ (Users user1))"
-  ("invalid .fe.sexp file" (.fe.sexp:3:13 "unsatisfiable [At_least]"))
-   no: 
-   no: user1
-   no: user2
-   no: user3
-   no: user1 user2
-   no: user1 user2 user3
-  $ check "(At_least 1 of_ (Users user1 user2))"
-   no: 
-  yes: user1
-  yes: user2
-   no: user3
-  yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(At_least 2 of_ (Users user1 user2))"
-   no: 
-   no: user1
-   no: user2
-   no: user3
-  yes: user1 user2
-  yes: user1 user2 user3
+
   $ check "(At_least 2 of_ (Users user1 user2 user3))"
    no: 
    no: user1
    no: user2
    no: user3
   yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(At_least 3 of_ (Users user1 user2 user3))"
-   no: 
-   no: user1
-   no: user2
-   no: user3
-   no: user1 user2
-  yes: user1 user2 user3
-  $ check "(At_least 2 of_ (Group users123))"
-   no: 
-   no: user1
-   no: user2
-   no: user3
-  yes: user1 user2
-  yes: user1 user2 user3
-  $ check "(At_least 3 of_ (Group users123))"
-   no: 
-   no: user1
-   no: user2
-   no: user3
-   no: user1 user2
   yes: user1 user2 user3
 
   $ check_followers user1

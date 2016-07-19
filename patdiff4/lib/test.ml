@@ -8,15 +8,6 @@ let%test_module _ = (module struct
     let context = 0 in
     let rev_names = Diamond.pretty_short_rev_names_const in
     let contents = { Diamond.b1 ; b2 ; f1 ; f2 } in
-    (* just run an emacs diff to check for exceptions. *)
-    Patdiff4.emacs_diff ~context ~contents
-      ~rev_names
-      ~file_names:rev_names
-      ~header_file_name:"new-tip"
-      ()
-    |> Structured_elisp.to_elisp
-    |> ignore;
-
     [%test_result: Slice.t Diamond.t list]
       (Segments.of_files ?verbose ~force_should_split_files_in_hunks:true
          ~context ~contents ~rev_names ()

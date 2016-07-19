@@ -39,6 +39,36 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
        about it. *)
     Hg.infer_tag repo_root ~root:(Feature_path.root feature_path) feature.tip
   in
+  let%bind () =
+    (* The following check is done to limit the race occurring when two child features are
+       released in a row into a parent feature whose release process is set to Direct.  It
+       is not ideal in that the parent's release process or tip may still change before
+       [Release] is actually called, and does not cover the cases where two releases are
+       run in parallel.  However this reduces the likelihood of the race to happen. *)
+    match Feature_path.parent feature_path with
+    | Error _ -> Deferred.unit
+    | Ok parent_path ->
+      let%bind parent =
+        Get_feature.rpc_to_server_exn
+          { feature_path = parent_path
+          ; rev_zero     = Some rev_zero
+          }
+      in
+      match parent.release_process with
+      | Continuous -> Deferred.unit
+      | Direct ->
+        let%map parent_tip = Hg.get_remote_rev remote_repo_path (`Feature parent_path) in
+        let feature_base = Rev.to_first_12 feature.base in
+        if not (Node_hash.First_12.equal feature_base parent_tip)
+        then
+          raise_s
+            [%sexp "Failed to release feature"
+                 , (feature_path : Feature_path.t)
+                 , { feature_base = (feature_base : Node_hash.First_12.t)
+                   ; parent_tip   = (parent_tip   : Node_hash.First_12.t)
+                   }
+            ]
+  in
   let%bind { disposition; send_release_email_to } =
     Release.rpc_to_server_exn { feature_path; for_; rev_zero; tagged_tip }
   in
@@ -99,14 +129,14 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
   in
   let%bind () =
     Interactive.printf "%s\n"
-    (match disposition with
-     | `Not_released__push_to_hydra -> "Submitted to hydra for continuous release."
-     | `Released_and_cleared reasons ->
-       concat [ "Released, but didn't archive -- "
-              ; Release.Reasons_for_not_archiving.to_string_hum
-                  reasons
-              ]
-     | `Released_and_archived -> "Released and archived.")
+      (match disposition with
+       | `Not_released__push_to_hydra -> "Submitted to hydra for continuous release."
+       | `Released_and_cleared reasons ->
+         concat [ "Released, but didn't archive -- "
+                ; Release.Reasons_for_not_archiving.to_string_hum
+                    reasons
+                ]
+       | `Released_and_archived -> "Released and archived.")
   in
   begin
     match disposition with
@@ -124,15 +154,15 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
             if true
             then Deferred.unit
             else
-            let parent_repo_root = Feature_share.center_repo_root parent_workspace in
-            Interactive.Job.run "Updating parent workspace to new released tip"
-              ~f:(fun () ->
-                Cmd_review.pull_and_update
-                  ~repo_root:parent_repo_root
-                  ~remote_repo_path
-                  ~feature_path:parent_path
-                  ~review_session_tip:feature.tip
-                  ~feature_tip:feature.tip)
+              let parent_repo_root = Feature_share.center_repo_root parent_workspace in
+              Interactive.Job.run "Updating parent workspace to new released tip"
+                ~f:(fun () ->
+                  Cmd_review.pull_and_update
+                    ~repo_root:parent_repo_root
+                    ~remote_repo_path
+                    ~feature_path:parent_path
+                    ~review_session_tip:feature.tip
+                    ~feature_tip:feature.tip)
   end
 ;;
 

@@ -37,6 +37,56 @@ module Stable = struct
     module Model = V2
   end
 
+  module V20 = struct
+    type t =
+      { feature_id                : Feature_id.V1.t
+      ; feature_path              : Feature_path.V1.t
+      ; rev_zero                  : Rev.V1.t
+      ; whole_feature_followers   : User_name.V1.Set.t
+      ; whole_feature_reviewers   : User_name.V1.Set.t
+      ; owners                    : User_name.V1.t list
+      ; base                      : Rev.V1.t
+      ; base_facts                : Rev_facts.V1.t Or_pending.V1.t
+      ; next_base_update          : Next_base_update.V1.t
+      ; crs_are_enabled           : bool
+      ; crs_shown_in_todo_only_for_users_reviewing  : bool
+      ; xcrs_shown_in_todo_only_for_users_reviewing : bool
+      ; next_bookmark_update      : Next_bookmark_update.V1.t
+      ; has_bookmark              : bool
+      ; tip                       : Rev.V1.t
+      ; tip_facts                 : Rev_facts.V1.t Or_pending.V1.t
+      ; base_is_ancestor_of_tip   : Rev_facts.Is_ancestor.V1.t Or_pending.V1.t
+      ; diff_from_base_to_tip     : Diff2s.V2.t Or_error.V1.t Or_pending.V1.t
+      ; description               : string
+      ; is_permanent              : bool
+      ; seconder                  : User_name.V1.t option
+      ; review_is_enabled         : bool
+      ; reviewing                 : Reviewing.V1.t
+      ; allow_review_for          : Allow_review_for.V1.t
+      ; included_features         : Released_feature.V3.t list
+      ; properties                : Properties.V1.t
+      ; remote_repo_path          : Remote_repo_path.V1.t
+      ; has_children              : bool
+      ; release_process           : Release_process.V1.t
+      ; who_can_release_into_me   : Who_can_release_into_me.V1.t
+      ; send_email_to             : Email_address.V1.Set.t
+      ; send_email_upon           : Send_email_upon.V1.Set.t
+      ; locked                    : (Lock_name.V2.t * Locked.V2.t list) list
+      ; line_count_by_user        : (User_name.V1.t * Line_count.V5.t) list Or_error.V1.t
+      ; cr_summary                : Cr_comment.Summary.V1.t Or_error.V1.t
+      ; next_steps                : Next_step.V5.t list
+      ; users_with_review_session_in_progress : User_name.V1.Set.t Or_error.V1.t
+      ; users_with_unclean_workspaces  : Unclean_workspace_reason.V1.t User_name.V1.Map.t
+      ; is_archived               : bool
+      ; latest_release            : Latest_release.V1.t option
+      ; inheritable_attributes    : Inheritable_attributes.V1.t
+      }
+
+    [@@deriving bin_io, fields, sexp]
+
+    let of_model m = m
+  end
+
   module V19 = struct
     type t =
       { feature_id                : Feature_id.V1.t
@@ -80,9 +130,103 @@ module Stable = struct
       ; is_archived               : bool
       ; latest_release            : Latest_release.V1.t option
       }
-    [@@deriving bin_io, fields, sexp]
+    [@@deriving bin_io]
 
-    let of_model (m : t) = m
+    open! Core.Std
+    open! Import
+
+    let of_model m =
+      let { V20.
+            feature_id
+          ; feature_path
+          ; rev_zero
+          ; whole_feature_followers
+          ; whole_feature_reviewers
+          ; owners
+          ; base
+          ; base_facts
+          ; next_base_update
+          ; crs_are_enabled
+          ; crs_shown_in_todo_only_for_users_reviewing
+          ; xcrs_shown_in_todo_only_for_users_reviewing
+          ; next_bookmark_update
+          ; has_bookmark
+          ; tip
+          ; tip_facts
+          ; base_is_ancestor_of_tip
+          ; diff_from_base_to_tip
+          ; description
+          ; is_permanent
+          ; seconder
+          ; review_is_enabled
+          ; reviewing
+          ; allow_review_for
+          ; included_features
+          ; properties
+          ; remote_repo_path
+          ; has_children
+          ; release_process
+          ; who_can_release_into_me
+          ; send_email_to
+          ; send_email_upon
+          ; locked
+          ; line_count_by_user
+          ; cr_summary
+          ; next_steps
+          ; users_with_review_session_in_progress
+          ; users_with_unclean_workspaces
+          ; is_archived
+          ; latest_release
+          ; inheritable_attributes = _
+          } = V20.of_model m in
+      let line_count_by_user =
+        line_count_by_user
+        |> Or_error.map ~f:(List.map ~f:(fun (user, line_count) ->
+          user, Line_count.Stable.V4.of_v5 line_count))
+      in
+      let users_with_uncommitted_session = users_with_review_session_in_progress in
+      { feature_id
+      ; feature_path
+      ; rev_zero
+      ; whole_feature_followers
+      ; whole_feature_reviewers
+      ; owners
+      ; base
+      ; base_facts
+      ; next_base_update
+      ; crs_are_enabled
+      ; crs_shown_in_todo_only_for_users_reviewing
+      ; xcrs_shown_in_todo_only_for_users_reviewing
+      ; next_bookmark_update
+      ; has_bookmark
+      ; tip
+      ; tip_facts
+      ; base_is_ancestor_of_tip
+      ; diff_from_base_to_tip
+      ; description
+      ; is_permanent
+      ; seconder
+      ; review_is_enabled
+      ; reviewing
+      ; allow_review_for
+      ; included_features
+      ; properties
+      ; remote_repo_path
+      ; has_children
+      ; release_process
+      ; who_can_release_into_me
+      ; send_email_to
+      ; send_email_upon
+      ; locked
+      ; line_count_by_user
+      ; cr_summary
+      ; next_steps
+      ; users_with_uncommitted_session
+      ; users_with_unclean_workspaces
+      ; is_archived
+      ; latest_release
+      }
+    ;;
   end
 
   module V18 = struct
@@ -1184,7 +1328,7 @@ module Stable = struct
     ;;
   end
 
-  module Model = V19
+  module Model = V20
 end
 
 open! Core.Std

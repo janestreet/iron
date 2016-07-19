@@ -16,13 +16,13 @@ end
 
 module Reaction : sig
   type t =
-    { description                    : string
-    ; line_count_by_user             : (User_name.t * Line_count.t) list
-    ; users_with_uncommitted_session : User_name.Set.t Or_error.t
-    ; users_with_unclean_workspaces  : Unclean_workspace_reason.t User_name.Map.t
-    ; cr_summary                     : Cr_comment.Summary.t
-    ; users                          : User_name.Set.t
-    ; next_bookmark_update           : Next_bookmark_update.t
+    { description                           : string
+    ; line_count_by_user                    : (User_name.t * Line_count.t) list
+    ; users_with_review_session_in_progress : User_name.Set.t Or_error.t
+    ; users_with_unclean_workspaces         : Unclean_workspace_reason.t User_name.Map.t
+    ; cr_summary                            : Cr_comment.Summary.t
+    ; users                                 : User_name.Set.t
+    ; next_bookmark_update                  : Next_bookmark_update.t
     }
   [@@deriving sexp_of]
 end

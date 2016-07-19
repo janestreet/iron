@@ -23,7 +23,7 @@ Review child.
   $ fe change -add-whole-feature-reviewers seconder
   $ IRON_USER=seconder fe second
   $ fe internal mark-fully-reviewed root/child -for all -reason reason
-  $ fe internal catch-up mark-file root/child file -for seconder
+  $ fe catch-up mark-file root/child file -for seconder
 
 Release child.
 

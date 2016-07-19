@@ -319,3 +319,30 @@ Check consistency after restart.
   | user1      |      1 |          |           |
   | user2      |        |        1 |         1 |
   |--------------------------------------------|
+
+Move a feature into a new parent, keep it's basename.
+
+  $ fe create root/keep-this-basename -description 'd'
+  $ fe create root/child              -description 'd'
+  $ fe list root -depth max -name-only
+  root
+  root/bzz
+  root/child
+  root/foo
+  root/foo/a
+  root/foo/b
+  root/foo/b/c
+  root/keep-this-basename
+  root/par
+
+  $ fe rename root/keep-this-basename -new-parent root/child
+  $ fe list root -depth max -name-only
+  root
+  root/bzz
+  root/child
+  root/child/keep-this-basename
+  root/foo
+  root/foo/a
+  root/foo/b
+  root/foo/b/c
+  root/par

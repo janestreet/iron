@@ -50,7 +50,7 @@ let command =
      and remove_owners =
        users_option ~switch:"-remove-owners"
      and remove_properties =
-       properties_option ~switch:"-remove-property" ~verb:"remove"
+       properties_set_option ~switch:"-remove-property" ~verb:"remove"
      and remove_reviewing =
        users_option ~switch:"-remove-reviewing"
      and remove_whole_feature_followers =
@@ -66,7 +66,8 @@ let command =
      and set_owners =
        user_list_option ~switch:"-set-owners"
      and set_properties =
-       property_values_flag ~switch:"-set-property"
+       property_values_flag
+         ~switch:"-set-property" ~doc:"set user-defined properties"
      and set_reviewing =
        users_option ~switch:"-set-reviewing"
      and set_reviewing_all =
@@ -100,6 +101,65 @@ let command =
      and remove_send_email_upon =
        send_email_upon ~switch:"-remove-send-email-upon"
          ~doc:"cause email to not be sent upon ACTION(S)"
+     and set_inheritable_crs_shown_in_todo_only_for_users_reviewing =
+       flag "-set-inheritable-crs-shown-in-todo-only-for-users-reviewing"
+         (optional bool) ~doc:"BOOL "
+     and remove_inheritable_crs_shown_in_todo_only_for_users_reviewing =
+       no_arg_flag "-remove-inheritable-crs-shown-in-todo-only-for-users-reviewing"
+         ~doc:""
+     and set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing =
+       flag "-set-inheritable-xcrs-shown-in-todo-only-for-users-reviewing"
+         (optional bool) ~doc:"BOOL "
+     and remove_inheritable_xcrs_shown_in_todo_only_for_users_reviewing =
+       no_arg_flag
+         "-remove-inheritable-xcrs-shown-in-todo-only-for-users-reviewing" ~doc:""
+     and set_inheritable_who_can_release_into_me =
+       enum_optional "-set-inheritable-who-can-release-into-me"
+         ~doc:"" (module Who_can_release_into_me)
+     and remove_inheritable_who_can_release_into_me =
+       no_arg_flag "-remove-inheritable-who-can-release-into-me" ~doc:""
+     and set_inheritable_owners =
+       user_list_option ~switch:"set-inheritable-owners"
+     and add_inheritable_owners =
+       user_list_option ~switch:"add-inheritable-owners"
+     and remove_inheritable_owners =
+       users_option ~switch:"remove-inheritable-owners"
+     and set_inheritable_properties =
+       property_values_flag
+         ~switch:"set-inheritable-property"
+         ~doc:""
+     and remove_inheritable_properties =
+       inheritable_properties_set_option
+         ~switch:"remove-inheritable-property"
+     and set_inheritable_release_process =
+       enum_optional
+         "-set-inheritable-release-process" (module Release_process) ~doc:"PROCESS"
+     and remove_inheritable_release_process =
+       no_arg_flag "-remove-inheritable-release-process" ~doc:""
+     and add_inheritable_send_email_to =
+       email_addresses_option ~switch:"-add-inheritable-send-email-to"
+     and remove_inheritable_send_email_to =
+       email_addresses_option ~switch:"-remove-inheritable-send-email-to"
+     and set_inheritable_send_email_to =
+       email_addresses_option ~switch:"-set-inheritable-send-email-to"
+     and add_inheritable_send_email_upon =
+       send_email_upon ~switch:"-add-inheritable-send-email-upon" ~doc:""
+     and remove_inheritable_send_email_upon =
+       send_email_upon ~switch:"-remove-inheritable-send-email-upon" ~doc:""
+     and set_inheritable_send_email_upon =
+       send_email_upon ~switch:"-set-inheritable-send-email-upon" ~doc:""
+     and set_inheritable_whole_feature_followers =
+       users_option ~switch:"-set-inheritable-whole-feature-followers"
+     and add_inheritable_whole_feature_followers =
+       users_option ~switch:"-add-inheritable-whole-feature-followers"
+     and remove_inheritable_whole_feature_followers =
+       users_option ~switch:"-remove-inheritable-whole-feature-followers"
+     and set_inheritable_whole_feature_reviewers =
+       users_option ~switch:"-set-inheritable-whole-feature-reviewers"
+     and add_inheritable_whole_feature_reviewers =
+       users_option ~switch:"-add-inheritable-whole-feature-reviewers"
+     and remove_inheritable_whole_feature_reviewers =
+       users_option ~switch:"-remove-inheritable-whole-feature-reviewers"
      and verbose = verbose
      in
      fun () ->
@@ -144,7 +204,7 @@ let command =
            ; Option.map set_owners
                ~f:(fun users -> `Set_owners users)
            ; Option.bind set_properties (fun properties ->
-               if Hashtbl.is_empty properties
+               if Map.is_empty properties
                then None
                else Some (`Set_properties properties))
            ; Option.map set_reviewing
@@ -188,6 +248,77 @@ let command =
                ~f:(fun send_email_upon -> `Add_send_email_upon send_email_upon)
            ; Option.map remove_send_email_upon
                ~f:(fun send_email_upon -> `Remove_send_email_upon send_email_upon)
+           ; Option.map set_inheritable_crs_shown_in_todo_only_for_users_reviewing
+               ~f:(fun option ->
+                 `Set_inheritable_crs_shown_in_todo_only_for_users_reviewing
+                   (Option.return option))
+           ; if remove_inheritable_crs_shown_in_todo_only_for_users_reviewing
+             then Some (`Set_inheritable_crs_shown_in_todo_only_for_users_reviewing None)
+             else None
+           ; Option.map set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing
+               ~f:(fun option ->
+                 `Set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing
+                   (Option.return option))
+           ; if remove_inheritable_xcrs_shown_in_todo_only_for_users_reviewing
+             then Some (`Set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing None)
+             else None
+           ; Option.map set_inheritable_owners
+               ~f:(fun owners -> `Set_inheritable_owners owners)
+           ; Option.map add_inheritable_owners
+               ~f:(fun owners -> `Add_inheritable_owners owners)
+           ; Option.map remove_inheritable_owners
+               ~f:(fun owners -> `Remove_inheritable_owners owners)
+           ; Option.map set_inheritable_properties
+               ~f:(fun attrs -> `Set_inheritable_properties attrs)
+           ; Option.map remove_inheritable_properties
+               ~f:(fun attrs -> `Remove_inheritable_properties attrs)
+           ; Option.map set_inheritable_release_process
+               ~f:(fun how -> `Set_inheritable_release_process (Option.return how))
+           ; if remove_inheritable_release_process
+             then Some (`Set_inheritable_release_process None)
+             else None
+           ; Option.map set_inheritable_who_can_release_into_me
+               ~f:(fun whom ->
+                 `Set_inheritable_who_can_release_into_me (Option.return whom))
+           ; if remove_inheritable_who_can_release_into_me
+             then Some (`Set_inheritable_who_can_release_into_me None)
+             else None
+           ; Option.map set_inheritable_send_email_to
+               ~f:(fun send_email_to ->
+                 `Set_inheritable_send_email_to send_email_to)
+           ; Option.map add_inheritable_send_email_to
+               ~f:(fun send_email_to ->
+                 `Add_inheritable_send_email_to send_email_to)
+           ; Option.map remove_inheritable_send_email_to
+               ~f:(fun send_email_to ->
+                 `Remove_inheritable_send_email_to send_email_to)
+           ; Option.map set_inheritable_send_email_upon
+               ~f:(fun send_email_upon ->
+                 `Set_inheritable_send_email_upon send_email_upon)
+           ; Option.map add_inheritable_send_email_upon
+               ~f:(fun send_email_upon ->
+                 `Add_inheritable_send_email_upon send_email_upon)
+           ; Option.map remove_inheritable_send_email_upon
+               ~f:(fun send_email_upon ->
+                 `Remove_inheritable_send_email_upon send_email_upon)
+           ; Option.map set_inheritable_whole_feature_followers
+               ~f:(fun whole_feature_followers ->
+                 `Set_inheritable_whole_feature_followers whole_feature_followers)
+           ; Option.map add_inheritable_whole_feature_followers
+               ~f:(fun whole_feature_followers ->
+                 `Add_inheritable_whole_feature_followers whole_feature_followers)
+           ; Option.map remove_inheritable_whole_feature_followers
+               ~f:(fun whole_feature_followers ->
+                 `Remove_inheritable_whole_feature_followers whole_feature_followers)
+           ; Option.map set_inheritable_whole_feature_reviewers
+               ~f:(fun whole_feature_reviewers ->
+                 `Set_inheritable_whole_feature_reviewers whole_feature_reviewers)
+           ; Option.map add_inheritable_whole_feature_reviewers
+               ~f:(fun whole_feature_reviewers ->
+                 `Add_inheritable_whole_feature_reviewers whole_feature_reviewers)
+           ; Option.map remove_inheritable_whole_feature_reviewers
+               ~f:(fun whole_feature_reviewers ->
+                 `Remove_inheritable_whole_feature_reviewers whole_feature_reviewers)
            ]
        in
        change_feature ~verbose ~feature_path ~updates ()

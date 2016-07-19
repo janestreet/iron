@@ -50,6 +50,8 @@ type t =
   ; timed_event_table                   : Timed_event.Table.t
   ; cached_attributes_errors            : Error.t Queue.t
   ; rpc_stats                           : Rpc_stats.t
+  ; metrics                             : Metrics.t
+  ; push_events                         : Push_events.t
   ; worker_cache                        : Worker_cache.t
   ; unclean_workspaces                  : Unclean_workspaces_manager.t
   ; event_subscriptions                 : Event_subscriptions.t
@@ -148,6 +150,8 @@ let invariant t : unit =
     ~user_info:(check User_info.invariant)
     ~cached_attributes_errors:ignore
     ~rpc_stats:(check Rpc_stats.invariant)
+    ~metrics:(check Metrics.invariant)
+    ~push_events:(check Push_events.invariant)
     ~worker_cache:(check Worker_cache.invariant)
     ~unclean_workspaces:(check Unclean_workspaces_manager.invariant)
     ~event_subscriptions:(check Event_subscriptions.invariant)
@@ -199,6 +203,8 @@ let iter_catch_up_managers_of_feature_path t feature_path ~f =
            creation
            queries
      event-subscriptions/
+     push-events/
+      properties
      user-info/
       aliases
       existing-users
@@ -222,6 +228,7 @@ let review_managers_dir_in_feature_dir = Relpath.of_string "review-managers"
 let fact_actions_file                  = Relpath.of_string "fact-actions"
 let catch_up_dir                       = Relpath.of_string "catch-up"
 let worker_cache_dir                   = Relpath.of_string "worker-cache"
+let push_events_dir                    = Relpath.of_string "push-events"
 let unclean_workspaces_dir             = Relpath.of_string "unclean-workspaces"
 let event_subscriptions_dir            = Relpath.of_string "event-subscriptions"
 
@@ -469,8 +476,7 @@ let create_review_manager t feature user ~cr_comments =
     Review_manager.create user
       ~is_whole_feature_follower:(Set.mem (Feature.whole_feature_followers feature) user)
       ~is_whole_feature_reviewer:(Set.mem (Feature.whole_feature_reviewers feature) user)
-      ~is_using_locked_sessions:
-        (Set.mem (User_info.users_using_locked_sessions t.user_info) user)
+      ~is_using_locked_sessions:(User_info.Using_locked_sessions.mem t.user_info user)
       ~cr_comments
       ~base_facts:(Feature.base_facts feature)
       ~register_catch_up:(make_register_catch_up t feature user)
@@ -583,23 +589,25 @@ let build_catch_up_lines_by_user t feature =
 ;;
 
 module Completed_review = struct
-  type t =
-    { with_uncommitted_session : User_name.Hash_set.t
-    ; with_committed_session   : User_name.Hash_set.t
-    } [@@deriving sexp_of]
 
-  let create () =
-    { with_uncommitted_session = User_name.Hash_set.create ()
-    ; with_committed_session   = User_name.Hash_set.create ()
-    }
+  type data = { have_review_session_in_progress : bool }
+  and t = data User_name.Table.t
+  [@@deriving sexp_of]
+
+  let create () = User_name.Table.create ()
+
+  let filter t ~f =
+    Hashtbl.to_alist t
+    |> List.filter_map ~f:(fun (user, { have_review_session_in_progress }) ->
+      Option.some_if (f have_review_session_in_progress) user)
+    |> User_name.Set.of_list
   ;;
 
-  let add t user ~has_uncommitted_session =
-    Hash_set.add
-      (if has_uncommitted_session
-       then t.with_uncommitted_session
-       else t.with_committed_session)
-      user
+  let users_with_review_session_in_progress t = filter t ~f:Fn.id
+  let users_without_review_session_in_progress t = filter t ~f:(not)
+
+  let add t user ~have_review_session_in_progress =
+    Hashtbl.set t ~key:user ~data:{ have_review_session_in_progress }
   ;;
 end
 
@@ -611,20 +619,19 @@ let compute_review_analysis state feature : Review_analysis.t option =
       Diff2.Ignoring_rev.Table.of_alist_exn
         (List.map diff2s ~f:(fun diff2 -> (diff2, Completed_review.create ())))
     in
-    let have_uncommitted_session = User_name.Hash_set.create () in
+    let mark_as_completed_review user diff2 ~have_review_session_in_progress =
+      match Hashtbl.find completed_review_by_diff2 diff2 with
+      | None -> ()
+      | Some completed_review ->
+        Completed_review.add completed_review user ~have_review_session_in_progress
+    in
+    let users_with_review_session_in_progress = User_name.Hash_set.create () in
     iter_review_managers_of_feature state feature ~f:(fun user review_manager ->
-      let has_uncommitted_session =
-        not (Review_manager.have_no_session_or_current_session_can_be_dropped
-               review_manager)
+      let have_review_session_in_progress =
+        Review_manager.have_session_in_progress review_manager
       in
-      let mark_as_completed_review diff2 ~has_uncommitted_session =
-        match Hashtbl.find completed_review_by_diff2 diff2 with
-        | None -> ()
-        | Some completed_review ->
-          Completed_review.add completed_review user ~has_uncommitted_session
-      in
-      if has_uncommitted_session then begin
-        Hash_set.add have_uncommitted_session user;
+      if have_review_session_in_progress then begin
+        Hash_set.add users_with_review_session_in_progress user;
         (* When the review obligations are satisfied by k-of-n we stop asking the
            remaining (n-k) users to review that diff.  We do not want to this to flicker
            each time one of the [k] starts a new session.  This is not a statement of
@@ -632,14 +639,15 @@ let compute_review_analysis state feature : Review_analysis.t option =
            [has_uncommited_session:true] *)
         List.iter
           (Review_manager.reviewed_diff4s_output_in_current_session review_manager)
-          ~f:(fun diff2 -> mark_as_completed_review diff2 ~has_uncommitted_session:true)
+          ~f:(mark_as_completed_review user ~have_review_session_in_progress:true)
       end;
       List.iter (Review_manager.brain review_manager) ~f:(fun { diff2; _ } ->
-        mark_as_completed_review diff2 ~has_uncommitted_session
+        mark_as_completed_review user diff2 ~have_review_session_in_progress
       );
     );
-    let user_set hset = hset |> Hash_set.to_list |> User_name.Set.of_list in
-    let have_uncommitted_session = user_set have_uncommitted_session in
+    let users_with_review_session_in_progress =
+      User_name.Set.of_hash_set users_with_review_session_in_progress
+    in
     let diff2s =
       Hashtbl.mapi completed_review_by_diff2 ~f:(fun ~key:diff2 ~data:completed_review ->
         let files_obligations_analysis completed_review =
@@ -659,12 +667,12 @@ let compute_review_analysis state feature : Review_analysis.t option =
           }
         in
         let actually_completed_review =
-          user_set completed_review.with_committed_session
+          Completed_review.users_without_review_session_in_progress completed_review
         in
         let assuming_expected_users_are_finished =
           User_name.Set.union_list
             [ actually_completed_review
-            ; user_set completed_review.with_uncommitted_session
+            ; Completed_review.users_with_review_session_in_progress completed_review
             ; Feature.whole_feature_reviewers feature
             ]
         in
@@ -685,8 +693,7 @@ let compute_review_analysis state feature : Review_analysis.t option =
             match find_review_manager state feature reviewer with
             | Error _ -> false
             | Ok review_manager ->
-              Review_manager.have_no_session_or_current_session_can_be_dropped
-                review_manager
+              not (Review_manager.have_session_in_progress review_manager)
               && (match
                     Review_manager.line_count_remaining_to_review
                       review_manager Entire_goal
@@ -696,7 +703,7 @@ let compute_review_analysis state feature : Review_analysis.t option =
         })
     in
     Some { diff2s
-         ; have_uncommitted_session
+         ; users_with_review_session_in_progress
          ; whole_feature_reviewers
          }
 ;;
@@ -716,19 +723,19 @@ let compute_line_count_by_user_exn t feature =
     |> Map.to_alist
     |> List.map ~f:(fun (user, { review
                                ; completed
-                               ; have_uncommitted_and_potentially_blocking_session
+                               ; have_potentially_blocking_review_session_in_progress
                                } ) ->
-         let catch_up =
-           Hashtbl.find_and_remove catch_up_lines_by_user user
-           |> Option.value ~default:Line_count.Catch_up.zero
-         in
-         user,
-         { Line_count.
-           review = To_goal_via_session.fully_known_exn review
-         ; catch_up
-         ; completed
-         ; have_uncommitted_and_potentially_blocking_session
-         })
+                     let catch_up =
+                       Hashtbl.find_and_remove catch_up_lines_by_user user
+                       |> Option.value ~default:Line_count.Catch_up.zero
+                     in
+                     user,
+                     { Line_count.
+                       review = To_goal_via_session.fully_known_exn review
+                     ; catch_up
+                     ; completed
+                     ; have_potentially_blocking_review_session_in_progress
+                     })
   in
   (* At this point, we found and removed all entries from [catch_up_lines_by_user] that
      had a review_manager.  However, there might be more remaining. *)
@@ -749,7 +756,7 @@ module Trying_to = struct
   type t =
     | Release
     | Release_into
-  [@@deriving sexp]
+  [@@deriving sexp_of]
 end
 
 let rec next_steps_gen t feature ~(trying_to : Trying_to.t) : Next_step.t list =
@@ -835,7 +842,7 @@ let rec next_steps_gen t feature ~(trying_to : Trying_to.t) : Next_step.t list =
             (* We report [Add_code] after [Wait_for_hydra] so that as soon as the first
                commit is pushed, we report [Wait_for_hydra] rather than [Add_code]. *)
             else if Feature.is_empty feature
-                    && (match trying_to with Release -> true | Release_into -> false)
+                 && (match trying_to with Release -> true | Release_into -> false)
             then maybe_prepend_rebase [ Add_code ]
             (* We report [Enable_review] after [Add_code] so that we don't encourage
                enabling review on empty features. *)
@@ -851,9 +858,9 @@ let rec next_steps_gen t feature ~(trying_to : Trying_to.t) : Next_step.t list =
                         ~f:(fun for_ -> seconding_is_recommended t ~for_ feature)
               then maybe_prepend_rebase [ Ask_seconder ]
               else if Feature.is_empty feature
-                      && (match trying_to with
-                        | Release -> false
-                        | Release_into -> true)
+                   && (match trying_to with
+                     | Release -> false
+                     | Release_into -> true)
               then [ Ask_seconder ]
               else maybe_prepend_rebase [ Widen_reviewing ]
             end else if not is_fully_reviewed then begin
@@ -872,8 +879,8 @@ let rec next_steps_gen t feature ~(trying_to : Trying_to.t) : Next_step.t list =
             end
             (* If we reach here, the feature is seconded, fully reviewed, and CR clean. *)
             else if not (Feature.is_seconded feature)
-                    || not is_fully_reviewed
-                    || not (List.is_empty crs)
+                 || not is_fully_reviewed
+                 || not (List.is_empty crs)
             then [ Report_iron_bug ]
             else
               let lock_name : Next_step.Lock_name.t =
@@ -1046,7 +1053,7 @@ module Post_check_in_features : sig
   val rename             : to_:('a -> Feature_path.t) -> 'a t
   val compress           : ('a -> Feature_path.t) -> 'a t
 
-  val all_review_managers_of_user : ('a -> User_name.t) -> 'a t
+  val all_review_managers_of_users : ('a -> User_name.Set.t) -> 'a t
 end with type state := t = struct
   type state = t
   type 'a t = state -> 'a -> [ `run_after_reaction of (unit -> Which_features.t) ]
@@ -1094,14 +1101,20 @@ end with type state := t = struct
     `run_after_reaction (const which_features)
   ;;
 
-  let all_review_managers_of_user get_user state action =
-    let user_name = get_user action in
+  let all_review_managers_of_users get_users state action =
+    let user_names = get_users action in
     let which_features =
-      Which_features.these_features (list_of_iter (fun ~f ->
-        iter_review_managers_of_user state user_name ~f:(fun feature_id _ ->
-          let feature = find_feature_by_id_exn state feature_id in
-          f (Feature.feature_path feature)
-        )))
+      let these_features =
+        let hset = Feature_path.Hash_set.create () in
+        Set.iter user_names ~f:(fun user_name ->
+          iter_review_managers_of_user state user_name ~f:(fun feature_id _ ->
+            let feature = find_feature_by_id_exn state feature_id in
+            Hash_set.add hset (Feature.feature_path feature)));
+        hset
+        |> Feature_path.Set.of_hash_set
+        |> Set.to_list
+      in
+      Which_features.these_features these_features
     in
     `run_after_reaction (const which_features)
   ;;
@@ -1274,6 +1287,7 @@ let initialize_and_sync_file_system serializer =
     ; catch_up_dir
     ; event_subscriptions_dir
     ; features_dir
+    ; push_events_dir
     ; unclean_workspaces_dir
     ; user_info_dir
     ; worker_cache_dir
@@ -1319,7 +1333,7 @@ let install_deserialized_feature t feature review_managers =
       review_manager
         ~whole_feature_followers:(Feature.whole_feature_followers feature)
         ~whole_feature_reviewers:(Feature.whole_feature_reviewers feature)
-        ~users_using_locked_sessions:(User_info.users_using_locked_sessions t.user_info)
+        ~users_using_locked_sessions:(User_info.Using_locked_sessions.get_set t.user_info)
         ~review_goal:(Feature.review_goal feature)
         ~indexed_diff4s:(Feature.indexed_diff4s feature)
         ~register_catch_up:(make_register_catch_up t feature user)
@@ -1467,13 +1481,23 @@ let get_maybe_archived_feature_and_reviewer_exn t ~what_feature ~what_diff =
     get_cached_or_reload_archived_feature_exn t
       (Archived_feature.feature_id archived_feature)
   in
-  let find archived_feature existing =
-    match namespace, archived_feature, existing with
-    | (`All | `Existing | `Existing_or_most_recently_archived), _, Some feature ->
+  let find archived_features existing =
+    match namespace, archived_features, existing with
+    | ( `All
+      | `Existing
+      | `Existing_or_most_recently_archived
+      | `Existing_or_with_catch_up
+      ), _, Some feature ->
       return (feature_to_protocol t feature)
 
+    | `Existing_or_with_catch_up, (_::_), None ->
+      List.filter archived_features ~f:(fun (archived_feature : Archived_feature.t) ->
+        Hashtbl2_pair.mem1 t.catch_up_managers archived_feature.feature_path)
+      |> get_archived_feature_exn
+      |> get_cached_or_reload_archived_feature_exn
+
     | `Existing_or_most_recently_archived, (_::_), None ->
-      List.min_elt archived_feature ~cmp:order_most_recently_archived_feature_first
+      List.min_elt archived_features ~cmp:order_most_recently_archived_feature_first
       |> Option.value_exn ~here:[%here]
       |> get_cached_or_reload_archived_feature_exn
 
@@ -1585,6 +1609,7 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
     sequence_of (module Persist.Change_fully_reviewed_revisions_query)
       ~in_file:fully_reviewed_revisions_queries_file
   and fact_actions = sequence_of (module Fact.Action.Persist) ~in_file:fact_actions_file
+  and push_events = in_subdir push_events_dir Push_events.deserializer
   and worker_cache = in_subdir worker_cache_dir Worker_cache.deserializer
   and unclean_workspaces =
     in_subdir unclean_workspaces_dir Unclean_workspaces_manager.deserializer
@@ -1617,6 +1642,8 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
       ; timed_event_table         = Timed_event.the_table ()
       ; cached_attributes_errors  = Queue.create ()
       ; rpc_stats                 = Rpc_stats.create ()
+      ; metrics                   = Metrics.create ()
+      ; push_events
       ; worker_cache
       ; unclean_workspaces
       ; event_subscriptions
@@ -1891,34 +1918,33 @@ let only_server_user_is_authorized_exn query =
                  * [ `authorized_user of User_name.t ]]
 ;;
 
-let trusted_users t =
-  Set.add (Iron_config.admin_user_names t.server_config) User_name.unix_login
+let users_with_admin_privileges t =
+  Set.add (User_info.Admins.get_set t.user_info) User_name.unix_login
 ;;
 
-let is_trusted_user t user = Set.mem (trusted_users t) user
+let user_has_admin_privileges t user =
+  User_name.equal user User_name.unix_login
+  || User_info.Admins.mem t.user_info user
 ;;
 
-let is_trusted_user_and_in_prod t user =
-  not am_functional_testing && is_trusted_user t user
-;;
-
-let only_trusted_user_is_authorized_exn t query =
+let only_user_with_admin_privileges_is_authorized_exn t query =
   let by = Query.by query in
-  if not (is_trusted_user t by)
+  if not (user_has_admin_privileges t by)
   then
     raise_s
       [%sexp
-        "unauthorized rpc by user",
-        { user          = (by              : User_name.t)
-        ; trusted_users = (trusted_users t : User_name.Set.t)
+        "unauthorized RPC by user -- admin privileges required"
+      , { user                        = (by                            : User_name.t)
+        ; users_with_admin_privileges = (users_with_admin_privileges t : User_name.Set.t)
         }
       ]
 ;;
 
 let check_catch_up_for_exn t ~for_ ~by =
   if User_info.are_acting_for_themselves_or_for_invalid_user t.user_info ~for_ ~by
-     || is_trusted_user_and_in_prod t by
-     || (am_functional_testing && Option.is_none (Sys.getenv "IRON_FUNCTIONAL_TESTING_CATCH_UP"))
+  || (user_has_admin_privileges t by && not am_functional_testing)
+  || (am_functional_testing
+      && Option.is_none (Sys.getenv "IRON_FUNCTIONAL_TESTING_CATCH_UP"))
   then ()
   else
     raise_s
@@ -1955,12 +1981,13 @@ let review_authorization_may_skip_user_exn t feature review_manager query
     | Error err ->
       match for_or_all with
       | `User _ ->
-        if is_trusted_user_and_in_prod t (Query.by query)
+        if user_has_admin_privileges t (Query.by query)
+        && not am_functional_testing
         then `Ok
         else `Error err
       | `All_users ->
         (* Skip the followers when running -for all, for convenience (regardless of
-           whether we are a trusted user). *)
+           whether the user has admin privileges). *)
         `Skip_user err
   in
   review_authorization, `Follow not_for_follow_only
@@ -1983,7 +2010,7 @@ let () =
   implement_rpc ~log:true Post_check_in_features.all
     (module Remove_alternate_names)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        let { Remove_alternate_names.Action. alternate_names; which; may_repartition_crs } =
          Query.action query
        in
@@ -2010,7 +2037,7 @@ let () =
     Post_check_in_features.none
     (module Update_valid_users_and_aliases)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        let { Update_valid_users_and_aliases.Action.
              valid_users_and_aliases
            ; may_repartition_crs
@@ -2024,41 +2051,59 @@ let () =
 ;;
 
 let () =
-  let module Users_using_locked_sessions = Iron_protocol.Users_using_locked_sessions in
+  let module User_set = Iron_protocol.User_set in
   implement_rpc ~log:true
     Post_check_in_features.none
-    (module Users_using_locked_sessions.Get)
+    (module User_set.Get)
     (fun t query ->
-       let () = Query.action query in
-       User_info.users_using_locked_sessions t.user_info
+       let module M =
+         (val (User_info.get_user_set (Query.action query)) : User_info.User_set.S)
+       in
+       M.get_set t.user_info
     );
   implement_rpc ~log:true
-    (Post_check_in_features.all_review_managers_of_user
-       Users_using_locked_sessions.Change_user.Action.user_name)
-    (module Users_using_locked_sessions.Change_user)
+    (Post_check_in_features.all_review_managers_of_users
+       User_set.Change.Action.user_names)
+    (module User_set.Change)
     (fun t query ->
-       let { Users_using_locked_sessions.Change_user.Action.
-             user_name; change
+       let { User_set.Change.Action.
+             user_set
+           ; user_names
+           ; change
+           ; idempotent
            } = Query.action query
        in
        let () =
-         if not am_functional_testing
-         && not (User_name.equal user_name (Query.by query))
-         then only_trusted_user_is_authorized_exn t query
+         let require_admin_privileges =
+           match user_set with
+           | `Admins -> true
+           | `Feeding_metrics -> true
+           | `Using_locked_sessions ->
+             Set.exists user_names ~f:(fun user_name ->
+               not (User_name.equal user_name (Query.by query)))
+         in
+         if require_admin_privileges
+         then only_user_with_admin_privileges_is_authorized_exn t query
        in
-       let is_using_locked_sessions =
-         match change with
-         | `Add    ->
-           ok_exn (User_info.add_user_using_locked_sessions t.user_info user_name);
-           true
-
-         | `Remove ->
-           ok_exn (User_info.remove_user_using_locked_sessions t.user_info user_name);
-           false
+       let module M = (val (User_info.get_user_set user_set) : User_info.User_set.S) in
+       let () =
+         (match change with
+          | `Add    -> M.add    t.user_info user_names ~idempotent
+          | `Remove -> M.remove t.user_info user_names ~idempotent)
+         |> ok_exn
        in
-       iter_review_managers_of_user t user_name ~f:(fun _ review_manager ->
-         Review_manager.set_is_using_locked_sessions review_manager
-           is_using_locked_sessions))
+       match user_set with
+       | `Admins | `Feeding_metrics -> () (* Nothing special to update *)
+       | `Using_locked_sessions ->
+         let is_using_locked_sessions =
+           match change with
+           | `Add    -> true
+           | `Remove -> false
+         in
+         Set.iter user_names ~f:(fun user_name ->
+           iter_review_managers_of_user t user_name ~f:(fun _ review_manager ->
+             Review_manager.set_is_using_locked_sessions review_manager
+               is_using_locked_sessions)))
 ;;
 
 let occurrences_by_user_name t =
@@ -2115,6 +2160,8 @@ let occurrences_by_user_name t =
     ~timed_event_table:ignore
     ~cached_attributes_errors:ignore
     ~rpc_stats:ignore
+    ~metrics:ignore
+    ~push_events:ignore
     ~worker_cache:ignore
     ~unclean_workspaces:(process (fun t ->
       Set.iter (Unclean_workspaces_manager.users t) ~f:(add Has_unclean_workspaces)))
@@ -2130,7 +2177,7 @@ let () =
   implement_rpc ~log:true Post_check_in_features.none
     (module Refresh_existing_users)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        let () = Query.action query in
        User_info.refresh_existing_users t.user_info
          ~occurrences_by_user_name:(occurrences_by_user_name t))
@@ -2143,7 +2190,7 @@ let () =
     (* [repartition_crs_by_assignee] handles invalidation, if needed. *)
     (module Repartition_crs)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        let () = Query.action query in
        repartition_crs_and_cr_soons_by_assignee_for_all_features t)
 ;;
@@ -2155,7 +2202,7 @@ let () =
     Post_check_in_features.none
     (module Define_typos)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        let { Define_typos.Action. definitions; may_repartition_crs } =
          Query.action query
        in
@@ -2212,7 +2259,7 @@ let () =
        let edge_opt =
          match edge with
          | `From_to (from_, to_) ->
-           only_trusted_user_is_authorized_exn t query;
+           only_user_with_admin_privileges_is_authorized_exn t query;
            Some { Fully_reviewed_edge.
                   rev_zero
                 ; from_
@@ -2273,6 +2320,7 @@ let archive_feature t query feature ~for_ ~must_be_owner =
       | Some remote_repo_path ->
         Hashtbl2_pair.remove_all1 t.bookmarks_without_feature remote_repo_path
   end;
+  Push_events.change t.push_events (Clear_features [ Feature.feature_id feature ]);
   let archived_feature_dir = archived_feature_dir archived_feature in
   Serializer.rename (serializer_exn t)
     ~from_:(feature_dir (Feature.feature_id feature))
@@ -2350,7 +2398,7 @@ let () =
   implement_rpc ~log:true Post_check_in_features.none
     (module Clear_bookmarks_without_feature)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        let { Clear_bookmarks_without_feature.Action.
              remote_repo_path
            } = Query.action query
@@ -2363,30 +2411,51 @@ let change_feature t feature query
   let users =
     User_name.Set.union_list
       (List.map updates ~f:(function
+         | `Add_inheritable_owners us
          | `Add_owners us
+         | `Set_inheritable_owners us
          | `Set_owners us
            -> User_name.Set.of_list us
+         | `Add_inheritable_whole_feature_reviewers us
+         | `Add_inheritable_whole_feature_followers us
          | `Add_reviewing us
          | `Add_whole_feature_followers us
          | `Add_whole_feature_reviewers us
+         | `Remove_inheritable_owners us
+         | `Remove_inheritable_whole_feature_followers us
+         | `Remove_inheritable_whole_feature_reviewers us
          | `Remove_owners us
          | `Remove_reviewing us
          | `Remove_whole_feature_followers us
          | `Remove_whole_feature_reviewers us
+         | `Set_inheritable_whole_feature_followers us
+         | `Set_inheritable_whole_feature_reviewers us
          | `Set_reviewing (`Only us)
          | `Set_reviewing (`All_but us)
          | `Set_whole_feature_followers us
          | `Set_whole_feature_reviewers us
            -> us
+         | `Add_inheritable_send_email_to _
+         | `Add_inheritable_send_email_upon _
          | `Add_send_email_to _
          | `Add_send_email_upon _
+         | `Remove_inheritable_properties _
          | `Remove_properties _
          | `Remove_send_email_to _
          | `Remove_send_email_upon _
+         | `Remove_inheritable_send_email_to _
+         | `Remove_inheritable_send_email_upon _
          | `Set_base _
          | `Set_crs_are_enabled _
          | `Set_crs_shown_in_todo_only_for_users_reviewing _
          | `Set_description _
+         | `Set_inheritable_properties _
+         | `Set_inheritable_release_process _
+         | `Set_inheritable_who_can_release_into_me _
+         | `Set_inheritable_crs_shown_in_todo_only_for_users_reviewing _
+         | `Set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing _
+         | `Set_inheritable_send_email_to _
+         | `Set_inheritable_send_email_upon _
          | `Set_is_permanent _
          | `Set_properties _
          | `Set_release_process _
@@ -2421,13 +2490,28 @@ let change_feature t feature query
   let whole_feature_followers = Feature.whole_feature_followers feature in
   let whole_feature_reviewers = Feature.whole_feature_reviewers feature in
   let owner_for_crs = Feature.owner_for_crs feature in
+  let owners = Feature.owners feature in
   let result = Feature.change feature query updates in
-  set_feature_parties t feature;
-  if not (Set.equal whole_feature_reviewers (Feature.whole_feature_reviewers feature))
-     || not (Set.equal whole_feature_followers (Feature.whole_feature_followers feature))
-  then update_review_manager_goals t feature;
-  if not (User_name.equal owner_for_crs (Feature.owner_for_crs feature))
-  then repartition_crs_by_assignee t feature;
+  let owners_changed =
+    not (Set.equal
+           (owners |> User_name.Set.of_list)
+           (Feature.owners feature |> User_name.Set.of_list))
+  in
+  let whole_feature_reviewers_changed =
+    not (Set.equal whole_feature_reviewers (Feature.whole_feature_reviewers feature))
+  in
+  let whole_feature_followers_changed =
+    not (Set.equal whole_feature_followers (Feature.whole_feature_followers feature))
+  in
+  (if List.exists Features_by_parties.Parties.all ~f:(function
+     | Owners -> owners_changed
+     | Whole_feature_followers -> whole_feature_followers_changed)
+   then set_feature_parties t feature);
+  (if whole_feature_reviewers_changed
+   || whole_feature_followers_changed
+   then update_review_manager_goals t feature);
+  (if not (User_name.equal owner_for_crs (Feature.owner_for_crs feature))
+   then repartition_crs_by_assignee t feature);
   result @ errors
 ;;
 
@@ -2471,7 +2555,7 @@ let () =
        let { Change_fully_reviewed_revisions.Action. what_to_do } =
          Query.action query
        in
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        let query = Query.with_action query what_to_do in
        change_fully_reviewed_revisions t query)
 ;;
@@ -2483,7 +2567,7 @@ let () =
   implement_rpc ~log:false Post_check_in_features.none
     (module Check_cached_feature_attributes)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        let { Check_cached_feature_attributes.Action.
              which_features; ignore_diffs_in_errors
            }
@@ -2505,7 +2589,7 @@ let () =
          if not (List.is_empty errors)
          then Error.raise (Error.of_list errors)
        | Clear ->
-         only_trusted_user_is_authorized_exn t query;
+         only_user_with_admin_privileges_is_authorized_exn t query;
          Queue.clear t.cached_attributes_errors)
 ;;
 
@@ -2522,7 +2606,7 @@ let () =
          if not (List.is_empty errors)
          then Error.raise (Error.of_list errors)
        | Clear ->
-         only_trusted_user_is_authorized_exn t query;
+         only_user_with_admin_privileges_is_authorized_exn t query;
          Timed_event.Table.Errors.clear t.timed_event_table)
 ;;
 
@@ -2574,7 +2658,7 @@ let () =
   implement_rpc ~log:true Post_check_in_features.none
     (module With_worker_cache)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        match Query.action query with
        | Clear_features clear ->
          begin match clear with
@@ -2598,7 +2682,7 @@ let () =
   implement_rpc ~log:true Post_check_in_features.none
     (module With_archived_features_cache)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        match Query.action query with
        | Clear what_to_clear ->
          begin match what_to_clear with
@@ -2614,17 +2698,17 @@ let () =
   implement_rpc ~log:true Post_check_in_features.none
     (module With_unclean_workspaces)
     (fun t query ->
-       let only_user_or_trusted user =
+       let is_authorized_exn user =
          if not am_functional_testing
          && not (User_name.equal user (Query.by query))
-         then only_trusted_user_is_authorized_exn t query
+         then only_user_with_admin_privileges_is_authorized_exn t query
        in
        match Query.action query with
        | Remove_user user ->
-         only_user_or_trusted user;
+         is_authorized_exn user;
          Unclean_workspaces_manager.remove_user_exn t.unclean_workspaces query user
        | Remove_machine (user, machine) ->
-         only_user_or_trusted user;
+         is_authorized_exn user;
          Unclean_workspaces_manager.remove_machine_exn t.unclean_workspaces
            query user machine)
 ;;
@@ -2687,6 +2771,8 @@ let () =
            Feature_forest.complete t.features ~prefix `Of_full_name
          | Archived_feature_path ->
            Archived_features.complete t.archived_features ~prefix `Of_partial_name
+         | Metric_name ->
+           Metrics.complete t.metrics ~prefix
          | Remote_repo_path ->
            complete_from_roots (fun ~f:maybe _ feature ->
              match Feature.remote_repo_path feature with
@@ -2699,6 +2785,20 @@ let () =
          | User_info which -> User_info.complete t.user_info ~prefix which)
        |> String.Set.stable_dedup_list
     )
+;;
+
+let%test_unit _ =
+  let inherit_attributes_and_properties_from_parent t query feature ~parent =
+    Batch_of_feature_changes.empty
+    |> Batch_of_feature_changes.add_inherited_from_parent
+         ~parent_inheritable_attributes:(Feature.inheritable_attributes parent)
+    |> Batch_of_feature_changes.to_feature_updates feature
+    |> change_feature_exn t feature query
+  in
+  let (_ : t -> _ Query.t -> Feature.t -> parent:Feature.t -> unit) =
+    inherit_attributes_and_properties_from_parent
+  in
+  ()
 ;;
 
 let create_feature_exn t query =
@@ -2750,6 +2850,9 @@ let create_feature_exn t query =
   ok_exn (Feature_forest.check_add t.features feature_path);
   let tip = Option.value tip ~default:base in
   let feature_id = Feature_id.create () in
+  (* Extra attributes requested by [create] shall be set after the inheritence logic has
+     run below, so as to chose what the right behavior is for conflicting attributes.  See
+     [add_whole_feature_reviewers] for an example. *)
   let feature =
     Feature.create_exn query
       ~feature_id
@@ -2759,18 +2862,25 @@ let create_feature_exn t query =
   in
   add_feature_exn t feature;
   Serializer.add_subtree (serializer_exn t) ~dir:(review_managers_dir feature_id);
-  (* [Feature.change] raises if we add whole-feature reviewers that are already present.
-     Since the feature starts with the owners as whole-feature reviewers, we remove those
-     to avoid the raise. *)
-  let add_whole_feature_reviewers =
-    Set.diff
-      add_whole_feature_reviewers
-      (User_name.Set.of_list owners)
+  let batch_of_feature_changes =
+    let changes = Batch_of_feature_changes.empty in
+    let changes =
+      match find_parent t feature_path with
+      | Error _   -> changes
+      | Ok parent ->
+        Batch_of_feature_changes.add_inherited_from_parent changes
+          ~parent_inheritable_attributes:(Feature.inheritable_attributes parent)
+    in
+    let changes =
+      match properties with
+      | None            -> changes
+      | Some properties -> Batch_of_feature_changes.add_properties changes ~properties
+    in
+    Batch_of_feature_changes.add_whole_feature_reviewers changes
+      ~whole_feature_reviewers:add_whole_feature_reviewers
   in
-  Option.iter properties ~f:(fun properties ->
-    Feature.set_properties feature query properties);
   change_feature_exn t feature query
-    [ `Add_whole_feature_reviewers add_whole_feature_reviewers ];
+    (Batch_of_feature_changes.to_feature_updates feature batch_of_feature_changes);
   feature
 ;;
 
@@ -2781,7 +2891,8 @@ let () =
     (fun t query ->
        let feature = create_feature_exn t query in
        { Create_feature.Reaction.
-         remote_repo_path = remote_repo_path t feature
+         feature_id       = Feature.feature_id feature
+       ; remote_repo_path = remote_repo_path t feature
        ; tip              = Feature.tip feature
        }
     )
@@ -2795,7 +2906,8 @@ module Rename = struct
 
   let to_hg_rename { from_feature; to_ } =
     { Iron_hg.Rename.
-      from = Feature.feature_path from_feature
+      feature_id = Feature.feature_id   from_feature
+    ; from       = Feature.feature_path from_feature
     ; to_
     }
   ;;
@@ -2883,8 +2995,8 @@ let prepare_to_compress t feature ~for_ ~check_rename_lock =
       let review =
         Line_count.Review.to_review_column_shown
           (To_goal_via_session.fully_known_exn line_count.review)
-          ~have_uncommitted_and_potentially_blocking_session:
-            line_count.have_uncommitted_and_potentially_blocking_session
+          ~have_potentially_blocking_review_session_in_progress:
+            line_count.have_potentially_blocking_review_session_in_progress
       in
       Review_or_commit.count review > 0)
   in
@@ -3059,7 +3171,8 @@ let () =
          Feature.set_xcrs_shown_in_todo_only_for_users_reviewing copy query
            (Feature.xcrs_shown_in_todo_only_for_users_reviewing feature);
          { Copy_feature.Reaction.
-           remote_repo_path = remote_repo_path t feature
+           feature_id       = Feature.feature_id feature
+         ; remote_repo_path = remote_repo_path t feature
          ; tip              = Feature.tip feature
          })
 ;;
@@ -3144,22 +3257,22 @@ let () =
        let { De_alias_feature.Action. feature_path } = Query.action query in
        let user_name_by_alias = User_info.alternate_names t.user_info ~which:`Aliases in
        let de_aliased = ref [] in
-       let did_not_de_alias_due_to_non_empty_session = ref [] in
+       let did_not_de_alias_due_to_review_session_in_progress = ref [] in
        let nothing_to_do = ref [] in
        iter_review_managers_of_feature t (find_feature_exn t feature_path)
          ~f:(fun user review_manager ->
            let r =
              match Review_manager.de_alias_brain review_manager user_name_by_alias with
-             | `De_aliased -> de_aliased
-             | `Did_not_de_alias_due_to_non_empty_session ->
-               did_not_de_alias_due_to_non_empty_session
+             | `De_aliased    -> de_aliased
              | `Nothing_to_do -> nothing_to_do
+             | `Did_not_de_alias_due_to_review_session_in_progress ->
+               did_not_de_alias_due_to_review_session_in_progress
            in
            r := user :: !r);
        { de_aliased
          = User_name.Set.of_list !de_aliased
-       ; did_not_de_alias_due_to_non_empty_session
-         = User_name.Set.of_list !did_not_de_alias_due_to_non_empty_session
+       ; did_not_de_alias_due_to_review_session_in_progress
+         = User_name.Set.of_list !did_not_de_alias_due_to_review_session_in_progress
        ; nothing_to_do
          = User_name.Set.of_list !nothing_to_do
        })
@@ -3171,7 +3284,9 @@ let () =
     (module Feature_exists)
     (fun t query ->
        let feature_path = Query.action query in
-       is_ok (find_feature t feature_path))
+       match find_feature t feature_path with
+       | Error _    -> No
+       | Ok feature -> Yes (Feature.feature_id feature))
 ;;
 
 let () =
@@ -3259,7 +3374,7 @@ let () =
              | `No -> false
              | `If_applicable ->
                User_name.equal for_ (Query.by query)
-               && Set.mem (User_info.users_using_locked_sessions t.user_info) for_
+               && User_info.Using_locked_sessions.mem t.user_info for_
            in
            if should_lock_session
            then begin
@@ -3327,7 +3442,7 @@ let () =
        match Hashtbl2_pair.find t.catch_up_managers feature_path for_ with
        | None ->
          if is_error (Feature_forest.find t.features feature_path)
-            && not (Archived_features.mem_feature_path t.archived_features feature_path)
+         && not (Archived_features.mem_feature_path t.archived_features feature_path)
          then raise_s [%sexp "unknown feature", (feature_path : Feature_path.t)]
        | Some catch_up_manager ->
          let catch_up_sessions =
@@ -3399,27 +3514,34 @@ let () =
        | Build_info -> Version_util.build_info_as_sexp
        | Version -> Version_util.version_list |> [%sexp_of: string list]
        | Worker_cache what_to_dump ->
-         if Worker_cache.What_to_dump.only_trusted_user_is_authorized what_to_dump
-         then only_trusted_user_is_authorized_exn t query;
+         if Worker_cache.What_to_dump.require_admin_privileges what_to_dump
+         then only_user_with_admin_privileges_is_authorized_exn t query;
          Worker_cache.dump t.worker_cache what_to_dump
        | State ->
          if not am_functional_testing
          then failwith "dumping state can only be done in test";
          t |> [%sexp_of: t]
+       | Push_events what_to_dump ->
+         if Iron_protocol.Push_events.What_to_dump.require_admin_privileges what_to_dump
+         then only_user_with_admin_privileges_is_authorized_exn t query;
+         Push_events.dump t.push_events what_to_dump
        | Unclean_workspaces what_to_dump ->
          Unclean_workspaces_manager.dump t.unclean_workspaces what_to_dump
        | User_info which_user_info -> User_info.dump t.user_info which_user_info
        | Feature feature_path ->
          find_feature_exn t feature_path |> [%sexp_of: Feature.t]
        | Hash_consing_cache what_to_dump ->
-         if Hash_consing.What_to_dump.only_trusted_user_is_authorized what_to_dump
-         then only_trusted_user_is_authorized_exn t query;
+         if Hash_consing.What_to_dump.require_admin_privileges what_to_dump
+         then only_user_with_admin_privileges_is_authorized_exn t query;
          Hash_consing.dump (Hash_consing.the_one_and_only ()) what_to_dump
        | Event_subscriptions ->
          [%sexp
-           [ (Feature_updates_manager.dump t.feature_updates_manager : Sexp.t)
-           ; (Event_subscriptions.dump     t.event_subscriptions     : Sexp.t)
-           ]
+           { metric_updates  = (Metrics.dump_subscriptions t.metrics : Sexp.t)
+           ; feature_updates =
+               (Feature_updates_manager.dump_subscriptions t.feature_updates_manager
+                : Sexp.t)
+           }
+         , (Event_subscriptions.dump t.event_subscriptions : Sexp.t)
          ]
        | Timed_event_table -> Timed_event.Table.dump t.timed_event_table
        | Review_analysis feature_path ->
@@ -3773,6 +3895,24 @@ let () =
        feature_protocol)
 ;;
 
+let add_span_since_push_value_to_metric_if_available t ~feature ~tip ~metric_name =
+  match Push_events.find t.push_events tip ~feature_id:(Feature.feature_id feature) with
+  | None -> ()
+  | Some push_event ->
+    match Push_event.mark_as_used_by_metrics push_event metric_name with
+    | `Already_marked -> ()
+    | `Ok ->
+      let span_since_push =
+        Time.diff (Time.now ()) (Push_event.at push_event)
+        |> Time.Span.to_sec
+      in
+      Metrics.add_values t.metrics
+        { feature_path = Feature.feature_path feature
+        ; metric_name
+        ; values       = [ span_since_push ]
+        }
+;;
+
 let () =
   let module Hydra_worker = Iron_protocol.Hydra_worker in
   (* We log Hydra_worker even though it's not state changing, because it has information
@@ -3837,6 +3977,55 @@ let () =
 ;;
 
 let () =
+  implement_rpc ~log:true Post_check_in_features.none
+    (module Iron_protocol.Metrics.Clear)
+    (fun t query ->
+       only_user_with_admin_privileges_is_authorized_exn t query;
+       Metrics.clear t.metrics (Query.action query))
+;;
+
+let () =
+  implement_rpc ~log:false Post_check_in_features.none
+    (module Iron_protocol.Metrics.Get)
+    (fun t query ->
+       Metrics.get t.metrics (Query.action query))
+;;
+
+
+let () =
+  implement_rpc ~log:false Post_check_in_features.none
+    (module Iron_protocol.Push_events.Add)
+    (fun t query ->
+       Push_events.add t.push_events query)
+;;
+
+let () =
+  implement_rpc ~log:false Post_check_in_features.none
+    (module Iron_protocol.Push_events.Change)
+    (fun t query ->
+       only_user_with_admin_privileges_is_authorized_exn t query;
+       Push_events.change t.push_events (Query.action query))
+;;
+
+let () =
+  implement_rpc ~log:false Post_check_in_features.none
+    (module Iron_protocol.Metrics.Add_values)
+    (fun t query ->
+       let by = Query.by query in
+       if User_info.Feeding_metrics.mem t.user_info by
+       then Metrics.add_values t.metrics (Query.action query)
+       else
+         let authorized_users = User_info.Feeding_metrics.get_set t.user_info in
+         raise_s
+           [%sexp
+             "user is not authorized to feed metric values"
+           , { user             = (by               : User_name.t)
+             ; authorized_users = (authorized_users : User_name.Set.t)
+             }
+           ])
+;;
+
+let () =
   let module Invalidate_cached_feature_attributes =
     Iron_protocol.Invalidate_cached_feature_attributes
   in
@@ -3866,15 +4055,15 @@ let () =
   implement_rpc ~log:false Post_check_in_features.none
     (module List_features)
     (fun t query ->
-       let { List_features.Action. feature_path; depth; use_archived } =
+       let { List_features.Action. descendants_of; depth; use_archived } =
          Query.action query
        in
        if use_archived
        then
          ok_exn
-           (Archived_features.list_features t.archived_features feature_path ~depth)
+           (Archived_features.list_features t.archived_features ~descendants_of ~depth)
        else
-         ok_exn (Feature_forest.list t.features feature_path ~depth)
+         ok_exn (Feature_forest.list t.features ~descendants_of ~depth)
          |> List.map ~f:(fun (feature_path, feature) ->
            { List_features.Reaction.
              feature_path
@@ -3895,14 +4084,14 @@ let () =
   implement_rpc ~log:false Post_check_in_features.none
     (module List_feature_names)
     (fun t query ->
-       let { List_feature_names.Action. feature_path; depth; use_archived } =
+       let { List_feature_names.Action. descendants_of; depth; use_archived } =
          Query.action query
        in
        if use_archived
-       then ok_exn (Archived_features.list_feature_names t.archived_features feature_path
-                      ~depth)
+       then ok_exn (Archived_features.list_feature_names t.archived_features
+                      ~descendants_of ~depth)
        else
-         ok_exn (Feature_forest.list t.features feature_path ~depth)
+         ok_exn (Feature_forest.list t.features ~descendants_of ~depth)
          |> List.map ~f:(fun (feature_path, _) -> feature_path))
 ;;
 
@@ -3923,7 +4112,8 @@ let () =
        in
        let subtree_features =
          List.map subtrees ~f:(fun feature_path ->
-           ok_exn (Feature_forest.list t.features (Some feature_path) ~depth:Int.max_value)
+           ok_exn (Feature_forest.list t.features
+                     ~descendants_of:(Feature feature_path) ~depth:Int.max_value)
            |> List.map ~f:(fun (_, feature) -> reaction feature))
        in
        let features =
@@ -4037,6 +4227,10 @@ let () =
          Feature_forest.mem t.features,
          Feature_forest.iteri t.features
        in
+       let ops_on_catch_up =
+         Hashtbl2_pair.mem1 t.catch_up_managers,
+         Hashtbl2_pair.iter1 t.catch_up_managers
+       in
        let combine_ops (mem1, iteri1) (mem2, iteri2) =
          (fun feature_path -> mem1 feature_path || mem2 feature_path),
          (fun ~f -> iteri1 ~f:(fun p _ -> f p ()); iteri2 ~f:(fun p _ -> f p ()))
@@ -4049,27 +4243,14 @@ let () =
             if not !hit
             then iteri2 ~f:(fun p _ -> f p ()))
        in
-       let matching_features =
-         match namespace with
-         | `Archived -> find ops_on_archived
-         | `Existing -> find ops_on_existing
-         | `All -> find (combine_ops ops_on_archived ops_on_existing)
-         | `Existing_or_most_recently_archived ->
-           find (sequence_ops ops_on_existing ops_on_archived)
-       in
-       let rev_zero_roots =
-         matching_features
-         |> List.map ~f:Feature_path.root
-         |> Feature_name.Set.of_list
-         |> Feature_name.Set.to_list
-         |> List.filter_map ~f:(fun root ->
-           match Feature_forest.find_root t.features root with
-           | Ok feature -> Some (root, Feature.rev_zero feature)
-           | Error _ -> None)
-       in
-       { matching_features
-       ; rev_zero_roots
-       })
+       match namespace with
+       | `Archived -> find ops_on_archived
+       | `Existing -> find ops_on_existing
+       | `All -> find (combine_ops ops_on_archived ops_on_existing)
+       | `Existing_or_most_recently_archived ->
+         find (sequence_ops ops_on_existing ops_on_archived)
+       | `Existing_or_with_catch_up ->
+         find (sequence_ops ops_on_existing ops_on_catch_up))
 ;;
 
 let () =
@@ -4230,7 +4411,7 @@ Iron server doesn't yet know whether it is valid to rebase (pending for %s)."
                       [%sexp_of: Feature_path.t * Rev.t];
                if not (ok_exn (Rev_facts.Is_cr_clean.check
                                  new_base_facts.is_cr_clean new_base))
-                  && not allow_non_cr_clean_new_base
+               && not allow_non_cr_clean_new_base
                then failwith "\
 new base is not cr clean -- use -allow-non-cr-clean-new-base to override";
                new_base
@@ -4335,7 +4516,6 @@ let () =
       in
       let query_is_for_hydra = User_name.equal for_ t.server_config.hydra_user in
       let query_is_by_hydra  = User_name.equal by   t.server_config.hydra_user in
-      let canonicalize_users users = Set.to_list (User_name.Set.of_list users) in
       if not query_is_for_hydra then begin
         let child_owners = Feature.owners feature in
         let who_can_release =
@@ -4348,9 +4528,11 @@ let () =
             | My_owners_and_child_owners -> parent_owners @ child_owners
         in
         if not (List.mem who_can_release for_ ~equal:User_name.equal)
-        then failwiths "only these users may release"
-               (canonicalize_users who_can_release)
-               [%sexp_of: User_name.t list];
+        then
+          raise_s
+            [%sexp "only these users may release"
+                 , (User_name.Set.of_list who_can_release : User_name.Set.t)
+            ];
       end;
       let parent_release_process = parent_release_process t feature in
       let send_release_email_to =
@@ -4374,7 +4556,8 @@ let () =
         | Direct    , _     -> `Directly
         | Continuous, false -> `Push_to_hydra
         | Continuous, true  ->
-          if not query_is_by_hydra then only_trusted_user_is_authorized_exn t query;
+          if not query_is_by_hydra
+          then only_user_with_admin_privileges_is_authorized_exn t query;
           `Directly
       in
       let reasons_for_not_archiving =
@@ -4486,6 +4669,7 @@ let () =
              feature_path
            ; for_; reason; review_session_id; diff4_in_session_ids
            ; create_catch_up_for_me
+           ; even_if_some_files_are_already_reviewed
            } =
          Query.action query
        in
@@ -4498,6 +4682,7 @@ let () =
        let goal_subset = what_goal_subset_needs_to_be_reviewed feature in
        Review_manager.reviewed review_manager query review_session_id
          diff4_in_session_ids goal_subset review_authorization
+         ~even_if_some_files_are_already_reviewed
        |> ok_exn)
 ;;
 
@@ -4538,7 +4723,7 @@ let () =
            then failwith "you are not allowed to unsecond"
            else failwithf !"%{User_name} is not allowed to unsecond" for_ ();
          ok_exn (Feature.set_seconder feature query None);
-         Feature.set_reviewing feature query `Whole_feature_reviewers)
+         change_feature_exn t feature query [ `Set_reviewing `Whole_feature_reviewers ])
 ;;
 
 let () =
@@ -4553,7 +4738,7 @@ let () =
        let by = Query.by query in
        ok_exn (seconding_allowed feature ~by ~even_though_empty ~even_though_owner);
        ok_exn (Feature.set_seconder feature query (Some by));
-       Feature.set_reviewing feature query `All)
+       change_feature_exn t feature query [ `Set_reviewing `All ])
 ;;
 
 let () =
@@ -4617,8 +4802,8 @@ let () =
            then User_name.Set.of_list (Feature.owners parent)
            else User_name.Set.empty
        in
-       let users_with_uncommitted_session =
-         Feature.users_with_uncommitted_session feature
+       let users_with_review_session_in_progress =
+         Feature.users_with_review_session_in_progress feature
        in
        let users_with_unclean_workspaces = users_with_unclean_workspaces t feature_path in
        let active_users =
@@ -4629,7 +4814,7 @@ let () =
              then Feature.whole_feature_reviewers feature
              else User_name.Set.empty
            ; maybe_parent_owners
-           ; (match users_with_uncommitted_session with
+           ; (match users_with_review_session_in_progress with
               | Error _ -> User_name.Set.empty
               | Ok set -> set)
            ; users_with_unclean_workspaces |> Map.keys |> User_name.Set.of_list
@@ -4649,7 +4834,7 @@ let () =
        { Remind.Reaction.
          description        = Feature.description feature
        ; line_count_by_user
-       ; users_with_uncommitted_session
+       ; users_with_review_session_in_progress
        ; users_with_unclean_workspaces
        ; cr_summary
        ; users
@@ -4676,18 +4861,30 @@ let () =
        let bookmarks_to_rerun = Queue.create () in
        Feature_forest.iter_descendants t.features (Feature.feature_path root)
          ~f:(fun feature ->
-           let bookmark = Feature_path.to_string (Feature.feature_path feature) in
+           let feature_path = Feature.feature_path feature in
+           let bookmark = Feature_path.to_string feature_path in
            match Hashtbl.find_and_remove state_by_bookmark bookmark with
            | None -> Feature.set_has_bookmark feature query false;
            | Some { bookmark = _; rev_author_or_error = _; first_12_of_rev; status } ->
+             let next_bookmark_update_before = Feature.next_bookmark_update feature in
              Feature.set_has_bookmark feature query true;
-             match
+             begin match
                Feature.synchronize_with_hydra feature
                  ~hydra_tip:first_12_of_rev
                  ~hydra_status:status
              with
-             | `Retry -> Queue.enqueue bookmarks_to_rerun bookmark
-             | `Do_not_retry -> ());
+             | `Retry        -> Queue.enqueue bookmarks_to_rerun bookmark;
+             | `Do_not_retry -> ()
+             end;
+             if Next_bookmark_update.is_transition_to_update_expected
+                  ~from:next_bookmark_update_before
+                  ~to_:(Feature.next_bookmark_update feature)
+             then begin
+               add_span_since_push_value_to_metric_if_available t ~feature
+                 ~tip:first_12_of_rev
+                 ~metric_name:Metric_name.hydra_synchronize_state_latency
+             end;
+         );
        begin
          let bookmarks_without_feature =
            Hashtbl.data state_by_bookmark
@@ -4756,13 +4953,13 @@ let () =
              | None -> Line_count.catch_up_only catch_up
              | Some { review
                     ; completed
-                    ; have_uncommitted_and_potentially_blocking_session
+                    ; have_potentially_blocking_review_session_in_progress
                     } ->
                { Line_count.
                  review = To_goal_via_session.maybe_partially_known review
                ; catch_up
                ; completed
-               ; have_uncommitted_and_potentially_blocking_session
+               ; have_potentially_blocking_review_session_in_progress
                }
            in
            let review_is_enabled = Feature.review_is_enabled feature in
@@ -4850,8 +5047,8 @@ let () =
                    let review =
                      Line_count.Review.to_review_column_shown
                        (To_goal_via_session.fully_known_exn line_count.review)
-                       ~have_uncommitted_and_potentially_blocking_session:
-                         line_count.have_uncommitted_and_potentially_blocking_session
+                       ~have_potentially_blocking_review_session_in_progress:
+                         line_count.have_potentially_blocking_review_session_in_progress
                    in
                    if Review_or_commit.count review > 0
                    then num_reviewers_with_review_remaining := Ok (n + 1)
@@ -5090,7 +5287,7 @@ let () =
            let result = Feature.update_bookmark feature query in
            begin match info with
            | Error _ -> ()
-           | Ok { crs_at_tip; cr_soons; _ } ->
+           | Ok { crs_at_tip; cr_soons; tip_facts; _ } ->
              begin match cr_soons with
              | Error _ -> ()
              | Ok cr_soons -> Cr_soons.update_feature t.cr_soons cr_soons
@@ -5107,13 +5304,17 @@ let () =
              in
              update_crs t feature crs_at_tip;
              update_review_manager_goals t feature;
+             add_span_since_push_value_to_metric_if_available t ~feature
+               ~tip:(tip_facts |> Rev_facts.rev |> Rev.to_first_12)
+               ~metric_name:Metric_name.hydra_update_bookmark_latency
            end;
            set_brains_to_goal_if_edge t query feature;
            let result = ok_exn result in
            (* If there was no error, we augment the worker cache *)
            if is_ok info then Worker_cache.augment t.worker_cache augment_worker_cache;
            result
-         end)
+         end;
+    )
 ;;
 
 let () =
@@ -5137,7 +5338,7 @@ let () =
   implement_rpc ~log:true Post_check_in_features.none
     (module With_event_subscriptions)
     (fun t query ->
-       only_trusted_user_is_authorized_exn t query;
+       only_user_with_admin_privileges_is_authorized_exn t query;
        match Query.action query with
        | Set_max_subscriptions_per_user max ->
          Event_subscriptions.set_max_subscriptions_per_user t.event_subscriptions max
@@ -5182,6 +5383,16 @@ let () =
        Pipe.map pipe ~f:(function
          | Ok `Updated -> Ok (`Updated (feature_to_protocol t feature))
          | (Ok `Archived | Error _ as res) -> res))
+;;
+
+let () =
+  let module Notify_on_metric_updates
+    = Iron_protocol.Notify_on_metric_updates in
+  implement_pipe_rpc ~log:false
+    (module Notify_on_metric_updates)
+    (fun t query ->
+       only_user_with_admin_privileges_is_authorized_exn t query;
+       Metrics.subscribe t.metrics query (Query.action query))
 ;;
 
 let rpc_implementations =

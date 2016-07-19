@@ -297,7 +297,7 @@ let command =
     ~summary:"deal with the attributes cached by the hydra worker"
     ~readme:(fun () ->
       concat [ "\
-Operations side effecting the cache need to be run by a Iron trusted user.
+Operations side effecting the cache require admin privileges.
 "])
     [ "clear"                 , clear
     ; "analyze-obligations"   , analyze_obligations

@@ -6,25 +6,25 @@ module Cache = struct
   module Rev_pair = struct
     module T = struct
       type t = Rev.Compare_by_hash.t * Rev.Compare_by_hash.t
-      [@@deriving compare, sexp]
+      [@@deriving compare, sexp_of]
       let hash (rev1, rev2) =
         Rev.Compare_by_hash.hash rev1 lxor Rev.Compare_by_hash.hash rev2
     end
     include T
-    include Hashable.Make(T)
-    include Comparable.Make(T)
+    include Hashable.Make_plain   (T)
+    include Comparable.Make_plain (T)
   end
 
   module Rev_and_path_in_repo = struct
     module T = struct
       type t = Rev.Compare_by_hash.t * Path_in_repo.t
-      [@@deriving compare, sexp]
+      [@@deriving compare, sexp_of]
       let hash (rev, path_in_repo) =
         Rev.Compare_by_hash.hash rev lxor Path_in_repo.hash path_in_repo
     end
     include T
-    include Hashable.Make(T)
-    include Comparable.Make(T)
+    include Hashable.Make_plain   (T)
+    include Comparable.Make_plain (T)
   end
 
   type t =

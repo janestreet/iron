@@ -92,8 +92,12 @@ module type T = sig
   val user_list_option       : switch:string -> User_name.t list    option t
   val users_option           : switch:string -> User_name.Set.t     option t
 
-  val properties_option    : switch:string -> verb:string -> string list option t
-  val property_values_flag : switch:string -> Properties.t option t
+  val properties_list_option : switch:string -> verb:string -> Property.t list option t
+  val properties_set_option  : switch:string -> verb:string -> Property.Set.t option  t
+
+  val inheritable_properties_set_option : switch:string -> Property.Set.t option t
+
+  val property_values_flag : switch:string -> doc:string -> Properties.t option t
 
   module User_or_all : sig
     type t =
@@ -137,9 +141,16 @@ module type T = sig
 
   val even_if_locked                            : unit                             t
 
+  val even_if_some_files_are_already_reviewed   : bool                             t
+
+  val feature_arg_type
+    : match_existing_feature:bool -> Feature_path.t Or_error.t Arg_type.t
   val feature_path                              : Feature_path.t Or_error.t        t
-  val absolute_feature_path                     : Feature_path.t Or_error.t        t
+  val absolute_feature_path                     : Feature_path.t Or_error.t t
+  val absolute_feature_path_option              : Feature_path.t option Or_error.t t
   val feature_id                                : Feature_id.t                     t
+  val feature_id_option                         : Feature_id.t option              t
+  val feature_id_list                           : Feature_id.t list                t
   val feature_path_option                       : Feature_path.t option Or_error.t t
   val feature_path_or_current_bookmark          : Feature_path.t Or_error.t        t
   val unverified_workspace_arg_type             : Feature_path.t Or_error.t Arg_type.t
@@ -171,6 +182,16 @@ module type T = sig
   val diff4_in_session_ids             : Diff4_in_session.Id.t list t
   val lock_names                       : Lock_name.t list           t
   val lock_reason                      : string                     t
+  val depth_option                     : int option                 t
+  val metric_values                    : float list                 t
+  val metric_name                      : Metric_name.t              t
+  val metric_name_option               : Metric_name.t option       t
+  val stat_type_enum_list
+    : doc:string
+    -> Metric.Stat_type.t list t
+  val metric_name_regex_list_option
+    : doc:string
+    -> Regex.t list Or_error.t option t
 
   (** [interactive] sets [Interactive.interactive]. *)
   val interactive                      : unit                       t
@@ -210,13 +231,14 @@ module type T = sig
 end
 
 module type Iron_param = sig
-  include T
+  module T : T
+  include module type of struct include T end
   module Let_syntax : sig
     module Let_syntax : sig
       val return : 'a -> 'a t
       val map    : 'a t -> f:('a -> 'b) -> 'b t
       val both   : 'a t -> 'b t -> ('a * 'b) t
-      module Open_on_rhs : T with type 'a t := 'a t
+      module Open_on_rhs : module type of struct include T end
     end
   end
 end

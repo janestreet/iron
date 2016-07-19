@@ -88,7 +88,8 @@ end
 module Cmd_review = struct
   type t =
     { mutable do_not_modify_local_repo : bool
-    ; mutable emacs : bool
+    ; mutable emacs                    : bool
+    ; mutable sort_build_order         : bool
     }
 
   let update t =
@@ -98,11 +99,14 @@ module Cmd_review = struct
          (fun () -> t.do_not_modify_local_repo <- true)
     +> no_arg "-emacs"
          (fun () -> t.emacs <- true)
+    +> no_arg "-sort-build-order"
+         (fun () -> t.sort_build_order <- true)
   ;;
 
   let create () =
     { do_not_modify_local_repo = false
-    ; emacs = false
+    ; emacs                    = false
+    ; sort_build_order         = false
     }
   ;;
 end
@@ -111,6 +115,7 @@ module Cmd_show = struct
   type t =
     { mutable omit_completed_review         : bool
     ; mutable omit_unclean_workspaces_table : bool
+    ; mutable show_inheritable_attributes   : bool
     ; mutable show_lock_reasons             : bool
     }
 
@@ -121,12 +126,15 @@ module Cmd_show = struct
     +> no_arg "-omit-completed-review" (fun () -> t.omit_completed_review <- true)
     +> no_arg "-omit-unclean-workspaces-table"
          (fun () -> t.omit_unclean_workspaces_table <- true)
+    +> no_arg "-show-inheritable-attributes"
+         (fun () -> t.show_inheritable_attributes <- true)
     +> no_arg "-show-lock-reasons"     (fun () -> t.show_lock_reasons     <- true)
   ;;
 
   let create () =
     { omit_completed_review         = false
     ; omit_unclean_workspaces_table = false
+    ; show_inheritable_attributes   = false
     ; show_lock_reasons             = false
     }
   ;;
@@ -220,8 +228,8 @@ module Workspace_config = struct
       [ `are_enabled      of Are_enabled.t
       | `auto_update_clean_workspaces_is_enabled of bool
       | `basedir          of string (* resolved to an [Abspath.t] during [update] *)
-      | `do_not_distclean of Feature_path.Set.t
-      | `do_not_auto_update of Feature_path.Set.t
+      | `do_not_distclean of Feature_path.Stable.V1.Set.t
+      | `do_not_auto_update of Feature_path.Stable.V1.Set.t
       | `unclean_workspaces_detection_is_enabled of bool
       | `unclean_workspaces_detection_max_concurrent_jobs of int
       ]
@@ -297,20 +305,21 @@ module M = struct
   let home_basename = ".ferc"
 
   type t =
-    { cmd_crs    : Cmd_crs.t
-    ; cmd_list   : Cmd_list.t
-    ; cmd_obligations_show : Cmd_obligations_show.t
-    ; cmd_rebase : Cmd_rebase.t
-    ; cmd_review : Cmd_review.t
-    ; cmd_show   : Cmd_show.t
-    ; cmd_star   : Cmd_star.t
-    ; cmd_todo   : Cmd_todo.t
-    ; cmd_wait_for_hydra : Cmd_wait_for_hydra.t
-    ; directory_order : Directory_order.t
+    { cmd_crs                                              : Cmd_crs.t
+    ; cmd_list                                             : Cmd_list.t
+    ; cmd_obligations_show                                 : Cmd_obligations_show.t
+    ; cmd_rebase                                           : Cmd_rebase.t
+    ; cmd_review                                           : Cmd_review.t
+    ; cmd_show                                             : Cmd_show.t
+    ; cmd_star                                             : Cmd_star.t
+    ; cmd_todo                                             : Cmd_todo.t
+    ; cmd_wait_for_hydra                                   : Cmd_wait_for_hydra.t
+    ; directory_order                                      : Directory_order.t
     ; mutable may_infer_feature_path_from_current_bookmark : bool
-    ; mutable pager_for_review : string option
-    ; mutable show_commit_session_warning : bool
-    ; workspaces : Workspace_config.t
+    ; mutable pager_for_review                             : string option
+    ; mutable send_push_events_to_server                   : bool
+    ; mutable show_commit_session_warning                  : bool
+    ; workspaces                                           : Workspace_config.t
     }
   [@@deriving fields]
 
@@ -344,6 +353,7 @@ module M = struct
       | `directory_order of Path_in_repo.t list
       | `may_infer_feature_path_from_current_bookmark of bool
       | `pager_for_review of string
+      | `send_push_events_to_server of bool
       | `show_commit_session_warning of bool
       | `workspaces of Sexp.t list
       ]
@@ -369,6 +379,7 @@ module M = struct
     ; directory_order = Directory_order.create ()
     ; may_infer_feature_path_from_current_bookmark = true
     ; pager_for_review = None
+    ; send_push_events_to_server = am_functional_testing
     ; show_commit_session_warning = true
     ; workspaces = Workspace_config.create ()
     }
@@ -394,6 +405,8 @@ module M = struct
     | `may_infer_feature_path_from_current_bookmark bool ->
       t.may_infer_feature_path_from_current_bookmark <- bool
     | `pager_for_review string -> t.pager_for_review <- Some (unix_wordexp_resolve string)
+    | `send_push_events_to_server bool ->
+      t.send_push_events_to_server <- bool
     | `show_commit_session_warning bool -> t.show_commit_session_warning <- bool
     | `add_flag_to (cmd, args) ->
       begin match cmd with
@@ -433,12 +446,14 @@ module Cmd = struct
 
   module Review = struct
     let do_not_modify_local_repo t = t.cmd_review.do_not_modify_local_repo
-    let emacs t = t.cmd_review.emacs
+    let emacs                    t = t.cmd_review.emacs
+    let sort_build_order         t = t.cmd_review.sort_build_order
   end
 
   module Show = struct
     let omit_completed_review         t = t.cmd_show.omit_completed_review
     let omit_unclean_workspaces_table t = t.cmd_show.omit_unclean_workspaces_table
+    let show_inheritable_attributes   t = t.cmd_show.show_inheritable_attributes
     let show_lock_reasons             t = t.cmd_show.show_lock_reasons
   end
 

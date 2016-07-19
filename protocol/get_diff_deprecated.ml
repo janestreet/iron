@@ -4,14 +4,32 @@ module Stable = struct
 
   module Action = struct
 
+    module V5 = struct
+      type t =
+        { what_feature : Maybe_archived_feature_spec.V3.t
+        ; what_diff    : What_diff.V2.t
+        }
+      [@@deriving bin_io, fields, sexp]
+
+      let to_model (t : t) = t
+    end
+
     module V4 = struct
       type t =
         { what_feature : Maybe_archived_feature_spec.V2.t
         ; what_diff    : What_diff.V2.t
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io]
 
-      let to_model t = t
+      let to_model { what_feature
+                   ; what_diff
+                   } =
+        V5.to_model
+          { V5.
+            what_feature = Maybe_archived_feature_spec.V2.to_v3 what_feature
+          ; what_diff
+          }
+      ;;
     end
 
     module V3 = struct
@@ -79,7 +97,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V4
+    module Model = V5
   end
 
   module Reaction = struct
@@ -191,6 +209,11 @@ end
 
 include Iron_versioned_rpc.Make
     (struct let name = "get-diff" end)
+    (struct let version = 7 end)
+    (Stable.Action.V5)
+    (Stable.Reaction.V5)
+
+include Register_old_rpc
     (struct let version = 6 end)
     (Stable.Action.V4)
     (Stable.Reaction.V5)

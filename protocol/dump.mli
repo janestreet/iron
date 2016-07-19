@@ -22,6 +22,7 @@ module Action : sig
     | Event_subscriptions
     | Feature                   of Feature_path.t
     | Hash_consing_cache        of Hash_consing.What_to_dump.t
+    | Push_events               of Push_events.What_to_dump.t
     | Review_analysis           of Feature_path.t
     | Review_manager            of Feature_path.t * [ `All_users | `User of User_name.t ]
     | Review_lines              of Feature_path.t * [ `All_users | `User of User_name.t ]

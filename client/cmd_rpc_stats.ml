@@ -4,11 +4,7 @@ open! Import
 
 module Key  = struct
   include Get_rpc_stats.Key
-  include Hashable.Make(struct
-      include Get_rpc_stats.Key
-      let hash (t:t) = Hashtbl.hash t
-      let t_of_sexp _ = assert false
-    end)
+  include Hashable.Make_plain (Get_rpc_stats.Key)
 end
 
 module Data = struct

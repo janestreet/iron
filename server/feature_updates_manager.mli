@@ -24,7 +24,7 @@ val create
   -> unit
   -> t
 
-val dump : t -> Sexp.t
+val dump_subscriptions : t -> Sexp.t
 
 (** Creating new subscriptions *)
 

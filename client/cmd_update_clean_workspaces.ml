@@ -45,57 +45,47 @@ be updated during that process, by adding the following in one's ferc file:
      fun () ->
        let open! Deferred.Let_syntax in
        let client_config = Client_config.get () in
-       let%bind () =
-         if do_nothing_if_not_enabled
-         && not (Client_config.Workspaces.auto_update_clean_workspaces_is_enabled
-                   client_config)
-         then
-           begin
-             let%bind () =
-               Interactive.printf "Auto update of clean workspaces is not enabled, and \
-                                   the switch %s was supplied.\nExiting with code 0\n"
-                 Switch.do_nothing_if_not_enabled
-             in
-             shutdown 0;
-             never ()
-           end
-         else
-           begin
-             Client_config.Workspaces.are_enabled_exn client_config;
-             return ()
-           end;
-       in
-       let%bind shares =
-         let%map shares = Feature_share.list () in
-         let do_not_auto_update =
-           Client_config.Workspaces.do_not_auto_update client_config
+       if do_nothing_if_not_enabled
+       && not (Client_config.Workspaces.auto_update_clean_workspaces_is_enabled
+                 client_config)
+       then
+         Interactive.printf "Auto update of clean workspaces is not enabled, and \
+                             the switch %s was supplied.\nExiting with code 0\n"
+           Switch.do_nothing_if_not_enabled
+       else begin
+         Client_config.Workspaces.are_enabled_exn client_config;
+         let%bind shares =
+           let%map shares = Feature_share.list () in
+           let do_not_auto_update =
+             Client_config.Workspaces.do_not_auto_update client_config
+           in
+           List.filter shares ~f:(fun share ->
+             not (Set.mem do_not_auto_update (Feature_share.feature_path share)))
          in
-         List.filter shares ~f:(fun share ->
-           not (Set.mem do_not_auto_update (Feature_share.feature_path share)))
-       in
-       let%map updates =
-         Deferred.List.map ~how:(`Max_concurrent_jobs 5) shares ~f:(fun share ->
-           let feature_path = Feature_share.feature_path share in
-           let repo_root = Feature_share.center_repo_root share in
-           Monitor.try_with_or_error (fun () ->
-             match%bind Feature_share.unclean_status share with
-             | Unclean _ -> return ()
-             | Clean ->
-               match%bind
-                 Get_feature_revs.rpc_to_server { feature_path; rev_zero = None }
-               with
-               | Error _ -> return ()
-               | Ok { tip ; remote_repo_path; _ } ->
-                 Cmd_review.pull_and_update
-                   ~repo_root
-                   ~remote_repo_path
-                   ~feature_path
-                   ~review_session_tip:tip
-                   ~feature_tip:tip;
-           ))
-       in
-       updates
-       |> Or_error.combine_errors_unit
-       |> ok_exn
+         let%map updates =
+           Deferred.List.map ~how:(`Max_concurrent_jobs 5) shares ~f:(fun share ->
+             let feature_path = Feature_share.feature_path share in
+             let repo_root = Feature_share.center_repo_root share in
+             Monitor.try_with_or_error (fun () ->
+               match%bind Feature_share.unclean_status share with
+               | Unclean _ -> return ()
+               | Clean ->
+                 match%bind
+                   Get_feature_revs.rpc_to_server { feature_path; rev_zero = None }
+                 with
+                 | Error _ -> return ()
+                 | Ok { tip ; remote_repo_path; _ } ->
+                   Cmd_review.pull_and_update
+                     ~repo_root
+                     ~remote_repo_path
+                     ~feature_path
+                     ~review_session_tip:tip
+                     ~feature_tip:tip;
+             ))
+         in
+         updates
+         |> Or_error.combine_errors_unit
+         |> ok_exn
+       end
     )
 ;;

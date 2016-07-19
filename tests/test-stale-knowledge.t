@@ -9,7 +9,7 @@
   Reviewing root/feature to c76fab53bb6c.
   1 files to review: 1 lines total
      [ ] 1 b
-  $ fe internal session mark-file root/feature b
+  $ fe session mark-file root/feature b
   $ fe session show |& matches "reviewer is up to date"
   [1]
   $ hg rm b

@@ -1,14 +1,14 @@
 open! Core.Std
 open! Import
 
-type t = Sexp.t String.Table.t
+type t = Sexp.t Property.Map.t
 [@@deriving sexp_of]
 
 include Invariant.S with type t := t
 
-val to_rows : t -> (string * string) list
+val empty : t
 
-val create : unit -> t
+val to_rows : t -> (string * string) list
 
 module Stable : sig
   module V1 : Stable_without_comparator with type t = t

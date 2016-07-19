@@ -13,7 +13,8 @@ end
 
 module Reaction : sig
   type t =
-    { remote_repo_path : Remote_repo_path.t
+    { feature_id       : Feature_id.t
+    ; remote_repo_path : Remote_repo_path.t
     ; tip              : Rev.t
     }
   [@@deriving sexp_of]

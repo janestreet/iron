@@ -8,10 +8,10 @@ Adding one property
   $ fe change -set-property prop1=value1
   $ fe show | grep prop
   | prop1                   | value1                  |
-  $ fe show -prop prop1
+  $ fe show -property prop1
   value1
 
-  $ fe show -prop no-such-prop |& matches "undefined property"
+  $ fe show -property no-such-prop |& matches "undefined property"
   [1]
 
 Checking persistence

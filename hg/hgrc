@@ -1,9 +1,5 @@
 # -*- mode: conf; -*-
 
-[merge-patterns]
-.projections/{.manifest,.spec-cache,all,file-reviewers,no-reviewers,one-reviewer,few-reviewers,projection-reviewers,ignores,too-many-reviewers,file-owners} = internal:other
-.projections/{build,build-info,code-review,cr-cutoff-version}/** = internal:other
-
 [extensions]
 purge =
 blackbox =
@@ -39,17 +35,16 @@ share =
 iron_bookmark_manipulation=/j/office/app/hg/prod/jhg/iron_bookmark_manipulation_v3.py
 
 # adds [hg active-bookmark].
-active_bookmark=/j/office/app/hg/prod/jhg/active_bookmark.py
+active_bookmark=/j/office/app/hg/prod/jhg/active_bookmark_v3.py
 
 # Updates the file .hg/dirstate.for-omake.txt on hg operations which
 # change the dirstate.  This file is used by jenga.
-dirstate_for_omake=/j/office/app/hg/prod/jhg/dirstate_for_omake.py
+dirstate_for_omake=/j/office/app/hg/prod/jhg/dirstate_for_omake_v4.py
 
 # Causes bookmark information only to be shared for bookmarks
 # explicitly passed with [-r] or [-B] to [hg push].
 only_push_explicitly_mentioned_bookmarks=/j/office/app/hg/prod/jhg/only_push_explicitly_mentioned_bookmarks_v1.py
 
-# Fix a bug in hg where it doesn't show copies
 tracefile=/j/office/app/hg/prod/jhg/fix_tracefile.py
 
 # Add [hg distclean]

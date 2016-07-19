@@ -35,12 +35,57 @@ let compute_unclean_workspace_and_update_server ~repo_root =
       (`Features [ current_feature ])
 ;;
 
+let compute_unclean_workspace ~repo_root =
+  if Client_config.(get () |> Workspaces.unclean_workspaces_detection_is_enabled)
+  then compute_unclean_workspace_and_update_server ~repo_root
+  else return ()
+;;
+
+let maybe_send_push_event ~repo_root =
+  if not Client_config.(get () |> send_push_events_to_server)
+  then Deferred.unit
+  else begin
+    let tip = Hg.create_rev repo_root Revset.dot in
+    let get_feature_id_from_server ~repo_root =
+      let%bind feature_path = Hg.current_bookmark repo_root in
+      match Feature_path.of_string (ok_exn (feature_path)) with
+      | exception _  -> return `Do_not_send_push_event
+      | feature_path ->
+        match%map Feature_exists.rpc_to_server_exn feature_path with
+        | No             -> `Do_not_send_push_event
+        | Yes feature_id -> `Send_push_to feature_id
+    in
+    match%bind begin
+      match%bind Workspace_hgrc.extract_info repo_root with
+      | Error _ -> get_feature_id_from_server ~repo_root
+      | Ok info ->
+        match info.kind with
+        | `Feature feature  -> return (`Send_push_to feature.feature_id)
+        | `Satellite_repo   -> return `Do_not_send_push_event
+        | `Clone            -> return `Do_not_send_push_event
+        | `Fake_for_testing ->
+          if am_functional_testing
+          then get_feature_id_from_server ~repo_root
+          else return `Do_not_send_push_event
+    end with
+    | `Do_not_send_push_event -> return ()
+    | `Send_push_to feature_id ->
+      match%bind tip with
+      | Error _ -> return ()
+      | Ok tip  -> Push_events.Add.rpc_to_server_exn { feature_id; tip }
+  end
+;;
+
 let main ~repo_root ~hook_name =
-  match (hook_name : Hook_name.t) with
-  | Post_commit | Post_push ->
-    if Client_config.(get () |> Workspaces.unclean_workspaces_detection_is_enabled)
-    then compute_unclean_workspace_and_update_server ~repo_root
-    else return ()
+  let maybe_send_push_event =
+    match (hook_name : Hook_name.t) with
+    | Post_commit -> Deferred.unit
+    | Post_push -> maybe_send_push_event ~repo_root
+  in
+  Deferred.all_unit
+    [ compute_unclean_workspace ~repo_root
+    ; maybe_send_push_event
+    ]
 ;;
 
 let command =
@@ -82,8 +127,7 @@ is deleted.  In case of an error, the directory is kept untouched for inspection
          | Ok () -> Abspath.rm_rf_exn (Abspath.of_string basedir)
          | Error err ->
            Log.Global.error "%s" (Error.to_string_hum err);
-           shutdown 1;
-           never ()
+           Shutdown.exit 1
        in
        App_harness.start ~init_stds:false ~log_format:`Text
          ~main ~basedir ~mode:`Prod ~fg ()

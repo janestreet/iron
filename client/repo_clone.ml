@@ -38,8 +38,9 @@ let force_memo =
       let%bind feature_exists =
         Feature_exists.rpc_to_server_exn (Feature_path.of_root root_feature)
       in
-      (if not feature_exists
-       then
+      (match feature_exists with
+       | Yes (_ : Feature_id.t) -> ()
+       | No ->
          raise_s
            [%sexp
              "root feature doesn't exist", (root_feature : Feature_name.t)

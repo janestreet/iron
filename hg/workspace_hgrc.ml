@@ -5,24 +5,24 @@ module Stable = struct
   (* The intent is to keep only the latest used type.  If the types have changed, we just
      regenerate the hgrc file and override it with the new syntax. *)
 
-
   module Feature = struct
-    module V1 = struct
+    module V2 = struct
       type t =
-        { feature_path : Feature_path.V1.t
+        { feature_id   : Feature_id.V1.t
+        ; feature_path : Feature_path.V1.t
         }
       [@@deriving compare, sexp]
 
       let t_of_sexp sexp = Core.Std.Sexp.of_sexp_allow_extra_fields t_of_sexp sexp
     end
 
-    module Model = V1
+    module Model = V2
   end
 
   module Kind = struct
-    module V1 = struct
+    module V2 = struct
       type t =
-        [ `Feature of Feature.V1.t
+        [ `Feature of Feature.V2.t
         | `Satellite_repo
         | `Clone
         | `Fake_for_testing
@@ -30,22 +30,22 @@ module Stable = struct
       [@@deriving compare, sexp]
     end
 
-    module Model = V1
+    module Model = V2
   end
 
   module Info = struct
-    module V1 = struct
+    module V2 = struct
       type t =
         { generated_by     : string
         ; remote_repo_path : Remote_repo_path.V1.t
-        ; kind             : Kind.V1.t
+        ; kind             : Kind.V2.t
         }
       [@@deriving compare, sexp]
 
       let t_of_sexp sexp = Core.Std.Sexp.of_sexp_allow_extra_fields t_of_sexp sexp
     end
 
-    module Model = V1
+    module Model = V2
   end
 end
 
@@ -190,7 +190,7 @@ let save t =
       ];
     begin match t.kind with
     | `Clone | `Satellite_repo | `Fake_for_testing -> ()
-    | `Feature { feature_path } ->
+    | `Feature { feature_path; feature_id = _ } ->
       let feature = Feature_path.to_string feature_path in
       Writer.newline w;
       List.iter ~f:(Writer.write_line w)

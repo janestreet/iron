@@ -65,7 +65,7 @@ Now, enable reviewing.
 Let's have the seconder complete some review so we can check that the remind
 email show completed lines as well as review sessions in progress.
 
-  $ fe internal session mark-file test/a a -for seconder -reason test
+  $ fe session mark-file test/a a -for seconder -reason test
   $ echo n | fe remind test/a -interactive true
   Sending mail
   

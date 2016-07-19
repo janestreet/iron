@@ -52,4 +52,5 @@ let async' ~summary ?readme param =
 
 let async = `Use_async'_instead
 let async_basic = `Async_basic_is_deprecated
-let async_or_error = `Redefine_async_or_error_in_iron_command_if_needed
+let async_or_error = `Use_async'_instead
+let async_or_error' = `Use_async'_instead

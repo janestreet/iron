@@ -31,6 +31,16 @@ module Stable = struct
     module Model = V1
   end
 
+  module V5 = struct
+    type t =
+      { review    : Review.V1.t
+      ; catch_up  : Catch_up.V1.t
+      ; completed : int
+      ; have_potentially_blocking_review_session_in_progress : bool
+      }
+    [@@deriving bin_io, compare, fields, sexp]
+  end
+
   module V4 = struct
     type t =
       { review    : Review.V1.t
@@ -38,7 +48,27 @@ module Stable = struct
       ; completed : int
       ; have_uncommitted_and_potentially_blocking_session : bool
       }
-    [@@deriving bin_io, compare, fields, sexp]
+    [@@deriving bin_io, compare, sexp]
+
+    open! Core.Std
+    open! Import
+
+    let of_v5 { V5.
+                review
+              ; catch_up
+              ; completed
+              ; have_potentially_blocking_review_session_in_progress
+              } =
+      let have_uncommitted_and_potentially_blocking_session =
+        have_potentially_blocking_review_session_in_progress
+      in
+      { review
+      ; catch_up
+      ; completed
+      ; have_uncommitted_and_potentially_blocking_session
+      }
+    ;;
+
   end
 
   module V3 = struct
@@ -121,7 +151,7 @@ module Stable = struct
     ;;
   end
 
-  module Model = V4
+  module Model = V5
 end
 
 open! Core.Std
@@ -182,11 +212,11 @@ module Review = struct
   ;;
 
   let to_review_column_shown (review : t)
-        ~have_uncommitted_and_potentially_blocking_session =
+        ~have_potentially_blocking_review_session_in_progress =
     let lines = Int.(review.must_review + review.ownership_changes) in
     if lines = 0
     then
-      if have_uncommitted_and_potentially_blocking_session
+      if have_potentially_blocking_review_session_in_progress
       then Review_or_commit.Commit
       else Num 0
     else Num Int.(lines + review.may_review)
@@ -256,7 +286,7 @@ let invariant t =
       ~review:   (check Review.invariant)
       ~catch_up: (check Catch_up.invariant)
       ~completed:(check non_negative)
-      ~have_uncommitted_and_potentially_blocking_session:(check (ignore : bool -> unit))
+      ~have_potentially_blocking_review_session_in_progress:(check (ignore : bool -> unit))
   )
 ;;
 
@@ -264,7 +294,7 @@ let zero =
   { review    = Review.zero
   ; catch_up  = Catch_up.zero
   ; completed = 0
-  ; have_uncommitted_and_potentially_blocking_session = false
+  ; have_potentially_blocking_review_session_in_progress = false
   }
 ;;
 
@@ -276,39 +306,39 @@ let (+) t1 t2 =
     ~review:(f Review.(+))
     ~catch_up:(f Catch_up.(+))
     ~completed:(f (+))
-    ~have_uncommitted_and_potentially_blocking_session:(f (||))
+    ~have_potentially_blocking_review_session_in_progress:(f (||))
 ;;
 
 let catch_up_only catch_up =
   { review    = Review.zero
   ; catch_up
   ; completed = 0
-  ; have_uncommitted_and_potentially_blocking_session = false
+  ; have_potentially_blocking_review_session_in_progress = false
   }
 ;;
 
 let _must_review_or_commit t =
   let must_review = t.review.must_review in
   if must_review = 0
-  && t.have_uncommitted_and_potentially_blocking_session
+  && t.have_potentially_blocking_review_session_in_progress
   then Review_or_commit.Commit
   else Num must_review
 ;;
 
 let to_review_column_shown t =
   Review.to_review_column_shown t.review
-    ~have_uncommitted_and_potentially_blocking_session:
-      t.have_uncommitted_and_potentially_blocking_session
+    ~have_potentially_blocking_review_session_in_progress:
+      t.have_potentially_blocking_review_session_in_progress
 ;;
 
 let is_shown { review
              ; catch_up
              ; completed
-             ; have_uncommitted_and_potentially_blocking_session
+             ; have_potentially_blocking_review_session_in_progress
              } ~show_completed_review =
   Review_or_commit.count
     (Review.to_review_column_shown review
-       ~have_uncommitted_and_potentially_blocking_session) > 0
+       ~have_potentially_blocking_review_session_in_progress) > 0
   || review.follow > 0
   || Catch_up.total catch_up > 0
   || show_completed_review && completed > 0
@@ -319,7 +349,10 @@ module Increasing_review = struct
     (if false
      then
        [ (fun t -> t.review.must_review)
-       ; (fun t -> if t.have_uncommitted_and_potentially_blocking_session then 1 else 0)
+       ; (fun t ->
+            if t.have_potentially_blocking_review_session_in_progress
+            then 1
+            else 0)
        ; (fun t -> t.review.follow)
        ; (fun t -> Int.(+) t.review.may_review t.review.ownership_changes)
        ; (fun t -> Catch_up.total t.catch_up)
@@ -348,7 +381,7 @@ module Cached_in_feature = struct
   type t =
     { review    : Review.t To_goal_via_session.t
     ; completed : int
-    ; have_uncommitted_and_potentially_blocking_session : bool
+    ; have_potentially_blocking_review_session_in_progress : bool
     }
   [@@deriving compare, fields, sexp_of]
 
@@ -359,7 +392,8 @@ module Cached_in_feature = struct
       Fields.iter
         ~review:   (check (To_goal_via_session.invariant Review.invariant))
         ~completed:(check non_negative)
-        ~have_uncommitted_and_potentially_blocking_session:(check (ignore : bool -> unit))
+        ~have_potentially_blocking_review_session_in_progress:
+          (check (ignore : bool -> unit))
     )
   ;;
 

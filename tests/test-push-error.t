@@ -29,14 +29,12 @@ Set the root bookmark to r2, from which r1 does not descend.
   $ r2=$(hg tip --template={node})
   $ hg book root -f -r $r2
 
-Create a local repository, and release the child -- the push fails.
+Create a local repository, and release the child -- the release fails.
 
   $ [ $(hg log -r root --template={node}) = $r2 ]
   $ hg -q clone . ../local
   $ ( cd ../local && hg book -d root && fe release child )
-  ("failed to push"
-   ((bookmark root) (local_revision 289e0fc393fa)
-    (remote_revision 28da2ad87d67)))
+  ("Failed to release feature" root/child
+   ((feature_base dc568be383d7) (parent_tip 28da2ad87d67)))
   [1]
   $ [ $(hg log -r root --template={node}) = $r2 ]
-

@@ -23,15 +23,9 @@ Create the feature.
   $ fe create -tip . test -remote "$PWD" -desc 'root for test'
   $ feature_to_server test -fake-valid-obligations
 
-Completion include only features with actual catch up lines.
-
-  $ completion-test fe catch-up review t
-  $ fe internal catch-up show-num-lines t
-  0
-
 It is an error to catch-up a file that is not pending for catch up.
 
-  $ fe internal catch-up mark-file test a |& matches "catch up is up to date"
+  $ fe catch-up mark-file test a |& matches "catch up is up to date"
   [1]
 
 Enable.
@@ -45,10 +39,10 @@ Review & Catch up.
   8
   $ fe internal catch-up show-num-lines test -for user1
   0
-  $ fe internal session mark-file test a     -for user1 -reason reason
+  $ fe session mark-file test a     -for user1 -reason reason
   $ fe internal session show-num-lines test  -for user1
   5
-  $ completion-test fe catch-up review t
+  $ completion-test fe review t
   test
   $ fe internal catch-up show-num-lines test -for user1
   3
@@ -92,7 +86,7 @@ Review & Catch up.
   $ fe catch-up diff -for user1 -session-id $(echo $session_id | sed 's/[a-f0-9]/0/g') \
   >     |& matches "incorrect review-session id"
   [1]
-  $ echo q | fe catch-up review test -for user1
+  $ echo q | fe review -only-catch-up-review test -for user1
   test
   ====
   root for test
@@ -125,7 +119,7 @@ Persistence.
   5
   $ fe internal catch-up show-num-lines test -for user1
   3
-  $ fe internal session mark-file test a     -for user1 -reason reason \
+  $ fe session mark-file test a     -for user1 -reason reason \
   >     |& matches "already reviewed"
   [1]
 
@@ -139,12 +133,12 @@ Check that mark-fully-reviewed also triggers some catch-up.
 
 No catch up if reviewed as yourself.
 
-  $ fe internal session mark-file test a
+  $ fe session mark-file test a
   $ fe internal session show-num-lines test
   5
   $ fe internal catch-up show-num-lines test
   0
-  $ fe internal session mark-file test b
+  $ fe session mark-file test b
   $ fe internal session show-num-lines test
   0
   $ fe internal catch-up show-num-lines test
@@ -157,8 +151,8 @@ Let's bounce the server after the archive to check persistence here, too.
   8
   $ fe internal catch-up show-num-lines test -for user2
   0
-  $ fe internal session mark-file test a     -for user2 -reason reason
-  $ fe internal session mark-file test b     -for user2 -reason reason
+  $ fe session mark-file test a     -for user2 -reason reason
+  $ fe session mark-file test b     -for user2 -reason reason
   $ fe internal session show-num-lines test  -for user2
   0
   $ fe internal catch-up show-num-lines test -for user2
@@ -179,13 +173,13 @@ Catch up on archived features.
   [1]
   $ fe internal catch-up show-num-lines test -for user2
   8
-  $ fe internal catch-up mark-file test a    -for user2
+  $ fe catch-up mark-file test a    -for user2
   $ fe internal catch-up show-num-lines test -for user2
   5
 
 Completion and partial names for catch up on archived features.
 
-  $ completion-test fe catch-up review t
+  $ completion-test fe review t
   test
   $ fe internal catch-up show-num-lines t -for user2
   5

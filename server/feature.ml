@@ -1,6 +1,13 @@
 module Stable = struct
-  open Core.Stable
-  open Import_stable
+  module Unstable = struct
+    open! Core.Std
+    open! Import
+
+    module Property = Property
+  end
+
+  open! Core.Stable
+  open! Import_stable
 
   module Cr_soons_or_pending = struct
     module V1 = struct
@@ -79,6 +86,21 @@ module Stable = struct
     end
   end
 
+  module Remove_properties = struct
+    module V1 = struct
+      type t = Property.V1.Set.t [@@deriving sexp_of]
+
+      (* Remove_properties used to take Property.t list. The t_of_sexp function below
+         ensures that the server won't choke on old persistency records that contain
+         duplicates. *)
+      let t_of_sexp sexp =
+        sexp
+        |> [%of_sexp: Property.V1.t list]
+        |> Unstable.Property.Set.of_list
+      ;;
+    end
+  end
+
   module Action = struct
     module V1 = struct
       (* [Ask_hydra_to_retry] and [Set_force_hydra_retry] are no longer used.  We no
@@ -86,33 +108,44 @@ module Stable = struct
          retrying after a server bounce, for features that Iron hydra can't process, but
          that is small. *)
       type t =
-        [ `Ask_hydra_to_retry             of [ `Done | `Pending_or_working_on_it ]
-        | `Lock                           of Lock.V1.t
-        | `Remove_properties              of string list
-        | `Set_base                       of Rev.V1.t
-        | `Set_crs_are_enabled            of bool
+        [ `Ask_hydra_to_retry of [ `Done | `Pending_or_working_on_it ]
+        | `Lock                                    of Lock.V1.t
+        | `Remove_properties                       of Remove_properties.V1.t
+        | `Remove_inheritable_properties           of Property.V1.Set.t
+        | `Set_base                                of Rev.V1.t
+        | `Set_crs_are_enabled                     of bool
         | `Set_crs_shown_in_todo_only_for_users_reviewing of bool
-        | `Set_feature_path               of Feature_path.V1.t
-        | `Set_description                of string
+        | `Set_feature_path                        of Feature_path.V1.t
+        | `Set_description                         of string
         | `Set_force_hydra_retry
-        | `Set_has_bookmark               of bool
-        | `Set_is_permanent               of bool
-        | `Set_owners                     of User_name.V1.t list
-        | `Set_properties                 of Properties.V1.t
-        | `Set_release_process            of Release_process.V1.t
-        | `Set_review_is_enabled          of bool
-        | `Set_reviewing                  of Reviewing.V1.t
-        | `Set_seconder                   of User_name.V1.t option
-        | `Set_send_email_to              of Email_address.V1.Set.t
-        | `Set_send_email_upon            of Send_email_upon.V1.Set.t
-        | `Set_send_release_email_to      of Email_address.V1.Set.t
-        | `Set_should_send_release_email  of bool
-        | `Set_who_can_release_into_me    of Who_can_release_into_me.V1.t
-        | `Set_whole_feature_followers    of User_name.V1.Set.t
-        | `Set_whole_feature_reviewers    of User_name.V1.Set.t
+        | `Set_has_bookmark                        of bool
+        | `Set_inheritable_crs_shown_in_todo_only_for_users_reviewing  of bool option
+        | `Set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing of bool option
+        | `Set_inheritable_owners                  of User_name.V1.t list
+        | `Set_inheritable_properties              of Properties.V1.t
+        | `Set_inheritable_release_process         of Release_process.V1.t option
+        | `Set_inheritable_who_can_release_into_me of Who_can_release_into_me.V1.t option
+        | `Set_inheritable_send_email_to           of Email_address.V1.Set.t
+        | `Set_inheritable_send_email_upon         of Send_email_upon.V1.Set.t
+        | `Set_inheritable_whole_feature_followers of User_name.V1.Set.t
+        | `Set_inheritable_whole_feature_reviewers of User_name.V1.Set.t
+        | `Set_is_permanent                        of bool
+        | `Set_owners                              of User_name.V1.t list
+        | `Set_properties                          of Properties.V1.t
+        | `Set_release_process                     of Release_process.V1.t
+        | `Set_review_is_enabled                   of bool
+        | `Set_reviewing                           of Reviewing.V1.t
+        | `Set_seconder                            of User_name.V1.t option
+        | `Set_send_email_to                       of Email_address.V1.Set.t
+        | `Set_send_email_upon                     of Send_email_upon.V1.Set.t
+        | `Set_send_release_email_to               of Email_address.V1.Set.t
+        | `Set_should_send_release_email           of bool
+        | `Set_who_can_release_into_me             of Who_can_release_into_me.V1.t
+        | `Set_whole_feature_followers             of User_name.V1.Set.t
+        | `Set_whole_feature_reviewers             of User_name.V1.Set.t
         | `Set_xcrs_shown_in_todo_only_for_users_reviewing of bool
-        | `Unlock                         of Unlock.V1.t
-        | `Update_bookmark                of Bookmark_update.V1.t Or_error.V1.t
+        | `Unlock                                  of Unlock.V1.t
+        | `Update_bookmark                         of Bookmark_update.V1.t Or_error.V1.t
         ]
       [@@deriving sexp]
     end
@@ -299,12 +332,13 @@ type t =
   ; mutable included_features         : Released_feature.t list
   (* [queries] is a reverse-chron list of all calls to [query]. *)
   ; mutable queries                   : Action_query.t list
-  ; properties                        : Properties.t
+  ; properties                        : Sexp.t Property.Table.t
   ; mutable latest_release            : Latest_release.t option
+  ; mutable inheritable_attributes    : Feature_inheritable_attributes.t
   }
 [@@deriving fields, sexp_of]
 
-let rev_zero (t : t)         = (Query.action t.creation).rev_zero
+let rev_zero (t : t) = (Query.action t.creation).rev_zero
 let remote_repo_path (t : t) = (Query.action t.creation).remote_repo_path
 
 let invalidate_dependents t = Cached.Invalidator.invalidate_dependents t.cache_invalidator
@@ -341,24 +375,30 @@ let set_cached_attributes t ~line_count_by_user ~next_steps ~review_analysis =
 ;;
 
 let line_count_by_user t = Cached.get t.line_count_by_user_cached
-let next_steps      t = ok_exn (Cached.get t.next_steps_cached)
+let next_steps t = ok_exn (Cached.get t.next_steps_cached)
 let review_analysis t = ok_exn (Cached.get t.review_analysis_cached)
 
 let allow_review_for t = Ref.Permissioned.read_only t.allow_review_for
 
-let users_with_uncommitted_session t =
+let users_with_review_session_in_progress t =
   match review_analysis t with
   | exception exn -> Or_error.of_exn exn
   | None ->
     Ok User_name.Set.empty
   | Some review_analysis ->
-    Ok (Review_analysis.have_uncommitted_session review_analysis)
+    Ok (Review_analysis.users_with_review_session_in_progress review_analysis)
 ;;
 
 let next_base_update t =
   match t.next_base_update_expected with
   | None -> Next_base_update.No_update_expected
   | Some { update_expected; expiration = _ } -> Update_expected update_expected
+;;
+
+let find_property t property = Hashtbl.find t.properties property
+;;
+
+let properties t = Property.Map.of_hashtbl_exn t.properties
 ;;
 
 let to_protocol t
@@ -370,48 +410,50 @@ let to_protocol t
       ~users_with_unclean_workspaces
   =
   { Iron_protocol.Feature.
-    feature_id                = t.feature_id
-  ; feature_path              = t.feature_path
-  ; rev_zero                  = rev_zero t
-  ; owners                    = t.owners
-  ; whole_feature_followers   = t.whole_feature_followers
-  ; whole_feature_reviewers   = t.whole_feature_reviewers
-  ; base                      = t.base
-  ; base_facts                = t.base_facts
-  ; next_base_update          = next_base_update t
-  ; next_bookmark_update      = t.next_bookmark_update
-  ; has_bookmark              = t.has_bookmark
-  ; tip                       = t.tip
-  ; tip_facts                 = t.tip_facts
-  ; base_is_ancestor_of_tip   = t.base_is_ancestor_of_tip
-  ; diff_from_base_to_tip     = t.diff_from_base_to_tip
-  ; description               = t.description
-  ; is_permanent              = t.is_permanent
-  ; review_is_enabled         = t.review_is_enabled
-  ; crs_are_enabled           = t.crs_are_enabled
+    feature_id = t.feature_id
+  ; feature_path = t.feature_path
+  ; rev_zero = rev_zero t
+  ; owners = t.owners
+  ; whole_feature_followers = t.whole_feature_followers
+  ; whole_feature_reviewers = t.whole_feature_reviewers
+  ; base = t.base
+  ; base_facts = t.base_facts
+  ; next_base_update = next_base_update t
+  ; next_bookmark_update = t.next_bookmark_update
+  ; has_bookmark = t.has_bookmark
+  ; tip = t.tip
+  ; tip_facts = t.tip_facts
+  ; base_is_ancestor_of_tip = t.base_is_ancestor_of_tip
+  ; diff_from_base_to_tip = t.diff_from_base_to_tip
+  ; description = t.description
+  ; is_permanent = t.is_permanent
+  ; review_is_enabled = t.review_is_enabled
+  ; crs_are_enabled = t.crs_are_enabled
   ; crs_shown_in_todo_only_for_users_reviewing
     = t.crs_shown_in_todo_only_for_users_reviewing
   ; xcrs_shown_in_todo_only_for_users_reviewing
     = t.xcrs_shown_in_todo_only_for_users_reviewing
-  ; reviewing                 = t.reviewing
-  ; allow_review_for          = Ref.Permissioned.get t.allow_review_for
-  ; seconder                  = t.seconder
-  ; included_features         = List.rev t.included_features
-  ; properties                = t.properties
+  ; reviewing = t.reviewing
+  ; allow_review_for = Ref.Permissioned.get t.allow_review_for
+  ; seconder = t.seconder
+  ; included_features = List.rev t.included_features
+  ; properties = properties t
   ; has_children
-  ; release_process           = t.release_process
-  ; who_can_release_into_me   = t.who_can_release_into_me
-  ; send_email_to             = t.send_email_to
-  ; send_email_upon           = t.send_email_upon
+  ; release_process = t.release_process
+  ; who_can_release_into_me = t.who_can_release_into_me
+  ; send_email_to = t.send_email_to
+  ; send_email_upon = t.send_email_upon
   ; remote_repo_path
-  ; locked                    = Feature_locks.what_is_locked t.locks
+  ; locked = Feature_locks.what_is_locked t.locks
   ; line_count_by_user
   ; cr_summary
   ; next_steps                = next_steps t
-  ; users_with_uncommitted_session = users_with_uncommitted_session t
+  ; users_with_review_session_in_progress = users_with_review_session_in_progress t
   ; users_with_unclean_workspaces
   ; is_archived
-  ; latest_release            = t.latest_release
+  ; latest_release = t.latest_release
+  ; inheritable_attributes
+    = Feature_inheritable_attributes.to_protocol t.inheritable_attributes
   }
 ;;
 
@@ -425,8 +467,8 @@ let to_released_feature_exn t ~query ~tagged_tip =
         raise_s
           [%sexp
             "Feature.to_released_feature_exn got mismatched tagged_tip",
-            { feature_tip = (t.tip      : Rev.t)
-            ; tagged_tip  = (tagged_tip : Rev.t)
+            { feature_tip = (t.tip : Rev.t)
+            ; tagged_tip = (tagged_tip : Rev.t)
             }
           ];
       tagged_tip
@@ -446,7 +488,7 @@ let to_released_feature_exn t ~query ~tagged_tip =
   ; seconder
   ; base                    = t.base
   ; tip
-  ; properties              = t.properties
+  ; properties              = properties t
   ; includes                = List.rev t.included_features
   ; release_cause           = Query.with_action query ()
   }
@@ -600,6 +642,7 @@ let invariant t =
       ~send_email_to:ignore
       ~send_email_upon:ignore
       ~latest_release:(check (Option.iter ~f:Latest_release.invariant))
+      ~inheritable_attributes:(check Feature_inheritable_attributes.invariant)
   )
 ;;
 
@@ -646,14 +689,14 @@ let user_is_currently_reviewing t user =
        ~whole_feature_followers:t.whole_feature_followers
 ;;
 
-let allow_review_for_file      = Relpath.of_string "allow-review-for"
-let cr_soons_file              = Relpath.of_string "cr-soons"
-let creation_file              = Relpath.of_string "creation"
+let allow_review_for_file = Relpath.of_string "allow-review-for"
+let cr_soons_file = Relpath.of_string "cr-soons"
+let creation_file = Relpath.of_string "creation"
 let diff_from_base_to_tip_file = Relpath.of_string "diff-from-base-to-tip"
-let diff4s_file                = Relpath.of_string "diff4s"
-let included_features_file     = Relpath.of_string "included-features"
-let queries_file               = Relpath.of_string "queries"
-let latest_release_file        = Relpath.of_string "latest-release"
+let diff4s_file = Relpath.of_string "diff4s"
+let included_features_file = Relpath.of_string "included-features"
+let queries_file = Relpath.of_string "queries"
+let latest_release_file = Relpath.of_string "latest-release"
 
 let set_diffs_internal t diff_from_base_to_tip diff4s =
   t.diff_from_base_to_tip <- diff_from_base_to_tip;
@@ -714,7 +757,7 @@ let create_internal creation ~serializer =
       ; description
       ; base
       ; tip
-      ; rev_zero         = _
+      ; rev_zero = _
       ; remote_repo_path = _
       } = Query.action creation
   in
@@ -722,51 +765,52 @@ let create_internal creation ~serializer =
   { feature_id
   ; feature_path
   ; owners
-  ; whole_feature_followers   = User_name.Set.empty
-  ; whole_feature_reviewers   = User_name.Set.of_list owners
-  ; seconder                  = None
+  ; whole_feature_followers = User_name.Set.empty
+  ; whole_feature_reviewers = User_name.Set.of_list owners
+  ; seconder = None
   ; base
   ; next_base_update_expected = None
-  ; base_facts                = pending
-  ; latest_bookmark_update    = Ok ()
-  ; next_bookmark_update      = Update_expected_since (Time.now ())
-  ; hydra_master_state        = None
-  ; has_bookmark              = true
+  ; base_facts = pending
+  ; latest_bookmark_update = Ok ()
+  ; next_bookmark_update = Update_expected_since (Time.now ())
+  ; hydra_master_state = None
+  ; has_bookmark = true
   ; tip
-  ; tip_facts                 = pending
-  ; base_is_ancestor_of_tip   = pending
-  ; diff_from_base_to_tip     = pending
-  ; indexed_diff4s            = pending
+  ; tip_facts = pending
+  ; base_is_ancestor_of_tip = pending
+  ; diff_from_base_to_tip = pending
+  ; indexed_diff4s = pending
   ; is_permanent
-  ; review_is_enabled         = false
-  ; reviewing                 = `Whole_feature_reviewers
-  ; allow_review_for          = Ref.Permissioned.create Allow_review_for.none
-  ; crs_are_enabled           = true
+  ; review_is_enabled = false
+  ; reviewing = `Whole_feature_reviewers
+  ; allow_review_for = Ref.Permissioned.create Allow_review_for.none
+  ; crs_are_enabled = true
   ; crs_shown_in_todo_only_for_users_reviewing
     = Iron_protocol.Feature.Default_values.crs_shown_in_todo_only_for_users_reviewing
   ; xcrs_shown_in_todo_only_for_users_reviewing
     = Iron_protocol.Feature.Default_values.xcrs_shown_in_todo_only_for_users_reviewing
   ; description
-  ; num_lines                 = pending
-  ; bounded_hydra_retry       = Bounded_hydra_retry.empty
+  ; num_lines = pending
+  ; bounded_hydra_retry = Bounded_hydra_retry.empty
   ; creation
-  ; locks                     = Feature_locks.create feature_path
-  ; cache_invalidator         =
+  ; locks = Feature_locks.create feature_path
+  ; cache_invalidator =
       Cached.Invalidator.create
         ~debug_information:[%sexp `Feature (feature_id : Feature_id.t)]
   ; line_count_by_user_cached = Cached.uninitialized ~name:"Feature.line_count_by_user" ()
-  ; next_steps_cached         = Cached.uninitialized ~name:"Feature.next_steps" ()
-  ; review_analysis_cached    = Cached.uninitialized ~name:"Feature.review_analysis" ()
-  ; included_features         = []
-  ; queries                   = []
+  ; next_steps_cached = Cached.uninitialized ~name:"Feature.next_steps" ()
+  ; review_analysis_cached = Cached.uninitialized ~name:"Feature.review_analysis" ()
+  ; included_features = []
+  ; queries = []
   ; serializer
-  ; cr_soons                  = pending
-  ; properties                = Properties.create ()
-  ; release_process           = Direct
-  ; who_can_release_into_me   = My_owners
-  ; send_email_to             = Email_address.Set.empty
-  ; send_email_upon           = Send_email_upon.default
-  ; latest_release            = None
+  ; cr_soons = pending
+  ; properties = Property.Table.create ()
+  ; release_process = Direct
+  ; who_can_release_into_me = My_owners
+  ; send_email_to = Email_address.Set.empty
+  ; send_email_upon = Send_email_upon.default
+  ; latest_release = None
+  ; inheritable_attributes = Feature_inheritable_attributes.create ()
   }
 ;;
 
@@ -923,7 +967,7 @@ let set_base t query rev =
   t.base_facts <- pending;
   t.base_is_ancestor_of_tip <- pending;
   if Option.is_some t.serializer
-  then set_diffs          t pending pending
+  then set_diffs t pending pending
   else set_diffs_internal t pending pending;
   refresh_next_bookmark_update t;
 ;;
@@ -945,9 +989,9 @@ let set_has_bookmark t query has_bookmark =
 let set_seconder t query user =
   match t.seconder, user with
   | Some user, Some _ -> error "already seconded by" user [%sexp_of: User_name.t]
-  | None     , None   -> Ok ()
-  | Some _   , None
-  | None     , Some _ ->
+  | None , None -> Ok ()
+  | Some _ , None
+  | None , Some _ ->
     record t query (`Set_seconder user);
     t.seconder <- user;
     Ok ()
@@ -1006,49 +1050,98 @@ let set_owners t query owners =
 let set_whole_feature_followers t query users =
   record t query (`Set_whole_feature_followers users);
   t.whole_feature_followers <- users;
-  Ok ()
 ;;
 
 let set_whole_feature_reviewers t query users =
   record t query (`Set_whole_feature_reviewers users);
   t.whole_feature_reviewers <- users;
-  Ok ()
 ;;
 
 let set_release_process t query how =
   record t query (`Set_release_process how);
   t.release_process <- how;
-  Ok ()
 ;;
 
 let set_who_can_release_into_me t query who =
   record t query (`Set_who_can_release_into_me who);
   t.who_can_release_into_me <- who;
-  Ok ()
 ;;
 
 let set_send_email_to t query whom =
   record t query (`Set_send_email_to whom);
   t.send_email_to <- whom;
-  Ok ()
 ;;
 
 let set_send_email_upon t query upon =
   record t query (`Set_send_email_upon upon);
   t.send_email_upon <- upon;
-  Ok ()
 ;;
 
 let set_send_release_email_to t query whom =
   record t query (`Set_send_release_email_to whom);
   t.send_email_to <- whom;
-  Ok ()
 ;;
 
 let set_should_send_release_email t query bool =
   record t query (`Set_should_send_release_email bool);
   t.send_email_upon <- Set.add t.send_email_upon Send_email_upon.release;
-  Ok ()
+;;
+
+let set_inheritable_crs_shown_in_todo_only_for_users_reviewing t query option =
+  record t query (`Set_inheritable_crs_shown_in_todo_only_for_users_reviewing option);
+  Feature_inheritable_attributes.set_crs_shown_in_todo_only_for_users_reviewing
+    t.inheritable_attributes option;
+;;
+
+let set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing t query option =
+  record t query (`Set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing option);
+  Feature_inheritable_attributes.set_xcrs_shown_in_todo_only_for_users_reviewing
+    t.inheritable_attributes option;
+;;
+
+let set_inheritable_owners t query owners =
+  record t query (`Set_inheritable_owners owners);
+  Feature_inheritable_attributes.set_owners t.inheritable_attributes owners;
+;;
+
+let set_inheritable_properties t query properties =
+  record t query (`Set_inheritable_properties properties);
+  Feature_inheritable_attributes.set_properties t.inheritable_attributes properties;
+;;
+
+let set_inheritable_release_process t query how =
+  record t query (`Set_inheritable_release_process how);
+  Feature_inheritable_attributes.set_release_process t.inheritable_attributes how
+;;
+
+let set_inheritable_who_can_release_into_me t query who =
+  record t query (`Set_inheritable_who_can_release_into_me who);
+  Feature_inheritable_attributes.set_who_can_release_into_me
+    t.inheritable_attributes who;
+;;
+
+let set_inheritable_send_email_to t query whom =
+  record t query (`Set_inheritable_send_email_to whom);
+  Feature_inheritable_attributes.set_send_email_to
+    t.inheritable_attributes whom;
+;;
+
+let set_inheritable_send_email_upon t query upon =
+  record t query (`Set_inheritable_send_email_upon upon);
+  Feature_inheritable_attributes.set_send_email_upon
+    t.inheritable_attributes upon;
+;;
+
+let set_inheritable_whole_feature_followers t query followers =
+  record t query (`Set_inheritable_whole_feature_followers followers);
+  Feature_inheritable_attributes.set_whole_feature_followers
+    t.inheritable_attributes followers
+;;
+
+let set_inheritable_whole_feature_reviewers t query reviewers =
+  record t query (`Set_inheritable_whole_feature_reviewers reviewers);
+  Feature_inheritable_attributes.set_whole_feature_reviewers
+    t.inheritable_attributes reviewers
 ;;
 
 let apply_bookmark_update t bookmark_update =
@@ -1084,14 +1177,14 @@ let apply_bookmark_update t bookmark_update =
      probably get rid of this. *)
   begin match t.hydra_master_state with
   | None -> ()
-  | Some { tip                                    = last_known_hydra_tip
-         ; status                                 = _
+  | Some { tip = last_known_hydra_tip
+         ; status = _
          ; override_next_pending_status_if_needed = _
          } ->
     if Rev.has_prefix t.tip last_known_hydra_tip
     then t.hydra_master_state <-
-        Some { status                                 = `Done
-             ; tip                                    = last_known_hydra_tip
+        Some { status = `Done
+             ; tip = last_known_hydra_tip
              ; override_next_pending_status_if_needed = true
              }
   end;
@@ -1192,8 +1285,8 @@ let synchronize_with_hydra t ~hydra_tip ~hydra_status =
     | _ -> hydra_status
   in
   let hydra_master_state : Hydra_master_state.t =
-    { status                                 = hydra_status
-    ; tip                                    = hydra_tip
+    { status = hydra_status
+    ; tip = hydra_tip
     ; override_next_pending_status_if_needed = false
     }
   in
@@ -1215,19 +1308,32 @@ let synchronize_with_hydra t ~hydra_tip ~hydra_status =
 
 let remove_properties t query props =
   let unknown_props =
-    List.filter props ~f:(fun prop -> not (Hashtbl.mem t.properties prop))
+    Set.filter props ~f:(fun prop -> not (Hashtbl.mem t.properties prop))
   in
-  if List.is_empty unknown_props then begin
+  if Set.is_empty unknown_props then begin
     record t query (`Remove_properties props);
-    List.iter props ~f:(fun prop -> Hashtbl.remove t.properties prop);
+    Set.iter props ~f:(fun prop -> Hashtbl.remove t.properties prop);
     Ok ()
   end else
-    error "unknown properties" unknown_props [%sexp_of: string list]
+    error "unknown properties" unknown_props [%sexp_of: Property.Set.t]
+;;
+
+let remove_inheritable_properties t query props =
+  let properties = (Feature_inheritable_attributes.properties t.inheritable_attributes) in
+  let unknown_props =
+    Set.filter props ~f:(fun prop -> not (Map.mem properties prop))
+  in
+  if Set.is_empty unknown_props then begin
+    record t query (`Remove_inheritable_properties props);
+    Feature_inheritable_attributes.remove_properties t.inheritable_attributes props;
+    Ok ()
+  end else
+    error "unknown properties" unknown_props [%sexp_of: Property.Set.t]
 ;;
 
 let set_properties t query properties =
   record t query (`Set_properties properties);
-  Hashtbl.iteri properties ~f:(fun ~key ~data -> Hashtbl.set t.properties ~key ~data);
+  Map.iteri properties ~f:(fun ~key ~data -> Hashtbl.set t.properties ~key ~data);
 ;;
 
 let lock t ~query ~for_ ~lock_name ~reason ~is_permanent =
@@ -1247,13 +1353,14 @@ let apply_change_internal t query (action : Action.t) =
   | `Lock { Lock. for_; lock_name; reason; is_permanent } ->
     lock t ~query ~for_ ~reason ~lock_name ~is_permanent; Ok ()
   | `Remove_properties props -> remove_properties t query props
+  | `Remove_inheritable_properties props -> remove_inheritable_properties t query props
   | `Set_base rev -> set_base t query rev; Ok ()
   | `Set_feature_path feature_path -> set_feature_path t query feature_path; Ok ()
   | `Set_description description -> set_description t query description; Ok ()
   | `Set_whole_feature_followers users ->
-    set_whole_feature_followers t query users
+    set_whole_feature_followers t query users; Ok ()
   | `Set_whole_feature_reviewers users ->
-    set_whole_feature_reviewers t query users
+    set_whole_feature_reviewers t query users; Ok ()
   | `Set_has_bookmark bool -> set_has_bookmark t query bool; Ok ()
   | `Set_is_permanent bool -> set_is_permanent t query bool; Ok ()
   | `Set_owners users -> set_owners t query users
@@ -1266,15 +1373,35 @@ let apply_change_internal t query (action : Action.t) =
     set_xcrs_shown_in_todo_only_for_users_reviewing t query bool; Ok ()
   | `Set_seconder user_option -> set_seconder t query user_option
   | `Set_reviewing reviewing -> set_reviewing t query reviewing; Ok ()
-  | `Unlock { Unlock. for_ ; lock_name; even_if_permanent  } ->
+  | `Unlock { Unlock. for_ ; lock_name; even_if_permanent } ->
     unlock t ~query ~for_ ~lock_name ~even_if_permanent
   | `Update_bookmark bookmark_update -> apply_bookmark_update t bookmark_update; Ok ()
-  | `Set_release_process         how  -> set_release_process  t query how
-  | `Set_who_can_release_into_me who  -> set_who_can_release_into_me t query who
-  | `Set_send_release_email_to   whom -> set_send_release_email_to   t query whom
-  | `Set_should_send_release_email bool -> set_should_send_release_email t query bool
-  | `Set_send_email_to whom   -> set_send_email_to   t query whom
-  | `Set_send_email_upon upon -> set_send_email_upon t query upon
+  | `Set_inheritable_properties properties ->
+    set_inheritable_properties t query properties; Ok ()
+  | `Set_inheritable_owners owners -> set_inheritable_owners t query owners; Ok ()
+  | `Set_inheritable_release_process how ->
+    set_inheritable_release_process t query how; Ok ()
+  | `Set_inheritable_whole_feature_followers followers ->
+    set_inheritable_whole_feature_followers t query followers; Ok ()
+  | `Set_inheritable_whole_feature_reviewers reviewers ->
+    set_inheritable_whole_feature_reviewers t query reviewers; Ok ()
+  | `Set_inheritable_crs_shown_in_todo_only_for_users_reviewing option ->
+    set_inheritable_crs_shown_in_todo_only_for_users_reviewing t query option; Ok ()
+  | `Set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing option ->
+    set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing t query option; Ok ()
+  | `Set_inheritable_who_can_release_into_me who
+    -> set_inheritable_who_can_release_into_me t query who; Ok ()
+  | `Set_inheritable_send_email_to whom -> set_inheritable_send_email_to t query whom;
+    Ok ()
+  | `Set_inheritable_send_email_upon upon -> set_inheritable_send_email_upon t query upon;
+    Ok ()
+  | `Set_release_process how -> set_release_process t query how; Ok ()
+  | `Set_who_can_release_into_me who -> set_who_can_release_into_me t query who; Ok ()
+  | `Set_send_release_email_to whom -> set_send_release_email_to t query whom; Ok ()
+  | `Set_should_send_release_email bool ->
+    set_should_send_release_email t query bool; Ok ()
+  | `Set_send_email_to whom -> set_send_email_to t query whom; Ok ()
+  | `Set_send_email_upon upon -> set_send_email_upon t query upon; Ok ()
 ;;
 
 let apply_query_internal t query =
@@ -1287,7 +1414,37 @@ module Add_remove
     (T : sig
        type t [@@deriving sexp_of]
        include Comparable with type t := t
-     end) = struct
+     end) : sig
+
+  val add_list
+    : T.t list
+    -> T.t list
+    -> (T.t list -> 'a)
+    -> desc:string
+    -> 'a Or_error.t
+
+  val remove_list
+    : T.t list
+    -> T.t list
+    -> (T.t list -> 'a)
+    -> desc:string
+    -> 'a Or_error.t
+
+  val add
+    : T.Set.t
+    -> T.Set.t
+    -> (T.Set.t -> 'a)
+    -> desc:string
+    -> 'a Or_error.t
+
+  val remove
+    : T.Set.t
+    -> T.Set.t
+    -> (T.Set.t -> 'a)
+    -> desc:string
+    -> 'a Or_error.t
+
+end = struct
 
   let mem t ts = List.mem ts t ~equal:T.equal
 
@@ -1325,12 +1482,13 @@ module Add_remove
 end
 
 module Email_addresses  = Add_remove (Email_address)
+module Property_set     = Add_remove (Property)
 module Send_email_upons = Add_remove (Send_email_upon)
 module User_names       = Add_remove (User_name)
 
 let change t query (updates : Change_feature.Update.t list) =
   let set_owners x = `Set_owners x in
-  let set_send_email_to   x = `Set_send_email_to   x in
+  let set_send_email_to x = `Set_send_email_to x in
   let set_send_email_upon x = `Set_send_email_upon x in
   let set_whole_feature_followers x = `Set_whole_feature_followers x in
   let set_whole_feature_reviewers x = `Set_whole_feature_reviewers x in
@@ -1338,9 +1496,18 @@ let change t query (updates : Change_feature.Update.t list) =
   let set_reviewing_all_but x =
     `Set_reviewing (if Set.is_empty x then `All else `All_but x)
   in
+  let set_inheritable_owners x = `Set_inheritable_owners x in
+  let set_inheritable_send_email_to x = `Set_inheritable_send_email_to x in
+  let set_inheritable_send_email_upon x = `Set_inheritable_send_email_upon x in
+  let set_inheritable_whole_feature_followers x =
+    `Set_inheritable_whole_feature_followers x
+  in
+  let set_inheritable_whole_feature_reviewers x =
+    `Set_inheritable_whole_feature_reviewers x
+  in
   let action_for (update : Change_feature.Update.t) =
     match update with
-    | `Add_owners    users ->
+    | `Add_owners users ->
       User_names.add_list (owners t) users set_owners ~desc:"already an owner"
     | `Remove_owners users ->
       User_names.remove_list (owners t) (Set.to_list users)
@@ -1381,24 +1548,88 @@ let change t query (updates : Change_feature.Update.t list) =
         User_names.remove reviewing users set_reviewing ~desc:"not reviewing"
       end
     | `Add_send_email_to users ->
-      Email_addresses.add    (send_email_to t) users set_send_email_to
+      Email_addresses.add (send_email_to t) users set_send_email_to
         ~desc:"already sending email to"
     | `Remove_send_email_to users ->
       Email_addresses.remove (send_email_to t) users set_send_email_to
         ~desc:"weren't sending email to"
     | `Add_send_email_upon upons ->
-      Send_email_upons.add    (send_email_upon t) upons set_send_email_upon
+      Send_email_upons.add (send_email_upon t) upons set_send_email_upon
         ~desc:"already sending email upon"
     | `Remove_send_email_upon upons ->
       Send_email_upons.remove (send_email_upon t) upons set_send_email_upon
         ~desc:"weren't sending email upon"
+    | `Add_inheritable_owners owners ->
+      User_names.add_list
+        (Feature_inheritable_attributes.owners t.inheritable_attributes)
+        owners set_inheritable_owners ~desc:"is already inheritable owner"
+    | `Remove_inheritable_owners owners ->
+      User_names.remove_list
+        (Feature_inheritable_attributes.owners t.inheritable_attributes)
+        (Set.to_list owners) set_inheritable_owners
+        ~desc:"owner is not inheritable"
+    | `Add_inheritable_whole_feature_followers whole_feature_followers ->
+      User_names.add
+        (Feature_inheritable_attributes.whole_feature_followers
+           t.inheritable_attributes)
+        whole_feature_followers set_inheritable_whole_feature_followers
+        ~desc:"is already inheritable whole-feature follower"
+    | `Remove_inheritable_whole_feature_followers whole_feature_followers ->
+      User_names.remove
+        (Feature_inheritable_attributes.whole_feature_followers
+           t.inheritable_attributes)
+        whole_feature_followers set_inheritable_whole_feature_followers
+        ~desc:"is not inheritable whole-feature follower"
+    | `Add_inheritable_whole_feature_reviewers whole_feature_reviewers ->
+      User_names.add
+        (Feature_inheritable_attributes.whole_feature_reviewers
+           t.inheritable_attributes)
+        whole_feature_reviewers set_inheritable_whole_feature_reviewers
+        ~desc:"is already inheritable whole-feature reviewer"
+    | `Remove_inheritable_whole_feature_reviewers whole_feature_reviewers ->
+      User_names.remove
+        (Feature_inheritable_attributes.whole_feature_reviewers
+           t.inheritable_attributes)
+        whole_feature_reviewers set_inheritable_whole_feature_reviewers
+        ~desc:"is not inheritable whole-feature reviewer"
+    | `Add_inheritable_send_email_to send_email_to ->
+      Email_addresses.add
+        (Feature_inheritable_attributes.send_email_to t.inheritable_attributes)
+        send_email_to set_inheritable_send_email_to
+        ~desc:"send_email_to is already inheritable"
+    | `Remove_inheritable_send_email_to send_email_to ->
+      Email_addresses.remove
+        (Feature_inheritable_attributes.send_email_to t.inheritable_attributes)
+        send_email_to set_inheritable_send_email_to
+        ~desc:"send_email_to is not inheritable"
+    | `Add_inheritable_send_email_upon send_email_upon ->
+      Send_email_upons.add
+        (Feature_inheritable_attributes.send_email_upon t.inheritable_attributes)
+        send_email_upon set_inheritable_send_email_upon
+        ~desc:"send_email_upon is already inheritable"
+    | `Remove_inheritable_send_email_upon send_email_upon ->
+      Send_email_upons.remove
+        (Feature_inheritable_attributes.send_email_upon t.inheritable_attributes)
+        send_email_upon set_inheritable_send_email_upon
+        ~desc:"send_email_upon is not inheritable"
     | ( `Remove_properties _
+      | `Remove_inheritable_properties _
       | `Set_base _
       | `Set_crs_are_enabled _
       | `Set_crs_shown_in_todo_only_for_users_reviewing _
       | `Set_xcrs_shown_in_todo_only_for_users_reviewing _
       | `Set_description _
       | `Set_is_permanent _
+      | `Set_inheritable_crs_shown_in_todo_only_for_users_reviewing _
+      | `Set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing _
+      | `Set_inheritable_owners _
+      | `Set_inheritable_properties _
+      | `Set_inheritable_release_process _
+      | `Set_inheritable_who_can_release_into_me _
+      | `Set_inheritable_send_email_upon _
+      | `Set_inheritable_send_email_to _
+      | `Set_inheritable_whole_feature_followers _
+      | `Set_inheritable_whole_feature_reviewers _
       | `Set_owners _
       | `Set_properties _
       | `Set_release_process _

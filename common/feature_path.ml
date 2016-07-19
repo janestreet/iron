@@ -1,5 +1,7 @@
-module Stable = struct
-  open Core.Stable
+module Stable_workaround = struct
+  open! Core.Stable
+
+  module Feature_name = Feature_name.Stable
 
   module V1 = struct
 
@@ -8,16 +10,16 @@ module Stable = struct
       (* The feature names in the internal representation of a feature path are in order
          from leaf to root.  I.e.
 
-         {[
+        {[
            of_string "a/b/c" = [ "c"; "b"; "a"]
          ]}
       *)
-      type t = Feature_name.Stable.V1.t list [@@deriving bin_io]
+      type t = Feature_name.V1.t list [@@deriving bin_io]
 
       open Core.Std
 
       let to_string t =
-        String.concat ~sep:"/" (List.rev_map t ~f:Feature_name.to_string)
+        String.concat ~sep:"/" (List.rev_map t ~f:Feature_name.V1.to_string)
       ;;
 
       let compare t1 t2 = Iron_string.alphabetic_compare (to_string t1) (to_string t2)
@@ -37,14 +39,28 @@ module Stable = struct
           then String.drop_suffix string 1
           else string
         in
-        try List.rev_map (String.split string ~on:'/') ~f:Feature_name.of_string
+        try List.rev_map (String.split string ~on:'/') ~f:Feature_name.V1.of_string
         with exn ->
           failwiths "Invalid feature path" (string, exn) [%sexp_of: string * exn]
       ;;
     end
+    module T1 = struct
+      include T0
+      include Sexpable.Of_stringable.V1 (T0)
+    end
+    module T2 = struct
+      include T1
+      include Comparator.V1.Make (T1)
+    end
+    module T3 = Comparable.V1.Make (T2)
+  end
+end
 
-    include T0
-    include Sexpable.Of_stringable.V1 (T0)
+module Stable = struct
+  module V1 = struct
+    include Stable_workaround.V1
+    include Stable_workaround.V1.T2
+    include Stable_workaround.V1.T3
   end
 end
 
@@ -52,7 +68,7 @@ open! Core.Std
 open! Import
 
 module T = struct
-  include Stable.V1
+  include Stable_workaround.V1.T2
 
   let hash t =
     List.fold t ~init:0 ~f:(fun ac feature_name ->
@@ -60,8 +76,8 @@ module T = struct
   ;;
 end
 include T
-include Comparable.Make_binable (T)
-include Hashable.Make (T)
+include Comparable.Make_plain_using_comparator (Stable.V1)
+include Hashable.Make_plain (T)
 
 let invariant t =
   assert (not (List.is_empty t));

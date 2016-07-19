@@ -17,6 +17,8 @@ module Stable = struct
         ; rpc_version : int
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let hash (t : t) = Core.Std.Hashtbl.hash t
     end
 
     module Model = V1

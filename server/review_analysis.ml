@@ -56,9 +56,9 @@ module Whole_feature_reviewer_analysis = struct
 end
 
 type t =
-  { diff2s                   : Diff2_analysis.t Diff2.Ignoring_rev.Map.t
-  ; have_uncommitted_session : User_name.Set.t
-  ; whole_feature_reviewers  : Whole_feature_reviewer_analysis.t User_name.Map.t
+  { diff2s : Diff2_analysis.t Diff2.Ignoring_rev.Map.t
+  ; users_with_review_session_in_progress : User_name.Set.t
+  ; whole_feature_reviewers : Whole_feature_reviewer_analysis.t User_name.Map.t
   }
 [@@deriving compare, fields, sexp_of]
 
@@ -71,7 +71,7 @@ let invariant t =
       ~diff2s:(check (Map.iteri ~f:(fun ~key:diff2 ~data ->
         Diff2.invariant diff2;
         Diff2_analysis.invariant data)))
-      ~have_uncommitted_session:(check (Set.iter ~f:User_name.invariant))
+      ~users_with_review_session_in_progress:(check (Set.iter ~f:User_name.invariant))
       ~whole_feature_reviewers:(check (Map.iteri ~f:(fun ~key:user_name ~data ->
         User_name.invariant user_name;
         Whole_feature_reviewer_analysis.invariant data))))
@@ -83,7 +83,7 @@ let obligations_are_satisfied t =
     ~diff2s:(check (Map.for_all ~f:(fun (diff2 : Diff2_analysis.t) ->
       Attributed_files_analysis.attributed_files_obligations_are_satisfied
         diff2.actually_reviewed)))
-    ~have_uncommitted_session:(const true)
+    ~users_with_review_session_in_progress:(const true)
     ~whole_feature_reviewers:
       (check (Map.for_all ~f:Whole_feature_reviewer_analysis.obligations_are_satisfied))
 ;;

@@ -29,13 +29,25 @@ module Stable = struct
   end
 
   module Reaction = struct
-    module V3 = struct
-      type t = [ `Updated of Feature.Stable.V19.t
+    module V4 = struct
+      type t = [ `Updated of Feature.Stable.V20.t
                | `Archived
                ]
       [@@deriving bin_io, sexp]
 
       let of_model t = t
+    end
+
+    module V3 = struct
+      type t = [ `Updated of Feature.Stable.V19.t
+               | `Archived
+               ]
+      [@@deriving bin_io]
+
+      let of_model = function
+        | `Updated feature -> `Updated (Feature.Stable.V19.of_model feature)
+        | `Archived as t -> t
+      ;;
     end
 
     module V2 = struct
@@ -62,12 +74,17 @@ module Stable = struct
       ;;
     end
 
-    module Model = V3
+    module Model = V4
   end
 end
 
 include Iron_versioned_rpc.Make_pipe_rpc
     (struct let name = "notify-on-feature-updates" end)
+    (struct let version = 4 end)
+    (Stable.Action.V2)
+    (Stable.Reaction.V4)
+
+include Register_old_rpc
     (struct let version = 3 end)
     (Stable.Action.V2)
     (Stable.Reaction.V3)

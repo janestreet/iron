@@ -1,4 +1,4 @@
 open! Core.Std
-open! Async.Std
+open! Import
 
 val command : Command.t

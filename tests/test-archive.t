@@ -210,7 +210,7 @@ Change a review manager and then persist.
   Reviewing root to 570d1cbcb724.
   1 files to review: 1 lines total
      [ ] 1 f1.txt
-  $ fe internal session mark-file root f1.txt
+  $ fe session mark-file root f1.txt
   $ fe todo
   CRs and review line counts:
   |---------------|

@@ -67,6 +67,7 @@ module Attribute = struct
       | Has_bookmark
       | Id
       | Included_features
+      | Inheritable_attributes
       | Is_permanent
       | Is_archived
       | Is_seconded
@@ -74,6 +75,7 @@ module Attribute = struct
       | Next_bookmark_update
       | Next_steps
       | Owners
+      | Properties
       | Release_process
       | Remote_repo_path
       | Rev_zero
@@ -102,7 +104,7 @@ module Attribute = struct
     let open Command.Let_syntax in
     let%map_open () = return ()
     and ts = enum_no_args (module T) ~doc:(fun ~name _ -> sprintf "show %s" name)
-    and user_defined = properties_option ~switch:"property" ~verb:"show"
+    and user_defined = properties_list_option ~switch:"property" ~verb:"show"
     in
     let user_defined =
       match user_defined with
@@ -144,16 +146,19 @@ module Attribute = struct
     | Is_permanent            -> feature.is_permanent |> [%sexp_of: bool]
     | Is_archived             -> feature.is_archived |> [%sexp_of: bool]
     | Is_seconded             -> is_some feature.seconder |> [%sexp_of: bool]
+    | Inheritable_attributes  ->
+      feature.inheritable_attributes |> [%sexp_of: Inheritable_attributes.Sexp_hum.t]
     | Next_base_update ->
       feature.next_base_update |> [%sexp_of: Next_base_update.t]
     | Next_bookmark_update  ->
       feature.next_bookmark_update |> [%sexp_of: Next_bookmark_update.t]
     | Owners                  -> users feature.owners
+    | Properties -> feature.properties |> [%sexp_of: Properties.t]
     | Release_process         ->
       feature.release_process |> [%sexp_of: Release_process.t]
     | Remote_repo_path        ->
       feature.remote_repo_path |> [%sexp_of: Remote_repo_path.t]
-    | Rev_zero -> feature.rev_zero |> [%sexp_of: Rev.t]
+    | Rev_zero -> Rev.to_string_40 feature.rev_zero |> [%sexp_of: string]
     | Review_is_enabled       ->
       feature.review_is_enabled
       |> [%sexp_of: bool]
@@ -178,12 +183,12 @@ module Attribute = struct
     | Whole_feature_reviewers -> feature.whole_feature_reviewers    |> user_set
     | Next_steps              -> feature.next_steps |> [%sexp_of: Next_step.t list]
     | User_defined key        ->
-      begin match Hashtbl.find feature.properties key with
+      begin match Map.find feature.properties key with
       | None -> raise_s [%sexp "undefined property", (key : string)]
       | Some sexp -> sexp
       end
     | Users_with_review_session_in_progress ->
-      begin match feature.users_with_uncommitted_session with
+      begin match feature.users_with_review_session_in_progress with
       | Ok users  -> users |> user_set
       | Error err -> Error.raise err
       end
@@ -277,6 +282,48 @@ let reviewing_to_string = function
     concat [ "all except: "; user_names_to_string (Set.to_list user_names) ]
 ;;
 
+let maybe_empty_set set ~f =
+  if Set.is_empty set
+  then []
+  else f set
+;;
+
+let maybe_empty_list list ~f =
+  if List.is_empty list
+  then []
+  else f list
+;;
+
+let set_to_row name ~f:to_string ?(attrs=[]) set =
+  [ name
+  , (attrs, (set
+          |> Set.to_list
+          |> List.map ~f:to_string
+          |> String.concat ~sep:", "))
+  ]
+;;
+
+let send_email_upon_row = set_to_row "send email upon" ~f:Send_email_upon.to_string
+let send_email_to_row   = set_to_row "send email to"   ~f:Email_address.to_string
+
+let property_rows properties =
+  Map.to_alist properties
+  |> List.map ~f:(fun (key, value) -> (key, ([], Sexp.to_string value)))
+;;
+
+let release_process_row release_process =
+  [ "release process"
+  , ([], Release_process.to_string_hum release_process)
+  ]
+;;
+
+let who_can_release_into_me_row who_can_release_into_me =
+  [ "who can release"
+  , ([], Who_can_release_into_me.to_string_hum_as_parent
+           who_can_release_into_me)
+  ]
+;;
+
 let block name = function
   | [] -> []
   | _ :: _ as inside ->
@@ -311,7 +358,9 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
       ?send_email_to
       ?send_email_upon
       ?locked
+      ?inheritable_attributes
       ?(show_lock_reasons=false)
+      ?(show_inheritable_attributes=false)
       ?(show_is_archived_if_not_archived=false)
       ()
   =
@@ -433,15 +482,8 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
                  | None | Some false -> []
                  | Some true ->
                    List.concat
-                     [ maybe release_process (fun release_process ->
-                         [ "release process"
-                         , ([], Release_process.to_string_hum release_process)
-                         ])
-                     ; maybe who_can_release_into_me (fun who_can_release_into_me ->
-                         [ "who can release"
-                         , ([], Who_can_release_into_me.to_string_hum_as_parent
-                                  who_can_release_into_me)
-                         ])
+                     [ maybe release_process release_process_row
+                     ; maybe who_can_release_into_me who_can_release_into_me_row
                      ]
                end
                ;
@@ -449,12 +491,7 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
       ; maybe send_email_upon (fun send_email_upon ->
           if Set.equal send_email_upon Send_email_upon.default
           then []
-          else [ "send email upon"
-               , ([], (send_email_upon
-                       |> Set.to_list
-                       |> List.map ~f:Send_email_upon.to_string
-                       |> String.concat ~sep:", "))
-               ])
+          else send_email_upon_row send_email_upon)
       ; maybe send_email_to (fun send_email_to ->
           if Set.is_empty send_email_to
           then []
@@ -467,16 +504,8 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
               in
               if enabled then [] else [ `Dim ]
             in
-            [ "send email to"
-            , (attrs, (send_email_to
-                       |> Set.to_list
-                       |> List.map ~f:Email_address.to_string
-                       |> String.concat ~sep:", "))
-            ])
-      ; maybe properties (fun properties ->
-          List.sort (Hashtbl.to_alist properties)
-            ~cmp:(fun (key1, _) (key2, _) -> String.compare key1 key2)
-          |> List.map ~f:(fun (key, value) -> (key, ([], Sexp.to_string value))))
+            send_email_to_row ~attrs send_email_to)
+      ; maybe properties property_rows
       ; block "locks"
           (maybe locked (fun locked ->
              List.concat_map locked ~f:(fun (lock, locks) ->
@@ -496,6 +525,44 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
                  ; (fun (_, (_, user1)) (_, (_, user2)) -> String.compare user1 user2)
                  ]
              )))
+      ; block "inheritable attributes"
+          ( maybe inheritable_attributes (
+              fun { Inheritable_attributes.
+                    crs_shown_in_todo_only_for_users_reviewing
+                  ; xcrs_shown_in_todo_only_for_users_reviewing
+                  ; owners
+                  ; properties
+                  ; release_process
+                  ; who_can_release_into_me
+                  ; send_email_to
+                  ; send_email_upon
+                  ; whole_feature_followers
+                  ; whole_feature_reviewers
+                  } ->
+              if not show_inheritable_attributes
+              then []
+              else
+                List.concat
+                  [ maybe crs_shown_in_todo_only_for_users_reviewing
+                      (fun crs_shown_in_todo_only_for_users_reviewing ->
+                         in_todo_for
+                           "CRs" crs_shown_in_todo_only_for_users_reviewing)
+                  ; maybe xcrs_shown_in_todo_only_for_users_reviewing
+                      (fun xcrs_shown_in_todo_only_for_users_reviewing ->
+                         in_todo_for
+                           "XCRs" xcrs_shown_in_todo_only_for_users_reviewing)
+                  ; maybe_empty_list ~f:(user_list "owner") owners
+                  ; property_rows properties
+                  ; maybe release_process release_process_row
+                  ; maybe who_can_release_into_me who_can_release_into_me_row
+                  ; maybe_empty_set send_email_upon ~f:send_email_upon_row
+                  ; maybe_empty_set send_email_to ~f:(send_email_to_row ~attrs:[])
+                  ; maybe_empty_set
+                      ~f:(user_set "whole feature follower") whole_feature_followers
+                  ; maybe_empty_set
+                      ~f:(user_set "whole feature reviewer") whole_feature_reviewers
+                  ]
+             ))
       ]
   in
   let columns =
@@ -510,7 +577,7 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
 ;;
 
 let attribute_table ~display_ascii ~max_output_columns
-      ~show_feature_id ~show_lock_reasons ~show_next_steps
+      ~show_feature_id ~show_lock_reasons ~show_inheritable_attributes ~show_next_steps
       { Feature.
         feature_id
       ; feature_path              = _
@@ -549,9 +616,10 @@ let attribute_table ~display_ascii ~max_output_columns
       ; line_count_by_user        = _
       ; cr_summary                = _
       ; next_steps
-      ; users_with_uncommitted_session = _
+      ; users_with_review_session_in_progress = _
       ; users_with_unclean_workspaces = _
       ; latest_release = _
+      ; inheritable_attributes
       } =
   attribute_table_with_fields ~display_ascii ~max_output_columns
     ?feature_id:(if (show_feature_id || is_archived) then Some feature_id else None)
@@ -581,7 +649,9 @@ let attribute_table ~display_ascii ~max_output_columns
     ~send_email_to
     ~send_email_upon
     ~locked
+    ~inheritable_attributes
     ~show_lock_reasons
+    ~show_inheritable_attributes
     ~is_archived
     ~show_is_archived_if_not_archived:false
     ()
@@ -599,7 +669,7 @@ let print_line_count_table line_count_by_user
     ~display_ascii ~max_output_columns
 ;;
 
-let uncommitted_sessions_table user_set =
+let review_sessions_in_progress_table user_set =
   let rows = Set.to_list user_set in
   let columns =
     Ascii_table.Column.(
@@ -609,8 +679,8 @@ let uncommitted_sessions_table user_set =
   Ascii_table.create ~columns ~rows
 ;;
 
-let print_uncommitted_sessions_table ~display_ascii ~max_output_columns user_set =
-  print_table (uncommitted_sessions_table user_set)
+let print_review_sessions_in_progress_table ~display_ascii ~max_output_columns user_set =
+  print_table (review_sessions_in_progress_table user_set)
     ~display_ascii ~max_output_columns
 ;;
 
@@ -634,9 +704,9 @@ let print_unclean_workspaces_table ~display_ascii ~max_output_columns users =
 let show_whole_feature
       (feature : Feature.t)
       ~display_ascii ~max_output_columns ~show_attribute_table ~show_description
-      ~show_included_feature_details ~included_features_order
+      ~show_included_feature_details ~included_features_order ~show_inheritable_attributes
       ~show_completed_review ~show_lock_reasons
-      ~show_uncommitted_sessions_table
+      ~show_review_sessions_in_progress_table
       ~show_unclean_workspaces_table
   =
   print_string (header feature.feature_path);
@@ -646,6 +716,7 @@ let show_whole_feature
       (attribute_table feature ~display_ascii ~max_output_columns
          ~show_feature_id:false
          ~show_lock_reasons
+         ~show_inheritable_attributes
          ~show_next_steps:true);
   end;
   begin match feature.cr_summary with
@@ -666,11 +737,12 @@ let show_whole_feature
        |> [%sexp_of: Error.t]
        |> Sexp.to_string_hum)
   end;
-  if show_uncommitted_sessions_table then begin
-    match feature.users_with_uncommitted_session with
+  if show_review_sessions_in_progress_table then begin
+    match feature.users_with_review_session_in_progress with
     | Ok users ->
       if not (Set.is_empty users)
-      then print_uncommitted_sessions_table users ~display_ascii ~max_output_columns
+      then print_review_sessions_in_progress_table users
+             ~display_ascii ~max_output_columns
     | Error _ -> ()
   end;
   if show_unclean_workspaces_table then begin
@@ -744,7 +816,8 @@ let display_included_features_org_mode (feature : Feature.t) ~depth
 
 let show_org_mode (feature : Feature.t) ~show_attribute_table
       ~show_description ~show_diff_stat ~show_included_feature_details
-      ~included_features_order ~show_lock_reasons ~show_next_steps =
+      ~included_features_order ~show_lock_reasons ~show_inheritable_attributes
+      ~show_next_steps =
   let display_ascii = true in
   let max_output_columns = Int.max_value in
   let feature_path = feature.feature_path in
@@ -755,7 +828,8 @@ let show_org_mode (feature : Feature.t) ~show_attribute_table
     print_string (org_header ~depth:(depth + 1) "Attributes");
     print_string
       (attribute_table feature ~display_ascii ~max_output_columns
-         ~show_feature_id:false ~show_lock_reasons ~show_next_steps);
+         ~show_feature_id:false ~show_lock_reasons ~show_inheritable_attributes
+         ~show_next_steps);
   end;
   display_included_features_org_mode feature ~depth ~show_description
     ~show_diff_stat ~show_included_feature_details ~included_features_order;
@@ -784,7 +858,7 @@ let command =
      and omit_attribute_table =
        no_arg_flag "-omit-attribute-table"
          ~doc:"don't include feature attributes"
-     and omit_uncommitted_sessions_table =
+     and omit_review_sessions_in_progress_table =
        no_arg_flag "-omit-review-sessions-in-progress-table"
          ~doc:"don't include review sessions in progress"
      and omit_unclean_workspaces_table =
@@ -806,6 +880,9 @@ let command =
        no_arg_flag "-show-completed-review" ~doc:"DEPRECATED -- became the default"
      and omit_completed_review =
        no_arg_flag "-omit-completed-review" ~doc:"omit completed review lines"
+     and show_inheritable_attributes =
+       no_arg_flag "-show-inheritable-attributes"
+         ~doc:"show inheritable attributes in attributes table"
      and sexp =
        no_arg_flag "-sexp" ~doc:"print [Feature.t] as a sexp and exit"
      and show_lock_reasons =
@@ -821,11 +898,17 @@ let command =
        let show_lock_reasons =
          show_lock_reasons || Client_config.Cmd.Show.show_lock_reasons client_config
        in
+       let show_inheritable_attributes =
+         show_inheritable_attributes
+         || Client_config.Cmd.Show.show_inheritable_attributes client_config
+       in
        if show_diff_stat && not org_mode
        then failwith (sprintf "%s can only be used with -org-mode" Switch.show_diff_stat);
        let show_description = not omit_description in
        let show_attribute_table = not omit_attribute_table in
-       let show_uncommitted_sessions_table = not omit_uncommitted_sessions_table in
+       let show_review_sessions_in_progress_table =
+         not omit_review_sessions_in_progress_table
+       in
        let show_unclean_workspaces_table =
          not (omit_unclean_workspaces_table
               || Client_config.Cmd.Show.omit_unclean_workspaces_table client_config)
@@ -833,7 +916,7 @@ let command =
        if print_attribute then begin
          List.iter Attribute.all ~f:(fun attribute ->
            print_endline (Sexp.to_string (Attribute.sexp_of_t attribute)));
-         return (shutdown 0);
+         return ();
        end else
          let%bind what_feature =
            Command.Param.resolve_maybe_archived_feature_spec_exn
@@ -849,7 +932,7 @@ let command =
            |> [%sexp_of: Feature.t]
            |> Sexp.to_string_hum
            |> print_endline;
-           return (shutdown 0)
+           return ()
          end
          else begin
            let show_diff_stat =
@@ -879,12 +962,16 @@ let command =
              if org_mode
              then show_org_mode feature ~show_attribute_table
                     ~show_description ~show_diff_stat ~show_included_feature_details
-                    ~included_features_order ~show_lock_reasons ~show_next_steps:true
+                    ~included_features_order ~show_lock_reasons
+                    ~show_inheritable_attributes
+                    ~show_next_steps:true
              else begin
                show_whole_feature feature ~display_ascii ~max_output_columns
                  ~show_attribute_table ~show_description ~show_included_feature_details
-                 ~included_features_order ~show_completed_review ~show_lock_reasons
-                 ~show_uncommitted_sessions_table
+                 ~included_features_order ~show_inheritable_attributes
+                 ~show_completed_review
+                 ~show_lock_reasons
+                 ~show_review_sessions_in_progress_table
                  ~show_unclean_workspaces_table;
                return ()
              end
@@ -922,7 +1009,8 @@ let render_email_body (feature : Feature.t) ~included_features_order =
   sprintf "%s\n%s%s"
     (header_and_description feature.feature_path ~description:feature.description)
     (attribute_table feature ~display_ascii ~max_output_columns
-       ~show_feature_id:true ~show_lock_reasons:false ~show_next_steps:false)
+       ~show_feature_id:true ~show_lock_reasons:false ~show_inheritable_attributes:false
+       ~show_next_steps:false)
     (render_included_features feature ~display_ascii
        ~max_output_columns
        ~show_attribute_table:true

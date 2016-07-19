@@ -32,6 +32,10 @@ let even_though_owner = "-even-though-owner"
 
 let existing_or_most_recently_archived = "-existing-or-most-recently-archived"
 
+let even_if_some_files_are_already_reviewed = "-even-if-some-files-are-already-reviewed"
+
+let feature_id = "-id"
+
 let include_active_cr_soons = "-include-active-cr-soons"
 
 let reason = "-reason"

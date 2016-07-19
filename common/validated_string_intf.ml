@@ -12,6 +12,7 @@ module type S = sig
     module V1 : sig
       include Stable_without_comparator with type t = t
       val hash : t -> int
+      include Stringable.S with type t := t
       module Map : sig
         type 'a t = 'a Map.t [@@deriving sexp, bin_io, compare]
         val hash : ('a -> int) -> 'a t -> int

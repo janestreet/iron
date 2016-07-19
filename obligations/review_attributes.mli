@@ -35,8 +35,8 @@ val with_review_obligation
   -> review_obligation: Review_obligation.t
   -> t
 
-include Comparable.S with type t := t
-include Equal.S      with type t := t
+include Comparable.S_plain with type t := t
+include Equal.S            with type t := t
 
 val attribute_table : t -> Ascii_table.t
 

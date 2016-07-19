@@ -99,7 +99,7 @@ opportunity to edit it.  Otherwise, the email is sent without requiring a confir
        in
        let%bind { description
                 ; line_count_by_user
-                ; users_with_uncommitted_session
+                ; users_with_review_session_in_progress
                 ; users_with_unclean_workspaces
                 ; users
                 ; cr_summary
@@ -116,21 +116,17 @@ opportunity to edit it.  Otherwise, the email is sent without requiring a confir
          Option.value_map cc ~default:[] ~f:Set.to_list
          |> List.map ~f:User_name.to_string
        in
-       let%bind () =
-         if just_print_recipients then begin
-           let recipients =
-             if no_email_to_send
-             then []
-             else
-               recipients @ cc
-               |> List.sort ~cmp:String.compare
-           in
-           List.iter recipients ~f:print_endline;
-           shutdown 0;
-           Deferred.never ()
-         end else return ()
-       in
-       if no_email_to_send then begin
+       if just_print_recipients then begin
+         let recipients =
+           if no_email_to_send
+           then []
+           else
+             recipients @ cc
+             |> List.sort ~cmp:String.compare
+         in
+         List.iter recipients ~f:print_endline;
+         return ()
+       end else if no_email_to_send then begin
          print_string "all users are up-to-date.  there is no email to send!\n";
          Deferred.unit
        end else
@@ -192,11 +188,12 @@ Warning: a bookmark update is expected since %s.\n"
              ; string_of_table_opt cr_table
              ; string_of_table
                  (Line_count_table.create ~show_completed_review:true line_count_by_user)
-             ; (match users_with_uncommitted_session with
+             ; (match users_with_review_session_in_progress with
                 | Error _ -> ""
-                | Ok users_with_uncommitted_session ->
+                | Ok users_with_review_session_in_progress ->
                   string_of_table
-                    (Cmd_show.uncommitted_sessions_table users_with_uncommitted_session))
+                    (Cmd_show.review_sessions_in_progress_table
+                       users_with_review_session_in_progress))
              ; string_of_table
                  (Cmd_show.unclean_workspaces_table users_with_unclean_workspaces)
              ; "\n"

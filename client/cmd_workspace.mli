@@ -57,7 +57,7 @@ val repo_for_hg_operations_command     : Command.t
 module If_enabled : sig
 
   (** Creates a workspace if it doesn't already exist. *)
-  val create_workspace : Feature_path.t -> unit Deferred.t
+  val create_workspace : Workspace_hgrc.Feature.t -> unit Deferred.t
 
   (** Deletes a workspace if it exists already, otherwise does nothing. *)
   val delete_workspace : Feature_path.t -> unit Deferred.t

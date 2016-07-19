@@ -29,7 +29,7 @@ Make user1 a whole-feature reviewer and do his review.
   Reviewing root to 57023eb9094d.
   1 files to review: 3 lines total
      [ ] 3 file
-  $ fe internal session mark-file root file -for user1 -reason reason
+  $ fe session mark-file root file -for user1 -reason reason
   $ fe session show -for user1 |& matches "reviewer is up to date"
   [1]
 

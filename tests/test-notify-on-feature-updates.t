@@ -46,9 +46,12 @@ Show the current event subscriptions.
 
   $ fe internal event-subscriptions show \
   >   | sexp change '(bottomup (seq (try (rewrite (query @X) (query <query>))) (try (rewrite (opened_at @X) (opened_at <time>)))))'
-  (((feature_only_subscriptions
-     ((* (1 unix-login-for-testing)))) (glob)
-    (feature_and_descendants_subscriptions ()))
+  (((metric_updates
+     ((metric_name_subscriptions ()) (feature_path_subscriptions ())))
+    (feature_updates
+     ((feature_only_subscriptions
+       ((* (1 unix-login-for-testing)))) (glob)
+      (feature_and_descendants_subscriptions ()))))
    ((max_subscriptions_global 500) (current_count_global 1)
     (max_subscriptions_per_user 50)
     (current_count_by_user ((unix-login-for-testing 1)))
@@ -76,6 +79,7 @@ parent.
 Archive the child and verify that the pipe closes.
 
   $ fe archive root/other-parent/child
+  $ wait ${dump_process_pid}
   $ cat-then-truncate
   Archived
   Process Exited
@@ -87,7 +91,11 @@ Clean up the dump file.
 And finally check that the event-subscriptions structure get cleaned up:
 
   $ fe internal event-subscriptions show
-  (((feature_only_subscriptions ()) (feature_and_descendants_subscriptions ()))
+  (((metric_updates
+     ((metric_name_subscriptions ()) (feature_path_subscriptions ())))
+    (feature_updates
+     ((feature_only_subscriptions ())
+      (feature_and_descendants_subscriptions ()))))
    ((max_subscriptions_global 500) (current_count_global 0)
     (max_subscriptions_per_user 50) (current_count_by_user ())
     (subscriptions ())))

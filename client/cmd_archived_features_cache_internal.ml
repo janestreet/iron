@@ -79,7 +79,7 @@ let command =
     ~summary:"deal with the archived features cached on the server"
     ~readme:(fun () ->
       concat [ "\
-Operations side affecting the cache need to be run by an Iron trusted user." ])
+Operations side affecting the cache require admin privileges." ])
     [ "clear"        , clear
     ; "set-max-size" , set_max_size
     ; "show"         , show

@@ -43,3 +43,7 @@ let same_variant t1 t2 =
     | No_update_expected_due_to_iron_bug _), _
     -> false
 ;;
+
+let is_transition_to_update_expected ~from ~to_ =
+  not (am_expecting_bookmark_update from) && am_expecting_bookmark_update to_
+;;

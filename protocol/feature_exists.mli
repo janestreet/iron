@@ -6,7 +6,10 @@ module Action : sig
 end
 
 module Reaction : sig
-  type t = bool [@@deriving sexp_of]
+  type t =
+    | No
+    | Yes of Feature_id.t
+  [@@deriving sexp_of]
 end
 
 include Iron_versioned_rpc.S

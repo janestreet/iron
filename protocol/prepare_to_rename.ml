@@ -1,5 +1,5 @@
 module Stable = struct
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V3 = struct
@@ -61,6 +61,21 @@ module Stable = struct
   end
 
   module Reaction = struct
+    module V2 = struct
+      type t =
+        { from_feature_path      : Feature_path.V1.t
+        ; from_base              : Rev.V1.t
+        ; from_tip               : Rev.V1.t
+        ; to_parent_feature_path : Feature_path.V1.t
+        ; to_parent_tip          : Rev.V1.t
+        ; renames                : Rename.V2.t list
+        ; remote_repo_path       : Remote_repo_path.V1.t
+        }
+      [@@deriving bin_io, sexp]
+
+      let of_model (t : t) = t
+    end
+
     module V1 = struct
       type t =
         { from_feature_path      : Feature_path.V1.t
@@ -68,19 +83,47 @@ module Stable = struct
         ; from_tip               : Rev.V1.t
         ; to_parent_feature_path : Feature_path.V1.t
         ; to_parent_tip          : Rev.V1.t
-        ; renames                : Import_stable.Rename.V1.t list
+        ; renames                : Rename.V1.t list
         ; remote_repo_path       : Remote_repo_path.V1.t
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io]
 
-      let of_model t = t
+      open! Core.Std
+      open! Import
+
+      let of_model m =
+        let { V2.
+              from_feature_path
+            ; from_base
+            ; from_tip
+            ; to_parent_feature_path
+            ; to_parent_tip
+            ; renames
+            ; remote_repo_path
+            } = V2.of_model m in
+        { from_feature_path
+        ; from_base
+        ; from_tip
+        ; to_parent_feature_path
+        ; to_parent_tip
+        ; renames                = List.map renames ~f:Rename.Stable.V1.of_v2
+        ; remote_repo_path
+        }
+      ;;
     end
+
+    module Model = V2
   end
 
 end
 
 include Iron_versioned_rpc.Make
     (struct let name = "prepare-to-rename" end)
+    (struct let version = 4 end)
+    (Stable.Action.V3)
+    (Stable.Reaction.V2)
+
+include Register_old_rpc
     (struct let version = 3 end)
     (Stable.Action.V3)
     (Stable.Reaction.V1)
@@ -95,5 +138,5 @@ include Register_old_rpc
     (Stable.Action.V1)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action.Model
-module Reaction = Stable.Reaction.V1
+module Action   = Stable.Action.   Model
+module Reaction = Stable.Reaction. Model

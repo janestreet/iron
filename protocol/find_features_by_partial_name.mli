@@ -15,10 +15,7 @@ module Action : sig
 end
 
 module Reaction : sig
-  type t =
-    { matching_features : Feature_path.t list
-    ; rev_zero_roots    : (Feature_name.t * Rev.t) list
-    }
+  type t = Feature_path.t list
 end
 
 include Iron_versioned_rpc.S

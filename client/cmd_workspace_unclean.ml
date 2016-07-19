@@ -210,53 +210,47 @@ When this is disabled the command fails, unless " ; Switch.do_nothing_if_not_ena
      in
      fun () ->
        let open! Deferred.Let_syntax in
-       let%bind () =
-         let client_config = Client_config.get () in
-         if Client_config.Workspaces.unclean_workspaces_detection_is_enabled
-              client_config
-         then return ()
-         else if do_nothing_if_not_enabled
-         then begin
-           let%bind () =
-             Interactive.printf "Unclean workspaces detection is not enabled, and the \
-                                 switch %s was supplied.\nExiting with code 0\n"
-               Switch.do_nothing_if_not_enabled
-           in
-           shutdown 0;
-           never ()
-         end
-         else
-           begin
-             Client_config.Workspaces.are_enabled_exn client_config;
-             failwith
-               (sprintf "Unclean workspaces detection is not enabled.\n\
-                         Consider enabling the functionality via your [.ferc], \
-                         or supply %s"
-                  Switch.do_nothing_if_not_enabled)
-           end;
-       in
-       let%bind which_features = force which_features in
-       (* Does the -for test in the client to fail early, since the walk is lengthy *)
-       if not am_functional_testing
-       && not (User_name.equal for_ User_name.unix_login)
+       let client_config = Client_config.get () in
+       if not (Client_config.Workspaces.unclean_workspaces_detection_is_enabled
+                 client_config)
        then
-         raise_s
-           [%sexp
-             "unauthorized use of [-for] in production",
-             { requested_by  = (User_name.unix_login : User_name.t)
-             ; requested_for = (for_                 : User_name.t)
-             }
-           ];
-       let which_features =
-         match which_features with
-         | All_features -> `All_features
-         | Features features ->
-           `Features
-             (List.map features ~f:(fun { feature_path; include_descendants } ->
-                assert (not include_descendants); (* allow_rec_flag is set to false *)
-                feature_path))
-       in
-       compute_and_update_server_exn ~for_ which_features
+         if do_nothing_if_not_enabled
+         then
+           Interactive.printf "Unclean workspaces detection is not enabled, and the \
+                               switch %s was supplied.\nExiting with code 0\n"
+             Switch.do_nothing_if_not_enabled
+         else begin
+           Client_config.Workspaces.are_enabled_exn client_config;
+           failwith
+             (sprintf "Unclean workspaces detection is not enabled.\n\
+                       Consider enabling the functionality via your [.ferc], \
+                       or supply %s"
+                Switch.do_nothing_if_not_enabled)
+         end
+       else begin
+         let%bind which_features = force which_features in
+         (* Does the -for test in the client to fail early, since the walk is lengthy *)
+         if not am_functional_testing
+         && not (User_name.equal for_ User_name.unix_login)
+         then
+           raise_s
+             [%sexp
+               "unauthorized use of [-for] in production",
+               { requested_by  = (User_name.unix_login : User_name.t)
+               ; requested_for = (for_                 : User_name.t)
+               }
+             ];
+         let which_features =
+           match which_features with
+           | All_features -> `All_features
+           | Features features ->
+             `Features
+               (List.map features ~f:(fun { feature_path; include_descendants } ->
+                  assert (not include_descendants); (* allow_rec_flag is set to false *)
+                  feature_path))
+         in
+         compute_and_update_server_exn ~for_ which_features
+       end
     )
 ;;
 

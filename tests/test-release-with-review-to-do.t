@@ -128,7 +128,7 @@ feature is releasable, then other users are not showing the lines in their todo.
 Verify that even if user1 has an uncommitted session, the file does not flicker
 in user2's todo.
 
-  $ IRON_USER=user1 fe internal session mark-file root/child file
+  $ IRON_USER=user1 fe session mark-file root/child file
 
   $ fe todo -for user2
   $ fe show -omit-attribute-table -omit-description
@@ -154,12 +154,12 @@ in user2's todo.
 Verify that if user1 is not a whole feature reviewer, and has an uncommitted
 session, the files he reviewed already do not flicker in user2's todo.
 
-  $ IRON_USER=user1 fe internal session mark-file root/child other-file
+  $ IRON_USER=user1 fe session mark-file root/child other-file
 
   $ IRON_USER=user1 fe session commit root/child \
   >   -session-id $(fe session show -id root/child -for user1)
 
-  $ IRON_USER=user1 fe internal session mark-file root/child user1-f1
+  $ IRON_USER=user1 fe session mark-file root/child user1-f1
 
   $ fe change -remove-whole-feature-reviewer user1
   $ fe todo -for user2

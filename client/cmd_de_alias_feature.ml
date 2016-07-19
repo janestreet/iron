@@ -2,6 +2,18 @@ open Core.Std
 open Async.Std
 open Import
 
+module Reaction_hum = struct
+  type t = De_alias_feature.Reaction.t =
+    { de_aliased
+      : User_name.Set.t [@sexp_drop_if Set.is_empty]
+    ; did_not_de_alias_due_to_review_session_in_progress
+      : User_name.Set.t [@sexp_drop_if Set.is_empty]
+    ; nothing_to_do
+      : User_name.Set.t [@sexp_drop_if Set.is_empty]
+    }
+  [@@deriving sexp_of]
+end
+
 let command =
   Command.async'
     ~summary:"de-alias a feature"
@@ -15,9 +27,7 @@ let command =
        let%bind reaction =
          De_alias_feature.rpc_to_server_exn { feature_path }
        in
-       printf "%s\n"
-         (Sexp.to_string_hum
-            (reaction |> [%sexp_of: De_alias_feature.Reaction.t]));
+       printf "%s\n" (Sexp.to_string_hum [%sexp (reaction : Reaction_hum.t)]);
        return ()
     )
 ;;

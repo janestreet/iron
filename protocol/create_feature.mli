@@ -20,10 +20,11 @@ end
 
 module Reaction : sig
   type t =
-    { remote_repo_path : Remote_repo_path.t
+    { feature_id       : Feature_id.t
+    ; remote_repo_path : Remote_repo_path.t
     ; tip              : Rev.t
     }
-  [@@deriving sexp_of]
+  [@@deriving fields, sexp_of]
 end
 
 include Iron_versioned_rpc.S

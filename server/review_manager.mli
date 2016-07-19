@@ -64,7 +64,7 @@ val is_whole_feature_reviewer : t -> bool
 val reviewer : t -> Reviewer.t
 
 val have_done_some_review : t -> bool
-val have_no_session_or_current_session_can_be_dropped : t -> bool
+val have_session_in_progress : t -> bool
 val reviewed_diff4s_output_in_current_session : t -> Diff2.t list
 
 module Goal_subset : sig
@@ -150,6 +150,7 @@ val reviewed
   -> Diff4_in_session.Id.t list
   -> Goal_subset.t
   -> Review_authorization.t
+  -> even_if_some_files_are_already_reviewed:bool
   -> unit Or_error.t
 
 val forget_from_brain_exn
@@ -227,7 +228,7 @@ val de_alias_brain
   :  t
   -> User_name_by_alternate_name.t
   -> [ `De_aliased
-     | `Did_not_de_alias_due_to_non_empty_session
+     | `Did_not_de_alias_due_to_review_session_in_progress
      | `Nothing_to_do
      ]
 

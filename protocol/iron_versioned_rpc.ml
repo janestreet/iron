@@ -223,8 +223,7 @@ module Make
     match%bind rpc_to_server action with
     | Error error ->
       eprintf "%s\n" (error |> [%sexp_of: Error.t] |> Sexp.to_string_hum);
-      shutdown 1;
-      Deferred.never ()
+      Shutdown.exit 1
     | Ok reaction ->
       printf "%s\n" (reaction |> [%sexp_of: reaction] |> Sexp.to_string_hum);
       Deferred.unit
@@ -410,8 +409,7 @@ module Make_pipe_rpc
     | Ok () -> return ()
     | Error error ->
       eprintf !"%{sexp#hum:Error.t}\n" error;
-      shutdown 1;
-      Deferred.never ()
+      Shutdown.exit 1
   ;;
 
   let () =

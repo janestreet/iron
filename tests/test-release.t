@@ -48,7 +48,7 @@ Start trying to release.
   $ fe release |& matches "feature is not releasable.*In_parent Review"
   [1]
   $ fe internal mark-fully-reviewed root -for seconder -reason reason
-  $ fe internal catch-up mark-file root file -for seconder
+  $ fe catch-up mark-file root file -for seconder
   $ fe release |& matches "feature is not releasable.*In_parent Ask_seconder"
   [1]
   $ IRON_USER=seconder fe second root

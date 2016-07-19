@@ -31,9 +31,9 @@ module Whole_feature_reviewer_analysis : sig
 end
 
 type t =
-  { diff2s                   : Diff2_analysis.t Diff2.Ignoring_rev.Map.t
-  ; have_uncommitted_session : User_name.Set.t
-  ; whole_feature_reviewers  : Whole_feature_reviewer_analysis.t User_name.Map.t
+  { diff2s : Diff2_analysis.t Diff2.Ignoring_rev.Map.t
+  ; users_with_review_session_in_progress : User_name.Set.t
+  ; whole_feature_reviewers : Whole_feature_reviewer_analysis.t User_name.Map.t
   }
 [@@deriving fields, sexp_of]
 

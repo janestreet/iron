@@ -32,7 +32,6 @@ export -f exit_trap
 
 export IRON_MODE=dev
 export FE_EXE_BEFORE_COPY=$IRON_TEST_DIR/../bin/fe.exe
-export PATDIFF4_EXE_BEFORE_COPY=$IRON_TEST_DIR/../patdiff4/bin/patdiff4.exe
 
 function setup_test {
     set -u -o pipefail
@@ -50,18 +49,16 @@ function setup_test {
     export IRON_APPDIR=$IRON_TEST_DIR/appdir/$test_name
     rm -rf $IRON_APPDIR
     mkdir -p $IRON_APPDIR
-        
+
     # We put fe.exe in IRON_APPDIRS, which is ignored by jenga, so that
     # jenga won't delete it.
     export FE_EXE=$IRON_APPDIR/fe.exe
-    export PATDIFF4_EXE=$IRON_APPDIR/patdiff4.exe
 
     # Here we save fe.exe so jenga can't change the executable from under running tests.
     # We shouldn't put fe.exe in bin/, because of the dependency on (files_recursively_in bin)
     # in the jbuild (I think tests would be run twice all the time).
     # Hopefully, this should fix issues where the tests leak fe servers.
     ln -T $FE_EXE_BEFORE_COPY $FE_EXE
-    ln -T $PATDIFF4_EXE_BEFORE_COPY $PATDIFF4_EXE
 }
 
 export -f setup_test

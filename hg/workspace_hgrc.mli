@@ -4,7 +4,8 @@ open! Import
 
 module Feature : sig
   type t =
-    { feature_path : Feature_path.t
+    { feature_id   : Feature_id.t
+    ; feature_path : Feature_path.t
     }
   [@@deriving compare, sexp_of]
 end
@@ -39,7 +40,7 @@ val save : t -> unit Deferred.t
 val extract_root_feature_from_hgrc : Repo_root.t -> Feature_name.t Or_error.t Deferred.t
 
 module Info : sig
-  type t =
+  type t = private
     { generated_by     : string (* Version_util.version *)
     ; remote_repo_path : Remote_repo_path.t
     ; kind             : Kind.t

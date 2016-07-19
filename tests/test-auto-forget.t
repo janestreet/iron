@@ -33,7 +33,7 @@ There is review to do.
 
 Mark, and then there is no review to do.
 
-  $ fe internal session mark-file root file
+  $ fe session mark-file root file
   $ fe todo
   Features you own:
   |----------------------------|
@@ -64,7 +64,7 @@ knowledge.
 
 Review, and then there is no subsequent review to do.
 
-  $ fe internal session mark-file root file
+  $ fe session mark-file root file
   $ fe todo
   Features you own:
   |---------------------|

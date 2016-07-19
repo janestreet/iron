@@ -24,7 +24,7 @@ the feature.
   $ fe create root/feature -d d -tip 1
   $ fe enable
   $ feature_to_server root/feature -fake-valid
-  $ fe internal session mark-file root/feature b
+  $ fe session mark-file root/feature b
   $ hg -q update -r 2; hg book -f root
   $ feature_to_server root -fake-valid
   $ hg -q update -r 3; hg book -f root/feature

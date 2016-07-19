@@ -43,8 +43,7 @@ module Iron = struct let _ = `Use_Fe_instead end
 let die message a sexp_of_a =
   eprintf "%s\n" (Sexp.to_string_hum
                     (Error.create message a sexp_of_a |> [%sexp_of: Error.t]));
-  shutdown 1;
-  Deferred.never ();
+  Shutdown.exit 1
 ;;
 
 let ensure_can_access_remote_repo ~for_root_of =
@@ -77,3 +76,4 @@ end
 let (>>>) = `Deprecated_in_iron__Use_let_syntax_instead
 let (>>=) = `Deprecated_in_iron__Use_let_syntax_instead
 let (>>|) = `Deprecated_in_iron__Use_let_syntax_instead
+let exit  = `Deprecated_in_iron__Use_shutdown_dot_exit_instead

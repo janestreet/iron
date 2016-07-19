@@ -827,8 +827,7 @@ let review_or_catch_up
       else return ()
     in
     print_endline "Quit";
-    shutdown 0;
-    never ()
+    Shutdown.exit 0
   | `Reviewed ->
     print_endline "Current session reviewed.";
     return `Reviewed
@@ -862,6 +861,7 @@ let may_modify_others_catch_up_exn ~for_ =
 ;;
 
 module Review_params = struct
+
   type t =
     { emacs                   : bool
     ; for_                    : User_name.t
@@ -896,6 +896,11 @@ module Review_params = struct
         && not (Client_config.Cmd.Review.do_not_modify_local_repo client_config)
       in
       let emacs = emacs || Client_config.Cmd.Review.emacs client_config in
+      let maybe_sort_review_files =
+        Option.first_some maybe_sort_review_files
+          (Option.some_if (Client_config.Cmd.Review.sort_build_order client_config)
+             `Build_order)
+      in
       { emacs
       ; for_
       ; display_ascii
@@ -1051,6 +1056,7 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
   print_string (Cmd_show.attribute_table feature
                   ~display_ascii ~max_output_columns
                   ~show_feature_id:false ~show_lock_reasons:false
+                  ~show_inheritable_attributes:false
                   ~show_next_steps:false);
   printf "\n";
   let only_print_session =
@@ -1140,6 +1146,7 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
                 { for_
                 ; reason
                 ; create_catch_up_for_me
+                ; even_if_some_files_are_already_reviewed = false
                 ; feature_path
                 ; review_session_id
                 ; diff4_in_session_ids =
@@ -1191,6 +1198,9 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
 let catch_up_review_command =
   Command.async'
     ~summary:"start or continue a catch up session"
+    ~readme:(fun () -> "\
+This command is deprecated and has been subsumed by [fe review].
+")
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and feature_path = catch_up_feature_path_or_current_bookmark
@@ -1198,6 +1208,9 @@ let catch_up_review_command =
      in
      fun () ->
        let open! Deferred.Let_syntax in
+       if am_functional_testing
+       then failwith "This command is deprecated.  \
+                      Tests should be updated to use [fe review] instead";
        let feature_path = ok_exn feature_path in
        let review_params = review_params () in
        let%bind repo_root =
@@ -1210,8 +1223,30 @@ let catch_up_review_command =
 ;;
 
 let command =
+  let only_catch_up_review_switch = "-only-catch-up-review" in
+  let skip_catch_up_review_switch = "-skip-catch-up-review" in
   Command.async'
     ~summary:"start or continue a review session"
+    ~readme:(fun () ->
+      concat [ "\
+[fe review] can be used to see lines to review in a feature and mark them as reviewed.
+
+When there are both [review] and [catch-up] lines to review, the latter are prioritized
+and shown first.  For more control over what to review, see the switches:
+
+  " ; skip_catch_up_review_switch ; "
+  " ; only_catch_up_review_switch ; "
+
+Attending someone else's review may be done if authorized, and requires the reviewer
+to supply a brief reason.  Example:
+
+  $ fe review -for USER1 -reason 'you are out sick today'
+
+By default, reviewing for someone else skips the catch-up review.  Attending someone
+else's catch-up requires admin privileges, and may be done with:
+
+  $ fe review " ; only_catch_up_review_switch ; " -for USER
+"])
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and feature_path = active_or_catch_up_feature_path_or_current_bookmark
@@ -1219,8 +1254,11 @@ let command =
      and which_files = which_files
      and create_catch_up_for_me = create_catch_up_for_me
      and review_params = Review_params.review_params
+     and only_catch_up_review =
+       no_arg_flag only_catch_up_review_switch
+         ~doc:" only attend the catch-up review"
      and skip_catch_up_review =
-       no_arg_flag "-skip-catch-up-review"
+       no_arg_flag skip_catch_up_review_switch
          ~doc:" skip the catch-up part when there are both catch-up and review to do"
      in
      fun () ->
@@ -1228,6 +1266,26 @@ let command =
        let review_params = review_params () in
        let create_catch_up_for_me =
          create_catch_up_for_me ~for_or_all:(`User review_params.for_) |> ok_exn
+       in
+       let is_acting_for_another_user =
+         User_name.(<>) review_params.for_ User_name.unix_login
+       in
+       let () =
+         if only_catch_up_review && create_catch_up_for_me
+         then failwithf "At most one of the switches %s and %s may be supplied."
+                only_catch_up_review_switch
+                Switch.create_catch_up_for_me
+                ()
+       in
+       let () =
+         if only_catch_up_review && skip_catch_up_review
+         then failwithf "At most one of the switches %s and %s may be supplied."
+                only_catch_up_review_switch
+                skip_catch_up_review_switch
+                ()
+       in
+       let skip_catch_up_review =
+         skip_catch_up_review || (not only_catch_up_review && is_acting_for_another_user)
        in
        let feature_path = ok_exn feature_path in
        let%bind repo_root =
@@ -1237,11 +1295,15 @@ let command =
          if skip_catch_up_review
          then return ()
          else
-           catch_up_review_loop ~warn_if_no_session:false ~repo_root ~feature_path
+           catch_up_review_loop ~warn_if_no_session:only_catch_up_review
+             ~repo_root ~feature_path
              review_params
        in
-       review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~reason
-         review_params
+       if only_catch_up_review
+       then return ()
+       else
+         review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~reason
+           review_params
     )
 ;;
 

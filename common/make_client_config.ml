@@ -1,6 +1,7 @@
 open! Core.Std
 open! Async.Std
 open! Import
+module Command = Iron_command
 
 include Make_client_config_intf
 
@@ -98,7 +99,7 @@ module Make (X : Config) = struct
   ;;
 
   let validate_config =
-    Command.async_or_error'
+    Command.async'
       ~summary:(sprintf "Validate config in $HOME/%s if it exists" X.home_basename)
       ~readme:(fun () -> concat [ "\
 By default the command will validate the following files in the order given,
@@ -111,29 +112,27 @@ are expected to be found.
        and files = anon (sequence ("FILE" %: file)) in
        fun () ->
          let open! Deferred.Let_syntax in
-         Monitor.try_with_or_error ~extract_exn:true (fun () ->
-           let%bind files =
-             if List.is_empty files
-             then return (force default_files)
-             else
-               let%map files = Deferred.List.map files ~f:(fun file ->
-                 let file =
-                   Path.resolve_relative_to_program_started_in (Path.of_string file)
-                 in
-                 match%map Abspath.file_exists_exn file with
-                 | true  -> Ok file
-                 | false -> Or_error.error "file not found" file [%sexp_of: Abspath.t])
+         let%bind files =
+           if List.is_empty files
+           then return (force default_files)
+           else
+             let%map files = Deferred.List.map files ~f:(fun file ->
+               let file =
+                 Path.resolve_relative_to_program_started_in (Path.of_string file)
                in
-               files
-               |> Or_error.combine_errors
-               |> ok_exn
-           in
-           let errors = snd (blocking_load_files files) in
-           List.iter errors ~f:(fun exn ->
-             eprintf "%s\n" (Error.to_string_hum exn)
-           );
-           shutdown (if List.is_empty errors then 0 else 1);
-           never ())
+               match%map Abspath.file_exists_exn file with
+               | true  -> Ok file
+               | false -> Or_error.error "file not found" file [%sexp_of: Abspath.t])
+             in
+             files
+             |> Or_error.combine_errors
+             |> ok_exn
+         in
+         let errors = snd (blocking_load_files files) in
+         List.iter errors ~f:(fun exn ->
+           eprintf "%s\n" (Error.to_string_hum exn)
+         );
+         Shutdown.exit (if List.is_empty errors then 0 else 1)
       )
   ;;
 end

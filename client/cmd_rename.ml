@@ -64,26 +64,55 @@ let main { Fe.Rename.Action.
 ;;
 
 let command =
+  let new_parent_switch = "-new-parent" in
   Command.async'
     ~summary:"rename a feature (and all features below it)"
-    ~readme:(fun () -> "\
+    ~readme:(fun () -> concat [ "\
 The target feature is not restricted to be a sibling of the original feature, i.e.
 renaming [jane/a/b] to [jane/c] (or vice versa) is permissible.
 
 Using [-skip-gca-check] skips the check that the greatest common ancestor of the current
 tip and the new base is the current base.  Skipping the check may mean future rebases and
 renames will be rejected.
-")
+
+When the basename of the feature is not meant to change, one can use [" ;
+                                new_parent_switch ; "].
+For example, to rename [jane/a/keep-this-basename] into [jane/b/keep-this-basename]:
+
+  $ fe rename jane/a/keep-this-basename -new-parent jane/b
+"])
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and from = feature_path
-     and to_  = absolute_feature_path
+     and to_  =
+       let%map rename_to_absolute_feature_path = absolute_feature_path_option
+       and rename_to_child_of =
+         flag new_parent_switch (optional (feature_arg_type ~match_existing_feature:true))
+           ~doc:"FEATURE Keep the same basename for the feature, rename it as a child of \
+                 the supplied parent feature."
+       in
+       Or_error.try_with (fun () ->
+         match ok_exn rename_to_absolute_feature_path, rename_to_child_of with
+         | Some absolute_feature_path, None
+           -> `Rename_to_absolute_feature_path absolute_feature_path
+         | None, Some new_parent
+           -> `Rename_to_child_of (ok_exn new_parent)
+         | None, None -> failwith "The new feature-path needs to be specified."
+         | Some _, Some _ ->
+           failwithf "One cannot supply %s when the target FEATURE name is supplied."
+             new_parent_switch ()
+       )
      and skip_gca_check = flag "-skip-gca-check" no_arg ~doc:" <see above>"
      and () = even_if_locked
      in
      fun () ->
        let from = ok_exn from in
-       let to_  = ok_exn to_  in
+       let to_  =
+         match ok_exn to_ with
+         | `Rename_to_absolute_feature_path to_ -> to_
+         | `Rename_to_child_of new_parent
+           -> Feature_path.extend new_parent (Feature_path.basename from)
+       in
        main { from
             ; to_
             ; skip_gca_check

@@ -32,6 +32,16 @@ module Stable = struct
   end
 
   module Reaction = struct
+    module V4 = struct
+      type t =
+        { whole_feature_review_remaining : (User_name.V1.t * Line_count.V5.t) list
+        ; cr_summary                     : Cr_comment.Summary.V1.t
+        }
+      [@@deriving bin_io, sexp]
+
+      let of_model (t : t) = t
+    end
+
     module V3 = struct
       type t =
         { whole_feature_review_remaining : (User_name.V1.t * Line_count.V4.t) list
@@ -39,7 +49,20 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
-      let of_model (t : t) = t
+      let of_model m =
+        let { V4.
+              whole_feature_review_remaining
+            ; cr_summary
+            } = V4.of_model m in
+        let whole_feature_review_remaining =
+          List.map whole_feature_review_remaining ~f:(fun (user, line_count) ->
+            user, Line_count.V4.of_v5 line_count
+          )
+        in
+        { whole_feature_review_remaining
+        ; cr_summary
+        }
+      ;;
     end
 
     module V2 = struct
@@ -91,13 +114,18 @@ module Stable = struct
       ;;
     end
 
-    module Model = V3
+    module Model = V4
   end
 
 end
 
 include Iron_versioned_rpc.Make
     (struct let name = "prepare-to-second" end)
+    (struct let version = 7 end)
+    (Stable.Action.V4)
+    (Stable.Reaction.V4)
+
+include Register_old_rpc
     (struct let version = 6 end)
     (Stable.Action.V4)
     (Stable.Reaction.V3)

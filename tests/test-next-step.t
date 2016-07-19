@@ -91,8 +91,8 @@ Test various next steps
   $ echo "review me!" > f2.ml
   $ hg commit -m "4"
   $ feature_to_server root/a -fake-valid
-  $ fe internal session mark-file root/a f2.ml
-  $ IRON_USER=file-owner fe internal session mark-file root/a f2.ml
+  $ fe session mark-file root/a f2.ml
+  $ IRON_USER=file-owner fe session mark-file root/a f2.ml
   $ fe show -next-step
   (Add_whole_feature_reviewer)
   $ fe change -add-whole-feature-reviewers user1
@@ -100,7 +100,7 @@ Test various next steps
   $ fe show -next-step
   (Widen_reviewing)
   $ fe change -set-reviewing-all
-  $ fe internal session mark-file root/a f2.ml -for user1 -reason reason
+  $ fe session mark-file root/a f2.ml -for user1 -reason reason
   $ fe show -next-step
   (Ask_seconder)
   $ IRON_USER=user1 fe second
@@ -110,7 +110,7 @@ Test various next steps
   $ fe second root -even-though-owner
   $ fe show -next-step
   ((In_parent Review))
-  $ fe internal session mark-file root f1.ml
+  $ fe session mark-file root f1.ml
   $ fe show -next-step
   (Release)
   $ hg -q up root
@@ -120,7 +120,7 @@ Test various next steps
   $ fe enable-review root
   $ fe show root/a -next-step
   (Rebase (In_parent Review))
-  $ fe internal session mark-file root f1.ml
+  $ fe session mark-file root f1.ml
   $ hg -q up root/a
   $ fe list -depth max
   |-----------------------------------|

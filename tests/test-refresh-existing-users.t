@@ -34,6 +34,7 @@ user names.  [invalid-user] enters the set because he has a cr and
   (invalid-user jdoe4 jsmith unix-login-for-testing)
   $ completion-test fe change feature -add-owners inv
   invalid-user
+  invalid-user,
 
 Create a bookmark without feature.
 

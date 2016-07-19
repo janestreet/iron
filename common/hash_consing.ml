@@ -110,7 +110,7 @@ module What_to_dump = struct
     ]
   [@@deriving sexp_of]
 
-  let only_trusted_user_is_authorized = function
+  let require_admin_privileges = function
     | `Stats              -> false
     | `Values             -> true
     | `Module_values _    -> false

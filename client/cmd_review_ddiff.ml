@@ -122,6 +122,6 @@ Or, staging the computation of ddiffs:
              (Sexp.to_string ([%sexp_of: [ `Reviewed | `Commit_session | `Quit ]] res));
          )
        in
-       shutdown 0
+       ()
     )
 ;;

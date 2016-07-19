@@ -3,18 +3,43 @@ module Stable = struct
   open Import_stable
 
   module Action = struct
+    module V2 = struct
+      type t =
+        { descendants_of : Which_ancestor.V1.t
+        ; depth          : int
+        ; use_archived   : bool
+        }
+      [@@deriving bin_io, fields, sexp]
+
+      let to_model (t : t) = t
+    end
+
     module V1 = struct
       type t =
         { feature_path : Feature_path.V1.t option
         ; depth        : int
         ; use_archived : bool
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io]
 
-      let to_model t = t
+      let to_model { feature_path
+                   ; depth
+                   ; use_archived
+                   } =
+        let descendants_of =
+          match feature_path with
+          | None -> Which_ancestor.V1.Any_root
+          | Some feature -> Feature feature
+        in
+        V2.to_model
+          { descendants_of
+          ; depth
+          ; use_archived
+          }
+      ;;
     end
 
-    module Model = V1
+    module Model = V2
   end
 
   module Reaction = struct
@@ -73,6 +98,11 @@ end
 
 include Iron_versioned_rpc.Make
     (struct let name = "list-features" end)
+    (struct let version = 9 end)
+    (Stable.Action.V2)
+    (Stable.Reaction.V8)
+
+include Register_old_rpc
     (struct let version = 8 end)
     (Stable.Action.V1)
     (Stable.Reaction.V8)
@@ -82,7 +112,8 @@ include Register_old_rpc
     (Stable.Action.V1)
     (Stable.Reaction.V7)
 
-module Action   = Stable.Action.   Model
+module Action   = Stable.Action.Model
+
 module Reaction = struct
   module Stable = Stable.Reaction
   include Stable.Model

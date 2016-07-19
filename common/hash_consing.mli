@@ -34,7 +34,7 @@ module What_to_dump : sig
     ]
   [@@deriving sexp_of]
 
-  val only_trusted_user_is_authorized : t -> bool
+  val require_admin_privileges : t -> bool
 end
 
 val dump : t -> What_to_dump.t -> Sexp.t

@@ -75,7 +75,7 @@ review the file with the whitespace change, even though user1 has already review
 But if user2 only reviews the actual change, the feature becomes releasable without
 user1 needing to do anything:
 
-  $ IRON_USER=user2 fe internal session mark-file root file2
+  $ IRON_USER=user2 fe session mark-file root file2
   $ ( export IRON_USER=user2; fe session commit -session-id $(fe session show -id) )
   $ fe show -next-step
   (Release)

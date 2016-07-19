@@ -11,31 +11,48 @@ let find_root_feature feature =
   Map.find root_features (Feature_path.root feature)
 ;;
 
-let maybe_regenerate_hgrc repo_root feature_path =
-  let%bind result = Workspace_hgrc.extract_info repo_root in
-  let status =
-    match result with
-    | Error _ -> `Stale
+let maybe_regenerate_hgrc repo_root feature_id feature_path =
+  let%bind status =
+    match%map Workspace_hgrc.extract_info repo_root with
+    | Error _ -> `Stale None
     | Ok { generated_by; kind; remote_repo_path = _ } ->
       match kind with
-      | `Clone | `Satellite_repo | `Fake_for_testing -> `Stale
-      | `Feature { feature_path = feature_path' } ->
+      | `Clone | `Satellite_repo | `Fake_for_testing -> `Stale None
+      | `Feature { feature_path = feature_path' ; feature_id = feature_id' } ->
         if String.equal generated_by Version_util.version
         && Feature_path.equal feature_path feature_path'
-        then `Up_to_date
-        else `Stale
+        && (match feature_id with
+          | None -> true
+          | Some feature_id -> Feature_id.equal feature_id feature_id')
+        then `Up_to_date feature_id'
+        else `Stale (Some feature_id')
   in
   match status with
-  | `Up_to_date -> return ()
-  | `Stale ->
+  | `Up_to_date feature_id -> return (Some feature_id)
+  | `Stale feature_id' ->
+    let feature_id = Option.first_some feature_id feature_id' in
     match%bind find_root_feature feature_path with
-    | None -> return ()
+    | None -> return None
     | Some { remote_repo_path ; _ } ->
-      Workspace_hgrc.save
-        { repo_root
-        ; remote_repo_path
-        ; kind = `Feature { feature_path }
-        }
+      let%bind feature_id =
+        match feature_id with
+        | (Some _) as some -> return some
+        | None ->
+          match%map Feature_exists.rpc_to_server_exn feature_path with
+          | No -> None
+          | Yes feature_id -> Some feature_id
+      in
+      let%map () =
+        match feature_id with
+        | None -> return ()
+        | Some feature_id ->
+          Workspace_hgrc.save
+            { repo_root
+            ; remote_repo_path
+            ; kind = `Feature { feature_id; feature_path }
+            }
+      in
+      feature_id
 ;;
 
 module T : sig
@@ -43,14 +60,16 @@ module T : sig
   (* [t] is private to ensure that the repo's hgrc is regenerated if necessary upon
      creation *)
   type t = private
-    { feature_path                      : Feature_path.t
+    { feature_id                        : Feature_id.t option
+    ; feature_path                      : Feature_path.t
     ; enclosing_repo_root               : Repo_root.t
     ; center_relative_to_enclosing_repo : Relpath.t
     }
   [@@deriving compare, fields, sexp_of]
 
   val create
-    :  feature_path:Feature_path.t
+    :  feature_id:Feature_id.t option
+    -> feature_path:Feature_path.t
     -> enclosing_repo_root:Repo_root.t
     -> center_relative_to_enclosing_repo:Relpath.t
     -> t Deferred.t
@@ -60,7 +79,8 @@ module T : sig
 end = struct
 
   type t =
-    { feature_path                      : Feature_path.t
+    { feature_id                        : Feature_id.t option
+    ; feature_path                      : Feature_path.t
     ; enclosing_repo_root               : Repo_root.t
     ; center_relative_to_enclosing_repo : Relpath.t
     }
@@ -68,10 +88,11 @@ end = struct
 
   let compare t1 t2 = Feature_path.compare t1.feature_path t2.feature_path
 
-  let center_repo_root { feature_path
-                       ; enclosing_repo_root
-                       ; center_relative_to_enclosing_repo
-                       } =
+  let center_repo_root_internal
+        ~feature_path
+        ~enclosing_repo_root
+        ~center_relative_to_enclosing_repo
+    =
     Repo_root.append enclosing_repo_root
       (Path_in_repo.of_relpath center_relative_to_enclosing_repo)
     |> Repo_root.of_abspath
@@ -80,16 +101,31 @@ end = struct
                                  ])
   ;;
 
-  let create ~feature_path ~enclosing_repo_root ~center_relative_to_enclosing_repo =
-    let t =
-      { feature_path
-      ; enclosing_repo_root
-      ; center_relative_to_enclosing_repo
-      }
+  let center_repo_root { feature_id = _
+                       ; feature_path
+                       ; enclosing_repo_root
+                       ; center_relative_to_enclosing_repo
+                       } =
+    center_repo_root_internal
+      ~feature_path
+      ~enclosing_repo_root
+      ~center_relative_to_enclosing_repo
+  ;;
+
+  let create ~feature_id ~feature_path
+        ~enclosing_repo_root ~center_relative_to_enclosing_repo =
+    let repo_root =
+      center_repo_root_internal ~feature_path
+        ~enclosing_repo_root
+        ~center_relative_to_enclosing_repo
     in
-    let repo_root = center_repo_root t in
-    let%map () = maybe_regenerate_hgrc repo_root feature_path in
-    t
+    let%map feature_id = maybe_regenerate_hgrc repo_root feature_id feature_path in
+    { feature_id
+    ; feature_path
+    ; enclosing_repo_root
+    ; center_relative_to_enclosing_repo
+    }
+  ;;
 end
 
 include T
@@ -232,7 +268,7 @@ let share_or_clone_and_update
   dst_repo_root
 ;;
 
-let force feature_path =
+let force { Workspace_hgrc.Feature. feature_id;  feature_path } =
   if verbose
   then Debug.ams [%here] "Feature_share.force" feature_path [%sexp_of: Feature_path.t];
   let enclosing_repo_root_abspath = enclosing_repo_root_abspath feature_path in
@@ -262,7 +298,7 @@ let force feature_path =
             ~dst_repo_root_abspath:tmp_center
             ~dst_repo_root_human_readable_name:"workspace"
             ~revision:(`Feature feature_path)
-            ~kind:(`Feature { feature_path })
+            ~kind:(`Feature { feature_id; feature_path })
             (Local_clone (Feature_path.root feature_path))
         in
         let%bind tmp_enclosing_repo_root =
@@ -345,10 +381,11 @@ let force feature_path =
     Scaffold.Center_relative_to_enclosing_repo.load_exn
       ~enclosing_repo_root_abspath:(Repo_root.to_abspath enclosing_repo_root)
   in
-  create ~feature_path ~enclosing_repo_root ~center_relative_to_enclosing_repo
+  create ~feature_id:(Some feature_id) ~feature_path
+    ~enclosing_repo_root ~center_relative_to_enclosing_repo
 ;;
 
-let find feature_path =
+let find ?feature_id feature_path =
   if verbose
   then Debug.ams [%here] "Feature_share.find" feature_path [%sexp_of: Feature_path.t];
   let enclosing_repo_root_abspath = enclosing_repo_root_abspath feature_path in
@@ -360,7 +397,8 @@ let find feature_path =
       Scaffold.Center_relative_to_enclosing_repo.load_exn ~enclosing_repo_root_abspath
     in
     let%map t =
-      create ~enclosing_repo_root ~feature_path ~center_relative_to_enclosing_repo
+      create ~feature_id ~feature_path
+        ~enclosing_repo_root ~center_relative_to_enclosing_repo
     in
     Some t
 ;;
@@ -427,7 +465,8 @@ let list () =
             Scaffold.Center_relative_to_enclosing_repo.load_exn
               ~enclosing_repo_root_abspath
           in
-          create ~center_relative_to_enclosing_repo ~enclosing_repo_root ~feature_path
+          create ~feature_id:None ~feature_path
+            ~enclosing_repo_root ~center_relative_to_enclosing_repo
         )
     in
     shares
@@ -632,7 +671,7 @@ let delete t =
       ]
 ;;
 
-let move_to src dst_feature =
+let move_to src feature_id dst_feature =
   if verbose
   then Debug.ams [%here] "Feature_share.move_to" (src, dst_feature)
          [%sexp_of: t * Feature_path.t];
@@ -668,7 +707,9 @@ let move_to src dst_feature =
       Workspace_hgrc.save
         { repo_root
         ; remote_repo_path
-        ; kind = `Feature { feature_path = dst_feature }
+        ; kind = `Feature { feature_id
+                          ; feature_path = dst_feature
+                          }
         }
     in
     (* Preserve workspaces invariant, update to the new bookmark *)

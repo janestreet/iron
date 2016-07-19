@@ -66,14 +66,12 @@ module T = struct
     ; scrutiny_name                      : Scrutiny_name.t
     }
   [@@deriving compare, fields, sexp_of]
-
-  let t_of_sexp _ = assert false
 end
 include T
-include Comparable.Make (T)
+include Comparable.Make_plain (T)
 
-let shared_t = Stable.Model.shared_t
-let hash = Stable.Model.hash
+let shared_t    = Stable.Model.shared_t
+let hash        = Stable.Model.hash
 let module_name = Stable.Model.module_name
 
 let create

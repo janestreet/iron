@@ -110,19 +110,18 @@ let command =
     ~summary:"list descendants of a feature"
     (let open Command.Let_syntax in
      let%map_open () = return ()
-     and feature_path = feature_path_option
+     and descendants_of =
+       let%map feature_path_option = feature_path_option in
+       Or_error.map feature_path_option ~f:(function
+         | None -> Which_ancestor.Any_root
+         | Some feature -> Feature feature)
      and use_archived =
        no_arg_flag Switch.archived ~doc:"list archived features"
      and sort_most_recently_archived_first =
        no_arg_flag "-sort-most-recently-archived-first"
          ~doc:(sprintf "show most recently archived features first.  Implies [%s]"
                  Switch.archived)
-     and depth =
-       map (flag "-depth" (optional string)
-              ~doc:"{DEPTH|max} show descendants DEPTH levels down (default is 1)")
-         ~f:(Option.map ~f:(function
-           | "max" -> Int.max_value
-           | n     -> Int.of_string n))
+     and depth = depth_option
      and display_ascii = display_ascii
      and max_output_columns = max_output_columns
      and name_only =
@@ -136,11 +135,11 @@ let command =
          Option.first_some depth (Client_config.Cmd.List.depth client_config)
          |> Option.value ~default:1
        in
-       let feature_path = ok_exn feature_path in
+       let descendants_of = ok_exn descendants_of in
        if name_only && not sort_most_recently_archived_first
        then begin
          let%map feature_paths =
-           List_feature_names.rpc_to_server_exn { feature_path; depth; use_archived }
+           List_feature_names.rpc_to_server_exn { descendants_of; depth; use_archived }
          in
          feature_paths
          |> List.sort ~cmp:Feature_path.compare
@@ -148,7 +147,7 @@ let command =
            print_endline (Feature_path.to_string feature_path))
        end else begin
          let%map features =
-           List_features.rpc_to_server_exn { feature_path; depth; use_archived }
+           List_features.rpc_to_server_exn { descendants_of; depth; use_archived }
          in
          if not (List.is_empty features)
          then

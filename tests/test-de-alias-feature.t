@@ -55,9 +55,7 @@ diff from scratch.
 But if we de-alias, we only have to review the new diff.
 
   $ fe internal de-alias root
-  ((de_aliased (unix-login-for-testing))
-   (did_not_de_alias_due_to_non_empty_session ())
-   (nothing_to_do (user1 user2)))
+  ((de_aliased (unix-login-for-testing)) (nothing_to_do (user1 user2)))
   $ fe session diff -do-not-lock-session | fe internal remove-color
   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ a @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   scrutiny level10

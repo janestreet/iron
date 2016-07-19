@@ -24,6 +24,9 @@ problem.
      \nno changes found\
      \n")
     (stderr
-     "abort: Permission denied: $TESTTMP/remote/.hg/.bookmarks-*\n") (glob)
+      "transaction abort!\
+     \nrollback completed\
+     \nabort: Permission denied: $TESTTMP/remote/.hg/.bookmarks-*\ (glob)
+     \n")
     (exit_status (Error (Exit_non_zero 255)))))
   [1]

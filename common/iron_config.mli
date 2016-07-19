@@ -32,7 +32,6 @@ type t = private
      ordinary users, [fe release] does [Hg.push], but hydra, it does a direct release. *)
   ; hydra_user                 : User_name.t
   ; serializer_pause_timeout   : Time.Span.t
-  ; admin_user_names           : User_name.Set.t
   }
 [@@deriving fields, sexp_of]
 

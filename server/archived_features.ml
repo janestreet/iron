@@ -152,7 +152,7 @@ let persist_query t query action =
 
 let add_internal t archived_feature =
   let feature_path = Archived_feature.feature_path archived_feature in
-  Feature_forest.add_ancestors t.features feature_path [];
+  Feature_forest.add_ancestors t.features feature_path ~f:(const []);
   Feature_forest.change_exn t.features feature_path (fun list -> archived_feature :: list);
   Hashtbl.set t.features_by_id
     ~key:archived_feature.feature_id ~data:archived_feature;
@@ -227,15 +227,15 @@ let mem_feature_path t feature_path =
   is_ok (Feature_forest.find t.features feature_path)
 ;;
 
-let list_features t feature_path_option ~depth =
-  Or_error.map (Feature_forest.list t.features feature_path_option ~depth)
+let list_features t ~descendants_of ~depth =
+  Or_error.map (Feature_forest.list t.features ~descendants_of ~depth)
     ~f:(fun descendants ->
       List.concat_map descendants ~f:(fun (_, archived_features) ->
         List.map archived_features ~f:Archived_feature.to_list_protocol))
 ;;
 
-let list_feature_names t feature_path_option ~depth =
-  Or_error.map (Feature_forest.list t.features feature_path_option ~depth)
+let list_feature_names t ~descendants_of ~depth =
+  Or_error.map (Feature_forest.list t.features ~descendants_of ~depth)
     ~f:(fun descendants ->
       List.map descendants ~f:(fun (feature_path, _) -> feature_path))
 ;;

@@ -32,7 +32,7 @@ let command =
     ~summary:"deal with unclean workspaces on the server"
     ~readme:(fun () ->
       concat [ "\
-Operations side effecting someone else's state need to be run by a Iron trusted user.
+Operations side effecting someone else's state require admin privileges.
 "])
     [ "remove-machine", remove_machine
     ; "remove-user"   , remove_user

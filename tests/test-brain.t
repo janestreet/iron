@@ -177,22 +177,24 @@ Can't forget a file you don't know.
   $ fe brain forget -file file |& matches "there is no diff in your brain for"
   [1]
 
-Create a session with no review, and one can still clear the brain.
+Create a session with no review, and one can still clear the brain, even if the
+session is locked as long as it has no reviewed files.
 
   $ fe session show
   Reviewing root to a08ed6f3a513.
   2 files to review: 4 lines total
      [ ] 2 file
      [ ] 2 file2
+  $ fe session lock
   $ fe brain forget -all
 
 But if review has been done in the session, one cannot clear the brain.
 
-  $ fe internal session mark-file root file
+  $ fe session mark-file root file
   $ fe session show
   Reviewing root to a08ed6f3a513.
   1 files to review (1 already reviewed): 4 lines total
      [X] 2 file
      [ ] 2 file2
-  $ fe brain forget -all |& matches "cannot forget; there is an active review session"
+  $ fe brain forget -all |& matches "cannot forget"
   [1]

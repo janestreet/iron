@@ -10,9 +10,9 @@ end
 
 module Reaction : sig
   type t =
-    { de_aliased                                : User_name.Set.t
-    ; did_not_de_alias_due_to_non_empty_session : User_name.Set.t
-    ; nothing_to_do                             : User_name.Set.t
+    { de_aliased                                         : User_name.Set.t
+    ; did_not_de_alias_due_to_review_session_in_progress : User_name.Set.t
+    ; nothing_to_do                                      : User_name.Set.t
     }
   [@@deriving sexp_of]
 end

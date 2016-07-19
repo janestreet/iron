@@ -54,8 +54,7 @@ let command =
               events"
     ~readme:(fun () ->
       concat [ "\
-Operations changing the subscription limits or dropping subscriptions need to be run \
-by a trusted Iron user.
+Operations side effecting the subscriptions require admin privileges.
 "])
     [ "drop-all-by-users"              , drop_all_by_users
     ; "set-max-subscriptions-global"   , set_max_subscriptions_global

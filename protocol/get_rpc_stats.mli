@@ -10,6 +10,8 @@ module Key : sig
     ; rpc_version : int
     }
   [@@deriving compare, fields, sexp_of]
+
+  val hash : t -> int
 end
 
 module Data : sig

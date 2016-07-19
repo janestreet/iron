@@ -158,7 +158,7 @@ let main { Fe.Create.Action.
           let%map description = default_description feature_path in
           `Default, description
       in
-      let%bind { Create_feature.Reaction. remote_repo_path ; tip } =
+      let%bind { Create_feature.Reaction. feature_id; remote_repo_path ; tip } =
         Create_feature.rpc_to_server_exn
           { feature_path
           ; owners
@@ -201,7 +201,7 @@ let main { Fe.Create.Action.
              once the editor is invoked, the workspace exists.  Doing it in the other
              order puts the description buffer in the user's face and would encourage one
              to start work on a feature before the workspace exists. *)
-          Cmd_workspace.If_enabled.create_workspace feature_path)
+          Cmd_workspace.If_enabled.create_workspace { feature_id; feature_path })
       in
       match description_used with
       | `Provided_by_user -> Deferred.unit
@@ -232,7 +232,8 @@ let command =
      and allow_non_cr_clean_base =
        no_arg_flag Switch.allow_non_cr_clean_base
          ~doc:"proceed even though the base of the new feature won't be CR clean"
-     and properties = property_values_flag ~switch:"property"
+     and properties =
+       property_values_flag ~switch:"property" ~doc:"user-defined properties"
      in
      fun () ->
        let feature_path = ok_exn feature_path in

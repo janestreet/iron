@@ -14,13 +14,32 @@ module Persist = struct
   end
 end
 
+module User_sets = struct
+  type one_set = User_name.Hash_set.t
+  and t =
+    { admins                : one_set
+    ; feeding_metrics       : one_set
+    ; using_locked_sessions : one_set
+    }
+  [@@deriving fields, sexp_of]
+
+  let invariant t =
+    Invariant.invariant [%here] t [%sexp_of: t] (fun () ->
+      let check x = Invariant.check_field t (Hash_set.iter ~f:User_name.invariant) x in
+      Fields.iter
+        ~admins:check
+        ~feeding_metrics:check
+        ~using_locked_sessions:check)
+     ;;
+end
+
 type t =
   { mutable existing_users : User_name.Hash_set.t
   ; mutable valid_users    : User_name.Hash_set.t
   ; mutable aliases_seen   : User_name_by_alternate_name.t
   ; mutable typos          : User_name_by_alternate_name.t
   ; mutable invalid_users  : User_name_occurrence.t list User_name.Map.t
-  ; mutable using_locked_sessions : User_name.Hash_set.t
+  ; user_sets              : User_sets.t
   ; mutable serializer     : Serializer.t
   }
 [@@deriving fields, sexp_of]
@@ -49,7 +68,7 @@ let check_no_intersections_exn t =
         add (Alternate_name.to_string key) (Typo_of data);
         add (User_name.to_string data) (Has_typo key)))
     ~invalid_users:(fun _ _ -> ignore)
-    ~using_locked_sessions:(fun _ _ -> ignore)
+    ~user_sets:(fun _ _ -> ignore)
     ~serializer:(fun _ _ -> ignore);
   let all_errors =
     Hashtbl.filter origins ~f:(fun origins ->
@@ -78,8 +97,7 @@ let invariant t =
         Hash_set.iter valid_users ~f:User_name.invariant))
       ~aliases_seen:(check User_name_by_alternate_name.invariant)
       ~typos:(check User_name_by_alternate_name.invariant)
-      ~using_locked_sessions:(check (fun using_locked_sessions ->
-        Hash_set.iter using_locked_sessions ~f:User_name.invariant))
+      ~user_sets:(check User_sets.invariant)
       ~serializer:(check Serializer.invariant)
       ~invalid_users:(check (fun map ->
         Map.iteri map ~f:(fun ~key ~data ->
@@ -92,7 +110,6 @@ let aliases_file               = Relpath.of_string "aliases"
 let existing_users_file        = Relpath.of_string "existing-users"
 let typos_file                 = Relpath.of_string "typos"
 let valid_users_file           = Relpath.of_string "valid-users"
-let using_locked_sessions_file = Relpath.of_string "using-locked-sessions"
 
 let persist_existing_users t =
   Serializer.set_contents t.serializer ~file:existing_users_file
@@ -118,14 +135,6 @@ let persist_aliases t =
 let persist_typos t =
   Serializer.set_contents t.serializer ~file:typos_file
     t.typos (module Persist.Alternate_names)
-;;
-
-let persist_using_locked_sessions t =
-  Serializer.set_contents t.serializer ~file:using_locked_sessions_file
-    (t.using_locked_sessions
-     |> Hash_set.to_list
-     |> User_name.Set.of_list)
-    (module Persist.User_names_set)
 ;;
 
 let set_valid_users t value =
@@ -215,30 +224,117 @@ let refresh_existing_users t ~occurrences_by_user_name =
   persist_existing_users t;
 ;;
 
-let add_user_using_locked_sessions t user =
-  if not (Hash_set.mem t.using_locked_sessions user) then begin
-    Hash_set.add t.using_locked_sessions user;
-    persist_using_locked_sessions t;
-    Ok ()
-  end
-  else
-    Or_error.error_s [%sexp "user is already using locked sessions", (user : User_name.t)]
-;;
+module User_set = struct
 
-let remove_user_using_locked_sessions t user =
-  if Hash_set.mem t.using_locked_sessions user then begin
-    Hash_set.remove t.using_locked_sessions user;
-    persist_using_locked_sessions t;
-    Ok ()
+  module type S = sig
+    val add      : t -> User_name.Set.t -> idempotent:bool -> unit Or_error.t
+    val remove   : t -> User_name.Set.t -> idempotent:bool -> unit Or_error.t
+    val mem      : t -> User_name.t -> bool
+    val get_set  : t -> User_name.Set.t
   end
-  else
-    Or_error.error_s [%sexp "user is not using locked sessions", (user : User_name.t)]
-;;
 
-let users_using_locked_sessions t =
-  t.using_locked_sessions
-  |> Hash_set.to_list
-  |> User_name.Set.of_list
+  module Make (X : sig
+      val field_in_user_sets : (User_sets.t, User_name.Hash_set.t) Field.t
+    end) : sig
+
+    include S
+
+    val deserializer : User_name.Hash_set.t Deserializer.t
+  end = struct
+
+    let set_name =
+      Field.name X.field_in_user_sets
+      |> String.map ~f:(function '_' -> '-' | c -> c)
+    ;;
+
+    let persisted_in_file = Relpath.of_string set_name
+    ;;
+
+    let get_field t = Field.get X.field_in_user_sets t.user_sets
+    ;;
+
+    let persist t =
+      Serializer.set_contents t.serializer ~file:persisted_in_file
+        (t
+         |> get_field
+         |> Hash_set.to_list
+         |> User_name.Set.of_list)
+        (module Persist.User_names_set)
+    ;;
+
+    let maybe_s set =
+      if Set.length set > 1 then "s" else ""
+    ;;
+
+    let add t user_names ~idempotent =
+      let hset = get_field t in
+      let present, absent = Set.partition_tf user_names ~f:(Hash_set.mem hset) in
+      if Set.is_empty present || idempotent then begin
+        if not (Set.is_empty absent) then begin
+          Set.iter absent ~f:(Hash_set.add hset);
+          persist t;
+        end;
+        Ok ()
+      end else
+        Or_error.error_s
+          [%sexp
+            (sprintf "user%s already in the set [%s]" (maybe_s present) set_name : string)
+          , (present : User_name.Set.t)
+          ]
+    ;;
+
+    let remove t user_names ~idempotent =
+      let hset = get_field t in
+      let present, absent = Set.partition_tf user_names ~f:(Hash_set.mem hset) in
+      if Set.is_empty absent || idempotent then begin
+        if not (Set.is_empty present) then begin
+          Set.iter present ~f:(Hash_set.remove hset);
+          persist t;
+        end;
+        Ok ()
+      end else
+        Or_error.error_s
+          [%sexp
+            (sprintf "user%s not in the set [%s]" (maybe_s absent) set_name : string)
+          , (absent : User_name.Set.t)
+          ]
+    ;;
+
+    let mem t user = Hash_set.mem (get_field t) user
+    ;;
+
+    let get_set t = User_name.Set.of_hash_set (get_field t)
+    ;;
+
+    let deserializer =
+      let open Deserializer.Let_syntax in
+      let%map_open set =
+        one (module Persist.User_names_set)
+          ~default:User_name.Set.empty
+          ~in_file:persisted_in_file
+      in
+      User_name.Hash_set.of_list (Set.to_list set)
+    ;;
+  end
+end
+
+module Admins = User_set.Make (struct
+    let field_in_user_sets = User_sets.Fields.admins
+  end)
+
+module Feeding_metrics = User_set.Make (struct
+    let field_in_user_sets = User_sets.Fields.feeding_metrics
+  end)
+
+module Using_locked_sessions = User_set.Make (struct
+    let field_in_user_sets = User_sets.Fields.using_locked_sessions
+  end)
+
+let get_user_set (t : Iron_protocol.User_set.t) =
+  match t with
+  | `Admins                -> (module Admins                : User_set.S)
+  | `Feeding_metrics       -> (module Feeding_metrics       : User_set.S)
+  | `Using_locked_sessions -> (module Using_locked_sessions : User_set.S)
 ;;
 
 let alternate_names t ~which =
@@ -359,18 +455,23 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
     one (module Persist.Alternate_names)
       ~default:User_name_by_alternate_name.not_available
       ~in_file:typos_file
-  and using_locked_sessions =
-    one (module Persist.User_names_set)
-      ~default:User_name.Set.empty
-      ~in_file:using_locked_sessions_file
+  and user_sets =
+    let%map admins = Admins.deserializer
+    and feeding_metrics = Feeding_metrics.deserializer
+    and using_locked_sessions = Using_locked_sessions.deserializer
+    in
+    { User_sets.
+      admins
+    ; feeding_metrics
+    ; using_locked_sessions
+    }
   in
   { existing_users = User_name.Hash_set.of_list (Set.to_list existing_users)
   ; valid_users    = User_name.Hash_set.of_list (Set.to_list valid_users)
   ; aliases_seen
   ; typos
   ; invalid_users  = User_name.Map.empty
-  ; using_locked_sessions
-    = User_name.Hash_set.of_list (Set.to_list using_locked_sessions)
+  ; user_sets
   ; serializer
   }
 )

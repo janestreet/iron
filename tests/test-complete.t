@@ -101,6 +101,11 @@ We complete all the way, above, because only root/foo1 is archived, not root/foo
 -- Test completion on attributes.
 
   $ completion-test fe change feature -
+  -add-inheritable-owners
+  -add-inheritable-send-email-to
+  -add-inheritable-send-email-upon
+  -add-inheritable-whole-feature-followers
+  -add-inheritable-whole-feature-reviewers
   -add-owners
   -add-reviewing
   -add-send-email-to
@@ -109,6 +114,16 @@ We complete all the way, above, because only root/foo1 is archived, not root/foo
   -add-whole-feature-reviewers
   -help
   -lock
+  -remove-inheritable-crs-shown-in-todo-only-for-users-reviewing
+  -remove-inheritable-owners
+  -remove-inheritable-property
+  -remove-inheritable-release-process
+  -remove-inheritable-send-email-to
+  -remove-inheritable-send-email-upon
+  -remove-inheritable-who-can-release-into-me
+  -remove-inheritable-whole-feature-followers
+  -remove-inheritable-whole-feature-reviewers
+  -remove-inheritable-xcrs-shown-in-todo-only-for-users-reviewing
   -remove-owners
   -remove-property
   -remove-reviewing
@@ -120,6 +135,16 @@ We complete all the way, above, because only root/foo1 is archived, not root/foo
   -set-crs-are-enabled
   -set-crs-shown-in-todo-only-for-users-reviewing
   -set-description
+  -set-inheritable-crs-shown-in-todo-only-for-users-reviewing
+  -set-inheritable-owners
+  -set-inheritable-property
+  -set-inheritable-release-process
+  -set-inheritable-send-email-to
+  -set-inheritable-send-email-upon
+  -set-inheritable-who-can-release-into-me
+  -set-inheritable-whole-feature-followers
+  -set-inheritable-whole-feature-reviewers
+  -set-inheritable-xcrs-shown-in-todo-only-for-users-reviewing
   -set-is-permanent
   -set-owners
   -set-property
@@ -137,6 +162,11 @@ We complete all the way, above, because only root/foo1 is archived, not root/foo
   -verbose
 
   $ completion-test fe change feature -ad
+  -add-inheritable-owners
+  -add-inheritable-send-email-to
+  -add-inheritable-send-email-upon
+  -add-inheritable-whole-feature-followers
+  -add-inheritable-whole-feature-reviewers
   -add-owners
   -add-reviewing
   -add-send-email-to

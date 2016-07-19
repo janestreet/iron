@@ -75,8 +75,8 @@ session.
 
 Sessions should be protected by the same permissions.
 
-  $ fe internal session mark-file root/a a -for jdoe3 -reason test
-  $ fe internal session mark-file root/a b -for user2 \
+  $ fe session mark-file root/a a -for jdoe3 -reason test
+  $ fe session mark-file root/a b -for user2 \
   >   |& matches "may-modify-others-review.*not allowed"
   [1]
   $ fe internal mark-fully-reviewed root/a -for all -reason test \

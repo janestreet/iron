@@ -10,9 +10,9 @@ module Node_hash : sig
   module First_12 : sig
     type t [@@deriving sexp_of]
 
-    include Equal.S     with type t := t
-    include Hashable.S  with type t := t
-    include Invariant.S with type t := t
+    include Invariant.S        with type t := t
+    include Comparable.S_plain with type t := t
+    include Hashable.S_plain   with type t := t
 
     val of_string : string -> t
     val to_string : t -> string
@@ -24,8 +24,8 @@ module Node_hash : sig
 
   type t [@@deriving sexp_of]
 
-  include Comparable.S with type t := t
-  include Hashable.S   with type t := t
+  include Comparable.S_plain with type t := t
+  include Hashable.S         with type t := t
 
   val to_string : t -> string
   val to_file_name : t -> File_name.t
@@ -39,14 +39,16 @@ end
 (** A node hash and an optional human-readable name. *)
 module Rev : sig
 
-  type t [@@deriving sexp]
+  type t [@@deriving sexp_of]
 
   include Invariant. S with type t := t
 
   module Compare_by_hash : sig
-    type nonrec t = t [@@deriving sexp, compare]
-    include Comparable.S with type t := t
-    include Hashable.  S with type t := t
+    type nonrec t = t [@@deriving compare, sexp_of]
+
+    include Invariant.S        with type t := t
+    include Comparable.S_plain with type t := t
+    include Hashable.S_plain   with type t := t
   end
 
   val compare : [ `Do_not_use ]

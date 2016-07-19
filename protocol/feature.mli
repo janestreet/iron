@@ -60,10 +60,11 @@ type t =
   ; line_count_by_user             : (User_name.t * Line_count.t) list Or_error.t
   ; cr_summary                     : Cr_comment.Summary.t Or_error.t
   ; next_steps                     : Next_step.t list
-  ; users_with_uncommitted_session : User_name.Set.t Or_error.t
+  ; users_with_review_session_in_progress : User_name.Set.t Or_error.t
   ; users_with_unclean_workspaces  : Unclean_workspace_reason.t User_name.Map.t
   ; is_archived                    : bool
   ; latest_release                 : Latest_release.t option
+  ; inheritable_attributes         : Inheritable_attributes.t
   }
 [@@deriving fields, sexp_of]
 
@@ -106,8 +107,13 @@ module Stable : sig
     type nonrec t = t [@@deriving sexp_of]
   end
 
-  module V19 : sig
+  module V20 : sig
     type t = Model.t [@@deriving bin_io, sexp]
+    val of_model : Model.t -> t
+  end
+
+  module V19 : sig
+    type t [@@deriving bin_io]
     val of_model : Model.t -> t
   end
 

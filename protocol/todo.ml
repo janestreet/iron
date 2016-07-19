@@ -60,6 +60,21 @@ module Stable = struct
 
   module Assigned = struct
 
+    module V9 = struct
+      type t =
+        { feature_path        : Feature_path.V1.t
+        ; feature_path_exists : bool
+        ; review_is_enabled   : bool
+        ; user_is_reviewing   : bool
+        ; may_second          : bool
+        ; num_crs             : Num_crs.V1.t
+        ; num_xcrs            : Num_crs.V1.t
+        ; line_count          : Line_count.V5.t
+        ; next_steps          : Next_step.V5.t list
+        }
+      [@@deriving bin_io, fields, sexp]
+    end
+
     module V8 = struct
       type t =
         { feature_path        : Feature_path.V1.t
@@ -72,7 +87,31 @@ module Stable = struct
         ; line_count          : Line_count.V4.t
         ; next_steps          : Next_step.V5.t list
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io]
+
+      let of_v9 { V9.
+                  feature_path
+                ; feature_path_exists
+                ; review_is_enabled
+                ; user_is_reviewing
+                ; may_second
+                ; num_crs
+                ; num_xcrs
+                ; line_count
+                ; next_steps
+                } =
+        let line_count = Line_count.V4.of_v5 line_count in
+        { feature_path
+        ; feature_path_exists
+        ; review_is_enabled
+        ; user_is_reviewing
+        ; may_second
+        ; num_crs
+        ; num_xcrs
+        ; line_count
+        ; next_steps
+        }
+      ;;
     end
 
     module V7 = struct
@@ -108,10 +147,16 @@ module Stable = struct
         let review_lines =
           if not user_is_reviewing
           then `Not_reviewing
-          else `Lines { Review_lines.V1.
-                        review = Line_count.to_review_column_shown line_count
-                      ; follow = line_count.review.follow
-                      }
+          else
+            let review =
+              Line_count.Review.to_review_column_shown line_count.review
+                ~have_potentially_blocking_review_session_in_progress:
+                  line_count.have_uncommitted_and_potentially_blocking_session
+            in
+            `Lines { Review_lines.V1.
+                     review
+                   ; follow = line_count.review.follow
+                   }
         in
         let catch_up_lines = Ok (Line_count.Catch_up.total line_count.catch_up) in
         { feature_path
@@ -253,7 +298,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V8
+    module Model = V9
   end
 
   module Rev_facts = struct
@@ -289,9 +334,9 @@ module Stable = struct
 
   module Reaction = struct
 
-    module V13 = struct
+    module V14 = struct
       type t =
-        { assigned                  : Assigned.V8.t list
+        { assigned                  : Assigned.V9.t list
         ; unclean_workspaces        : Unclean_workspace.V1.t list Machine.V1.Map.t
         ; owned                     : Feature_info.V6.t list
         ; watched                   : Feature_info.V6.t list
@@ -302,6 +347,37 @@ module Stable = struct
       [@@deriving bin_io, fields, sexp]
 
       let of_model m = m
+    end
+
+    module V13 = struct
+      type t =
+        { assigned                  : Assigned.V8.t list
+        ; unclean_workspaces        : Unclean_workspace.V1.t list Machine.V1.Map.t
+        ; owned                     : Feature_info.V6.t list
+        ; watched                   : Feature_info.V6.t list
+        ; cr_soons                  : Cr_soon_multiset.V1.t
+        ; bookmarks_without_feature : (Remote_repo_path.V1.t
+                                       * Bookmark_without_feature.V1.t list) list
+        }
+      [@@deriving bin_io]
+
+      let of_model m =
+        let { V14.
+              assigned
+            ; unclean_workspaces
+            ; owned
+            ; watched
+            ; cr_soons
+            ; bookmarks_without_feature
+            } = V14.of_model m in
+        { assigned = List.map assigned ~f:Assigned.V8.of_v9
+        ; unclean_workspaces
+        ; owned
+        ; watched
+        ; cr_soons
+        ; bookmarks_without_feature
+        }
+      ;;
     end
 
     module V12 = struct
@@ -443,7 +519,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V13
+    module Model = V14
   end
 end
 
@@ -452,6 +528,11 @@ open! Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "todo" end)
+    (struct let version = 15 end)
+    (Stable.Action.V3)
+    (Stable.Reaction.V14)
+
+include Register_old_rpc
     (struct let version = 14 end)
     (Stable.Action.V3)
     (Stable.Reaction.V13)

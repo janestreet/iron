@@ -12,11 +12,12 @@ type t [@@deriving sexp_of]
 
 val feature_path     : t -> Feature_path.t
 val center_repo_root : t -> Repo_root.t
+val feature_id       : t -> Feature_id.t option
 
 (** Create *)
 
-val find  : Feature_path.t -> t option Deferred.t
-val force : Feature_path.t -> t Deferred.t
+val find  : ?feature_id:Feature_id.t -> Feature_path.t -> t option Deferred.t
+val force : Workspace_hgrc.Feature.t -> t Deferred.t
 
 (** [list] returns features sorted by name. *)
 val list  : unit -> t list Deferred.t
@@ -25,7 +26,7 @@ val list  : unit -> t list Deferred.t
 
 val distclean  : t -> unit Deferred.t
 val delete     : t -> unit Deferred.t
-val move_to    : t -> Feature_path.t -> unit Deferred.t
+val move_to    : t -> Feature_id.t -> Feature_path.t -> unit Deferred.t
 val kill_build : t -> unit Deferred.t
 
 (** Checks *)

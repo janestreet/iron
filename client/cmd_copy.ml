@@ -8,13 +8,13 @@ let copy_feature ~from_ ~to_ ~without_copying_review =
   let repo_is_clean = ok_exn repo_is_clean in
   let%bind () = ensure_can_access_remote_repo ~for_root_of:from_ in
   let%bind rev_zero = Hg.create_rev_zero repo_root in
-  let%bind { remote_repo_path; tip } =
+  let%bind { feature_id; remote_repo_path; tip } =
     Copy_feature.rpc_to_server_exn { from_; to_; rev_zero; without_copying_review }
   in
   let%bind () =
     Hg.create_bookmark_and_update_to_it ~repo_is_clean repo_root remote_repo_path to_ tip
   in
-  Cmd_workspace.If_enabled.create_workspace to_
+  Cmd_workspace.If_enabled.create_workspace { feature_id; feature_path = to_ }
 ;;
 
 let command =

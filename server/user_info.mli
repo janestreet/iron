@@ -67,6 +67,17 @@ val update_valid_users_and_aliases_exn
   -> Iron_protocol.Update_valid_users_and_aliases.User_aliases.t list
   -> unit
 
-val add_user_using_locked_sessions    : t -> User_name.t -> unit Or_error.t
-val remove_user_using_locked_sessions : t -> User_name.t -> unit Or_error.t
-val users_using_locked_sessions       : t -> User_name.Set.t
+module User_set : sig
+  module type S = sig
+    val add      : t -> User_name.Set.t -> idempotent:bool -> unit Or_error.t
+    val remove   : t -> User_name.Set.t -> idempotent:bool -> unit Or_error.t
+    val mem      : t -> User_name.t -> bool
+    val get_set  : t -> User_name.Set.t
+  end
+end
+
+module Admins                : User_set.S
+module Feeding_metrics       : User_set.S
+module Using_locked_sessions : User_set.S
+
+val get_user_set : Iron_protocol.User_set.t -> (module User_set.S)

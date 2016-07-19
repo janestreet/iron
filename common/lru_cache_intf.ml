@@ -1,6 +1,13 @@
 open! Core.Std
 open! Import
 
+module type H = sig
+  type t
+
+  include Hashtbl.Key_plain with type t := t
+  include Invariant.S       with type t := t
+end
+
 module type S = sig
   type key
   type 'a t [@@deriving sexp_of]
@@ -9,6 +16,7 @@ module type S = sig
 
   val to_alist        : 'a t -> (key * 'a) list
   val length          : _ t -> int
+  val is_empty        : _ t -> bool
   val stats           : ?sexp_of_key:(key -> Sexp.t) -> _ t -> Sexp.t
   val max_size        : _ t -> int
 
@@ -29,5 +37,7 @@ end
 
 module type Lru_cache = sig
   module type S = S
-  module Make (H : Hashtbl.Key) : S with type key := H.t
+  module type H = H
+
+  module Make (H : H) : S with type key := H.t
 end

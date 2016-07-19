@@ -1,23 +1,23 @@
 RPCs to server:
-┌──────────────────────────────┬────────────────────────────────────────┐
-│ name                         │ versions                               │
-├──────────────────────────────┼────────────────────────────────────────┤
-│ change-feature               │ 4, 5, 6, 7                             │
-│ enable-review                │ 2                                      │
-│ fact-action                  │ 2                                      │
-│ fact-evidence                │ 1                                      │
-│ feature-exists               │ 1                                      │
-│ get-brain                    │ 2, 3                                   │
-│ get-feature                  │ 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 │
-│ get-feature-by-id            │ 13, 14, 15, 16, 17, 18, 19             │
-│ get-feature-maybe-archived   │ 1, 2, 3, 4, 5, 6                       │
-│ list-feature-names           │ 1                                      │
-│ list-features                │ 7, 8                                   │
-│ notify-on-descendant-updates │ 1, 2                                   │
-│ notify-on-feature-updates    │ 1, 2, 3                                │
-│ revision-is-fully-reviewed   │ 1                                      │
-│ second                       │ 3, 4                                   │
-└──────────────────────────────┴────────────────────────────────────────┘
+┌──────────────────────────────┬────────────────────────────────────────────┐
+│ name                         │ versions                                   │
+├──────────────────────────────┼────────────────────────────────────────────┤
+│ change-feature               │ 4, 5, 6, 7, 8                              │
+│ enable-review                │ 2                                          │
+│ fact-action                  │ 2                                          │
+│ fact-evidence                │ 1                                          │
+│ feature-exists               │ 1, 2                                       │
+│ get-brain                    │ 2, 3                                       │
+│ get-feature                  │ 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 │
+│ get-feature-by-id            │ 13, 14, 15, 16, 17, 18, 19, 20             │
+│ get-feature-maybe-archived   │ 1, 2, 3, 4, 5, 6, 7, 8                     │
+│ list-feature-names           │ 1, 2                                       │
+│ list-features                │ 7, 8, 9                                    │
+│ notify-on-descendant-updates │ 1, 2                                       │
+│ notify-on-feature-updates    │ 1, 2, 3, 4                                 │
+│ revision-is-fully-reviewed   │ 1                                          │
+│ second                       │ 3, 4                                       │
+└──────────────────────────────┴────────────────────────────────────────────┘
 
 Command RPCs:
 ┌─────────────────────────┬──────────┐

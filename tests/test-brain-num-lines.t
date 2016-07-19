@@ -8,7 +8,7 @@
 
 Review [file], and the brain knows the right number of lines.
 
-  $ fe internal session mark-file root file -reason reason
+  $ fe session mark-file root file -reason reason
   $ fe session commit -session-id $(fe session show -id)
   $ fe brain show
   |--------------------|
@@ -21,7 +21,7 @@ Ditto, with server restart during the session.
 
   $ fe brain forget -file file
   $ fe brain show
-  $ fe internal session mark-file root file -reason reason
+  $ fe session mark-file root file -reason reason
   $ fe-server stop
   $ fe-server start
   $ fe session commit -session-id $(fe session show -id)

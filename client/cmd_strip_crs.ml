@@ -44,7 +44,7 @@ let strip_crs_exn format ~replace_with ~extra_cr_comment_headers file =
       let comment_start, pos = offsets raw in
       let len = stop - pos in
       String.sub contents ~pos ~len :: acc, comment_start)
-    |! (fun (acc, stop) -> String.sub contents ~pos:0 ~len:stop :: acc)
+    |> (fun (acc, stop) -> String.sub contents ~pos:0 ~len:stop :: acc)
   in
   String.concat ?sep:replace_with chunks
 ;;

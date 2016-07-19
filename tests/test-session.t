@@ -74,13 +74,22 @@ The lock of a session are persisted.
   $ fe session show -is-locked
   false
 
-  $ fe internal session mark-file test a
+  $ fe session mark-file test a
   $ fe session show -id | matches ${ID}
   $ fe session show
   Reviewing test to 9bdd8ea4bdfa.
   1 files to review (1 already reviewed): 8 lines total
      [X] 3 a
      [ ] 5 b
+
+It is an error to mark as reviewed a file that is already reviewed, unless a
+special switch is supplied.
+
+  $ fe session mark-file test a
+  (error (reviewed-diff4 ("This file is already reviewed" (a))))
+  [1]
+
+  $ fe session mark-file test a -even-if-some-files-are-already-reviewed
 
 Can get the session even when review is disabled.
 
@@ -186,7 +195,7 @@ Persistence
 
 Forget specific files
 
-  $ fe internal session mark-file test a
+  $ fe session mark-file test a
   $ fe session show
   Reviewing test to 9bdd8ea4bdfa.
   1 files to review (1 already reviewed): 8 lines total
@@ -205,7 +214,7 @@ Forget specific files
 
 Delete
 
-  $ fe internal session mark-file test a
+  $ fe session mark-file test a
   $ fe internal session show-num-lines test
   5
 
@@ -230,7 +239,7 @@ Check that when one has opted in, session are locked by looking at diffs.
   $ fe session show -is-locked
   false
 
-  $ fe admin users using-locked-sessions add-user
+  $ fe admin users using-locked-sessions add unix-login-for-testing
 
   $ fe session show -is-locked
   false
@@ -238,12 +247,12 @@ Check that when one has opted in, session are locked by looking at diffs.
   $ fe session show -is-locked
   true
 
-  $ fe admin users using-locked-sessions remove-user
+  $ fe admin users using-locked-sessions remove unix-login-for-testing
   $ fe session unlock
 
 Mark one file.
 
-  $ fe internal session mark-file test a
+  $ fe session mark-file test a
   $ fe internal session show-num-lines test
   5
 
@@ -255,14 +264,15 @@ Mark one file.
   $ fe internal session show-num-lines test
   5
 
-Check that the commands from [admin users using-locked-sessions] give proper
+Check that the commands from [admin users set] give proper
 error messages.
 
-  $ fe admin users using-locked-sessions add-user
-  $ fe admin users using-locked-sessions add-user
+  $ fe admin users using-locked-sessions add unix-login-for-testing
+  $ fe admin users using-locked-sessions add unix-login-for-testing
   (error
-   (users-using-locked-sessions-change-user
-    ("user is already using locked sessions" unix-login-for-testing)))
+   (user-set-change
+    ("user already in the set [using-locked-sessions]"
+     (unix-login-for-testing))))
   [1]
 
   $ fe-server stop
@@ -270,13 +280,24 @@ error messages.
 
   $ fe admin users using-locked-sessions get
   unix-login-for-testing
-  $ fe admin users using-locked-sessions remove-user
-  $ fe admin users using-locked-sessions remove-user
+  $ fe admin users using-locked-sessions remove unix-login-for-testing
+  $ fe admin users using-locked-sessions remove unix-login-for-testing
   (error
-   (users-using-locked-sessions-change-user
-    ("user is not using locked sessions" unix-login-for-testing)))
+   (user-set-change
+    ("user not in the set [using-locked-sessions]" (unix-login-for-testing))))
   [1]
-  $ fe admin users using-locked-sessions add-user
+  $ fe admin users using-locked-sessions add unix-login-for-testing
+
+Check that admin privileges is required for a user to add someone else in this set,
+but not required when they are adding themselves.
+
+  $ IRON_USER=user1 fe admin users using-locked-sessions add unix-login-for-testing
+  (error
+   (user-set-change
+    ("unauthorized RPC by user -- admin privileges required"
+     ((user user1) (users_with_admin_privileges (unix-login-for-testing))))))
+  [1]
+  $ IRON_USER=user1 fe admin users using-locked-sessions add user1
 
 Check warning about stale session.
 

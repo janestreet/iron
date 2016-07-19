@@ -210,6 +210,7 @@
 :   build-info    output Iron server executable's build info
 :   down-message  server-down message commands
 :   gc-compact    have the server do a gc compaction
+:   metrics       various commands for collecting data in features
 :   rpc-stats     output the server's RPC statistics
 :   serializer    control Iron server's serializer of persistent state
 :   start         start fe
@@ -311,6 +312,95 @@
 : 
 :   [-help]  print this help text and exit
 :            (alias: -?)
+
+**** metrics
+
+: various commands for collecting data in features
+: 
+:   fe.exe admin server metrics SUBCOMMAND
+: 
+: === subcommands ===
+: 
+:   add        add values to a metric
+:   clear      clear a metric
+:   list       list metrics available on the server
+:   show       show statistics of data captured from features
+:   subscribe  subscribe to specified metric updates and print them
+:   help       explain a given subcommand (perhaps recursively)
+
+***** add
+
+: add values to a metric
+: 
+:   fe.exe admin server metrics add FEATURE
+: 
+: === flags ===
+: 
+:   -metric METRIC           metric
+:   -values FLOAT[,FLOAT..]  value
+:   [-help]                  print this help text and exit
+:                            (alias: -?)
+
+***** clear
+
+: clear a metric
+: 
+:   fe.exe admin server metrics clear [FEATURE ...]
+: 
+: === flags ===
+: 
+:   -metric METRIC  metric
+:   [-all]          include all features
+:   [-rec]          include recursively each descendant of given features
+:   [-help]         print this help text and exit
+:                   (alias: -?)
+
+***** list
+
+: list metrics available on the server
+: 
+:   fe.exe admin server metrics list [FEATURE]
+: 
+: === flags ===
+: 
+:   [-help]  print this help text and exit
+:            (alias: -?)
+
+***** show
+
+: show statistics of data captured from features
+: 
+:   fe.exe admin server metrics show [FEATURE]
+: 
+: Metrics are shown for all features in the requested subtree(s), aggregated by -depth.
+: Tables are drawn by metric by default (i.e. showing all stats for a metric), and by stat
+: (i.e. count, mean, etc.) if the switch -show-by-stat is supplied.
+: 
+: 
+: === flags ===
+: 
+:   [-decimals NUM]             round stats to n decimals. Default 2
+:   [-depth {DEPTH|max}]        show descendants DEPTH levels down (default is 1)
+:   [-display-ascii]            display ASCII characters, with no ANSI color
+:                               escapes or unicode characters
+:   [-max-output-columns INT]   maximum column width for table output
+:   [-metrics REGEX,[REGEX..]]  select metrics to show
+:   [-show-by-stat]             draw tables by stat
+:   [-stats STAT,[STAT...]]     select stats to show count|max|mean|min|total
+:   [-help]                     print this help text and exit
+:                               (alias: -?)
+
+***** subscribe
+
+: subscribe to specified metric updates and print them
+: 
+:   fe.exe admin server metrics subscribe [FEATURE]
+: 
+: === flags ===
+: 
+:   [-metric METRIC]  metric
+:   [-help]           print this help text and exit
+:                     (alias: -?)
 
 **** rpc-stats
 
@@ -491,7 +581,9 @@
 : 
 : === subcommands ===
 : 
+:   admins
 :   define-typos                    define the user for a mistyped user name
+:   feeding-metrics
 :   get-invalid                     output invalid users
 :   refresh-existing-users          recompute the set of existing users
 :   remove-aliases                  remove aliases from the mapping from aliases
@@ -505,6 +597,54 @@
 :   using-locked-sessions
 :   help                            explain a given subcommand (perhaps
 :                                   recursively)
+
+**** admins
+
+: fe.exe admin users admins SUBCOMMAND
+: 
+: 
+: 
+: === subcommands ===
+: 
+:   add     add users in this set
+:   get     print out the users of this set
+:   remove  remove users from this set
+:   help    explain a given subcommand (perhaps recursively)
+
+***** add
+
+: add users in this set
+: 
+:   fe.exe admin users admins add [USER ...]
+: 
+: === flags ===
+: 
+:   [-idempotent]  do not fail if setting is already as requested
+:   [-help]        print this help text and exit
+:                  (alias: -?)
+
+***** get
+
+: print out the users of this set
+: 
+:   fe.exe admin users admins get 
+: 
+: === flags ===
+: 
+:   [-help]  print this help text and exit
+:            (alias: -?)
+
+***** remove
+
+: remove users from this set
+: 
+:   fe.exe admin users admins remove [USER ...]
+: 
+: === flags ===
+: 
+:   [-idempotent]  do not fail if setting is already as requested
+:   [-help]        print this help text and exit
+:                  (alias: -?)
 
 **** define-typos
 
@@ -530,6 +670,54 @@
 :   [-typo TYPO]
 :   [-help]                    print this help text and exit
 :                              (alias: -?)
+
+**** feeding-metrics
+
+: fe.exe admin users feeding-metrics SUBCOMMAND
+: 
+: 
+: 
+: === subcommands ===
+: 
+:   add     add users in this set
+:   get     print out the users of this set
+:   remove  remove users from this set
+:   help    explain a given subcommand (perhaps recursively)
+
+***** add
+
+: add users in this set
+: 
+:   fe.exe admin users feeding-metrics add [USER ...]
+: 
+: === flags ===
+: 
+:   [-idempotent]  do not fail if setting is already as requested
+:   [-help]        print this help text and exit
+:                  (alias: -?)
+
+***** get
+
+: print out the users of this set
+: 
+:   fe.exe admin users feeding-metrics get 
+: 
+: === flags ===
+: 
+:   [-help]  print this help text and exit
+:            (alias: -?)
+
+***** remove
+
+: remove users from this set
+: 
+:   fe.exe admin users feeding-metrics remove [USER ...]
+: 
+: === flags ===
+: 
+:   [-idempotent]  do not fail if setting is already as requested
+:   [-help]        print this help text and exit
+:                  (alias: -?)
 
 **** get-invalid
 
@@ -622,49 +810,45 @@
 : 
 : === subcommands ===
 : 
-:   add-user     add a user in the special set of users using locked sessions
-:   get-users    print out the special set of users using locked sessions
-:   remove-user  remove a user from the special set of users using locked sessions
-:   help         explain a given subcommand (perhaps recursively)
+:   add     add users in this set
+:   get     print out the users of this set
+:   remove  remove users from this set
+:   help    explain a given subcommand (perhaps recursively)
 
-***** add-user
+***** add
 
-: add a user in the special set of users using locked sessions
+: add users in this set
 : 
-:   fe.exe admin users using-locked-sessions add-user 
-: 
-: acting -for someone requires admin privileges.
+:   fe.exe admin users using-locked-sessions add [USER ...]
 : 
 : === flags ===
 : 
-:   [-for USER]  for user (default is unix login)
-:   [-help]      print this help text and exit
-:                (alias: -?)
+:   [-idempotent]  do not fail if setting is already as requested
+:   [-help]        print this help text and exit
+:                  (alias: -?)
 
-***** get-users
+***** get
 
-: print out the special set of users using locked sessions
+: print out the users of this set
 : 
-:   fe.exe admin users using-locked-sessions get-users 
+:   fe.exe admin users using-locked-sessions get 
 : 
 : === flags ===
 : 
 :   [-help]  print this help text and exit
 :            (alias: -?)
 
-***** remove-user
+***** remove
 
-: remove a user from the special set of users using locked sessions
+: remove users from this set
 : 
-:   fe.exe admin users using-locked-sessions remove-user 
-: 
-: acting -for someone requires admin privileges.
+:   fe.exe admin users using-locked-sessions remove [USER ...]
 : 
 : === flags ===
 : 
-:   [-for USER]  for user (default is unix login)
-:   [-help]      print this help text and exit
-:                (alias: -?)
+:   [-idempotent]  do not fail if setting is already as requested
+:   [-help]        print this help text and exit
+:                  (alias: -?)
 
 ** archive
 
@@ -754,6 +938,7 @@
 :   diff       show diffs from a catch-up session
 :   is-needed  print [true] or [false], depending on whether the catch-up review
 :              is needed
+:   mark-file  mark as caught up files in a catch-up session
 :   review     start or continue a catch up session
 :   show       show a catch-up session or some of its attributes
 :   help       explain a given subcommand (perhaps recursively)
@@ -814,11 +999,30 @@
 :   [-help]      print this help text and exit
 :                (alias: -?)
 
+*** mark-file
+
+: mark as caught up files in a catch-up session
+: 
+:   fe.exe catch-up mark-file FEATURE [FILE ...]
+: 
+: 
+: 
+: === flags ===
+: 
+:   [-for USER]               for user (default is unix login)
+:   [-session-id SESSION_ID]  fail if the current session id is not the one
+:                             supplied
+:   [-help]                   print this help text and exit
+:                             (alias: -?)
+
 *** review
 
 : start or continue a catch up session
 : 
 :   fe.exe catch-up review [FEATURE]
+: 
+: This command is deprecated and has been subsumed by [fe review].
+: 
 : 
 : === flags ===
 : 
@@ -867,55 +1071,106 @@
 : 
 : === flags ===
 : 
+:   [-add-inheritable-owners USER[,USER...]]
+:   [-add-inheritable-send-email-to EMAIL[,EMAIL...]]
+:   [-add-inheritable-send-email-upon ACTION[,ACTION...]]
+:   [-add-inheritable-whole-feature-followers USER[,USER...]]
+:   [-add-inheritable-whole-feature-reviewers USER[,USER...]]
 :   [-add-owners USER[,USER...]]
 :   [-add-reviewing USER[,USER...]]
 :   [-add-send-email-to EMAIL[,EMAIL...]]
-:   [-add-send-email-upon ACTION[,ACTION...]]                cause email to be
-:                                                            sent also upon
-:                                                            ACTION(S)
+:   [-add-send-email-upon ACTION[,ACTION...]]                            cause
+:                                                                        email to
+:                                                                        be sent
+:                                                                        also upon
+:                                                                        ACTION(S)
 :   [-add-whole-feature-followers USER[,USER...]]
 :   [-add-whole-feature-reviewers USER[,USER...]]
-:   [-lock]                                                  error -- use [fe
-:                                                            lock] or [fe unlock]
+:   [-lock]                                                              error --
+:                                                                        use [fe
+:                                                                        lock] or
+:                                                                        [fe
+:                                                                        unlock]
+:   [-remove-inheritable-crs-shown-in-todo-only-for-users-reviewing]
+:   [-remove-inheritable-owners USER[,USER...]]
+:   [-remove-inheritable-property ATTR[,ATTR...]]
+:   [-remove-inheritable-release-process]
+:   [-remove-inheritable-send-email-to EMAIL[,EMAIL...]]
+:   [-remove-inheritable-send-email-upon ACTION[,ACTION...]]
+:   [-remove-inheritable-who-can-release-into-me]
+:   [-remove-inheritable-whole-feature-followers USER[,USER...]]
+:   [-remove-inheritable-whole-feature-reviewers USER[,USER...]]
+:   [-remove-inheritable-xcrs-shown-in-todo-only-for-users-reviewing]
 :   [-remove-owners USER[,USER...]]
-:   [-remove-property ATTR[,ATTR...]]                        remove user-defined
-:                                                            properties
+:   [-remove-property ATTR[,ATTR...]]                                    remove
+:                                                                        user-defined
+:                                                                        properties
 :   [-remove-reviewing USER[,USER...]]
 :   [-remove-send-email-to EMAIL[,EMAIL...]]
-:   [-remove-send-email-upon ACTION[,ACTION...]]             cause email to not be
-:                                                            sent upon ACTION(S)
+:   [-remove-send-email-upon ACTION[,ACTION...]]                         cause
+:                                                                        email to
+:                                                                        not be
+:                                                                        sent upon
+:                                                                        ACTION(S)
 :   [-remove-whole-feature-followers USER[,USER...]]
 :   [-remove-whole-feature-reviewers USER[,USER...]]
 :   [-set-base REV]
 :   [-set-crs-are-enabled BOOL]
 :   [-set-crs-shown-in-todo-only-for-users-reviewing BOOL]
 :   [-set-description TEXT]
+:   [-set-inheritable-crs-shown-in-todo-only-for-users-reviewing BOOL]
+:   [-set-inheritable-owners USER[,USER...]]
+:   [-set-inheritable-property ATTR=SEXP]
+:   [-set-inheritable-release-process PROCESS:]                          continuous
+:                                                                        | direct
+:   [-set-inheritable-send-email-to EMAIL[,EMAIL...]]
+:   [-set-inheritable-send-email-upon ACTION[,ACTION...]]
+:   [-set-inheritable-who-can-release-into-me _]                         my-owners
+:                                                                        |
+:                                                                        my-owners-and-child-owners
+:   [-set-inheritable-whole-feature-followers USER[,USER...]]
+:   [-set-inheritable-whole-feature-reviewers USER[,USER...]]
+:   [-set-inheritable-xcrs-shown-in-todo-only-for-users-reviewing BOOL]
 :   [-set-is-permanent BOOL]
 :   [-set-owners USER[,USER...]]
-:   [-set-property ATTR=SEXP]                                user-defined
-:                                                            properties
-:   [-set-release-process PROCESS]                           how features are
-:                                                            released into this
-:                                                            one: continuous |
-:                                                            direct
+:   [-set-property ATTR=SEXP]                                            set
+:                                                                        user-defined
+:                                                                        properties
+:   [-set-release-process PROCESS]                                       how
+:                                                                        features
+:                                                                        are
+:                                                                        released
+:                                                                        into this
+:                                                                        one:
+:                                                                        continuous
+:                                                                        | direct
 :   [-set-reviewing USER[,USER...]]
 :   [-set-reviewing-all]
 :   [-set-reviewing-none]
 :   [-set-reviewing-whole-feature-only]
 :   [-set-send-email-to EMAIL[,EMAIL...]]
-:   [-set-send-email-upon ACTION[,ACTION...]]                cause email to be
-:                                                            sent only upon
-:                                                            ACTION(S)
-:   [-set-who-can-release-into-me WHO]                       owner who can
-:                                                            release: my-owners |
-:                                                            my-owners-and-child-owners
+:   [-set-send-email-upon ACTION[,ACTION...]]                            cause
+:                                                                        email to
+:                                                                        be sent
+:                                                                        only upon
+:                                                                        ACTION(S)
+:   [-set-who-can-release-into-me WHO]                                   owner who
+:                                                                        can
+:                                                                        release:
+:                                                                        my-owners
+:                                                                        |
+:                                                                        my-owners-and-child-owners
 :   [-set-whole-feature-followers USER[,USER...]]
 :   [-set-whole-feature-reviewers USER[,USER...]]
 :   [-set-xcrs-shown-in-todo-only-for-users-reviewing BOOL]
-:   [-verbose]                                               be more verbose
-:   [-help]                                                  print this help text
-:                                                            and exit
-:                                                            (alias: -?)
+:   [-verbose]                                                           be more
+:                                                                        verbose
+:   [-help]                                                              print
+:                                                                        this help
+:                                                                        text and
+:                                                                        exit
+:                                                                        (alias:
+:                                                                        -?)
 
 ** compress
 
@@ -1319,6 +1574,7 @@
 :   notify-on-feature-updates        watch for updates and dump a feature each
 :                                    time it is changed on the server
 :   process-num-lines-in-diff4       compute num lines of a diff4
+:   push-events                      push events stored on the server
 :   remove-color                     Filter color escape chars from stdin and
 :                                    output to stdout
 :   render-release-email             output the body of the release email for a
@@ -1350,7 +1606,7 @@
 : 
 :   fe.exe internal archived-features-cache SUBCOMMAND
 : 
-: Operations side affecting the cache need to be run by an Iron trusted user.
+: Operations side affecting the cache require admin privileges.
 : 
 : === subcommands ===
 : 
@@ -1505,6 +1761,9 @@
 : mark as caught up files in a catch-up session
 : 
 :   fe.exe internal catch-up mark-file FEATURE [FILE ...]
+: 
+: This command is deprecated and has been subsumed by [fe catch-up mark-file].
+: 
 : 
 : === flags ===
 : 
@@ -1816,7 +2075,7 @@
 : 
 :   fe.exe internal event-subscriptions SUBCOMMAND
 : 
-: Operations changing the subscription limits or dropping subscriptions need to be run by a trusted Iron user.
+: Operations side effecting the subscriptions require admin privileges.
 : 
 : 
 : === subcommands ===
@@ -2112,6 +2371,63 @@
 :   [-help]  print this help text and exit
 :            (alias: -?)
 
+*** push-events
+
+: push events stored on the server
+: 
+:   fe.exe internal push-events SUBCOMMAND
+: 
+: Operations side effecting the push events state require admin privileges.
+: 
+: 
+: === subcommands ===
+: 
+:   clear                     clear push events
+:   set-max-size-per-feature  set max number of push events per feature stored in
+:                             state
+:   show                      show push events
+:   help                      explain a given subcommand (perhaps recursively)
+
+**** clear
+
+: clear push events
+: 
+:   fe.exe internal push-events clear 
+: 
+: === flags ===
+: 
+:   [-all]            clear the entire state
+:   [-id FEATURE_ID]  feature id
+:   [-rev REV]        revision(s) to be cleared from state
+:   [-user USER]      clear events attached to the supplied username
+:   [-help]           print this help text and exit
+:                     (alias: -?)
+
+**** set-max-size-per-feature
+
+: set max number of push events per feature stored in state
+: 
+:   fe.exe internal push-events set-max-size-per-feature SIZE
+: 
+: === flags ===
+: 
+:   [-help]  print this help text and exit
+:            (alias: -?)
+
+**** show
+
+: show push events
+: 
+:   fe.exe internal push-events show 
+: 
+: === flags ===
+: 
+:   [-id FEATURE_ID]  feature id
+:   [-user USER]      show push events of USER
+:   [-values]         show all values
+:   [-help]           print this help text and exit
+:                     (alias: -?)
+
 *** remove-color
 
 : Filter color escape chars from stdin and output to stdout
@@ -2242,16 +2558,22 @@
 : 
 :   fe.exe internal session mark-file FEATURE [FILE ...]
 : 
+: This command is deprecated and has been subsumed by [fe session mark-file].
+: 
+: 
 : === flags ===
 : 
-:   [-create-catch-up-for-me]  create catch-up review even when reviewing for
-:                              oneself
-:   [-for USER]                for user (default is unix login)
-:   [-reason REASON]           why you are reviewing this for someone else
-:   [-session-id SESSION_ID]   fail if the current session id is not the one
-:                              supplied
-:   [-help]                    print this help text and exit
-:                              (alias: -?)
+:   [-create-catch-up-for-me]                   create catch-up review even when
+:                                               reviewing for oneself
+:   [-even-if-some-files-are-already-reviewed]  do not fail if some files are
+:                                               already reviewed
+:   [-for USER]                                 for user (default is unix login)
+:   [-reason REASON]                            why you are reviewing this for
+:                                               someone else
+:   [-session-id SESSION_ID]                    fail if the current session id is
+:                                               not the one supplied
+:   [-help]                                     print this help text and exit
+:                                               (alias: -?)
 
 **** mark-id
 
@@ -2261,14 +2583,17 @@
 : 
 : === flags ===
 : 
-:   -session-id SESSION_ID     session id
-:   [-create-catch-up-for-me]  create catch-up review even when reviewing for
-:                              oneself
-:   [-diff-id DIFF_ID]         diff id
-:   [-for USER]                for user (default is unix login)
-:   [-reason REASON]           why you are reviewing this for someone else
-:   [-help]                    print this help text and exit
-:                              (alias: -?)
+:   -session-id SESSION_ID                      session id
+:   [-create-catch-up-for-me]                   create catch-up review even when
+:                                               reviewing for oneself
+:   [-diff-id DIFF_ID]                          diff id
+:   [-even-if-some-files-are-already-reviewed]  do not fail if some files are
+:                                               already reviewed
+:   [-for USER]                                 for user (default is unix login)
+:   [-reason REASON]                            why you are reviewing this for
+:                                               someone else
+:   [-help]                                     print this help text and exit
+:                                               (alias: -?)
 
 **** show-num-lines
 
@@ -2405,7 +2730,7 @@
 : 
 :   fe.exe internal unclean-workspaces SUBCOMMAND
 : 
-: Operations side effecting someone else's state need to be run by a Iron trusted user.
+: Operations side effecting someone else's state require admin privileges.
 : 
 : 
 : === subcommands ===
@@ -2444,7 +2769,7 @@
 : 
 :   fe.exe internal worker-cache SUBCOMMAND
 : 
-: Operations side effecting the cache need to be run by a Iron trusted user.
+: Operations side effecting the cache require admin privileges.
 : 
 : 
 : === subcommands ===
@@ -2932,7 +3257,7 @@
 
 : rename a feature (and all features below it)
 : 
-:   fe.exe rename FEATURE FEATURE
+:   fe.exe rename FEATURE [FEATURE]
 : 
 : The target feature is not restricted to be a sibling of the original feature, i.e.
 : renaming [jane/a/b] to [jane/c] (or vice versa) is permissible.
@@ -2941,19 +3266,45 @@
 : tip and the new base is the current base.  Skipping the check may mean future rebases and
 : renames will be rejected.
 : 
+: When the basename of the feature is not meant to change, one can use [-new-parent].
+: For example, to rename [jane/a/keep-this-basename] into [jane/b/keep-this-basename]:
+: 
+:   $ fe rename jane/a/keep-this-basename -new-parent jane/b
+: 
 : 
 : === flags ===
 : 
-:   [-even-if-locked]  DEPRECATED -- will be removed soon in a subsequent roll
-:   [-skip-gca-check]  <see above>
-:   [-help]            print this help text and exit
-:                      (alias: -?)
+:   [-even-if-locked]      DEPRECATED -- will be removed soon in a subsequent roll
+:   [-new-parent FEATURE]  Keep the same basename for the feature, rename it as a
+:                          child of the supplied parent feature.
+:   [-skip-gca-check]      <see above>
+:   [-help]                print this help text and exit
+:                          (alias: -?)
 
 ** review
 
 : start or continue a review session
 : 
 :   fe.exe review [FEATURE]
+: 
+: [fe review] can be used to see lines to review in a feature and mark them as reviewed.
+: 
+: When there are both [review] and [catch-up] lines to review, the latter are prioritized
+: and shown first.  For more control over what to review, see the switches:
+: 
+:   -skip-catch-up-review
+:   -only-catch-up-review
+: 
+: Attending someone else's review may be done if authorized, and requires the reviewer
+: to supply a brief reason.  Example:
+: 
+:   $ fe review -for USER1 -reason 'you are out sick today'
+: 
+: By default, reviewing for someone else skips the catch-up review.  Attending someone
+: else's catch-up requires admin privileges, and may be done with:
+: 
+:   $ fe review -only-catch-up-review -for USER
+: 
 : 
 : === flags ===
 : 
@@ -2967,6 +3318,7 @@
 :   [-interactive BOOL]          be interactive via the terminal (default is
 :                                false)
 :   [-max-output-columns INT]    maximum column width for table output
+:   [-only-catch-up-review]      only attend the catch-up review
 :   [-raw]                       show Iron's internal representation of the review
 :   [-reason REASON]             why you are reviewing this for someone else
 :   [-skip-catch-up-review]      skip the catch-up part when there are both
@@ -3018,14 +3370,15 @@
 : 
 : === subcommands ===
 : 
-:   commit  finish the current session, adding reviewed diffs to the brain
-:   diff    show diffs from the current session
-:   forget  forget previously reviewed diffs in the current session
-:   lock    lock the current session, prevent it from being deleted if not
-:           reviewed
-:   show    show attributes of a session
-:   unlock  unlock the current session
-:   help    explain a given subcommand (perhaps recursively)
+:   commit     finish the current session, adding reviewed diffs to the brain
+:   diff       show diffs from the current session
+:   forget     forget previously reviewed diffs in the current session
+:   lock       lock the current session, prevent it from being deleted if not
+:              reviewed
+:   mark-file  mark some files as reviewed
+:   show       show attributes of a session
+:   unlock     unlock the current session
+:   help       explain a given subcommand (perhaps recursively)
 
 *** commit
 
@@ -3118,6 +3471,28 @@
 :                             supplied
 :   [-help]                   print this help text and exit
 :                             (alias: -?)
+
+*** mark-file
+
+: mark some files as reviewed
+: 
+:   fe.exe session mark-file FEATURE [FILE ...]
+: 
+: 
+: 
+: === flags ===
+: 
+:   [-create-catch-up-for-me]                   create catch-up review even when
+:                                               reviewing for oneself
+:   [-even-if-some-files-are-already-reviewed]  do not fail if some files are
+:                                               already reviewed
+:   [-for USER]                                 for user (default is unix login)
+:   [-reason REASON]                            why you are reviewing this for
+:                                               someone else
+:   [-session-id SESSION_ID]                    fail if the current session id is
+:                                               not the one supplied
+:   [-help]                                     print this help text and exit
+:                                               (alias: -?)
 
 *** show
 
@@ -3216,6 +3591,7 @@
 :   [-has-bookmark]                                 show has-bookmark
 :   [-id]                                           show id
 :   [-included-features]                            show included-features
+:   [-inheritable-attributes]                       show inheritable-attributes
 :   [-is-archived]                                  show is-archived
 :   [-is-permanent]                                 show is-permanent
 :   [-is-seconded]                                  show is-seconded
@@ -3240,6 +3616,7 @@
 :   [-owners]                                       show owners
 :   [-print-attribute]                              print all required attributes
 :                                                   and exit
+:   [-properties]                                   show properties
 :   [-property ATTR[,ATTR...]]                      show user-defined properties
 :   [-release-process]                              show release-process
 :   [-remote-repo-path]                             show remote-repo-path
@@ -3258,6 +3635,8 @@
 :                                                   --stat] in org-mode output
 :   [-show-included-feature-details]                show included-feature
 :                                                   descriptions and attributes
+:   [-show-inheritable-attributes]                  show inheritable attributes in
+:                                                   attributes table
 :   [-show-lock-reasons]                            show lock reasons as well
 :   [-tip]                                          show tip
 :   [-users-with-review-session-in-progress]        show

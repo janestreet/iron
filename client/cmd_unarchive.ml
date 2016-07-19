@@ -44,7 +44,7 @@ let main  { Fe.Unarchive.Action. feature_path; feature_id } =
   let%bind () =
     Hg.update repo_root (`Feature feature_path) ~clean_after_update:(Yes repo_is_clean)
   in
-  Cmd_workspace.If_enabled.create_workspace feature_path
+  Cmd_workspace.If_enabled.create_workspace { feature_id; feature_path }
 ;;
 
 let command =

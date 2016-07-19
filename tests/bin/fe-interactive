@@ -34,7 +34,7 @@ case "$command" in
             -mode $IRON_MODE "$@" || true
         echo "remove previous directory"
         rm -rf $IRON_APPDIRS/interactive/dev/export
-        backup=$(ls -1 /j/office/app/fe/prod/backups/export-dir-backup.*.tar.xz | sort -g | tail -n 1)
+        backup=$(ls -1 /j/tot/app/fe/prod/backups/export-dir-backup.*.tar.xz | sort -g | tail -n 1)
         echo "setting up state from: $(basename ${backup})"
         tar --directory="$IRON_APPDIRS/interactive/dev" -xJf ${backup}
         ;;

@@ -10,4 +10,4 @@
 [extensions]
 
 # adds [hg active-bookmark].
-active_bookmark=/j/office/app/hg/prod/jhg/active_bookmark.py
+active_bookmark=/j/office/app/hg/prod/jhg/active_bookmark_v3.py

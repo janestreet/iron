@@ -151,6 +151,12 @@ let main { Fe.Rebase.Action.
     ok_exn result
   in
   let%bind () =
+    match%map try_with (fun () ->
+      Cmd_hg_hooks.maybe_send_push_event ~repo_root)
+    with
+    | Ok () | Error (_ : Exn.t) -> ()
+  in
+  let%bind () =
     if not am_functional_testing
     then Deferred.unit
     else

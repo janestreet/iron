@@ -36,10 +36,11 @@ module If_enabled = struct
             (Feature_path.num_parts r2.from)
             (Feature_path.num_parts r1.from))
       in
-      Deferred.List.iter ~how:`Sequential renames ~f:(fun { Rename. from; to_ } ->
-        match%bind Feature_share.find from with
-        | None -> Deferred.unit
-        | Some src_share -> Feature_share.move_to src_share to_))
+      Deferred.List.iter ~how:`Sequential renames
+        ~f:(fun { Rename. feature_id; from; to_ } ->
+          match%bind Feature_share.find from with
+          | None -> Deferred.unit
+          | Some src_share -> Feature_share.move_to src_share feature_id to_))
   ;;
 
   let update_satellite_repos ~center_repo_root =
@@ -94,7 +95,7 @@ let dir_command =
     )
 ;;
 
-let repo_for_hg_operations_exn feature ~use =
+let repo_for_hg_operations_exn feature_path ~use =
   if not (workspaces_are_enabled ())
   then begin
     let repo_root = ok_exn Repo_root.program_started_in in
@@ -102,7 +103,7 @@ let repo_for_hg_operations_exn feature ~use =
       let%bind repo_root_feature =
         Workspace_hgrc.extract_root_feature_from_hgrc repo_root
       in
-      let feature_root = Feature_path.root feature in
+      let feature_root = Feature_path.root feature_path in
       match repo_root_feature with
       | Error e1 ->
         (* that way we can still test the functionality by creating a valid .hgrc but it
@@ -113,7 +114,7 @@ let repo_for_hg_operations_exn feature ~use =
           else
             match%bind
               Deferred.Or_error.try_with ~extract_exn:true (fun () ->
-                Workspace_util.find_remote_repo_path_exn feature)
+                Workspace_util.find_remote_repo_path_exn feature_path)
             with
             | Ok remote_repo_path ->
               Hg.ensure_local_repo_is_in_family repo_root remote_repo_path
@@ -141,23 +142,24 @@ but is inside a clone of the [%{Feature_name}] family"
     repo_root
   end else
     let use_clone () =
-      let%map repo_clone = Repo_clone.force ~root_feature:(Feature_path.root feature) in
+      let%map repo_clone =
+        Repo_clone.force ~root_feature:(Feature_path.root feature_path)
+      in
       Repo_clone.repo_root repo_clone
     in
     let default_workspace_logic () =
       match use with
       | `Clone -> use_clone ()
       | `Share | `Share_or_clone_if_share_does_not_exist as use ->
-        let%bind feature_exists = Feature_exists.rpc_to_server_exn feature in
-        if not feature_exists
-        then use_clone ()
-        else
+        match%bind Feature_exists.rpc_to_server_exn feature_path with
+        | No -> use_clone ()
+        | Yes feature_id ->
           match use with
           | `Share ->
-            let%map share = Feature_share.force feature in
+            let%map share = Feature_share.force { feature_id; feature_path } in
             Feature_share.center_repo_root share
           | `Share_or_clone_if_share_does_not_exist ->
-            match%bind Feature_share.find feature with
+            match%bind Feature_share.find ~feature_id feature_path with
             | None -> use_clone ()
             | Some feature_share ->
               return (Feature_share.center_repo_root feature_share)
@@ -169,7 +171,7 @@ but is inside a clone of the [%{Feature_name}] family"
         match%map Workspace_hgrc.extract_root_feature_from_hgrc repo_root with
         | Error _ -> false
         | Ok repo_root_family ->
-          Feature_name.equal repo_root_family (Feature_path.root feature)
+          Feature_name.equal repo_root_family (Feature_path.root feature_path)
       in
       match Feature_share.extract_feature_from_workspace_share_path repo_root with
       | None ->
@@ -180,12 +182,12 @@ but is inside a clone of the [%{Feature_name}] family"
         if repo_root_is_of_correct_family
            && Feature_name.(<>)
                 (Feature_path.root current_workspace)
-                (Feature_path.root feature)
+                (Feature_path.root feature_path)
         then
           (* We are in a satellite and the user wants to use the satellite to work on
              some satellite feature.  Let it be. *)
           return repo_root
-        else if Feature_path.(=) current_workspace feature
+        else if Feature_path.(=) current_workspace feature_path
                 || begin match use with
                   | `Share -> false
                   | `Clone | `Share_or_clone_if_share_does_not_exist -> true
@@ -196,7 +198,7 @@ but is inside a clone of the [%{Feature_name}] family"
             [%sexp
               "disallowed due to current workspace being different from supplied feature",
               { current_workspace = (current_workspace : Feature_path.t)
-              ; supplied_feature  = (feature           : Feature_path.t)
+              ; supplied_feature  = (feature_path      : Feature_path.t)
               }
             ]
 ;;
@@ -428,11 +430,13 @@ running other workspace commands."
              | Some _ -> return ()
              | None ->
                match%bind Feature_exists.rpc_to_server_exn feature_path with
-               | true ->
-                 let%map (_ : Feature_share.t) = Feature_share.force feature_path in
+               | Yes feature_id ->
+                 let%map (_ : Feature_share.t) =
+                   Feature_share.force { feature_id; feature_path }
+                 in
                  ()
 
-               | false ->
+               | No ->
                  (* The feature may not exist, because assigned features includes
                     features with catch up.  In that case the user will need at least the
                     clone of the family, if it still exists. *)
@@ -715,9 +719,9 @@ unpushed changes and fail instead, in order to preserve those changes.
          let%bind shares = Feature_share.list () in
          let%map existing_features =
            List_feature_names.rpc_to_server_exn
-             { feature_path = None
-             ; depth = Int.max_value
-             ; use_archived = false
+             { descendants_of = Any_root
+             ; depth          = Int.max_value
+             ; use_archived   = false
              }
          in
          let existing_features =

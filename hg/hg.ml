@@ -198,7 +198,7 @@ type _ how =
 ;;
 
 let hg_executable =
-  "/j/office/app/hg/versions/3.2.2+hgrc_env_vars+share_cache_fix/bin/hg"
+  "/j/office/app/hg/versions/3.5+hgrc_env_vars+share_cache_fix+eliminate_bookmark_race+actually_add_hgrc_env_vars/bin/hg"
 ;;
 
 let hg_user_env_var = "HGUSER"
@@ -395,6 +395,7 @@ module Rev = struct
     include T
     include Comparable.Make (T)
     include Hashable.  Make (T)
+    let invariant = invariant
   end
 
   let equal_node_hash = Compare_by_hash.equal
@@ -1626,7 +1627,7 @@ let rename ?repo_is_clean repo_root remote_repo_path (renames : Rename.t list) =
      Eventually, we should complain about unbookmarked heads, which would at least
      notify people if their change was dropped. *)
   let%bind () =
-    Deferred.List.iter renames ~f:(fun { from; to_ } ->
+    Deferred.List.iter renames ~f:(fun { feature_id = _; from; to_ } ->
       set_bookmark repo_root (Feature to_) ~to_:(`Feature from) `Do_not_push)
   in
   let%bind () =
@@ -1636,7 +1637,7 @@ let rename ?repo_is_clean repo_root remote_repo_path (renames : Rename.t list) =
       `Do_not_push
   in
   let bookmarks_to_push =
-    List.concat_map renames ~f:(fun { from; to_ } ->
+    List.concat_map renames ~f:(fun { feature_id = _; from; to_ } ->
       [ Bookmark.Feature from ; Feature to_ ])
   in
   (* Because we push -B, we should hopefully manage to push all bookmarks or fail

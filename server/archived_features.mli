@@ -57,13 +57,13 @@ val iteri : t -> f:(Feature_path.t -> Archived_feature.t list -> unit) -> unit
 
 val list_features
   :  t
-  -> Feature_path.t option
+  -> descendants_of:Which_ancestor.t
   -> depth:int
   -> Iron_protocol.List_features.Reaction.one list Or_error.t
 
 val list_feature_names
   :  t
-  -> Feature_path.t option
+  -> descendants_of:Which_ancestor.t
   -> depth:int
   -> Feature_path.t list Or_error.t
 

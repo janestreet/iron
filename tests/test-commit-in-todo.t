@@ -52,14 +52,14 @@ Create child with changes.
   | unix-login-for-testing |        |         6 |
   |---------------------------------------------|
 
-  $ IRON_USER=user1 fe internal session mark-file root/child file1
-  $ IRON_USER=user1 fe internal session mark-file root/child file2
+  $ IRON_USER=user1 fe session mark-file root/child file1
+  $ IRON_USER=user1 fe session mark-file root/child file2
 
-  $ IRON_USER=user2 fe internal session mark-file root/child file2
-  $ IRON_USER=user2 fe internal session mark-file root/child file3
+  $ IRON_USER=user2 fe session mark-file root/child file2
+  $ IRON_USER=user2 fe session mark-file root/child file3
 
-  $ IRON_USER=user3 fe internal session mark-file root/child file3
-  $ IRON_USER=user3 fe internal session mark-file root/child file1
+  $ IRON_USER=user3 fe session mark-file root/child file3
+  $ IRON_USER=user3 fe session mark-file root/child file1
 
   $ fe show -omit-attribute-table -omit-description
   root/child

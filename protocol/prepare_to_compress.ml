@@ -61,6 +61,18 @@ module Stable = struct
   end
 
   module Reaction = struct
+    module V2 = struct
+      type t =
+        { feature_tip      : Rev.V1.t
+        ; parent_tip       : Rev.V1.t
+        ; renames          : Rename.V2.t list
+        ; remote_repo_path : Remote_repo_path.V1.t
+        }
+      [@@deriving bin_io, sexp]
+
+      let of_model (t : t) = t
+    end
+
     module V1 = struct
       type t =
         { feature_tip      : Rev.V1.t
@@ -68,17 +80,37 @@ module Stable = struct
         ; renames          : Rename.V1.t list
         ; remote_repo_path : Remote_repo_path.V1.t
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io]
 
-      let of_model t = t
+      open! Core.Std
+      open! Import
+
+      let of_model m =
+        let { V2.
+              feature_tip
+            ; parent_tip
+            ; renames
+            ; remote_repo_path
+            } = V2.of_model m in
+        { feature_tip
+        ; parent_tip
+        ; renames          = List.map renames ~f:Rename.Stable.V1.of_v2
+        ; remote_repo_path
+        }
+      ;;
     end
 
-    module Model = V1
+    module Model = V2
   end
 end
 
 include Iron_versioned_rpc.Make
     (struct let name = "prepare-to-compress" end)
+    (struct let version = 4 end)
+    (Stable.Action.V3)
+    (Stable.Reaction.V2)
+
+include Register_old_rpc
     (struct let version = 3 end)
     (Stable.Action.V3)
     (Stable.Reaction.V1)

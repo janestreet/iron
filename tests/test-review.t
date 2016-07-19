@@ -52,7 +52,7 @@ Review
 
   $ fe internal session show-num-lines test
   8
-  $ fe internal session mark-file test a
+  $ fe session mark-file test a
   $ fe internal session show-num-lines test
   5
 
@@ -70,14 +70,18 @@ Persistence
   $ fe internal session show-num-lines test
   5
 
-  $ fe internal session mark-file test a |& matches "already reviewed"
+  $ fe session mark-file test a |& matches "already reviewed"
   [1]
 
-  $ fe internal session mark-file test b
+  $ fe session mark-file test b
+
+A new session is now created since [b] was the last file to review in
+the former session.
+
   $ fe internal session show-num-lines test
   6
 
-  $ fe internal session mark-file test a
+  $ fe session mark-file test a
   $ fe internal session show-num-lines test
   0
 
@@ -162,7 +166,7 @@ Test [-create-catch-up-for-me].
   |---------+--------|
   | test    |      8 |
   |------------------|
-  $ fe internal session mark-file test a -create-catch-up-for-me
+  $ fe session mark-file test a -create-catch-up-for-me
   $ fe todo -crs-and-review
   CRs and review line counts:
   |-----------------------------|

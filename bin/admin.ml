@@ -41,18 +41,25 @@ let last_hydra_error =
     )
 ;;
 
+let user_sets =
+  let module User_set = Iron_protocol.User_set in
+  List.map User_set.all ~f:(fun user_set ->
+    Enum.to_string_hum (module User_set) user_set
+  , Iron_client.Cmd_user_set.make_command user_set)
+;;
+
 let users =
   Command.group ~summary: "commands about the various sets of user names"
-    [ "define-typos"               , Iron_client.Cmd_define_typos.command
-    ; "get-invalid"                , Iron_client.Cmd_get_invalid_users.command
-    ; "refresh-existing-users"     , Iron_client.Cmd_refresh_existing_users.command
-    ; "remove-aliases"             , Iron_client.Cmd_remove_aliases.command
-    ; "remove-typos"               , Iron_client.Cmd_remove_typos.command
-    ; "repartition-crs"            , Iron_client.Cmd_repartition_crs.command
-    ; "using-locked-sessions"      , Iron_client.Cmd_users_using_locked_sessions.command
-    ; "update-valid-users-and-aliases" ,
-      Iron_client.Cmd_update_valid_users_and_aliases.command
-    ]
+    ([ "define-typos"                   , Iron_client.Cmd_define_typos.command
+     ; "get-invalid"                    , Iron_client.Cmd_get_invalid_users.command
+     ; "refresh-existing-users"         , Iron_client.Cmd_refresh_existing_users.command
+     ; "remove-aliases"                 , Iron_client.Cmd_remove_aliases.command
+     ; "remove-typos"                   , Iron_client.Cmd_remove_typos.command
+     ; "repartition-crs"                , Iron_client.Cmd_repartition_crs.command
+     ; "update-valid-users-and-aliases" ,
+       Iron_client.Cmd_update_valid_users_and_aliases.command
+     ]
+     @ user_sets)
 ;;
 
 let version =
@@ -83,6 +90,7 @@ Also see:
             ; "down-message", Iron_client.Cmd_server_down_message.command
             ; "gc-compact"  , Iron_client.Cmd_gc_compact.command
             ; "rpc-stats"   , Iron_client.Cmd_rpc_stats.command
+            ; "metrics"     , Iron_client.Cmd_metrics.command
             ; "serializer"  , Iron_client.Cmd_serializer.command
             ; "stat"        , Iron_client.Cmd_stat.command
             ; "uptime"      , Iron_client.Cmd_uptime.command

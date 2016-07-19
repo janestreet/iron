@@ -3,7 +3,7 @@ open! Import
 
 include Lru_cache_intf
 
-module Make (H : Hashtbl.Key) = struct
+module Make (H : H) = struct
   module Hq = struct
     include Hash_queue.Make (H)
 
@@ -47,7 +47,9 @@ module Make (H : Hashtbl.Key) = struct
       assert (Hq.length t.items <= t.max_size);
       assert (t.max_size >= max_size_lower_bound);
       Hq.iteri t.items ~f:(fun ~key ~data ->
-        Invariant.invariant [%here] key [%sexp_of: H.t] (fun () -> invariant_a data));
+        Invariant.invariant [%here] key [%sexp_of: H.t] (fun () ->
+          H.invariant key;
+          invariant_a data));
     )
   ;;
 
@@ -71,6 +73,7 @@ module Make (H : Hashtbl.Key) = struct
 
   let to_alist t = Hq.to_alist t.items
   let length   t = Hq.length   t.items
+  let is_empty t = Hq.is_empty t.items
   let max_size t = t.max_size
 
   let find t key =

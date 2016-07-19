@@ -24,7 +24,7 @@ Create the feature
 
   $ BOOKMARK=test fe internal hydra; hg -q update -r test
 
-  $ fe internal session mark-file test a
+  $ fe session mark-file test a
 
 #  $ hg log -G -p
   $ hg update -r 0 -q

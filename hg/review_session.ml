@@ -339,11 +339,6 @@ module Reviewable_diff4 = struct
     t.review_status <- Reviewed { frozen_review_kind }
   ;;
 
-  let check_reviewed t =
-    if is_reviewed t
-    then error "already reviewed" t.diff4 [%sexp_of: Diff4.t]
-    else Ok ()
-  ;;
 
   let unreviewed t = t.review_status <- Not_reviewed
   ;;
@@ -556,7 +551,6 @@ let serializer_exn t =
 let record t query action =
   let recording_query_will_allow_to_rollback =
     match (action : Action.t) with
-    | `Set_is_locked _ -> am_functional_testing
     (* Note to devs: please keep at least this line so that it is easy to add/remove
        lines there *)
     | #Action.t -> true
@@ -628,10 +622,9 @@ let check_session_id t session_id =
 
 let is_locked t = t.is_locked
 
-let can_be_dropped t =
-  not (is_locked t)
-  && not (Array.exists (diff4s_in_session_not_implicitly_reviewed t)
-            ~f:Diff4_in_session.is_reviewed)
+let have_done_some_review t =
+  Array.exists (diff4s_in_session_not_implicitly_reviewed t)
+    ~f:Diff4_in_session.is_reviewed
 ;;
 
 let all_diff4s_are_reviewed t =
@@ -660,24 +653,40 @@ let reviewed_internal t (diff4_ids : Diff4_in_session.Id.And_review_kind.t list)
       t.reviewable_diff4s.( diff4_id ) ~frozen_review_kind:(Some review_kind))
 ;;
 
-let reviewed t query session_id diff4_ids ~compute_review_kind ~is_using_locked_sessions =
+let reviewed t query session_id diff4_ids ~compute_review_kind ~is_using_locked_sessions
+      ~even_if_some_files_are_already_reviewed =
   match check_session_id t session_id with
   | Error _ as e -> e
   | Ok () ->
-    List.map diff4_ids ~f:(fun diff4_id ->
-      let diff4_in_session = t.reviewable_diff4s.(diff4_id) in
-      match Reviewable_diff4.check_reviewed diff4_in_session with
-      | Error _ as err -> err
-      | Ok () ->
-        let review_kind = compute_review_kind diff4_in_session.diff4 in
-        Ok { Diff4_in_session.Id.And_review_kind. diff4_id; review_kind })
-    |> Or_error.combine_errors
-    |> Or_error.map ~f:(fun diff4_id_and_review_kinds ->
+    let already_reviewed_files, diff4_id_and_review_kinds =
+      List.partition_map diff4_ids ~f:(fun diff4_id ->
+        let diff4_in_session = t.reviewable_diff4s.(diff4_id) in
+        if Reviewable_diff4.is_reviewed diff4_in_session
+        then
+          `Fst (Diff4.path_in_repo_at_f2 diff4_in_session.diff4)
+        else
+          let review_kind = compute_review_kind diff4_in_session.diff4 in
+          `Snd { Diff4_in_session.Id.And_review_kind. diff4_id; review_kind })
+    in
+    if not (List.is_empty already_reviewed_files)
+    && not even_if_some_files_are_already_reviewed
+    then
+      let already_reviewed_files = Path_in_repo.Set.of_list already_reviewed_files in
+      let msg =
+        (if Set.length already_reviewed_files > 1
+         then "These files are"
+         else "This file is"
+        ) ^ " already reviewed"
+      in
+      error_s [%sexp (msg : string), (already_reviewed_files : Path_in_repo.Set.t)]
+    else begin
       if not (List.is_empty diff4_id_and_review_kinds) then begin
         record t query (`Reviewed diff4_id_and_review_kinds);
         reviewed_internal t diff4_id_and_review_kinds;
         if is_using_locked_sessions then set_is_locked t query true;
-      end)
+      end;
+      Ok ()
+    end
 ;;
 
 let unreviewed_internal t diff4_ids =

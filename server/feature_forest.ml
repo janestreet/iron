@@ -177,13 +177,13 @@ let add_exn t feature_path value =
   Hashtbl.add_exn t.node_by_path ~key:feature_path ~data:node;
 ;;
 
-let rec add_ancestors t feature_path value =
+let rec add_ancestors t feature_path ~f =
   if not (mem t feature_path) then begin
     begin match Feature_path.parent feature_path with
     | Error _ -> ()
-    | Ok parent -> add_ancestors t parent value
+    | Ok parent_path -> add_ancestors t parent_path ~f
     end;
-    add_exn t feature_path value
+    add_exn t feature_path (f ())
   end;
 ;;
 
@@ -224,22 +224,23 @@ let complete t ~prefix of_what =
     of_what
 ;;
 
-let rec list_children node_by_name ~depth accum =
+let rec list_descendants node_by_name ~depth accum =
   if depth = 0
   then accum
   else
     let depth = depth - 1 in
     Hashtbl.fold node_by_name ~init:accum ~f:(fun ~key:_ ~data:node accum ->
-      list_children node.Node.children ~depth ((node.feature_path, node.value) :: accum))
+      list_descendants node.Node.children ~depth
+        ((node.feature_path, node.value) :: accum))
 ;;
 
-let list t feature_path_option ~depth =
+let list t ~descendants_of ~depth =
   if depth < 0
   then error "negative depth is not allowed" depth [%sexp_of: int]
   else
-    match feature_path_option with
-    | None -> Ok (list_children t.root_by_name ~depth [])
-    | Some feature_path ->
+    match (descendants_of : Which_ancestor.t) with
+    | Any_root -> Ok (list_descendants t.root_by_name ~depth [])
+    | Feature feature_path ->
       Or_error.map (find_node t feature_path) ~f:(fun node ->
-        list_children node.children ~depth [ (node.feature_path, node.value) ])
+        list_descendants node.children ~depth [ (node.feature_path, node.value) ])
 ;;

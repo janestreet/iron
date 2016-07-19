@@ -131,3 +131,82 @@ carry one with the next session.
      [ ] 2 f2
      [X] 2 f4
      [ ] 2 f8
+
+One can use [fe review] to review on behalf of someone else.  When doing so,
+supplying a reason is required.
+
+  $ echo -e "F\ny\nq" | IRON_USER=user1 review -for unix-login-for-testing 2>&1 \
+  >   | matches "must supply -reason when acting for someone"
+  [1]
+
+  $ echo -e "F\ny\nq" \
+  >   | IRON_USER=user1 review -for unix-login-for-testing -reason 'reason' >/dev/null
+
+When there are catch-up lines to review, they are shown first ...
+
+  $ echo -e "q\n" | review | grep -A 300 'Catch-up.'
+  Catch-up.  user1 reviewed this for you, giving the reason as:
+  reason
+     [ ] 2 f2
+  How do you want to do this review? [F/g/s/q/?]: Quit
+
+... unless one supplies [-skip-catch-up-review] ...
+
+  $ echo -e "q\n" | review -skip-catch-up-review | grep -A 300 'Reviewing.'
+  Reviewing root to *. (glob)
+  1 files to review (2 already reviewed): 6 lines total
+     [X] 2 f2
+     [X] 2 f4
+     [ ] 2 f8
+  How do you want to do this review? [F/g/s/c/q/?]: Quit
+
+... or unless someone else is reviewing on their behalf.
+
+  $ echo -e "q\n" | IRON_USER=user1 review -for unix-login-for-testing -reason test \
+  >   | grep -A 300 'Reviewing.'
+  Reviewing root to *. (glob)
+  1 files to review (2 already reviewed): 6 lines total
+     [X] 2 f2
+     [X] 2 f4
+     [ ] 2 f8
+  How do you want to do this review? [F/g/s/c/q/?]: Quit
+
+Check that some reasonable errors are given when inconsistent combinations of
+the switches are supplied.
+
+  $ IRON_USER=user1 review -create-catch-up-for-me -for unix-login-for-testing
+  Cannot use [-create-catch-up-for-me] when using [-for] for another user.
+  [1]
+
+  $ review -only-catch-up-review -for unix-login-for-testing -create-catch-up-for-me
+  At most one of the switches -only-catch-up-review and -create-catch-up-for-me may be supplied.
+  [1]
+
+  $ review -only-catch-up-review -skip-catch-up-review
+  At most one of the switches -only-catch-up-review and -skip-catch-up-review may be supplied.
+  [1]
+
+Check that an admin can catch-up for someone else (in fact in test, this is
+always allowed).
+
+  $ fe catch-up show -omit-attribute-table -omit-header-and-description
+  Reviewing root to * (glob)
+  1 files to review: 2 lines total
+  
+  Catch-up.  user1 reviewed this for you, giving the reason as:
+  reason
+     [ ] 2 f2
+
+  $ echo -e 'F\ny\nq\n' \
+  >   | IRON_USER=user1 review -only-catch-up-review -for unix-login-for-testing >/dev/null
+
+  $ fe catch-up show
+  No review to catch up on for unix-login-for-testing in root.
+  [1]
+
+When there is no catch-up, the command does not enter the regular review loop,
+and the proper indication is printed on stdout.
+
+  $ echo -e 'F\ny\nq\n' \
+  >   | IRON_USER=user1 review -only-catch-up-review -for unix-login-for-testing
+  No review to catch up on in root.

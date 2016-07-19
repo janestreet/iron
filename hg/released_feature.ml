@@ -148,7 +148,7 @@ module Stable = struct
       ; seconder
       ; base
       ; tip
-      ; properties              = Properties.create ()
+      ; properties              = Properties.empty
       ; includes                = List.map includes ~f:to_v2
       ; release_cause
       }

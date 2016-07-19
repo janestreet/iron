@@ -25,7 +25,7 @@ val check_add : 'a t -> Feature_path.t -> unit Or_error.t
 (** [add_exn t path a] raises if [not (is_ok (check_add t path))] *)
 val add_exn : 'a t -> Feature_path.t -> 'a -> unit
 
-val add_ancestors : 'a t -> Feature_path.t -> 'a -> unit
+val add_ancestors : 'a t -> Feature_path.t -> f:(unit -> 'a) -> unit
 
 (** [change_exn t path] fails if [not (mem t path)]. *)
 val change_exn : 'a t -> Feature_path.t -> ('a -> 'a) -> unit
@@ -38,7 +38,7 @@ val remove_exn       : _ t -> Feature_path.t -> unit
 
 val list
   :  'a t
-  -> Feature_path.t option
+  -> descendants_of:Which_ancestor.t
   -> depth:int
   -> (Feature_path.t * 'a) list Or_error.t
 

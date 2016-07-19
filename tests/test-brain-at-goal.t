@@ -35,7 +35,7 @@ Start a session.
   $ touch file2; hg add file2; hg com -m file2
   $ echo change2 >file; hg com -m change2
   $ feature_to_server root -fake-valid
-  $ fe internal session mark-file root file
+  $ fe session mark-file root file
   $ fe session show
   Reviewing root to 7c2ded74c530.
   1 files to review (1 already reviewed): 3 lines total
@@ -50,7 +50,7 @@ Extend the feature with a no-op.
 
 Finish the session.
 
-  $ fe internal session mark-file root file2
+  $ fe session mark-file root file2
 
 The reviewer brain has been advanced to the goal.
 

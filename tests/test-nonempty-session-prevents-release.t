@@ -45,8 +45,8 @@ Setup feature with review in two files
 
 Review one file, but not the other.
 
-  $ fe internal session mark-file root file1
-  $ IRON_USER=user1 fe internal session mark-file root file1
+  $ fe session mark-file root file1
+  $ IRON_USER=user1 fe session mark-file root file1
 
 Revert the feature to the check point, and it's not releasable.
 

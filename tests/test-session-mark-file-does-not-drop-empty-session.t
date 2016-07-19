@@ -43,7 +43,7 @@ Advance the feature.
 Even though the feature has advanced and the session is empty, we can
 still mark a file in it.
 
-  $ fe internal session mark-file -session-id $sid root file
+  $ fe session mark-file -session-id $sid root file
 
 But then we still have to review the subsequent diff.
 

@@ -49,7 +49,7 @@ Pause serializer, freeze persistent state.
 
 Do some write operations.
 
-  $ fe internal session mark-file test a
+  $ fe session mark-file test a
   $ fe session show
   Reviewing test to 9bdd8ea4bdfa.
   1 files to review (1 already reviewed): 8 lines total
@@ -91,7 +91,7 @@ Force resume on quit:
 Should abort the pause and force flushing the changes.
 
   $ fe admin server serializer pause
-  $ fe internal session mark-file test b
+  $ fe session mark-file test b
   $ fe session show |& matches "reviewer is up to date"
   [1]
 

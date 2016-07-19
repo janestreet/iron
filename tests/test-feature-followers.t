@@ -237,7 +237,7 @@ But one cannot review for a feature follower, it serves no purpose.
 Check that a partial session is not blocking release if this is for a user who
 only has follow lines.
 
-  $ IRON_USER=user2 fe internal session mark-file root/add-follower file
+  $ IRON_USER=user2 fe session mark-file root/add-follower file
   $ fe show -next-steps root/add-follower
   (Release)
 

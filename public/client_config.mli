@@ -23,12 +23,14 @@ module Cmd : sig
 
   module Review : sig
     val do_not_modify_local_repo : t -> bool
-    val emacs : t -> bool
+    val emacs                    : t -> bool
+    val sort_build_order         : t -> bool
   end
 
   module Show : sig
     val omit_completed_review         : t -> bool
     val omit_unclean_workspaces_table : t -> bool
+    val show_inheritable_attributes   : t -> bool
     val show_lock_reasons             : t -> bool
   end
 
@@ -80,6 +82,8 @@ val directory_order : t -> Path_in_repo.t list list
 val may_infer_feature_path_from_current_bookmark : t -> bool
 
 val pager_for_review : t -> string option
+
+val send_push_events_to_server : t -> bool
 
 val show_commit_session_warning : t -> bool
 

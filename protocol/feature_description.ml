@@ -3,10 +3,16 @@ module Stable = struct
   open Import_stable
 
   module Action = struct
+    module V4 = struct
+      include Maybe_archived_feature_spec.V3
+
+      let to_model t = t
+    end
+
     module V3 = struct
       include Maybe_archived_feature_spec.V2
 
-      let to_model t = t
+      let to_model t = V4.to_model (Maybe_archived_feature_spec.V2.to_v3 t)
     end
 
     module V2 = struct
@@ -26,7 +32,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V3
+    module Model = V4
   end
 
   module Reaction = struct
@@ -45,6 +51,11 @@ end
 
 include Iron_versioned_rpc.Make
     (struct let name = "feature-description" end)
+    (struct let version = 4 end)
+    (Stable.Action.V4)
+    (Stable.Reaction.V1)
+
+include Register_old_rpc
     (struct let version = 3 end)
     (Stable.Action.V3)
     (Stable.Reaction.V1)

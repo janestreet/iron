@@ -56,18 +56,6 @@ val diff
   -> unit
   -> string list
 
-(* Diffs with every algo, returning the hunks in a map of the algo name to its
-   representation of the hunk. *)
-val emacs_diff
-  :  ?verbose:bool
-  -> rev_names:string Diamond.t
-  -> file_names:string Diamond.t
-  -> header_file_name:string
-  -> context:int
-  -> contents:string Diamond.t
-  -> unit
-  -> Structured_elisp.t
-
 val num_lines_to_review
   : contents:string Diamond.t
   -> int

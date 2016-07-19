@@ -71,24 +71,6 @@ let hunks
              })
 ;;
 
-let to_lines
-      ?verbose
-      ~view_ids_shown
-      ~rev_names ~file_names ~header_file_name ~context
-      ~scrutiny ~contents () =
-  let view_ids_computed : View_ids_computed.t =
-    match (view_ids_shown : Hunk.View_ids_shown.t) with
-    | All -> Compute_every_view_available
-    | Only list -> Compute_only_in_that_order list
-  in
-  hunks ?verbose
-    ~view_ids_computed
-    ~include_hunk_breaks:true
-    ~rev_names ~file_names ~header_file_name
-    ~context ~scrutiny ~contents ()
-  |> List.map ~f:Hunk.to_lines
-;;
-
 let compute_only_default_views_when_counting_lines =
   View_ids_computed.Compute_only_by_diff4_class
     (Map.map User_config.default_view_configuration ~f:Diff_algo_id.Set.of_list)
@@ -112,20 +94,25 @@ let diff
       ?verbose
       ~view_ids_shown
       ~rev_names ~file_names ~header_file_name ~context ~contents () =
-  to_lines
-    ?verbose
-    ~view_ids_shown
-    ~rev_names ~file_names ~header_file_name ~context
-    ~scrutiny:None ~contents ()
-  |> List.concat_map ~f:(List.concat_map ~f:(fun (hunk : Hunk.Lines.t) -> hunk.lines))
-;;
-
-let emacs_diff ?verbose ~rev_names ~file_names ~header_file_name ~context ~contents () =
-  to_lines
-    ?verbose ~view_ids_shown:All
-    ~rev_names ~file_names ~header_file_name ~context
-    ~scrutiny:None ~contents ()
-  |> Structured_elisp.create
+  let view_ids_computed : View_ids_computed.t =
+    match (view_ids_shown : Hunk.View_ids_shown.t) with
+    | All -> Compute_every_view_available
+    | Only list -> Compute_only_in_that_order list
+  in
+  hunks ?verbose
+    ~view_ids_computed
+    ~include_hunk_breaks:true
+    ~rev_names ~file_names ~header_file_name
+    ~context ~scrutiny:None ~contents ()
+  |>
+  begin
+    if false
+    then Hunk.list_to_lines
+    else (fun hunks ->
+      hunks
+      |> List.map ~f:Hunk.to_lines
+      |> List.concat_map ~f:(List.concat_map ~f:(fun (hunk : Hunk.Lines.t) -> hunk.lines)))
+  end
 ;;
 
 let hunks

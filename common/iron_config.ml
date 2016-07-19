@@ -147,7 +147,6 @@ module T = struct
     ; hgrc                     : Abspath.t
     ; hydra_user               : User_name.t [@default default_hydra_user]
     ; serializer_pause_timeout : Time.Span.t [@default serializer_pause_timeout_default]
-    ; admin_user_names         : User_name.Set.t [@default User_name.Set.empty]
     }
   [@@deriving fields, sexp]
 end
@@ -168,7 +167,6 @@ let for_checking_invariants =
   ; hgrc                     = Abspath.of_string "/"
   ; hydra_user               = default_hydra_user
   ; serializer_pause_timeout = serializer_pause_timeout_default
-  ; admin_user_names         = User_name.Set.empty
   }
 ;;
 
@@ -181,6 +179,5 @@ let invariant t =
       ~hgrc:ignore
       ~hydra_user:ignore
       ~serializer_pause_timeout:ignore
-      ~admin_user_names:ignore
   )
 ;;

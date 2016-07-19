@@ -3,6 +3,16 @@ module Stable = struct
   open! Import_stable
 
   module Namespace = struct
+    module V4 = struct
+      type t =
+        [ `All
+        | `Archived
+        | `Existing
+        | `Existing_or_most_recently_archived
+        | `Existing_or_with_catch_up
+        ]
+      [@@deriving bin_io, compare, sexp]
+    end
     module V2 = struct
       type t =
         [ `All
@@ -10,7 +20,9 @@ module Stable = struct
         | `Existing
         | `Existing_or_most_recently_archived
         ]
-      [@@deriving bin_io, compare, sexp]
+      [@@deriving bin_io]
+
+      let to_v4 (t : t) : V4.t = (t :> V4.t)
     end
     module V1 = struct
       type t =
@@ -22,7 +34,7 @@ module Stable = struct
 
       let to_v2 (t : t) : V2.t = (t :> V2.t)
     end
-    module Model = V2
+    module Model = V4
   end
 
   module Feature_spec = struct
@@ -36,12 +48,27 @@ module Stable = struct
     module Model = V1
   end
 
+  module V3 = struct
+    type t =
+      { feature_spec : Feature_spec.V1.t
+      ; namespace    : Namespace.V4.t
+      }
+    [@@deriving bin_io, compare, sexp]
+  end
+
   module V2 = struct
     type t =
       { feature_spec : Feature_spec.V1.t
       ; namespace    : Namespace.V2.t
       }
-    [@@deriving bin_io, compare, sexp]
+    [@@deriving bin_io]
+
+    let to_v3 { feature_spec; namespace } =
+      { V3.
+        feature_spec
+      ; namespace    = Namespace.V2.to_v4 namespace
+      }
+    ;;
   end
 
   module V1 = struct
@@ -65,7 +92,7 @@ module Stable = struct
     ;;
   end
 
-  module Model = V2
+  module Model = V3
 end
 
 open! Core.Std

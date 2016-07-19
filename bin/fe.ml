@@ -44,6 +44,7 @@ let internal =
     ; "need-diff4s-starting-from"    , Iron_client.Cmd_need_diff4s_starting_from.command
     ; "notify-on-descendant-updates" , Iron_client.Cmd_notify_on_descendant_updates.command
     ; "notify-on-feature-updates"    , Iron_client.Cmd_notify_on_feature_updates.command
+    ; "push-events"                  , Iron_client.Cmd_push_events.command
     ; "remove-color"                 , Iron_client.Cmd_remove_color.command
     ; "render-release-email"         , Iron_client.Cmd_show.render_release_email_command
     ; "rpc-to-server"                , Iron_client.Cmd_internal_rpc_to_server.command

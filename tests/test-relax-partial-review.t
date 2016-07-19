@@ -52,7 +52,7 @@ Create child.
 
 Have user2 do a partial review.
 
-  $ IRON_USER=user2 fe internal session mark-file root/child file
+  $ IRON_USER=user2 fe session mark-file root/child file
 
   $ echo second-change >file; hg com -m file
   $ feature_to_server root/child
@@ -98,7 +98,7 @@ that very user's session, which was confusing.
      [ ] 2 file
      [ ] 2 other-file
 
-  $ IRON_USER=user1 fe internal session mark-file root/child file
+  $ IRON_USER=user1 fe session mark-file root/child file
 
   $ IRON_USER=user1 fe session show root/child
   Reviewing root/child to e1dfb03d82b0.
@@ -284,9 +284,9 @@ Create another child.
   $ fe enable
   $ fe second -even-though-owner
 
-  $ fe internal session mark-file root/child file
-  $ IRON_USER=user1 fe internal session mark-file root/child file
-  $ IRON_USER=user2 fe internal session mark-file root/child file
+  $ fe session mark-file root/child file
+  $ IRON_USER=user1 fe session mark-file root/child file
+  $ IRON_USER=user2 fe session mark-file root/child file
 
 
   $ REVERT_TO_HERE=$(fe show -tip)
@@ -309,8 +309,8 @@ Create another child.
 
 user1 and user2 reviews partially the feature.
 
-  $ IRON_USER=user1 fe internal session mark-file root/child file
-  $ IRON_USER=user2 fe internal session mark-file root/child file
+  $ IRON_USER=user1 fe session mark-file root/child file
+  $ IRON_USER=user2 fe session mark-file root/child file
 
 Revert the feature to a reviewed state, and it's not releasable.  user1 and
 user2 have partial review done in their session.

@@ -127,8 +127,8 @@ Fail without empty brains or review sessions in progress.
   $ fe enable
   $ fe change -add-reviewing file-owner
   $ feature_to_server root/feature -fake-valid
-  $ fe internal session mark-file root/feature b
-  $ IRON_USER=file-owner fe internal session mark-file root/feature b
+  $ fe session mark-file root/feature b
+  $ IRON_USER=file-owner fe session mark-file root/feature b
   $ fe copy root/feature root/feature1 |& matches "review has been done"
   [1]
   $ fe copy root/feature root/feature1 -without-copying-review

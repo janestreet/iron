@@ -16,8 +16,8 @@ as reviewed, and create a new version of the parent.
   $ fe change -add-reviewing file-owner
   $ echo a > for_the_feature; hg add for_the_feature; hg -q commit -m for_the_feature
   $ feature_to_server root/feature -fake-valid
-  $ fe internal session mark-file root/feature for_the_feature
-  $ IRON_USER=file-owner fe internal session mark-file root/feature for_the_feature
+  $ fe session mark-file root/feature for_the_feature
+  $ IRON_USER=file-owner fe session mark-file root/feature for_the_feature
   $ fe show
   root/feature
   ============
@@ -70,12 +70,12 @@ decreases when I mark and reaches 0 at the end, the exact numbers don't matter.
 
   $ fe internal session show-num-lines root/feature
   5
-  $ fe internal session mark-file root/feature for_the_feature
+  $ fe session mark-file root/feature for_the_feature
   $ fe internal session show-num-lines root/feature
   3
-  $ fe internal session mark-file root/feature initial
+  $ fe session mark-file root/feature initial
   $ fe internal session show-num-lines root/feature
   2
-  $ fe internal session mark-file root/feature for_the_base
+  $ fe session mark-file root/feature for_the_base
   $ fe internal session show-num-lines root/feature
   0

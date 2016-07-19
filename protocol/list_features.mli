@@ -3,9 +3,9 @@ open! Import
 
 module Action : sig
   type t =
-    { feature_path : Feature_path.t option
-    ; depth        : int
-    ; use_archived : bool
+    { descendants_of : Which_ancestor.t
+    ; depth          : int
+    ; use_archived   : bool
     }
   [@@deriving fields, sexp_of]
 end

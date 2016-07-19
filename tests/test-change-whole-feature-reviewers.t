@@ -38,7 +38,7 @@ Make user1 not a whole-feature reviewer and he has nothing todo.
 Make user1 a whole-feature reviewer, create a session.
 
   $ fe change -add-whole-feature-reviewer user1
-  $ fe review -for user1 >/dev/null 2>&1 || true   # create a session
+  $ IRON_USER=user1 fe session show >/dev/null 2>&1 # create a session
   $ SESSION_ID=$(fe session show -id -for user1)
 
 Lock the session.

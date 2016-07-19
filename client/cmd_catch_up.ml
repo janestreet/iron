@@ -152,6 +152,69 @@ let is_needed =
     )
 ;;
 
+let mark_file ~deprecated =
+  let subsumed_by = "[fe catch-up mark-file]" in
+  Command.async'
+    ~summary:"mark as caught up files in a catch-up session"
+    ~readme:(fun () ->
+      if deprecated
+      then concat [ "\
+This command is deprecated and has been subsumed by " ; subsumed_by ; ".
+"]
+      else ""
+    )
+    (let open Command.Let_syntax in
+     let%map_open () = return ()
+     and feature_path  = catch_up_feature_path
+     and for_          = for_
+     and which_session = which_session
+     and paths_in_repo = paths_in_repo
+     in
+     fun () ->
+       let open! Deferred.Let_syntax in
+       if deprecated && am_functional_testing
+       then failwithf "This command is deprecated.  \
+                       Tests should be updated to use %s instead" subsumed_by ();
+       let feature_path = ok_exn feature_path in
+       match%bind Get_catch_up_session.rpc_to_server_exn { feature_path; for_ } with
+       | `Up_to_date ->
+         failwiths "catch up is up to date, cannot mark file" paths_in_repo
+           [%sexp_of: Path_in_repo.t list]
+       | `Catch_up_session
+           { Get_catch_up_session.Catch_up_session.
+             catch_up_session_id
+           ; diff4s_to_catch_up
+           ;  _ } ->
+         begin match which_session with
+         | Current_session -> ()
+         | This_session session_id ->
+           ok_exn (Session_id.check ~actual:catch_up_session_id ~supplied:session_id)
+         end;
+         let diff4s_in_session =
+           List.map diff4s_to_catch_up ~f:Diff4_to_catch_up.diff4_in_session
+         in
+         let table = Path_in_repo.Table.create () in
+         List.iter diff4s_in_session ~f:(fun diff4_in_session ->
+           let key = Diff4.path_in_repo_at_f2 (Diff4_in_session.diff4 diff4_in_session) in
+           Hashtbl.set table ~key ~data:diff4_in_session);
+         let ids_to_mark, invalid_files =
+           List.partition_map paths_in_repo ~f:(fun path_in_repo ->
+             match Hashtbl.find table path_in_repo with
+             | None       -> `Snd path_in_repo
+             | Some diff4 -> `Fst (Diff4_in_session.id diff4))
+         in
+         if not (List.is_empty invalid_files)
+         then failwiths "files not found in the current session" invalid_files
+                [%sexp_of: Path_in_repo.t list];
+         Catch_up_diffs.rpc_to_server_exn
+           { for_
+           ; feature_path
+           ; catch_up_session_id
+           ; diff4_in_session_ids = ids_to_mark
+           }
+    )
+;;
+
 module Attribute = struct
   module T = struct
     type t =
@@ -233,6 +296,7 @@ let command =
     [ "clear"    , clear
     ; "diff"     , diff
     ; "is-needed", is_needed
+    ; "mark-file", mark_file ~deprecated:false
     ; "review"   , Cmd_review.catch_up_review_command
     ; "show"     , show
     ]

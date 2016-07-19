@@ -26,12 +26,12 @@ Review & Catch up.
   2
   $ fe internal catch-up show-num-lines root -for user1
   0
-  $ fe internal session mark-file root a     -for user1 -reason reason
+  $ fe session mark-file root a     -for user1 -reason reason
   $ fe internal session show-num-lines root  -for user1
   1
   $ fe internal catch-up show-num-lines root -for user1
   1
-  $ fe internal session mark-file root a     -for user2 -reason reason
+  $ fe session mark-file root a     -for user2 -reason reason
   $ fe internal session show-num-lines root  -for user2
   1
   $ fe internal catch-up show-num-lines root -for user2
@@ -51,7 +51,7 @@ Review & Catch up.
 Check that the env var above stops the ability to catch up on behalf
 of someone else even though in test mode.
 
-  $ fe catch-up review -for user2 > /dev/null
+  $ fe review -only-catch-up-review -for user2 > /dev/null
   (error
    (may-modify-others-catch-up
     ("unauthorized attempt to modify someone else's catch-up review"
@@ -65,7 +65,7 @@ of someone else even though in test mode.
      ((for_ user2) (requested_by unix-login-for-testing)))))
   [1]
 
-  $ fe internal catch-up mark-file root a -for user2
+  $ fe catch-up mark-file root a -for user2
   (error
    (catch-up-diffs
     ("unauthorized attempt to modify someone else's catch-up review"
@@ -83,7 +83,7 @@ Allow to anyone via -for to review invalid users catch-up sessions
 
   $ fe internal catch-up show-num-lines root -for user2
   1
-  $ fe internal catch-up mark-file root a -for user2
+  $ fe catch-up mark-file root a -for user2
   $ fe internal catch-up show-num-lines root -for user2
   0
   $ show-catch-up
@@ -100,7 +100,7 @@ Do not generate catch-up when reviewing for an invalid user
   1
   $ fe internal catch-up show-num-lines root -for user2
   0
-  $ fe internal session mark-file root b -for user2 -reason reason
+  $ fe session mark-file root b -for user2 -reason reason
   $ fe internal session show-num-lines root  -for user2
   0
   $ fe internal catch-up show-num-lines root -for user2
@@ -117,7 +117,7 @@ Allow a user to review existing catch-up session for their aliases
 
   $ fe internal catch-up show-num-lines root -for user1
   1
-  $ fe internal catch-up mark-file root a -for user1
+  $ fe catch-up mark-file root a -for user1
   $ fe internal catch-up show-num-lines root -for user1
   0
   $ show-catch-up
@@ -134,7 +134,7 @@ Do not generate catch-up when reviewing for an alias
   1
   $ fe internal catch-up show-num-lines root -for user1
   0
-  $ fe internal session mark-file root b     -for user1 -reason reason
+  $ fe session mark-file root b     -for user1 -reason reason
   $ fe internal session show-num-lines root  -for user1
   0
   $ fe internal catch-up show-num-lines root -for user1

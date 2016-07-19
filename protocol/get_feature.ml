@@ -37,14 +37,32 @@ module Stable = struct
 
   module Maybe_archived = struct
     module Action = struct
+      module V3 = struct
+        type t =
+          { what_feature : Maybe_archived_feature_spec.V3.t
+          ; what_diff    : What_diff.V2.t
+          }
+        [@@deriving bin_io, compare, fields, sexp]
+
+        let to_model (t : t) = t
+      end
+
       module V2 = struct
         type t =
           { what_feature : Maybe_archived_feature_spec.V2.t
           ; what_diff    : What_diff.V2.t
           }
-        [@@deriving bin_io, compare, fields, sexp]
+        [@@deriving bin_io]
 
-        let to_model t = t
+        let to_model { what_feature
+                     ; what_diff
+                     } =
+          V3.to_model
+            { V3.
+              what_feature = Maybe_archived_feature_spec.V2.to_v3 what_feature
+            ; what_diff
+            }
+        ;;
       end
 
       module V1 = struct
@@ -65,7 +83,7 @@ module Stable = struct
         ;;
       end
 
-      module Model = V2
+      module Model = V3
     end
 
     module Reaction = Feature
@@ -92,6 +110,11 @@ open! Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "get-feature" end)
+    (struct let version = 20 end)
+    (Stable.Action.V1)
+    (Stable.Reaction.V20)
+
+include Register_old_rpc
     (struct let version = 19 end)
     (Stable.Action.V1)
     (Stable.Reaction.V19)
@@ -147,6 +170,11 @@ module Reaction  = Feature
 module By_id = struct
   include Iron_versioned_rpc.Make
       (struct let name = "get-feature-by-id" end)
+      (struct let version = 20 end)
+      (Stable.By_id.Action.V2)
+      (Stable.By_id.Reaction.V20)
+
+  include Register_old_rpc
       (struct let version = 19 end)
       (Stable.By_id.Action.V2)
       (Stable.By_id.Reaction.V19)
@@ -188,6 +216,16 @@ end
 module Maybe_archived = struct
   include Iron_versioned_rpc.Make
       (struct let name = "get-feature-maybe-archived" end)
+      (struct let version = 8 end)
+      (Stable.Maybe_archived.Action.V3)
+      (Stable.Maybe_archived.Reaction.V20)
+
+  include Register_old_rpc
+      (struct let version = 7 end)
+      (Stable.Maybe_archived.Action.V2)
+      (Stable.Maybe_archived.Reaction.V20)
+
+  include Register_old_rpc
       (struct let version = 6 end)
       (Stable.Maybe_archived.Action.V2)
       (Stable.Maybe_archived.Reaction.V19)

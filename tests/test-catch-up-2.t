@@ -23,9 +23,9 @@ Release a child into test-root
   $ seq 1 3 > a
   $ hg commit -m "add some lines"
   $ feature_to_server test-root/feat1 -fake-valid-obligations
-  $ fe internal session  mark-file test-root/feat1 a -for user1 -reason reason
-  $ fe internal catch-up mark-file test-root/feat1 a -for user1
-  $ fe internal session  mark-file test-root/feat1 a
+  $ fe session  mark-file test-root/feat1 a -for user1 -reason reason
+  $ fe catch-up mark-file test-root/feat1 a -for user1
+  $ fe session  mark-file test-root/feat1 a
   $ IRON_USER=user1 fe second test-root/feat1
   $ fe release test-root/feat1
   $ feature_to_server test-root -fake-valid-obligations

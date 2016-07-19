@@ -79,7 +79,7 @@ val create
   -> Serializer.t
   -> t
 
-val can_be_dropped : t -> bool
+val have_done_some_review : t -> bool
 
 val all_diff4s_are_reviewed : t -> bool
 
@@ -98,6 +98,7 @@ val reviewed
   -> Diff4_in_session.Id.t list
   -> compute_review_kind:( Diff4.t -> Review_kind.t )
   -> is_using_locked_sessions:bool
+  -> even_if_some_files_are_already_reviewed:bool
   -> unit Or_error.t
 
 val unreviewed

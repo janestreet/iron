@@ -1,108 +1,114 @@
-┌─────────────────────────────────────────┬────────────────────────────────────────┐
-│ name                                    │ versions                               │
-├─────────────────────────────────────────┼────────────────────────────────────────┤
-│ add-fully-reviewed-edge                 │ 1, 2, 3                                │
-│ archive-feature                         │ 2, 3                                   │
-│ brain-forget                            │ 1                                      │
-│ catch-up-diffs                          │ 1                                      │
-│ change-feature                          │ 4, 5, 6, 7                             │
-│ change-fully-reviewed-revisions         │ 2                                      │
-│ check-cached-feature-attributes         │ 1                                      │
-│ check-invariant                         │ 1                                      │
-│ clear-bookmarks-without-feature         │ 1                                      │
-│ clear-catch-up-sessions                 │ 1                                      │
-│ commit-session                          │ 1                                      │
-│ complete                                │ 4, 5, 6                                │
-│ compress                                │ 1, 2, 3                                │
-│ copy-feature                            │ 1                                      │
-│ create-feature                          │ 5                                      │
-│ de-alias-feature                        │ 1                                      │
-│ define-typos                            │ 1                                      │
-│ dump                                    │ 11                                     │
-│ enable-review                           │ 2                                      │
-│ expect-next-base-update                 │ 1                                      │
-│ fact-action                             │ 2                                      │
-│ fact-evidence                           │ 1                                      │
-│ fact-list                               │ 1                                      │
-│ fact-spec                               │ 1                                      │
-│ fact-specs                              │ 1                                      │
-│ feature-description                     │ 1, 2, 3                                │
-│ feature-exists                          │ 1                                      │
-│ feature-is-pending                      │ 1                                      │
-│ find-features-by-partial-name           │ 2, 3, 4, 5                             │
-│ force-retry                             │ 1                                      │
-│ force-set-cached-feature-attributes     │ 1                                      │
-│ forget-session                          │ 1                                      │
-│ gc-compact                              │ 1                                      │
-│ get-alternate-names                     │ 1                                      │
-│ get-brain                               │ 2, 3                                   │
-│ get-catch-up-session                    │ 2, 3, 4                                │
-│ get-cr-soons                            │ 2                                      │
-│ get-cr-summary                          │ 1                                      │
-│ get-crs                                 │ 1                                      │
-│ get-diff                                │ 2, 3, 4, 5, 6                          │
-│ get-feature                             │ 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 │
-│ get-feature-by-id                       │ 13, 14, 15, 16, 17, 18, 19             │
-│ get-feature-maybe-archived              │ 1, 2, 3, 4, 5, 6                       │
-│ get-feature-revs                        │ 1                                      │
-│ get-invalid-users                       │ 1, 2, 3                                │
-│ get-locked                              │ 2, 3, 4                                │
-│ get-review-session                      │ 4, 5, 6, 7, 8, 9, 10                   │
-│ get-rpc-stats                           │ 1                                      │
-│ hydra-worker                            │ 1, 5                                   │
-│ invalidate-cached-feature-attributes    │ 1                                      │
-│ is-fully-reviewed-edge                  │ 1                                      │
-│ is-releasable                           │ 2                                      │
-│ list-feature-names                      │ 1                                      │
-│ list-feature-revisions                  │ 1                                      │
-│ list-features                           │ 7, 8                                   │
-│ list-root-features                      │ 1                                      │
-│ lock-feature                            │ 1, 2, 3                                │
-│ mark-fully-reviewed                     │ 4, 5, 6                                │
-│ may-modify-others-catch-up              │ 1                                      │
-│ may-modify-others-review                │ 1                                      │
-│ notify-on-descendant-updates            │ 1, 2                                   │
-│ notify-on-feature-updates               │ 1, 2, 3                                │
-│ pause-serializer                        │ 1                                      │
-│ ping                                    │ 1                                      │
-│ prepare-for-crs                         │ 2                                      │
-│ prepare-to-compress                     │ 1, 2, 3                                │
-│ prepare-to-rebase                       │ 1                                      │
-│ prepare-to-rename                       │ 1, 2, 3                                │
-│ prepare-to-restore-bookmark             │ 1                                      │
-│ prepare-to-second                       │ 3, 4, 5, 6                             │
-│ prior-changes-synced-to-file-system     │ 1                                      │
-│ refresh-existing-users                  │ 1                                      │
-│ release                                 │ 3, 4, 5                                │
-│ remind                                  │ 6, 7, 8                                │
-│ remove-alternate-names                  │ 1                                      │
-│ rename-feature                          │ 1, 2, 3                                │
-│ repartition-crs                         │ 1                                      │
-│ resume-serializer                       │ 1                                      │
-│ reviewed-diff4                          │ 2, 3                                   │
-│ revision-is-fully-reviewed              │ 1                                      │
-│ second                                  │ 3, 4                                   │
-│ serializer-status                       │ 1                                      │
-│ server-started-at                       │ 1                                      │
-│ set-brains-to-goal-if-edge              │ 1                                      │
-│ set-lock-session                        │ 1                                      │
-│ stat                                    │ 1                                      │
-│ supported-rpcs                          │ 1                                      │
-│ synchronize-state                       │ 1                                      │
-│ todo                                    │ 8, 9, 10, 11, 12, 13, 14               │
-│ unarchive-feature                       │ 1                                      │
-│ unlock-feature                          │ 1, 2, 3                                │
-│ unsecond                                │ 1                                      │
-│ update-bookmark                         │ 5, 8                                   │
-│ update-unclean-workspaces               │ 1                                      │
-│ update-valid-users-and-aliases          │ 2                                      │
-│ users-using-locked-sessions-change-user │ 1                                      │
-│ users-using-locked-sessions-get         │ 1                                      │
-│ with-archived-features-cache            │ 1                                      │
-│ with-cached-attributes-errors           │ 1                                      │
-│ with-event-subscriptions                │ 1                                      │
-│ with-timed-event-errors                 │ 1                                      │
-│ with-unclean-workspaces                 │ 1                                      │
-│ with-worker-cache                       │ 3                                      │
-└─────────────────────────────────────────┴────────────────────────────────────────┘
+┌──────────────────────────────────────┬────────────────────────────────────────────┐
+│ name                                 │ versions                                   │
+├──────────────────────────────────────┼────────────────────────────────────────────┤
+│ add-fully-reviewed-edge              │ 1, 2, 3                                    │
+│ archive-feature                      │ 2, 3                                       │
+│ brain-forget                         │ 1                                          │
+│ catch-up-diffs                       │ 1                                          │
+│ change-feature                       │ 4, 5, 6, 7, 8                              │
+│ change-fully-reviewed-revisions      │ 2                                          │
+│ check-cached-feature-attributes      │ 1                                          │
+│ check-invariant                      │ 1                                          │
+│ clear-bookmarks-without-feature      │ 1                                          │
+│ clear-catch-up-sessions              │ 1                                          │
+│ commit-session                       │ 1                                          │
+│ complete                             │ 4, 5, 6, 7                                 │
+│ compress                             │ 1, 2, 3                                    │
+│ copy-feature                         │ 1, 2                                       │
+│ create-feature                       │ 5, 6                                       │
+│ de-alias-feature                     │ 1, 2                                       │
+│ define-typos                         │ 1                                          │
+│ dump                                 │ 12                                         │
+│ enable-review                        │ 2                                          │
+│ expect-next-base-update              │ 1                                          │
+│ fact-action                          │ 2                                          │
+│ fact-evidence                        │ 1                                          │
+│ fact-list                            │ 1                                          │
+│ fact-spec                            │ 1                                          │
+│ fact-specs                           │ 1                                          │
+│ feature-description                  │ 1, 2, 3, 4                                 │
+│ feature-exists                       │ 1, 2                                       │
+│ feature-is-pending                   │ 1                                          │
+│ find-features-by-partial-name        │ 2, 3, 4, 5, 6                              │
+│ force-retry                          │ 1                                          │
+│ force-set-cached-feature-attributes  │ 1                                          │
+│ forget-session                       │ 1                                          │
+│ gc-compact                           │ 1                                          │
+│ get-alternate-names                  │ 1                                          │
+│ get-brain                            │ 2, 3                                       │
+│ get-catch-up-session                 │ 2, 3, 4                                    │
+│ get-cr-soons                         │ 2                                          │
+│ get-cr-summary                       │ 1                                          │
+│ get-crs                              │ 1                                          │
+│ get-diff                             │ 2, 3, 4, 5, 6, 7                           │
+│ get-feature                          │ 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 │
+│ get-feature-by-id                    │ 13, 14, 15, 16, 17, 18, 19, 20             │
+│ get-feature-maybe-archived           │ 1, 2, 3, 4, 5, 6, 7, 8                     │
+│ get-feature-revs                     │ 1                                          │
+│ get-invalid-users                    │ 1, 2, 3                                    │
+│ get-locked                           │ 2, 3, 4                                    │
+│ get-review-session                   │ 4, 5, 6, 7, 8, 9, 10                       │
+│ get-rpc-stats                        │ 1                                          │
+│ hydra-worker                         │ 1, 5                                       │
+│ invalidate-cached-feature-attributes │ 1                                          │
+│ is-fully-reviewed-edge               │ 1                                          │
+│ is-releasable                        │ 2                                          │
+│ list-feature-names                   │ 1, 2                                       │
+│ list-feature-revisions               │ 1                                          │
+│ list-features                        │ 7, 8, 9                                    │
+│ list-root-features                   │ 1                                          │
+│ lock-feature                         │ 1, 2, 3                                    │
+│ mark-fully-reviewed                  │ 4, 5, 6                                    │
+│ may-modify-others-catch-up           │ 1                                          │
+│ may-modify-others-review             │ 1                                          │
+│ metrics-add-values                   │ 1                                          │
+│ metrics-clear                        │ 1                                          │
+│ metrics-get                          │ 1                                          │
+│ notify-on-descendant-updates         │ 1, 2                                       │
+│ notify-on-feature-updates            │ 1, 2, 3, 4                                 │
+│ notify-on-metric-updates             │ 1                                          │
+│ pause-serializer                     │ 1                                          │
+│ ping                                 │ 1                                          │
+│ prepare-for-crs                      │ 2                                          │
+│ prepare-to-compress                  │ 1, 2, 3, 4                                 │
+│ prepare-to-rebase                    │ 1                                          │
+│ prepare-to-rename                    │ 1, 2, 3, 4                                 │
+│ prepare-to-restore-bookmark          │ 1                                          │
+│ prepare-to-second                    │ 3, 4, 5, 6, 7                              │
+│ prior-changes-synced-to-file-system  │ 1                                          │
+│ push-event-add                       │ 1                                          │
+│ push-event-change                    │ 1                                          │
+│ refresh-existing-users               │ 1                                          │
+│ release                              │ 3, 4, 5                                    │
+│ remind                               │ 6, 7, 8, 9                                 │
+│ remove-alternate-names               │ 1                                          │
+│ rename-feature                       │ 1, 2, 3                                    │
+│ repartition-crs                      │ 1                                          │
+│ resume-serializer                    │ 1                                          │
+│ reviewed-diff4                       │ 2, 3, 4                                    │
+│ revision-is-fully-reviewed           │ 1                                          │
+│ second                               │ 3, 4                                       │
+│ serializer-status                    │ 1                                          │
+│ server-started-at                    │ 1                                          │
+│ set-brains-to-goal-if-edge           │ 1                                          │
+│ set-lock-session                     │ 1                                          │
+│ stat                                 │ 1                                          │
+│ supported-rpcs                       │ 1                                          │
+│ synchronize-state                    │ 1                                          │
+│ todo                                 │ 8, 9, 10, 11, 12, 13, 14, 15               │
+│ unarchive-feature                    │ 1                                          │
+│ unlock-feature                       │ 1, 2, 3                                    │
+│ unsecond                             │ 1                                          │
+│ update-bookmark                      │ 5, 8                                       │
+│ update-unclean-workspaces            │ 1                                          │
+│ update-valid-users-and-aliases       │ 2                                          │
+│ user-set-change                      │ 1, 2                                       │
+│ user-set-get                         │ 1, 2                                       │
+│ with-archived-features-cache         │ 1                                          │
+│ with-cached-attributes-errors        │ 1                                          │
+│ with-event-subscriptions             │ 1                                          │
+│ with-timed-event-errors              │ 1                                          │
+│ with-unclean-workspaces              │ 1                                          │
+│ with-worker-cache                    │ 3                                          │
+└──────────────────────────────────────┴────────────────────────────────────────────┘
 

@@ -18,6 +18,7 @@ val description               : t -> string
 val diff_from_base_to_tip     : t -> Diff2s.t Or_error.t Or_pending.t
 val has_bookmark              : t -> bool
 val indexed_diff4s            : t -> Indexed_diff4s.t Or_error.t Or_pending.t
+val inheritable_attributes    : t -> Feature_inheritable_attributes.t
 val is_permanent              : t -> bool
 val owners                    : t -> User_name.t list
 val owner_for_crs             : t -> User_name.t
@@ -30,6 +31,7 @@ val next_bookmark_update      : t -> Next_bookmark_update.t
 val next_steps_cached         : t -> Next_step.t list Cached.t
 val next_steps                : t -> Next_step.t list
 val properties                : t -> Properties.t
+val find_property             : t -> Property.t -> Sexp.t option
 val release_process           : t -> Release_process.t
 val remote_repo_path          : t -> Remote_repo_path.t option
 val rev_zero                  : t -> Rev.t
@@ -61,7 +63,7 @@ val is_seconded : t -> bool
 
 val tip_is_cr_clean : t -> bool
 
-val users_with_uncommitted_session : t -> User_name.Set.t Or_error.t
+val users_with_review_session_in_progress : t -> User_name.Set.t Or_error.t
 
 val user_is_currently_reviewing : t -> User_name.t -> bool
 
@@ -124,50 +126,14 @@ val fire_next_base_update_expiration_if_applicable
   -> expiration_id:Timed_event.Id.t
   -> unit
 
-val set_description
-  :  t
-  -> _ Query.t
-  -> string
-  -> unit
-
 val set_has_bookmark : t -> _ Query.t -> bool -> unit
 
 val set_properties : t -> _ Query.t -> Properties.t -> unit
-
-val set_whole_feature_followers
-  :  t
-  -> _ Query.t
-  -> User_name.Set.t
-  -> unit Or_error.t
-
-val set_whole_feature_reviewers
-  :  t
-  -> _ Query.t
-  -> User_name.Set.t
-  -> unit Or_error.t
-
-val set_is_permanent
-  :  t
-  -> _ Query.t
-  -> bool
-  -> unit
-
-val set_owners
-  :  t
-  -> _ Query.t
-  -> User_name.t list
-  -> unit Or_error.t
 
 val set_review_is_enabled
   :  t
   -> _ Query.t
   -> bool
-  -> unit
-
-val set_reviewing
-  :  t
-  -> _ Query.t
-  -> Reviewing.t
   -> unit
 
 val set_crs_are_enabled

@@ -148,7 +148,16 @@ module Parts = struct
     String.concat ~sep:Filename.dir_sep (List.map elts ~f:File_name.to_string)
   ;;
 
-  let hash elts = Listhash.hash File_name.hash elts
+  let hash elts =
+    let rotate_left x i =
+      let  i = i % Int.num_bits in
+      let hi = Int.shift_left x i in
+      let lo = Int.shift_right_logical x (Int.num_bits - i) in
+      Int.bit_or hi lo
+    in
+    List.fold elts ~init:0 ~f:(fun acc x ->
+      Int.bit_xor (rotate_left acc 1) (File_name.hash x))
+  ;;
 
   (* Please bear in mind that killing .. elements is not always a valid thing to do.
      It is not necessarily the case that a/b/../c is the same as a/c -- a/b might

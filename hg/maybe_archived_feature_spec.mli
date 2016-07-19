@@ -8,6 +8,7 @@ module Namespace : sig
     | `Archived
     | `Existing
     | `Existing_or_most_recently_archived
+    | `Existing_or_with_catch_up
     ]
   [@@deriving sexp_of]
 end
@@ -46,14 +47,28 @@ module Command_line : sig
 end
 
 module Stable : sig
-  module V2 : Stable_without_comparator with type t = t
+  module V3 : Stable_without_comparator with type t = t
+  module V2 : sig
+    type t [@@deriving bin_io]
+    val to_v3 : t -> V3.t
+  end
   module V1 : sig
     type t [@@deriving bin_io]
     val existing_feature_path : Feature_path.t -> t
     val to_v2 : t -> V2.t
   end
   module Namespace : sig
-    module V2 : Stable_without_comparator with type t = Namespace.t
+    module V4 : Stable_without_comparator with type t = Namespace.t
+    module V2 : sig
+      type t =
+        [ `All
+        | `Archived
+        | `Existing
+        | `Existing_or_most_recently_archived
+        ]
+      [@@deriving bin_io]
+      val to_v4 : t -> V4.t
+    end
     module V1 : sig
       type t [@@deriving bin_io]
       val to_v2 : t -> V2.t

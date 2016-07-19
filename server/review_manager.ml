@@ -227,10 +227,21 @@ let persist_current_session_id t =
     (module Persist.Current_session_id)
 ;;
 
-let have_no_session_or_current_session_can_be_dropped t =
+let session_is_in_progress review_session =
+  Review_session.is_locked review_session
+  || Review_session.have_done_some_review review_session
+;;
+
+let have_session_in_progress t =
   match t.current_session with
-  | None -> true
-  | Some review_session -> Review_session.can_be_dropped review_session
+  | None                -> false
+  | Some review_session -> session_is_in_progress review_session
+;;
+
+let have_done_some_review_in_current_session t =
+  match t.current_session with
+  | None                -> false
+  | Some review_session -> Review_session.have_done_some_review review_session
 ;;
 
 let diff4s_from_brain_to_goal t ~(brain : Brain_with_goal.t) =
@@ -278,7 +289,7 @@ let clear_current_session t =
 ;;
 
 let set_brain t brain =
-  assert (have_no_session_or_current_session_can_be_dropped t);
+  assert (not (have_done_some_review_in_current_session t));
   let brain =
     match diff4s_from_brain_to_goal t ~brain with
     | Pending_since _ | Known (Error _) -> brain
@@ -463,7 +474,7 @@ let what_to_do_with_session t ~(which_session : Which_session.t) =
       (* We prefer people to have the feature goal as their session goal.  So, we only use
          a session if review has been done or if its goal is the review goal. *)
       if must_use_it
-      || not (Review_session.can_be_dropped session)
+      || session_is_in_progress session
       || (Rev.equal_node_hash
             (Review_session.tip session)
             (Review_goal.tip_rev goal)
@@ -476,11 +487,14 @@ let what_to_do_with_session t ~(which_session : Which_session.t) =
 ;;
 
 let forget_from_brain_internal_exn t ~what_to_forget =
-  begin match what_to_do_with_session t ~which_session:Current_session with
-  | `No_current_session | `Drop_it -> ()
-  | `Use_it session ->
-    if not (Review_session.can_be_dropped session)
-    then failwith "cannot forget; there is an active review session"
+  begin match t.current_session with
+  | None -> ()
+  | Some session ->
+    (* Forgetting when the session is locked is authorized, as long as no files are
+       reviewed. *)
+    if Review_session.have_done_some_review session
+    then failwith "cannot forget -- some files are marked as reviewed in the current \
+                   review session"
   end;
   let brain =
     match what_to_forget with
@@ -571,8 +585,8 @@ let reviewed_diff4s_output_in_current_session t =
       ~f:Diff4.And_output_num_lines.output
 ;;
 
-let have_uncommitted_and_potentially_blocking_session t =
-  not (have_no_session_or_current_session_can_be_dropped t)
+let have_potentially_blocking_review_session_in_progress t =
+  have_session_in_progress t
   && let reviewer = reviewer t in
      let is_potentially_blocking diff2 =
        Diff2.may_review diff2 ~include_may_follow:false reviewer
@@ -746,8 +760,8 @@ let line_count_cached_in_feature t goal_subset =
   { Line_count.Cached_in_feature.
     review = line_count_remaining_to_review t goal_subset
   ; completed = num_lines_completed t
-  ; have_uncommitted_and_potentially_blocking_session
-    = have_uncommitted_and_potentially_blocking_session t
+  ; have_potentially_blocking_review_session_in_progress
+    = have_potentially_blocking_review_session_in_progress t
   }
 ;;
 
@@ -767,8 +781,8 @@ let can_make_progress t goal_subset =
     line_count_remaining_to_review t goal_subset
     |> To_goal_via_session.maybe_partially_known
     |> Line_count.Review.to_review_column_shown
-         ~have_uncommitted_and_potentially_blocking_session:
-           (have_uncommitted_and_potentially_blocking_session t)
+         ~have_potentially_blocking_review_session_in_progress:
+           (have_potentially_blocking_review_session_in_progress t)
   in
   Review_or_commit.count review > 0
 ;;
@@ -830,7 +844,7 @@ let maybe_advance_brain t =
   | `Use_it session ->
     if Review_session.all_diff4s_are_reviewed session
     then commit_current_session_internal t
-    else if Review_session.can_be_dropped session
+    else if not (session_is_in_progress session)
     then set_brain t t.brain
 ;;
 
@@ -909,8 +923,8 @@ module Review_authorization = struct
           | Fully_known review_lines ->
             let review =
               Line_count.Review.to_review_column_shown review_lines
-                ~have_uncommitted_and_potentially_blocking_session:
-                  (have_uncommitted_and_potentially_blocking_session review_manager)
+                ~have_potentially_blocking_review_session_in_progress:
+                  (have_potentially_blocking_review_session_in_progress review_manager)
             in
             Review_or_commit.count review = 0 && review_lines.follow > 0
         in
@@ -970,7 +984,7 @@ let forget_from_brain_exn t review_authorization ~what_to_forget =
 ;;
 
 let reviewed t query review_session_id diff4_in_session_ids
-      goal_subset review_authorization =
+      goal_subset review_authorization ~even_if_some_files_are_already_reviewed =
   match t.current_session with
   | None -> error_string "there is no current session"
   | Some session ->
@@ -981,6 +995,7 @@ let reviewed t query review_session_id diff4_in_session_ids
     match
       Review_session.reviewed session query review_session_id diff4_in_session_ids
         ~compute_review_kind ~is_using_locked_sessions:t.is_using_locked_sessions
+        ~even_if_some_files_are_already_reviewed
     with
     | Error _ as error -> error
     | Ok () ->
@@ -1156,8 +1171,8 @@ let de_alias_brain t user_name_by_alias =
   if Brain.compare t.brain.brain de_aliased_brain = 0
   then `Nothing_to_do
   else
-  if not (have_no_session_or_current_session_can_be_dropped t)
-  then `Did_not_de_alias_due_to_non_empty_session
+  if have_session_in_progress t
+  then `Did_not_de_alias_due_to_review_session_in_progress
   else begin
     clear_current_session t;
     set_brain t { brain = de_aliased_brain; at_review_goal = None };

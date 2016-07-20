@@ -179,7 +179,7 @@ let main { Fe.Wait_for_hydra.Action.
                 [%sexp
                   "feature was archived while waiting for hydra",
                   { waiting_for = (feature_path : Feature_path.t)
-                  ; feature_id  = (feature_id   : Feature_id.t)
+                  ; feature_id                  : Feature_id.t
                   }
                 ]
             | `Updated feature -> `Updated feature
@@ -212,7 +212,7 @@ let main { Fe.Wait_for_hydra.Action.
                   "feature was renamed while waiting for hydra",
                   { waiting_for = (feature_path         : Feature_path.t)
                   ; renamed_to  = (feature.feature_path : Feature_path.t)
-                  ; feature_id  = (feature_id           : Feature_id.t)
+                  ; feature_id                          : Feature_id.t
                   }
                 ];
             match%map wait_status feature with

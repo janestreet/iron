@@ -168,9 +168,9 @@ module Utils = struct
             raise_s
               [%sexp
                 "exception while parsing sexp",
-                { flag = (flag : string)
-                ; sexp = (arg  : Sexp.t)
-                ; exn  = (exn  : Exn.t)
+                { flag        : string
+                ; sexp = (arg : Sexp.t)
+                ; exn         : Exn.t
                 }
               ]
         in

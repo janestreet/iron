@@ -178,9 +178,9 @@ module From_server_to_worker = struct
 
     let sexp_of_t { worker_obligations; worker_rev_facts; properties } =
       [%sexp
-        { worker_obligations = (worker_obligations : Concise_worker_obligations.t)
-        ; worker_rev_facts   = (worker_rev_facts   : Concise_worker_rev_facts.t)
-        ; properties         = (properties         : Properties.t)
+        { worker_obligations : Concise_worker_obligations.t
+        ; worker_rev_facts   : Concise_worker_rev_facts.t
+        ; properties         : Properties.t
         }
       ]
     ;;
@@ -194,8 +194,8 @@ module From_worker_back_to_server = struct
 
     let sexp_of_t { worker_obligations; worker_rev_facts } =
       [%sexp
-        { worker_obligations = (worker_obligations : Concise_worker_obligations.t)
-        ; worker_rev_facts   = (worker_rev_facts   : Concise_worker_rev_facts.t)
+        { worker_obligations : Concise_worker_obligations.t
+        ; worker_rev_facts   : Concise_worker_rev_facts.t
         }
       ]
     ;;

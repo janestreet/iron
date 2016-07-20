@@ -768,10 +768,11 @@ let line_count_cached_in_feature t goal_subset =
 let dump_review_lines t goal_subset =
   let detail = review_lines_to_goal_via_session t goal_subset in
   let total = Review_lines_to_goal_via_session.review_lines detail in
+  let user = t.user_name in
   [%sexp
-    { user    = (t.user_name : User_name.t)
-    ; total   = (total  : Line_count.Review.t To_goal_via_session.t)
-    ; detail  = (detail : Review_lines_of_diff4.t list Review_lines_to_goal_via_session.t)
+    { user   : User_name.t
+    ; total  : Line_count.Review.t To_goal_via_session.t
+    ; detail : Review_lines_of_diff4.t list Review_lines_to_goal_via_session.t
     }
   ]
 ;;

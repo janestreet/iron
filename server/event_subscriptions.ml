@@ -44,11 +44,11 @@ module Subscription_t = struct
     (* The query is at the end because it might be big and the short field are easier
        to spot when put at the beginning *)
     [%sexp
-       { rpc_name    = (rpc_name    : string)
-       ; rpc_version = (rpc_version : int)
-       ; opened_at   = (opened_at   : Time.t)
-       ; ticks       = (ticks       : int)
-       ; query       = (query       : action Query.t)
+       { rpc_name    : string
+       ; rpc_version : int
+       ; opened_at   : Time.t
+       ; ticks       : int
+       ; query       : action Query.t
        }
     ]
   ;;
@@ -282,20 +282,16 @@ let dump
   { properties = { max_subscriptions_global; max_subscriptions_per_user }
   ; subscriptions
   ; subscription_counts
-  ; subscription_count_global
+  ; subscription_count_global = current_count_global
   ; serializer = _
   } =
-  let subscription_counts =
-    subscription_counts
-    |> Hashtbl.to_alist
-    |> List.sort ~cmp:(fun (u1, _) (u2, _) -> User_name.compare u1 u2)
-  in
+  let current_count_by_user = User_name.Map.of_hashtbl_exn subscription_counts in
   [%sexp
-    { max_subscriptions_global   = (max_subscriptions_global   : int)
-    ; current_count_global       = (subscription_count_global  : int)
-    ; max_subscriptions_per_user = (max_subscriptions_per_user : int)
-    ; current_count_by_user      = (subscription_counts        : (User_name.t * int) list)
-    ; subscriptions              = (subscriptions              : Subscription_t.t Bag.t)
+    { max_subscriptions_global   : int
+    ; current_count_global       : int
+    ; max_subscriptions_per_user : int
+    ; current_count_by_user      : int User_name.Map.t
+    ; subscriptions              : Subscription_t.t Bag.t
     }
   ]
 ;;

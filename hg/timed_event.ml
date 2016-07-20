@@ -86,7 +86,7 @@ module Table = struct
            ; events
            } =
     [%sexp
-      { errors = (errors : Error.t Queue.t)
+      { errors : Error.t Queue.t
       ; events = (Hashtbl.data events |> sort_by_scheduled_time : timed_event list)
       }
     ]
@@ -105,9 +105,10 @@ module Table = struct
       add_error t
         (Error.create_s
            [%sexp "exception during execution of timed_event"
-                , (id     : Id.t)
-                , (action : Action.t)
-                , (exn    : exn)
+                , { id     : Id.t
+                  ; action : Action.t
+                  ; exn    : Exn.t
+                  }
            ])
   ;;
 

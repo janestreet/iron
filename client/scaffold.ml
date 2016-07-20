@@ -91,8 +91,8 @@ end = struct
         [%sexp
           [%here],
           "Iron scaffold reader",
-          { on_disk = (on_disk : On_disk.t)
-          ; t       = (t : t)
+          { on_disk : On_disk.t
+          ; t       : t
           }
         ];
     t

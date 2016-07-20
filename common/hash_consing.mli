@@ -23,6 +23,8 @@ val detailed_stats   : t -> (string * Set_stats.t) list
 
 module Module_name : sig
   type t = string [@@deriving sexp_of]
+
+  val module_name_without_libname : t -> t
 end
 
 module What_to_dump : sig

@@ -212,7 +212,7 @@ let check_renameable ~from ~to_ =
     error_s
       [%sexp
         (msg : string),
-        { from = (from : t) ; to_ = (to_  : t) }
+        { from : t ; to_ : t }
       ]
   in
   if Result.is_error (parent from)

@@ -63,11 +63,8 @@ let clear (t : t) { Iron_protocol.Metrics.Clear.Action.
   | Features features ->
     List.iter features ~f:(fun { feature_path; include_descendants } ->
       if include_descendants
-      then Feature_forest.iter_descendants t.forest feature_path ~f:clear
-      else
-        match Feature_forest.find t.forest feature_path with
-        | Error _ -> ()
-        | Ok metrics -> clear metrics)
+      then Feature_forest.iter_descendants t.forest feature_path     ~f:clear
+      else Or_error.iter (Feature_forest.find t.forest feature_path) ~f:clear)
 ;;
 
 let get (t : t) ({ descendants_of } : Iron_protocol.Metrics.Get.Action.t) =
@@ -77,7 +74,7 @@ let get (t : t) ({ descendants_of } : Iron_protocol.Metrics.Get.Action.t) =
   |> Map.map ~f:(fun metrics ->
     metrics
     |> Metric_name.Map.of_hashtbl_exn
-    |> Map.map ~f:Metric.snapshot)
+    |> Map.map ~f:Metric.data_points)
 ;;
 
 let complete t ~prefix =
@@ -116,7 +113,7 @@ let add_values t
   in
   let added_at = Time.now () in
   List.iter values ~f:(fun value ->
-    Metric.add_value metric value;
+    Metric.add metric { at = added_at; value };
     let event =
       { Event.
         feature_path

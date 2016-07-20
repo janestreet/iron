@@ -36,14 +36,14 @@ module Stable = struct
     end
 
     module Reaction = struct
-      module V1 = struct
-        type t = Metric.Snapshot.V1.t Metric_name.V1.Map.t Feature_path.V1.Map.t
+      module V2 = struct
+        type t = Metric.Data_point.V1.t list Metric_name.V1.Map.t Feature_path.V1.Map.t
         [@@deriving bin_io, sexp]
 
         let of_model m = m
       end
 
-      module Model = V1
+      module Model = V2
     end
   end
 
@@ -92,9 +92,9 @@ module Get = struct
 
   include Iron_versioned_rpc.Make
       (struct let name = "metrics-get" end)
-      (struct let version = 1 end)
+      (struct let version = 2 end)
       (Stable.Action.V1)
-      (Stable.Reaction.V1)
+      (Stable.Reaction.V2)
 
   module Action   = Stable.Action.   Model
   module Reaction = Stable.Reaction. Model

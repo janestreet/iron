@@ -379,9 +379,9 @@ module Abspath = struct
       raise_s
         [%sexp
           "Abspath.rename_exn failed",
-          { src = (src : t)
-          ; dst = (dst : t)
-          ; exn = (exn : Exn.t)
+          { src : t
+          ; dst : t
+          ; exn : Exn.t
           }
         ]
   ;;

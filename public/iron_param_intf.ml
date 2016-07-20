@@ -186,9 +186,6 @@ module type T = sig
   val metric_values                    : float list                 t
   val metric_name                      : Metric_name.t              t
   val metric_name_option               : Metric_name.t option       t
-  val stat_type_enum_list
-    : doc:string
-    -> Metric.Stat_type.t list t
   val metric_name_regex_list_option
     : doc:string
     -> Regex.t list Or_error.t option t

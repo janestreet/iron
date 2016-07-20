@@ -1450,12 +1450,18 @@ let restrict_diff_from_base_to_tip
 let get_maybe_archived_feature_and_reviewer_exn t ~what_feature ~what_diff =
   let open Async.Std in
   let { Maybe_archived_feature_spec. feature_spec; namespace } = what_feature in
-  let sexp_of_archived_feature (feature : Archived_feature.t) =
+  let sexp_of_archived_feature
+        { Archived_feature.
+          feature_id
+        ; feature_path
+        ; owners
+        ; archived_at
+        ; _ } =
     [%sexp
-      [ { feature_id   = (feature.feature_id   : Feature_id.t) }
-      ; { feature_path = (feature.feature_path : Feature_path.t)
-        ; owners       = (feature.owners       : User_name.t list)
-        ; archived_at  = (feature.archived_at  : Time.t)
+      [ { feature_id   : Feature_id.t }
+      ; { feature_path : Feature_path.t
+        ; owners       : User_name.t list
+        ; archived_at  : Time.t
         }
       ]
     ]
@@ -1744,14 +1750,15 @@ let implement_deferred_rpc
           | Ok () -> ()
           | Error err ->
             let err =
+              let rpc_name = M.name in
               Error.create_s
                 [%sexp
                   "faulty cached attributes post-RPC check",
-                  { rpc_name         = (M.name           : string)
-                  ; query            = (query            : M.action Query.t)
-                  ; reaction         = (reaction         : M.reaction)
-                  ; checked_features = (checked_features : Which_features.t)
-                  ; error            = (err              : Error.t)
+                  { rpc_name         : string
+                  ; query            : M.action Query.t
+                  ; reaction         : M.reaction
+                  ; checked_features : Which_features.t
+                  ; err              : Error.t
                   }
                 ]
             in
@@ -1779,12 +1786,12 @@ let implement_deferred_rpc
         else
           match invariant state with
           | () -> reaction
-          | exception e ->
+          | exception post_condition_exn ->
             error_s
               [%sexp
                 "post condition failed after rpc",
-                { post_condition_exn = (e : exn)
-                ; reaction           = (reaction : M.reaction Or_error.t)
+                { post_condition_exn : Exn.t
+                ; reaction           : M.reaction Or_error.t
                 }
               ]
       in
@@ -3467,9 +3474,9 @@ let () =
            raise_s
              [%sexp
                "no catch-up to clear",
-               { feature_path           = (feature_path           : Feature_path.t)
-               ; for_                   = (for_                   : User_name.t)
-               ; only_those_reviewed_by = (only_those_reviewed_by : User_name.t Blang.t)
+               { feature_path           : Feature_path.t
+               ; for_                   : User_name.t
+               ; only_those_reviewed_by : User_name.t Blang.t
                }
              ])
 ;;
@@ -3585,8 +3592,8 @@ let () =
          raise_s
            [%sexp
              "not a fully-reviewed edge",
-             { from = (from : Rev.t)
-             ; to_  = (to_  : Rev.t)
+             { from : Rev.t
+             ; to_  : Rev.t
              }
            ])
 ;;
@@ -3899,18 +3906,21 @@ let add_span_since_push_value_to_metric_if_available t ~feature ~tip ~metric_nam
   match Push_events.find t.push_events tip ~feature_id:(Feature.feature_id feature) with
   | None -> ()
   | Some push_event ->
-    match Push_event.mark_as_used_by_metrics push_event metric_name with
-    | `Already_marked -> ()
-    | `Ok ->
-      let span_since_push =
-        Time.diff (Time.now ()) (Push_event.at push_event)
-        |> Time.Span.to_sec
-      in
-      Metrics.add_values t.metrics
-        { feature_path = Feature.feature_path feature
-        ; metric_name
-        ; values       = [ span_since_push ]
-        }
+    let feature_path = Feature.feature_path feature in
+    if Feature_path.equal feature_path (Push_event.feature_path push_event)
+    then
+      match Push_event.mark_as_used_by_metrics push_event metric_name with
+      | `Already_marked -> ()
+      | `Ok ->
+        let span_since_push =
+          Time.diff (Time.now ()) (Push_event.at push_event)
+          |> Time.Span.to_sec
+        in
+        Metrics.add_values t.metrics
+          { feature_path
+          ; metric_name
+          ; values       = [ span_since_push ]
+          }
 ;;
 
 let () =
@@ -3932,7 +3942,7 @@ let () =
          raise_s
            [%sexp
              "rejecting hydra worker query when a base update is expected",
-             { update_expected = (update_expected : Next_base_update.Update_expected.t)
+             { update_expected : Next_base_update.Update_expected.t
              }
            ]
        end;
@@ -3991,12 +4001,13 @@ let () =
        Metrics.get t.metrics (Query.action query))
 ;;
 
-
 let () =
   implement_rpc ~log:false Post_check_in_features.none
     (module Iron_protocol.Push_events.Add)
     (fun t query ->
-       Push_events.add t.push_events query)
+       let { Iron_protocol.Push_events.Add.Action. feature_id; _ } = Query.action query in
+       let feature = find_feature_by_id_exn t feature_id in
+       Push_events.add t.push_events query ~feature_path:(Feature.feature_path feature))
 ;;
 
 let () =
@@ -4274,8 +4285,8 @@ let () =
                [%sexp
                  (sprintf "provided %s is different from what server knows"
                     name : string),
-                 { provided_rev = (provided_rev : Rev.t)
-                 ; server_rev   = (server_rev   : Rev.t)
+                 { provided_rev : Rev.t
+                 ; server_rev   : Rev.t
                  }
                ]
        in
@@ -5188,9 +5199,9 @@ let () =
          raise_s
            [%sexp
              "feature_path mismatch",
-             { feature_id             = (feature_id          : Feature_id.t)
-             ; actual_feature_path    = (actual_feature_path : Feature_path.t)
-             ; requested_feature_path = (feature_path        : Feature_path.t)
+             { feature_id                             : Feature_id.t
+             ; actual_feature_path                    : Feature_path.t
+             ; requested_feature_path = (feature_path : Feature_path.t)
              }
            ];
        let feature_rev_zero = Archived_feature.rev_zero archived_feature in
@@ -5199,9 +5210,9 @@ let () =
          raise_s
            [%sexp
              "mismatch between feature family and local clone",
-             { feature_path     = (feature_path     : Feature_path.t)
-             ; feature_rev_zero = (feature_rev_zero : Rev.t)
-             ; local_rev_zero   = (rev_zero         : Rev.t)
+             { feature_path                 : Feature_path.t
+             ; feature_rev_zero             : Rev.t
+             ; local_rev_zero   = (rev_zero : Rev.t)
              }
            ];
        (* At this point, we've committed to unarchiving the feature.  The [uncompress] and

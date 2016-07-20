@@ -14,17 +14,17 @@ let send_sigkill_if_pid_exists pid =
     error_s
       [%sexp
         "sending signal failed",
-        { pid    = (pid    : Pid.t)
-        ; signal = (signal : Signal.t)
-        ; exn    = (exn    : Exn.t)
+        { pid    : Pid.t
+        ; signal : Signal.t
+        ; exn    : Exn.t
         }
       ]
   | `Timeout ->
     error_s
       [%sexp
         "sending signal timed out",
-        { pid    = (pid    : Pid.t)
-        ; signal = (signal : Signal.t)
+        { pid    : Pid.t
+        ; signal : Signal.t
         }
       ]
 ;;
@@ -44,8 +44,8 @@ let process_run ~prog ~args ~timeout () =
         (Error.create_s
            [%sexp
              "running process timed out",
-             { prog = (prog : string)
-             ; args = (args : string list)
+             { prog : string
+             ; args : string list
              }
            ]);
       let pid = Process.pid process in

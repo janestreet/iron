@@ -123,9 +123,9 @@ let main { Fe.Create.Action.
                   raise_s
                     [%sexp
                       "Inconsistency between feature and remote_repo_path family",
-                      { remote_repo_path = (remote_repo_path : Remote_repo_path.t)
-                      ; family           = (family           : string)
-                      ; feature          = (feature_path     : Feature_path.t)
+                      { remote_repo_path : Remote_repo_path.t
+                      ; family           : string
+                      ; feature_path     : Feature_path.t
                       }
                     ]
             end;

@@ -63,7 +63,7 @@
 │ may-modify-others-review             │ 1                                          │
 │ metrics-add-values                   │ 1                                          │
 │ metrics-clear                        │ 1                                          │
-│ metrics-get                          │ 1                                          │
+│ metrics-get                          │ 2                                          │
 │ notify-on-descendant-updates         │ 1, 2                                       │
 │ notify-on-feature-updates            │ 1, 2, 3, 4                                 │
 │ notify-on-metric-updates             │ 1                                          │

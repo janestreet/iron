@@ -408,8 +408,8 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
           "invalid file attributes"
         , (List.map !problems ~f:(fun (file, error) ->
           [%sexp
-            { file  = (file  : File_name.t)
-            ; error = (error : Error.t)
+            { file  : File_name.t
+            ; error : Error.t
             }
           ]) : Sexp.t list)
         ];

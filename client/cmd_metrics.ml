@@ -2,6 +2,109 @@ open! Core.Std
 open! Async.Std
 open! Import
 
+module Stat_column = struct
+  module Percentile = struct
+    type t = int [@@deriving compare, sexp_of]
+
+    let all = [ 0; 5; 15; 25; 50; 75; 90; 95; 99 ]
+  end
+
+  module T = struct
+    type t =
+      | Percentile of Percentile.t
+      | Count
+    [@@deriving compare, enumerate]
+
+    let sexp_of_t = function
+      | Percentile p -> Sexp.Atom (sprintf "%d%%" p)
+      | Count        -> Sexp.Atom "count"
+    ;;
+  end
+
+  module Compare_by_interest = struct
+    type t = T.t [@@deriving sexp_of]
+
+    let compare = T.compare
+  end
+
+  include T
+  include Comparable.Make_plain (T)
+
+  let to_string_hum = Enum.to_string_hum (module T)
+end
+
+module Dimension = struct
+
+  type t =
+    | Int
+    | Span
+    | Other
+  [@@deriving sexp_of]
+
+  let of_metric ~metric_name =
+    if Metric_name.(equal hydra_synchronize_state_latency  metric_name
+                    || equal hydra_update_bookmark_latency metric_name)
+    then Span
+    else Other
+  ;;
+
+  let of_metric_stat ~metric_name ~stat_column =
+    match stat_column with
+    | None -> of_metric ~metric_name
+    | Some stat_column ->
+      match Stat_column.to_string_hum stat_column with
+      | "count" -> Int
+      | _ -> of_metric ~metric_name
+  ;;
+end
+
+module Appendable_list = Core_extended.Appendable_list
+
+module Values = struct
+  type t = float Appendable_list.t
+
+  let init (data_points : Metric.Data_point.t list) : t =
+    data_points
+    |> List.map ~f:Metric.Data_point.value
+    |> Appendable_list.of_list
+  ;;
+
+  let aggregate = Appendable_list.append
+end
+
+module Stats = struct
+  type t = (Stat_column.t * float) list [@@deriving sexp_of]
+
+  let compute (t : Values.t) =
+    let array = t |> Appendable_list.to_sequence |> Sequence.to_array in
+    Array.sort array ~cmp:Float.compare;
+    let length = Array.length array in
+    List.map Stat_column.all ~f:(fun stat ->
+      let value =
+        match stat with
+        | Count -> Int.to_float length
+        | Percentile index ->
+          if length = 0
+          then Float.nan
+          else
+            let index = Int.to_float (index * length) /. 100. in
+            array.(max 0 (min (Int.of_float index) (pred length)))
+      in
+      stat, value)
+  ;;
+
+  let get_column t stat_column =
+    List.Assoc.find t stat_column ~equal:Stat_column.equal
+  ;;
+end
+
+let pp_value metric_name ~decimals ~stat_column value =
+  match Dimension.of_metric_stat ~metric_name ~stat_column with
+  | Int   -> value |> Int.of_float |> Int.to_string_hum
+  | Span  -> Time.Span.(to_string_hum ~decimals (of_sec value))
+  | Other -> Float.to_string_hum ~decimals ~strip_zero:false value
+;;
+
 let add =
   Command.async'
     ~summary:"add values to a metric"
@@ -48,15 +151,16 @@ let aggregate_metrics m1 m2 =
   Map.merge m1 m2 ~f:(fun ~key:(_ : Metric_name.t) result ->
     match result with
     | `Left result | `Right result -> Some result
-    | `Both (x, y) -> Some (Metric.Snapshot.aggregate x y))
+    | `Both (x, y) -> Some (Values.aggregate x y))
+;;
+
+let increment_depth ~depth ~by =
+  if Int.max_value - depth <= by
+  then Int.max_value
+  else depth + by
 ;;
 
 let aggregate_by_feature ~feature_to_metrics_map ~descendants_of ~depth_to_aggregate =
-  let increment_depth depth ~by =
-    if (Int.max_value - depth) < by
-    then Int.max_value
-    else depth + by
-  in
   let shorten feature_path depth =
     if depth <= 0
     then
@@ -77,7 +181,8 @@ let aggregate_by_feature ~feature_to_metrics_map ~descendants_of ~depth_to_aggre
           shorten descendant depth_to_aggregate
         | Feature ancestor ->
           shorten descendant
-            (increment_depth ~by:(Feature_path.num_parts ancestor) depth_to_aggregate)
+            (increment_depth ~depth:depth_to_aggregate
+               ~by:(Feature_path.num_parts ancestor))
       in
       Map.update acc descendant ~f:(fun previous_metrics ->
         aggregate_metrics metrics
@@ -103,59 +208,31 @@ let metric_names feature_to_metrics_map =
           Metric_name.Set.add metric_names metric_name))
 ;;
 
-let by_stat_feature_table
-      (feature_to_metrics_map : Metric.Snapshot.t Metric_name.Map.t Feature_path.Map.t)
-      ~decimals ~depth_to_aggregate ~descendants_of ~which_metrics ~stat_type =
-  let columns =
-    Ascii_table.Column.(
-      string ~header:"feature" (cell fst)
-      :: List.map which_metrics ~f:(fun metric_name ->
-        string ~header:(Metric_name.to_string metric_name) ~align:Right
-          (cell (fun (_, metrics) ->
-             match Map.find metrics metric_name with
-             | None -> ""
-             | Some metric ->
-               Metric.Snapshot.get_stat_as_string_hum metric stat_type ~decimals))))
-  in
-  let rows =
-    match aggregate ~feature_to_metrics_map ~descendants_of ~depth_to_aggregate with
-    | `All metrics -> [ "*", metrics ]
-    | `By_feature feature_to_metrics_map ->
-      let feature_to_metrics_map =
-        let which_metrics = Metric_name.Set.of_list which_metrics in
-        Map.filter_map feature_to_metrics_map ~f:(fun metrics ->
-          let metrics = Map.filter_keys metrics ~f:(Set.mem which_metrics) in
-          Option.some_if (not (Map.is_empty metrics)) metrics)
-      in
-      Feature_table.create (Map.to_alist feature_to_metrics_map) fst
-        (fun ~feature data ->
-           match data with
-           | None              -> feature, Metric_name.Map.empty
-           | Some (_, metrics) -> feature, metrics)
-  in
-  Ascii_table.create ~columns ~rows
-;;
-
 let by_metric_feature_table
-      (feature_to_metrics_map : Metric.Snapshot.t Metric_name.Map.t Feature_path.Map.t)
+      (feature_to_metrics_map : Metric.Data_point.t list Metric_name.Map.t Feature_path.Map.t)
       ~decimals ~depth_to_aggregate ~descendants_of ~which_stats ~metric_name =
   let columns =
     Ascii_table.Column.(
       string ~header:"feature" (cell fst)
-      :: List.map which_stats ~f:(fun stat_type ->
-        string ~header:(Enum.to_string_hum (module Metric.Stat_type) stat_type)
+      :: List.map which_stats ~f:(fun stat_column ->
+        string ~header:(Enum.to_string_hum (module Stat_column) stat_column)
           ~align:Right (cell (fun (_, metric) ->
             match metric with
             | None -> ""
             | Some metric ->
-              Metric.Snapshot.get_stat_as_string_hum metric stat_type ~decimals))))
+              match Stats.get_column metric stat_column with
+              | None -> ""
+              | Some value ->
+                pp_value metric_name ~decimals
+                  ~stat_column:(Some stat_column) value))))
   in
   let rows =
     let feature_to_metrics_map =
       Map.filter_map feature_to_metrics_map ~f:(fun metrics ->
         match Map.find metrics metric_name with
         | None -> None
-        | Some metrics -> Some (Metric_name.Map.singleton metric_name metrics))
+        | Some metrics ->
+          Some (Metric_name.Map.singleton metric_name (Values.init metrics)))
     in
     match aggregate ~feature_to_metrics_map ~descendants_of ~depth_to_aggregate with
     | `All metrics -> [ "*", Map.find metrics metric_name ]
@@ -169,6 +246,10 @@ let by_metric_feature_table
            match data with
            | None             -> feature, None
            | Some (_, metric) -> feature, Some metric)
+  in
+  let rows =
+    List.map rows ~f:(fun (row, snapshots) ->
+      row, Option.map ~f:Stats.compute snapshots)
   in
   Ascii_table.create ~columns ~rows
 ;;
@@ -198,48 +279,124 @@ let list =
          print_endline (Metric_name.to_string metric_name)))
 ;;
 
-let show =
-  let show_by_stat_switch = "-show-by-stat" in
+let get =
   Command.async'
-    ~summary:"show statistics of data captured from features"
+    ~summary:"get the raw list of metric data points captured from features"
     ~readme:(fun () -> concat ["\
-Metrics are shown for all features in the requested subtree(s), aggregated by -depth.
-Tables are drawn by metric by default (i.e. showing all stats for a metric), and by stat
-(i.e. count, mean, etc.) if the switch "; show_by_stat_switch ; " is supplied.
+This is a raw command to access the most recent internal data points directly.
+To display stats on those values, see [show].
 "])
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and display_ascii = display_ascii
      and max_output_columns = max_output_columns
      and descendants_of = descendants_of
-     and depth_to_aggregate =
-       let%map depth = depth_option in
-       Option.value depth ~default:1
+     and only_metrics =
+       metric_name_regex_list_option ~doc:"REGEX,[REGEX..] select metrics to show"
+     and depth = depth_option
+     and decimals =
+       let default = 2 in
+       flag "-decimals" (optional_with_default default int)
+         ~doc:(sprintf "NUM round stats to n decimals.  Default %d" default)
+     in fun () ->
+       let open! Deferred.Let_syntax in
+       let only_metrics = Option.map only_metrics ~f:ok_exn in
+       let descendants_of = ok_exn descendants_of in
+       let%map reaction =
+         let%map features_map =
+           Metrics.Get.rpc_to_server_exn { descendants_of }
+         in
+         let cut_depth =
+           match descendants_of with
+           | Any_root -> Option.value depth ~default:Int.max_value
+           | Feature feature ->
+             let num_parts = Feature_path.num_parts feature in
+             match depth with
+             | None       -> num_parts
+             | Some depth -> increment_depth ~depth ~by:num_parts
+         in
+         Map.filter_keys features_map ~f:(fun feature_path ->
+           Feature_path.num_parts feature_path <= cut_depth)
+       in
+       let print_table feature_path metric_name data_points =
+         let columns =
+           Ascii_table.Column.(
+             [ string ~header:"at" (cell (fun data_point ->
+                 Time.to_string (Metric.Data_point.at data_point)))
+             ; string ~header:"value" (cell (fun data_point ->
+                 let value = Metric.Data_point.value data_point in
+                 pp_value metric_name ~decimals ~stat_column:None value))
+             ])
+         in
+         let table = Ascii_table.create ~columns ~rows:data_points in
+         if not (Ascii_table.is_empty table) then begin
+           print_endline (sprintf "%s: %s"
+                            (Feature_path.to_string feature_path)
+                            (Metric_name.to_string metric_name));
+           print_endline (Ascii_table.to_string table ~display_ascii ~max_output_columns)
+         end
+       in
+       let include_metric_name =
+         match only_metrics with
+         | None -> const true
+         | Some metric_regex_list ->
+           fun metric_name ->
+             let metric_name = Metric_name.to_string metric_name in
+             List.exists metric_regex_list
+               ~f:(fun metric_regex -> Regex.matches metric_regex metric_name)
+       in
+       Map.iteri reaction ~f:(fun ~key:feature_path ~data:metrics ->
+         Map.iteri metrics ~f:(fun ~key:metric_name ~data:data_points ->
+           if include_metric_name metric_name
+           then print_table feature_path metric_name data_points)))
+;;
+
+let show =
+  Command.async'
+    ~summary:"show statistics of data captured from features"
+    ~readme:(fun () -> concat ["\
+Metrics are shown for all features in the requested subtree(s), aggregated by -depth.
+"])
+    (let open Command.Let_syntax in
+     let%map_open () = return ()
+     and display_ascii = display_ascii
+     and max_output_columns = max_output_columns
+     and descendants_of = descendants_of
+     and depth_to_aggregate = depth_option
      and only_metrics =
        metric_name_regex_list_option ~doc:"REGEX,[REGEX..] select metrics to show"
      and which_stats =
+       let for_stats_doc =
+         sprintf "STAT,[STAT...] select stats to show %s"
+           (Stat_column.all
+            |> List.sort ~cmp:Stat_column.Compare_by_interest.compare
+            |> List.map ~f:(Enum.to_string_hum (module Stat_column))
+            |> String.concat ~sep:"|")
+       in
        let%map for_stats_list =
-         stat_type_enum_list
-           ~doc:(sprintf "STAT,[STAT...] select stats to show %s"
-                   (Metric.Stat_type.all
-                    |> List.map ~f:(Enum.to_string_hum (module Metric.Stat_type))
-                    |> List.sort ~cmp:String.alphabetic_compare
-                    |> String.concat ~sep:"|"))
+         map (enum_list "-stats" ~doc:for_stats_doc (module Stat_column))
+           ~f:Stat_column.Set.stable_dedup_list
        in
        if List.is_empty for_stats_list
-       then Metric.Stat_type.
+       then Stat_column.
               (all |> List.sort ~cmp:Compare_by_interest.compare)
        else for_stats_list
      and decimals =
        let default = 2 in
        flag "-decimals" (optional_with_default default int)
          ~doc:(sprintf "NUM round stats to n decimals.  Default %d" default)
-     and show_by_stat =
-       no_arg_flag show_by_stat_switch ~doc:" draw tables by stat"
      in fun () ->
        let open! Deferred.Let_syntax in
-       let show_by_stat = show_by_stat in
        let descendants_of = ok_exn descendants_of in
+       let depth_to_aggregate =
+         let default =
+           match descendants_of with
+           | Any_root  -> 1
+           | Feature _ -> 0
+         in
+         Option.value depth_to_aggregate ~default
+       in
+       let only_metrics = Option.map only_metrics ~f:ok_exn in
        let%map feature_to_metrics_map =
          Metrics.Get.rpc_to_server_exn { descendants_of }
        in
@@ -248,7 +405,6 @@ Tables are drawn by metric by default (i.e. showing all stats for a metric), and
          match only_metrics with
          | None -> all_metrics
          | Some metric_regex_list ->
-           let metric_regex_list = ok_exn metric_regex_list in
            List.filter all_metrics ~f:(fun metric_name ->
              let metric_name = Metric_name.to_string metric_name in
              List.exists metric_regex_list
@@ -260,17 +416,10 @@ Tables are drawn by metric by default (i.e. showing all stats for a metric), and
            print_endline (Ascii_table.to_string table ~display_ascii ~max_output_columns)
          end
        in
-       if show_by_stat
-       then
-         List.iter which_stats ~f:(fun stat_type ->
-           print_table ~name:(Enum.to_string_hum (module Metric.Stat_type) stat_type)
-             (by_stat_feature_table ~stat_type ~decimals ~depth_to_aggregate
-                ~descendants_of ~which_metrics feature_to_metrics_map))
-       else
-         List.iter which_metrics ~f:(fun metric_name ->
-           print_table ~name:(Metric_name.to_string metric_name)
-             (by_metric_feature_table ~metric_name ~decimals ~depth_to_aggregate
-                ~descendants_of ~which_stats feature_to_metrics_map)))
+       List.iter which_metrics ~f:(fun metric_name ->
+         print_table ~name:(Metric_name.to_string metric_name)
+           (by_metric_feature_table ~metric_name ~decimals ~depth_to_aggregate
+              ~descendants_of ~which_stats feature_to_metrics_map)))
 ;;
 
 let subscribe =
@@ -315,6 +464,7 @@ let command =
   Command.group ~summary:"various commands for collecting data in features"
     [ "add"      , add
     ; "clear"    , clear
+    ; "get"      , get
     ; "list"     , list
     ; "show"     , show
     ; "subscribe", subscribe

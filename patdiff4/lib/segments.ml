@@ -190,13 +190,13 @@ let of_matches ~file_names ~context diamond matches =
         raise_s
           [%sexp
             "test_result failure",
-            { exn          = (exn          : Exn.t)
-            ; matches      = (matches      : int Diamond.t)
-            ; match_lines  = (match_lines  : int Diamond.t)
-            ; source_lines = (source_lines : string list Diamond.t)
-            ; prev_lines   = (prev_lines   : string list Diamond.t)
-            ; mid          = (mid          : string Diamond.t)
-            ; next_lines   = (next_lines   : string list Diamond.t)
+            { exn          : Exn.t
+            ; matches      : int Diamond.t
+            ; match_lines  : int Diamond.t
+            ; source_lines : string list Diamond.t
+            ; prev_lines   : string list Diamond.t
+            ; mid          : string Diamond.t
+            ; next_lines   : string list Diamond.t
             }
           ]
     in

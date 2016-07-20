@@ -52,8 +52,8 @@ let handle_rpc t connection ~rpc_tag ~version responder buf ~pos ~len =
         log ~level:`Info
           [%sexp
             "caching RPC response",
-            { description = (description : Description.t)
-            ; data        = (data        : _ Or_error.t)
+            { description : Description.t
+            ; data        : _ Or_error.t
             }
           ];
         data)
@@ -62,8 +62,8 @@ let handle_rpc t connection ~rpc_tag ~version responder buf ~pos ~len =
     log ~level:`Debug
       [%sexp
         "proxying RPC response",
-        { rpc_tag = (rpc_tag : string)
-        ; version = (version : int)
+        { rpc_tag : string
+        ; version : int
         }
       ];
     Responder.write_bigstring responder buf ~pos ~len;
@@ -83,8 +83,8 @@ let handle_rpc t connection ~rpc_tag ~version responder buf ~pos ~len =
     log ~level:`Debug
       [%sexp
         "proxying RPC query",
-        { rpc_tag = (rpc_tag : string)
-        ; version = (version : int)
+        { rpc_tag : string
+        ; version : int
         }
       ];
     (* The incoming RPC had a query id, which is in [responder].  This call to
@@ -122,7 +122,7 @@ let simple_server ~where_to_listen ~real_server =
             [%sexp
               "failed to connect to RPC server...",
               { server = (real_server : Host_and_port.t)
-              ; error  = (error       : Error.t)
+              ; error : Error.t
               }
             ];
           Error error)

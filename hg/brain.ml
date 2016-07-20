@@ -115,10 +115,10 @@ let by_diff2 (t : t) ~f =
     ~f:List.hd_exn
 ;;
 
-let diff4s_needed_to_extend_brain (t : t)
+let diff4s_needed_to_extend_brain (brain : t)
       ~reviewer ~goal ~(could_use : Indexed_diff4s.t) =
   try
-    let brain = by_diff2 t ~f:(fun a -> (a, ref false)) in
+    let brain = by_diff2 brain ~f:(fun a -> (a, ref false)) in
     let needed : Diff4s.t ref = ref [] in
     let need diff4 ~output_num_lines =
       needed := { Diff4.And_output_num_lines. diff4; output_num_lines } :: !needed
@@ -199,35 +199,35 @@ let diff4s_needed_to_extend_brain (t : t)
     raise_s
       [%sexp
         "Brain.diff4s_needed_to_extend_brain",
-        { brain     = (t         : t)
-        ; reviewer  = (reviewer  : Reviewer.t)
-        ; goal      = (goal      : Diff2s.t)
-        ; could_use = (could_use : Indexed_diff4s.t)
-        ; exn       = (exn       : Exn.t)
+        { brain     : t
+        ; reviewer  : Reviewer.t
+        ; goal      : Diff2s.t
+        ; could_use : Indexed_diff4s.t
+        ; exn       : Exn.t
         }
       ]
 ;;
 
-let diff4s_needed_to_extend_brain t ~reviewer ~goal ~could_use =
-  let result = diff4s_needed_to_extend_brain t ~reviewer ~goal ~could_use in
+let diff4s_needed_to_extend_brain brain ~reviewer ~goal ~could_use =
+  let result = diff4s_needed_to_extend_brain brain ~reviewer ~goal ~could_use in
   if verbose then
     Debug.eprint_s
       [%sexp
         "Brain.diff4s_needed_to_extend_brain_exn",
         [%here],
-        { reviewer  = (reviewer  : Reviewer.t)
-        ; brain     = (t         : t)
-        ; goal      = (goal      : Diff2s.t)
-        ; could_use = (could_use : Indexed_diff4s.t)
-        ; result    = (result    : Diff4s.t)
+        { reviewer  : Reviewer.t
+        ; brain     : t
+        ; goal      : Diff2s.t
+        ; could_use : Indexed_diff4s.t
+        ; result    : Diff4s.t
         }
       ];
   result
 ;;
 
-let what_would_be_extended t =
+let what_would_be_extended brain =
   lazy (
-    let brain = by_diff2 t ~f:Fn.id in
+    let brain = by_diff2 brain ~f:Fn.id in
     fun diff4 ->
       match Hashtbl.find brain (Diff4.input diff4 ~num_lines_in_diff:1) with
       | Some brain_marked_diff2 ->
@@ -238,10 +238,10 @@ let what_would_be_extended t =
         | None -> Or_error.error "inapplicable diff4" diff4 [%sexp_of: Diff4.t])
 ;;
 
-let extend (t : t) ~(with_ : Diff4s.t)
+let extend (brain : t) ~(with_ : Diff4s.t)
       ~(reviewer : Reviewer.t) ~(mark_kind : Mark_kind.t) =
   try
-    let brain = by_diff2 t ~f:(fun a -> (a, ref false)) in
+    let brain = by_diff2 brain ~f:(fun a -> (a, ref false)) in
     let new_brain =
       List.map with_ ~f:(fun { diff4; output_num_lines } ->
         let make_marked_diff2 diff2 ~previous_mark_kind =
@@ -299,38 +299,38 @@ let extend (t : t) ~(with_ : Diff4s.t)
     raise_s
       [%sexp
         "Brain.extend",
-        { brain     = (t         : t)
-        ; with_     = (with_     : Diff4s.t)
-        ; reviewer  = (reviewer  : Reviewer.t)
-        ; mark_kind = (mark_kind : Mark_kind.t)
-        ; exn       = (exn       : Exn.t)
+        { brain     : t
+        ; with_     : Diff4s.t
+        ; reviewer  : Reviewer.t
+        ; mark_kind : Mark_kind.t
+        ; exn       : Exn.t
         }
       ]
 ;;
 
-let check_diff4s_needed_to_extend_brain_exn (t : t)
+let check_diff4s_needed_to_extend_brain_exn (brain : t)
       ~reviewer ~goal ~could_use =
   let needed t = diff4s_needed_to_extend_brain t ~reviewer ~goal ~could_use in
-  let session1 = needed t in
+  let session1 = needed brain in
   let session2 =
-    needed (extend t ~with_:session1 ~reviewer ~mark_kind:Internal__fully_reviewed)
+    needed (extend brain ~with_:session1 ~reviewer ~mark_kind:Internal__fully_reviewed)
   in
   if not (List.is_empty session2)
   then
     raise_s
       [%sexp
         "bug in Brain.diff4s_needed_to_extend_brain",
-        { reviewer  = (reviewer  : Reviewer.t)
-        ; brain     = (t         : t)
-        ; goal      = (goal      : Diff2s.t)
-        ; could_use = (could_use : Indexed_diff4s.t)
-        ; session1  = (session1  : Diff4s.t)
-        ; session2  = (session2  : Diff4s.t)
+        { reviewer  : Reviewer.t
+        ; brain     : t
+        ; goal      : Diff2s.t
+        ; could_use : Indexed_diff4s.t
+        ; session1  : Diff4s.t
+        ; session2  : Diff4s.t
         }
       ]
 ;;
 
-let de_alias (t : t) user_name_by_alias =
-  List.map t ~f:(fun marked_diff2 ->
+let de_alias (brain : t) user_name_by_alias =
+  List.map brain ~f:(fun marked_diff2 ->
     Marked_diff2.de_alias marked_diff2 user_name_by_alias)
 ;;

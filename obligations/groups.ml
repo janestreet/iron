@@ -23,15 +23,15 @@ let check_users t ~known_users =
       then Hashtbl.add_multi unknown_users ~key:group ~data:user));
   unknown_users
   |> Hashtbl.to_alist
-  |> List.filter_map ~f:(fun (group, users) ->
-    let users = Unresolved_name.Set.of_list users in
-    if Set.is_empty users
+  |> List.filter_map ~f:(fun (group, unknown_users) ->
+    let unknown_users = Unresolved_name.Set.of_list unknown_users in
+    if Set.is_empty unknown_users
     then None
     else
       Some
         [%sexp
-          { group         = (group : Group_name.t)
-          ; unknown_users = (users : Unresolved_name.Set.t)
+          { group         : Group_name.t
+          ; unknown_users : Unresolved_name.Set.t
           }
         ])
   |> function

@@ -196,9 +196,9 @@ but is inside a clone of the [%{Feature_name}] family"
         else
           raise_s
             [%sexp
-              "disallowed due to current workspace being different from supplied feature",
-              { current_workspace = (current_workspace : Feature_path.t)
-              ; supplied_feature  = (feature_path      : Feature_path.t)
+              "disallowed due to current workspace being different from supplied feature"
+            , { current_workspace                 : Feature_path.t
+              ; supplied_feature  = (feature_path : Feature_path.t)
               }
             ]
 ;;

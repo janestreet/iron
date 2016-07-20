@@ -371,8 +371,8 @@ let typo_conflict typo means =
   raise_s
     [%sexp
       "typo can be resolved to different user names",
-      { typo  = (typo : Alternate_name.t)
-      ; means = (means : User_name.t list)
+      { typo  : Alternate_name.t
+      ; means : User_name.t list
       }
     ]
 ;;
@@ -381,8 +381,8 @@ let alias_conflict alias user_names =
   raise_s
     [%sexp
       "alias can be resolved to different user names",
-      { alias      = (alias : Alternate_name.t)
-      ; user_names = (user_names : User_name.t list)
+      { alias      : Alternate_name.t
+      ; user_names : User_name.t list
       }
     ]
 ;;

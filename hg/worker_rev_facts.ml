@@ -47,9 +47,9 @@ module Concise = struct
         ; cr_soons
         } =
     [%sexp
-      { rev_facts = (rev_facts : Rev_facts.t)
-      ; crs       = (crs       : crs_count_or_error)
-      ; cr_soons  = (cr_soons  : crs_count_or_error)
+      { rev_facts : Rev_facts.t
+      ; crs       : crs_count_or_error
+      ; cr_soons  : crs_count_or_error
       }
     ]
   ;;

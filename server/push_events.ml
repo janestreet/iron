@@ -45,12 +45,14 @@ end
 module Push_event = struct
   type t =
     { query           : Iron_protocol.Push_events.Add.Action.t Query.t
+    ; feature_path    : Feature_path.t
     ; used_by_metrics : Metric_name.Hash_set.t
     }
   [@@deriving fields, sexp_of]
 
-  let create query () =
+  let create query ~feature_path () =
     { query
+    ; feature_path
     ; used_by_metrics = Metric_name.Hash_set.create ()
     }
   ;;
@@ -64,13 +66,12 @@ module Push_event = struct
     | Ok ()   -> `Ok
   ;;
 
-  let sexp_of_t { query; used_by_metrics } =
+  let sexp_of_t { query; feature_path; used_by_metrics } =
     [%sexp
-      { query =
-          { by = (Query.by query : User_name.t)
-          ; at = (Query.at query : Time.t)
-          }
-      ; used_by_metrics = (used_by_metrics : Metric_name.Hash_set.t)
+      { feature_path    : Feature_path.t
+      ; by              = (Query.by query : User_name.t)
+      ; at              = (Query.at query : Time.t)
+      ; used_by_metrics : Metric_name.Hash_set.t
       }
     ]
   ;;
@@ -130,21 +131,23 @@ let dump t (what_to_dump : Iron_protocol.Push_events.What_to_dump.t) =
   | `Values ->
     [%sexp (t.push_events : Push_event.t Lru.t Feature_id.Table.t)]
   | `Stats ->
-    let users = User_name.Hash_set.create () in
+    let users = User_name.Table.create () in
     let feature_ids = Feature_id.Hash_set.create () in
     let total_rev_count = ref 0 in
     Hashtbl.iteri t.push_events ~f:(fun ~key:feature_id ~data:by_rev ->
       Hash_set.add feature_ids feature_id;
       List.iter (Lru.to_alist by_rev) ~f:(fun (_rev, query) ->
-        Hash_set.add users (Query.by query.query);
+        Hashtbl.incr users (Query.by query.query);
         incr total_rev_count;
       ));
     let { Properties. by_rev_size } = t.properties in
     [%sexp
       { by_rev_size      = (by_rev_size                 : int)
-      ; user_count       = (Hash_set.length users       : int)
       ; feature_id_count = (Hash_set.length feature_ids : int)
       ; total_rev_count  = (!total_rev_count            : int)
+      ; users =
+          (Hashtbl.length users : int)
+        , (User_name.Map.of_hashtbl_exn users : int User_name.Map.t)
       }
     ]
 ;;
@@ -163,7 +166,7 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
 )
 ;;
 
-let add t query =
+let add t query ~feature_path =
   let { Iron_protocol.Push_events.Add.Action.feature_id ; tip } =
     Query.action query
   in
@@ -173,7 +176,7 @@ let add t query =
   in
   let key = Rev.to_first_12 tip in
   if not (Lru.mem by_rev key)
-  then Lru.set by_rev ~key ~data:(Push_event.create query ())
+  then Lru.set by_rev ~key ~data:(Push_event.create query ~feature_path ())
 ;;
 
 let persist_properties t properties =

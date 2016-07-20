@@ -11,12 +11,14 @@ export IRON_APPDIR=$IRON_APPDIRS/interactive
 export IRON_BASEDIR=$IRON_APPDIR/$IRON_MODE
 mkdir -p $IRON_BASEDIR/{etc,export,var}
 IRON_CONFIG_PATH=$IRON_BASEDIR/etc/iron-config.sexp
+if ! [ -f $IRON_CONFIG_PATH ]; then
     cat >$IRON_CONFIG_PATH <<EOF
 ((host localhost)
  (async_rpc_port (dynamic $IRON_BASEDIR/var/server-listening-on-port))
  (hgrc $IRON_TEST_DIR/../hg/hgrc)
 )
 EOF
+fi
 export IRON_CONFIG="$(cat $IRON_CONFIG_PATH)"
 
 command=${1:-""}

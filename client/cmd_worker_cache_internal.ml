@@ -191,7 +191,7 @@ are given.
        let number_of_analyzed_files = List.length obligations_files in
        Print.printf "Will analyze obligations from %d report files\n"
          number_of_analyzed_files;
-       let index = ref (-1) in
+       let index = ref 0 in
        let hash_consing = Hash_consing.the_one_and_only () in
        let%bind rows =
          deferred_fold_map obligations_files ~init:Table_line.Acc.init
@@ -250,11 +250,15 @@ are given.
        in
        let table =
          let hash_consing extract module_name =
+           let module_name =
+             Hash_consing.Module_name.module_name_without_libname module_name
+           in
            Ascii_table.Column.(
              int ~header:module_name
-               (cell (fun line ->
-                  List.Assoc.find_exn line.Table_line.hash_consing_stats module_name
-                  |> extract)))
+               (cell (fun (line : Table_line.t) ->
+                  match List.Assoc.find line.hash_consing_stats module_name with
+                  | None -> 0
+                  | Some stats -> extract stats)))
          in
          let number_of_shared_entries =
            hash_consing Hash_consing.Set_stats.number_of_entries

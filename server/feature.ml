@@ -466,9 +466,9 @@ let to_released_feature_exn t ~query ~tagged_tip =
       then
         raise_s
           [%sexp
-            "Feature.to_released_feature_exn got mismatched tagged_tip",
-            { feature_tip = (t.tip : Rev.t)
-            ; tagged_tip = (tagged_tip : Rev.t)
+            "Feature.to_released_feature_exn got mismatched tagged_tip"
+          , { feature_tip = (t.tip : Rev.t)
+            ; tagged_tip           : Rev.t
             }
           ];
       tagged_tip

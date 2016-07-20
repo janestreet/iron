@@ -64,10 +64,10 @@ let check_result
     raise_s
       [%sexp
         "Topological_sort detected bug",
-        { exn    = (exn    : exn)
-        ; result = (result : (Node.t list, Node.t list) Result.t)
-        ; nodes  = (nodes  : Node.t list)
-        ; edges  = (edges  : Node.t Edge.t list)
+        { exn    : exn
+        ; result : (Node.t list, Node.t list) Result.t
+        ; nodes  : Node.t list
+        ; edges  : Node.t Edge.t list
         }
       ]
 ;;
@@ -109,8 +109,8 @@ let sort
             "visit",
             [%here],
             { node     = (t.node   : Node.t)
-            ; visiting = (visiting : Node.t list)
-            ; visited  = (visited  : Node.t list)
+            ; visiting : Node.t list
+            ; visited  : Node.t list
             }
           ];
       match t.state with

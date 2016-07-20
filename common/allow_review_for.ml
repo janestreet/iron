@@ -98,9 +98,9 @@ let check t ~reviewed_for ~reviewed_by =
     error_s
       [%sexp
         "this is not allowed -- see [Allow_review_for] in .fe/obligations-repo.sexp",
-        { reviewed_for       = (reviewed_for       : User_name.t)
-        ; reviewed_by        = (reviewed_by        : User_name.t)
-        ; may_be_reviewed_by = (may_be_reviewed_by : Users.t)
+        { reviewed_for       : User_name.t
+        ; reviewed_by        : User_name.t
+        ; may_be_reviewed_by : Users.t
         }
       ]
 ;;

@@ -2,6 +2,10 @@ Check expected behaviour around the [fe admin server metrics] command.
 
   $ start_test
 
+Avoid truncating ascii tables in the rest of the test.
+
+  $ export COLUMNS=500
+
 Authorize the running user to feed metrics.  In prod this is going to be
 reserved to a restricted list of special users.
 
@@ -10,210 +14,153 @@ reserved to a restricted list of special users.
 Add stats.
 
   $ fe admin server metrics add root/child1 -metric metric1 -value 2.24
-  $ fe admin server metrics add root        -metric metric2 -value 3.1,3.1,3.1
+  $ fe admin server metrics add root        -metric metric2 -value 3.1,3.2,3.3
   $ fe admin server metrics add root/child2 -metric metric1 -value 4.2,2
 
-  $ fe admin server metrics show root -stat count,mean -depth max -show-by-stat
-  count
-  |------------------------------|
-  | feature  | metric1 | metric2 |
-  |----------+---------+---------|
-  | root     |         |       3 |
-  |   child1 |       1 |         |
-  |   child2 |       2 |         |
-  |------------------------------|
+  $ fe admin server metrics show root -stat count,50% -depth max
+  metric1
+  |-------------------------|
+  | feature  | count |  50% |
+  |----------+-------+------|
+  | root     |       |      |
+  |   child1 |     1 | 2.24 |
+  |   child2 |     2 | 4.20 |
+  |-------------------------|
   
-  mean
-  |------------------------------|
-  | feature  | metric1 | metric2 |
-  |----------+---------+---------|
-  | root     |         |    3.10 |
-  |   child1 |    2.24 |         |
-  |   child2 |    3.10 |         |
-  |------------------------------|
+  metric2
+  |------------------------|
+  | feature | count |  50% |
+  |---------+-------+------|
+  | root    |     3 | 3.20 |
+  |------------------------|
   
-  $ fe admin server metrics show -stat count,mean -show-by-stat
-  count
-  |-----------------------------|
-  | feature | metric1 | metric2 |
-  |---------+---------+---------|
-  | root    |       3 |       3 |
-  |-----------------------------|
+  $ fe admin server metrics show -stat count,50%
+  metric1
+  |------------------------|
+  | feature | count |  50% |
+  |---------+-------+------|
+  | root    |     3 | 2.24 |
+  |------------------------|
   
-  mean
-  |-----------------------------|
-  | feature | metric1 | metric2 |
-  |---------+---------+---------|
-  | root    |    2.81 |    3.10 |
-  |-----------------------------|
+  metric2
+  |------------------------|
+  | feature | count |  50% |
+  |---------+-------+------|
+  | root    |     3 | 3.20 |
+  |------------------------|
   
-  $ fe admin server metrics show root -metric metric1 -show-by-stat \
-  > -depth 0
-  mean
-  |-------------------|
-  | feature | metric1 |
-  |---------+---------|
-  | root    |    2.81 |
-  |-------------------|
-  
-  min
-  |-------------------|
-  | feature | metric1 |
-  |---------+---------|
-  | root    |    2.00 |
-  |-------------------|
-  
-  max
-  |-------------------|
-  | feature | metric1 |
-  |---------+---------|
-  | root    |    4.20 |
-  |-------------------|
-  
-  count
-  |-------------------|
-  | feature | metric1 |
-  |---------+---------|
-  | root    |       3 |
-  |-------------------|
-  
-  total
-  |-------------------|
-  | feature | metric1 |
-  |---------+---------|
-  | root    |    8.44 |
-  |-------------------|
+  $ fe admin server metrics show root -metric metric1 -depth 0
+  metric1
+  |--------------------------------------------------------------------------------|
+  | feature |   0% |   5% |  15% |  25% |  50% |  75% |  90% |  95% |  99% | count |
+  |---------+------+------+------+------+------+------+------+------+------+-------|
+  | root    | 2.00 | 2.00 | 2.00 | 2.00 | 2.24 | 4.20 | 4.20 | 4.20 | 4.20 |     3 |
+  |--------------------------------------------------------------------------------|
   
   $ fe admin server metrics show root -metric metric2
   metric2
-  |----------------------------------------------|
-  | feature | mean |  min |  max | count | total |
-  |---------+------+------+------+-------+-------|
-  | root    | 3.10 | 3.10 | 3.10 |     3 |  9.30 |
-  |----------------------------------------------|
+  |--------------------------------------------------------------------------------|
+  | feature |   0% |   5% |  15% |  25% |  50% |  75% |  90% |  95% |  99% | count |
+  |---------+------+------+------+------+------+------+------+------+------+-------|
+  | root    | 3.10 | 3.10 | 3.10 | 3.10 | 3.20 | 3.30 | 3.30 | 3.30 | 3.30 |     3 |
+  |--------------------------------------------------------------------------------|
   
   $ fe admin server metrics show root -metric metric1 -depth 1
   metric1
-  |-----------------------------------------------|
-  | feature  | mean |  min |  max | count | total |
-  |----------+------+------+------+-------+-------|
-  | root     |      |      |      |       |       |
-  |   child1 | 2.24 | 2.24 | 2.24 |     1 |  2.24 |
-  |   child2 | 3.10 | 2.00 | 4.20 |     2 |  6.20 |
-  |-----------------------------------------------|
+  |---------------------------------------------------------------------------------|
+  | feature  |   0% |   5% |  15% |  25% |  50% |  75% |  90% |  95% |  99% | count |
+  |----------+------+------+------+------+------+------+------+------+------+-------|
+  | root     |      |      |      |      |      |      |      |      |      |       |
+  |   child1 | 2.24 | 2.24 | 2.24 | 2.24 | 2.24 | 2.24 | 2.24 | 2.24 | 2.24 |     1 |
+  |   child2 | 2.00 | 2.00 | 2.00 | 2.00 | 4.20 | 4.20 | 4.20 | 4.20 | 4.20 |     2 |
+  |---------------------------------------------------------------------------------|
   
-  $ fe admin server metrics show root -metric metric1 -stat mean,count \
+  $ fe admin server metrics show root -metric metric1 -stat 50%,count \
   > -depth 0
   metric1
   |------------------------|
-  | feature | mean | count |
+  | feature |  50% | count |
   |---------+------+-------|
-  | root    | 2.81 |     3 |
+  | root    | 2.24 |     3 |
   |------------------------|
   
-  $ fe admin server metrics show root -metrics metric1,metric2 -stat \
-  > mean,count -depth 0
+  $ fe admin server metrics show root -metrics metric1,metric2 \
+  >   -stat 50%,count -depth 0
   metric1
   |------------------------|
-  | feature | mean | count |
+  | feature |  50% | count |
   |---------+------+-------|
-  | root    | 2.81 |     3 |
+  | root    | 2.24 |     3 |
   |------------------------|
   
   metric2
   |------------------------|
-  | feature | mean | count |
+  | feature |  50% | count |
   |---------+------+-------|
-  | root    | 3.10 |     3 |
+  | root    | 3.20 |     3 |
   |------------------------|
   
-  $ fe admin server metrics show root -metrics ^metric$ -stat mean,count
-
+  $ fe admin server metrics show root -metrics ^metric$ -stat 50%,count
   $ fe admin server metrics add root/child1 -metric regex1 -value 4.2
-  $ fe admin server metrics show root -metrics r.* -stat mean
+  $ fe admin server metrics show root -metrics r.* -stat 50%
   regex1
-  |-----------------|
-  | feature  | mean |
-  |----------+------|
-  | root     |      |
-  |   child1 | 4.20 |
-  |-----------------|
+  |----------------|
+  | feature |  50% |
+  |---------+------|
+  | root    | 4.20 |
+  |----------------|
   
-  $ fe admin server metrics show root -metrics m.* -stat mean,count \
+  $ fe admin server metrics show root -metrics m.* -stat 50%,count \
   > -depth 0
   metric1
   |------------------------|
-  | feature | mean | count |
+  | feature |  50% | count |
   |---------+------+-------|
-  | root    | 2.81 |     3 |
+  | root    | 2.24 |     3 |
   |------------------------|
   
   metric2
   |------------------------|
-  | feature | mean | count |
+  | feature |  50% | count |
   |---------+------+-------|
-  | root    | 3.10 |     3 |
+  | root    | 3.20 |     3 |
   |------------------------|
   
 
-  $ fe admin server metrics show -metrics m.* -depth 0 -show-by-stat
-  mean
-  |-----------------------------|
-  | feature | metric1 | metric2 |
-  |---------+---------+---------|
-  | *       |    2.81 |    3.10 |
-  |-----------------------------|
+  $ fe admin server metrics show -metrics m.* -depth 0
+  metric1
+  |--------------------------------------------------------------------------------|
+  | feature |   0% |   5% |  15% |  25% |  50% |  75% |  90% |  95% |  99% | count |
+  |---------+------+------+------+------+------+------+------+------+------+-------|
+  | *       | 2.00 | 2.00 | 2.00 | 2.00 | 2.24 | 4.20 | 4.20 | 4.20 | 4.20 |     3 |
+  |--------------------------------------------------------------------------------|
   
-  min
-  |-----------------------------|
-  | feature | metric1 | metric2 |
-  |---------+---------+---------|
-  | *       |    2.00 |    3.10 |
-  |-----------------------------|
+  metric2
+  |--------------------------------------------------------------------------------|
+  | feature |   0% |   5% |  15% |  25% |  50% |  75% |  90% |  95% |  99% | count |
+  |---------+------+------+------+------+------+------+------+------+------+-------|
+  | *       | 3.10 | 3.10 | 3.10 | 3.10 | 3.20 | 3.30 | 3.30 | 3.30 | 3.30 |     3 |
+  |--------------------------------------------------------------------------------|
   
-  max
-  |-----------------------------|
-  | feature | metric1 | metric2 |
-  |---------+---------+---------|
-  | *       |    4.20 |    3.10 |
-  |-----------------------------|
-  
-  count
-  |-----------------------------|
-  | feature | metric1 | metric2 |
-  |---------+---------+---------|
-  | *       |       3 |       3 |
-  |-----------------------------|
-  
-  total
-  |-----------------------------|
-  | feature | metric1 | metric2 |
-  |---------+---------+---------|
-  | *       |    8.44 |    9.30 |
-  |-----------------------------|
-  
-
   $ fe admin server metrics add root -metric metric.with.dots -value 2
   $ fe admin server metrics show -metrics 'metric\..*' -decimals 0
   metric.with.dots
-  |--------------------------------------------|
-  | feature | mean | min | max | count | total |
-  |---------+------+-----+-----+-------+-------|
-  | root    |    2 |   2 |   2 |     1 |     2 |
-  |--------------------------------------------|
+  |---------------------------------------------------------------------|
+  | feature | 0% | 5% | 15% | 25% | 50% | 75% | 90% | 95% | 99% | count |
+  |---------+----+----+-----+-----+-----+-----+-----+-----+-----+-------|
+  | root    |  2 |  2 |   2 |   2 |   2 |   2 |   2 |   2 |   2 |     1 |
+  |---------------------------------------------------------------------|
   
-
   $ fe admin server metrics add jane -metric metric3 -value 2
 
   $ fe admin server metrics show -metrics metric3
   metric3
-  |----------------------------------------------|
-  | feature | mean |  min |  max | count | total |
-  |---------+------+------+------+-------+-------|
-  | jane    | 2.00 | 2.00 | 2.00 |     1 |  2.00 |
-  |----------------------------------------------|
+  |--------------------------------------------------------------------------------|
+  | feature |   0% |   5% |  15% |  25% |  50% |  75% |  90% |  95% |  99% | count |
+  |---------+------+------+------+------+------+------+------+------+------+-------|
+  | jane    | 2.00 | 2.00 | 2.00 | 2.00 | 2.00 | 2.00 | 2.00 | 2.00 | 2.00 |     1 |
+  |--------------------------------------------------------------------------------|
   
-
   $ completion-test fe admin server metrics show root/child1 -metrics met
   metric.with.dots
   metric1
@@ -234,6 +181,47 @@ Add stats.
   $ fe admin server metrics clear -metric metric1 root -rec
   $ fe admin server metrics show -metrics metric1
 
+  $ fe admin server metrics get root
+  root: metric.with.dots
+  |-------------------------------------|
+  | at                          | value |
+  |-----------------------------+-------|
+  | * | 2.00  | (glob)
+  |-------------------------------------|
+  
+  root: metric2
+  |-------------------------------------|
+  | at                          | value |
+  |-----------------------------+-------|
+  | * | 3.10  | (glob)
+  | * | 3.20  | (glob)
+  | * | 3.30  | (glob)
+  |-------------------------------------|
+  
+  $ fe admin server metrics get root -depth max
+  root: metric.with.dots
+  |-------------------------------------|
+  | at                          | value |
+  |-----------------------------+-------|
+  | * | 2.00  | (glob)
+  |-------------------------------------|
+  
+  root: metric2
+  |-------------------------------------|
+  | at                          | value |
+  |-----------------------------+-------|
+  | * | 3.10  | (glob)
+  | * | 3.20  | (glob)
+  | * | 3.30  | (glob)
+  |-------------------------------------|
+  
+  root/child1: regex1
+  |-------------------------------------|
+  | at                          | value |
+  |-----------------------------+-------|
+  | * | 4.20  | (glob)
+  |-------------------------------------|
+  
 Test the subscription API.
 
   $ function subscribe {
@@ -369,25 +357,26 @@ latency.
   |-----------------|
   
   $ fe internal push-events show
-  ((by_rev_size 10) (user_count 1) (feature_id_count 1) (total_rev_count 3))
+  ((by_rev_size 10) (feature_id_count 1) (total_rev_count 3)
+   (users (1 ((unix-login-for-testing 3)))))
   $ fe internal push-events show -values \
   >   | sed -e "s/$rev/\$rev/g" | sed -e "s/$rev2/\$rev2/g" | sed -e "s/$rev3/\$rev3/g"
   ((* (glob)
     ((max_size 10) (length 3)
      (items
       (($rev
-        ((query
-          ((by unix-login-for-testing) (at (*)))) (glob)
+        ((feature_path root) (by unix-login-for-testing)
+         (at (*)) (glob)
          (used_by_metrics
           (hydra.synchronize-state-latency hydra.update-bookmark-latency))))
        ($rev2
-        ((query
-          ((by unix-login-for-testing) (at (*)))) (glob)
+        ((feature_path root) (by unix-login-for-testing)
+         (at (*)) (glob)
          (used_by_metrics
           (hydra.synchronize-state-latency hydra.update-bookmark-latency))))
        ($rev3
-        ((query
-          ((by unix-login-for-testing) (at (*)))) (glob)
+        ((feature_path root) (by unix-login-for-testing)
+         (at (*)) (glob)
          (used_by_metrics (hydra.update-bookmark-latency)))))))))
 
   $ fe internal push-events show -user as-hydra-worker
@@ -397,14 +386,15 @@ Change some settings on the push-events.
 
   $ fe internal push-events set-max-size-per-feature 1
   $ fe internal push-events show
-  ((by_rev_size 1) (user_count 1) (feature_id_count 1) (total_rev_count 1))
+  ((by_rev_size 1) (feature_id_count 1) (total_rev_count 1)
+   (users (1 ((unix-login-for-testing 1)))))
   $ fe internal push-events show -values | sed -e "s/$rev2/\$rev2/g" | sed -e "s/$rev3/\$rev3/g"
   ((* (glob)
     ((max_size 1) (length 1)
      (items
       (($rev3
-        ((query
-          ((by unix-login-for-testing) (at (*)))) (glob)
+        ((feature_path root) (by unix-login-for-testing)
+         (at (*)) (glob)
          (used_by_metrics (hydra.update-bookmark-latency)))))))))
 
 Clear the events.
@@ -415,4 +405,4 @@ Clear the events.
 
   $ fe internal push-events clear -all
   $ fe internal push-events show
-  ((by_rev_size 1) (user_count 0) (feature_id_count 0) (total_rev_count 0))
+  ((by_rev_size 1) (feature_id_count 0) (total_rev_count 0) (users (0 ())))

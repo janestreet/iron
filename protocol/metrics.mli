@@ -24,7 +24,8 @@ module Get : sig
   end
 
   module Reaction : sig
-    type t = Metric.Snapshot.t Metric_name.Map.t Feature_path.Map.t [@@deriving sexp_of]
+    type t = Metric.Data_point.t list Metric_name.Map.t Feature_path.Map.t
+    [@@deriving sexp_of]
   end
 
   include Iron_versioned_rpc.S

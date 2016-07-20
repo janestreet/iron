@@ -323,6 +323,7 @@
 : 
 :   add        add values to a metric
 :   clear      clear a metric
+:   get        get the raw list of metric data points captured from features
 :   list       list metrics available on the server
 :   show       show statistics of data captured from features
 :   subscribe  subscribe to specified metric updates and print them
@@ -355,6 +356,27 @@
 :   [-help]         print this help text and exit
 :                   (alias: -?)
 
+***** get
+
+: get the raw list of metric data points captured from features
+: 
+:   fe.exe admin server metrics get [FEATURE]
+: 
+: This is a raw command to access the most recent internal data points directly.
+: To display stats on those values, see [show].
+: 
+: 
+: === flags ===
+: 
+:   [-decimals NUM]             round stats to n decimals. Default 2
+:   [-depth {DEPTH|max}]        show descendants DEPTH levels down (default is 1)
+:   [-display-ascii]            display ASCII characters, with no ANSI color
+:                               escapes or unicode characters
+:   [-max-output-columns INT]   maximum column width for table output
+:   [-metrics REGEX,[REGEX..]]  select metrics to show
+:   [-help]                     print this help text and exit
+:                               (alias: -?)
+
 ***** list
 
 : list metrics available on the server
@@ -373,8 +395,6 @@
 :   fe.exe admin server metrics show [FEATURE]
 : 
 : Metrics are shown for all features in the requested subtree(s), aggregated by -depth.
-: Tables are drawn by metric by default (i.e. showing all stats for a metric), and by stat
-: (i.e. count, mean, etc.) if the switch -show-by-stat is supplied.
 : 
 : 
 : === flags ===
@@ -385,8 +405,8 @@
 :                               escapes or unicode characters
 :   [-max-output-columns INT]   maximum column width for table output
 :   [-metrics REGEX,[REGEX..]]  select metrics to show
-:   [-show-by-stat]             draw tables by stat
-:   [-stats STAT,[STAT...]]     select stats to show count|max|mean|min|total
+:   [-stats STAT,[STAT...]]     select stats to show
+:                               0%|5%|15%|25%|50%|75%|90%|95%|99%|count
 :   [-help]                     print this help text and exit
 :                               (alias: -?)
 

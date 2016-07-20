@@ -96,12 +96,12 @@ let what_is_locked t =
 let check_all_unlocked t =
   match Hashtbl.to_alist t.lock_by_name with
   | [] -> Ok ()
-  | locked ->
+  | (_::_) as locked ->
     error_s
       [%sexp
         "feature is locked",
         { feature_path = (t.feature_path : Feature_path.t)
-        ; locked = (locked : (Lock_name.t * Locked.t list) list)
+        ; locked : (Lock_name.t * Locked.t list) list
         }
       ]
 ;;
@@ -114,8 +114,8 @@ let check_unlocked t lock_name =
       [%sexp
         "feature lock is locked",
         { feature_path = (t.feature_path : Feature_path.t)
-        ; lock_name    = (lock_name      : Lock_name.t)
-        ; locks        = (locks          : Locked.t list)
+        ; lock_name    : Lock_name.t
+        ; locks        : Locked.t list
         }
       ]
 ;;
@@ -175,7 +175,7 @@ let unlock t ~for_ ~lock_name ~even_if_permanent =
         error_s
           [%sexp
             (message : string),
-            { locks = (locks : Locked.t list)
+            { locks : Locked.t list
             }
           ]
     )

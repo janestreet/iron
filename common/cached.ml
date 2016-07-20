@@ -225,8 +225,8 @@ let check t ~ignore_diffs_in_errors =
       error_s
         [%sexp
           "fixed incorrect cache",
-          { was_cached_as = (was_cached_as : a Or_error.t)
-          ; set_cache_to  = (set_cache_to  : a Or_error.t)
+          { was_cached_as : a Or_error.t
+          ; set_cache_to  : a Or_error.t
           }
         ]
     end

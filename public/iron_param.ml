@@ -189,9 +189,9 @@ let complete_or_error types =
         [%sexp
           "unless the server is down, please report this bug in Iron \
            server's completion"
-        , { types  = (types  : Iron_protocol.Complete.Type.t list)
-          ; prefix = (prefix : string)
-          ; exn    = (exn    : Exn.t)
+        , { types  : Iron_protocol.Complete.Type.t list
+          ; prefix : string
+          ; exn    : Exn.t
           }
         ]
 ;;
@@ -322,8 +322,8 @@ let feature_path_of_string_or_partial_name_internal_exn
         raise_s
           [%sexp
             "cannot disambiguate among features, and cannot determine your repo family",
-            { matching_features = (matching_features : Feature_path.t list)
-            ; error             = (error             : Error.t)
+            { matching_features : Feature_path.t list
+            ; error             : Error.t
             }
           ]
       | Ok desired_family ->
@@ -353,10 +353,8 @@ cannot disambiguate among features, and none of them are in the %s repo"
             [%sexp
               (sprintf "cannot disambiguate among features in the %s repo"
                  (Feature_name.to_string desired_family) : string),
-              { matching_features_in_this_repo =
-                  (matching_features_in_this_repo   : Feature_path.t list)
-              ; matching_features_in_other_repos =
-                  (matching_features_in_other_repos : Feature_path.t list)
+              { matching_features_in_this_repo   : Feature_path.t list
+              ; matching_features_in_other_repos : Feature_path.t list
               }
             ]
         end
@@ -1201,11 +1199,6 @@ let metric_name =
 
 let metric_name_option =
   flag metric_switch ~doc:"METRIC metric" (optional metric_name_arg_type)
-;;
-
-let stat_type_enum_list ~doc=
-  map (enum_list "-stats" ~doc (module Metric.Stat_type))
-    ~f:Metric.Stat_type.Set.stable_dedup_list
 ;;
 
 let depth_option =

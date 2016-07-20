@@ -206,7 +206,7 @@ let remove_machine_exn t query user_name machine =
         [%sexp
           "no such machine for user",
           { user    = (user_name : User_name.t)
-          ; machine = (machine   : Machine.t)
+          ; machine : Machine.t
           }
         ];
     persist_user t query user_name;

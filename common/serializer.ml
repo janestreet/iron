@@ -363,7 +363,7 @@ let idempotent_compress_or_uncompress operation t ~dir =
         [%sexp
           (operation_name : string),
           [%here],
-          { dir = (dir : Relpath.t) }
+          { dir : Relpath.t }
         ];
     let { Compress_or_uncompress. source; destination } =
       Compress_or_uncompress.source_and_destination operation t dir
@@ -377,8 +377,8 @@ let idempotent_compress_or_uncompress operation t ~dir =
           [%sexp
             (operation_name : string),
             [%here],
-            { source      = (source                  : string)
-            ; destination = (destination             : string)
+            { source      : string
+            ; destination : string
             ; working_dir = (Filename.dirname source : string)
             }
           ];

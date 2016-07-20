@@ -85,9 +85,9 @@ let synthesize ~desired ~universe =
     raise_s
       [%sexp
         "File_set.synthesize got desired files not in the universe",
-        { universe           = (universe           : File_name.Set.t)
-        ; desired            = (desired            : File_name.Set.t)
-        ; unexpected_desired = (unexpected_desired : File_name.Set.t)
+        { universe           : File_name.Set.t
+        ; desired            : File_name.Set.t
+        ; unexpected_desired : File_name.Set.t
         }
       ];
   let add_remaining sexp_string =

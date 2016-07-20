@@ -46,6 +46,15 @@ module Id = Unique_id.Int()
 module Module_name = struct
   type t = string [@@deriving compare, sexp_of]
   let equal = String.equal
+
+  let module_name_without_libname module_name =
+    if not (String.is_prefix module_name ~prefix:"Iron_")
+    then module_name
+    else
+      match String.lsplit2 module_name ~on:'.' with
+      | Some (_libname, module_name) -> module_name
+      | None -> module_name
+  ;;
 end
 
 type weak_set =
@@ -189,18 +198,12 @@ module Make (X : Unshared) () = struct
   ;;
 
   let set = lazy (
-    let module_name_without_libname =
-      let module_name = X.module_name in
-      match String.lsplit2 module_name ~on:'.' with
-      | Some (_libname, module_name) -> module_name
-      | None -> module_name
-    in
     let set = Weak_hashset.create 128 in
     register
       { stats       = (fun () -> stats set)
       ; elements    = (fun () -> elements set)
       ; hash_data   = (fun () -> hash_data set)
-      ; module_name = module_name_without_libname
+      ; module_name = Module_name.module_name_without_libname X.module_name
       };
     set
   )

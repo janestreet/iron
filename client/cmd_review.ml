@@ -605,7 +605,7 @@ let confirm_review_session_id_exn repo_root
     raise_s
       [%sexp
         "reviewer is up to date, no current session",
-        { feature_path  = (feature_path : Feature_path.t)
+        { feature_path                  : Feature_path.t
         ; requested_for = (for_         : User_name.t)
         }
       ]

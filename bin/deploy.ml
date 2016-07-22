@@ -38,7 +38,7 @@ dir=$(mktemp --tmpdir -d);
 trap 'rm -rf -- $dir' EXIT INT QUIT
 cd $dir
 echo >&2 Downloading last backup
-ssh as-fe@tot-qpr-fe1 '
+ssh %s '
   cd /j/office/app/fe/prod/backups;
   backup=$(ls -1 export-dir-backup.*.tar.xz | sort -g | tail -n 1)
   echo >&2 $backup
@@ -47,7 +47,7 @@ ssh as-fe@tot-qpr-fe1 '
 tar -xJf backup.tar.xz
 echo >&2 Checking invariants
 %s internal invariant server-state check-backup-in $PWD/export
-" exe
+" Fe_config.backup_host exe
   in
   fork_exec_wait ~prog:"bash" ~args:[ "-e"; "-u"; "-c"; command ]
 ;;

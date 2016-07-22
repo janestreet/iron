@@ -12,7 +12,7 @@ let browse_disk_quota =
          (Unix.exec () ~prog
             ~args:[ prog
                   ; "browse"
-                  ; "tot:/app/isi-quota-monitor/tot-isilon3/j/tot/app/fe"
+                  ; Fe_config.catalog_browse_path
                   ])
     )
 ;;

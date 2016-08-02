@@ -304,62 +304,58 @@ let feature_path_of_string_or_partial_name_internal_exn
     in
     if not parse_partial_name_if_no_match
     then fail ()
-    else
-      begin match Feature_path.of_string partial_name_prefix with
+    else (
+      match Feature_path.of_string partial_name_prefix with
       | exception  _ -> fail ()
-      | feature_path -> return feature_path
-      end
+      | feature_path -> return feature_path)
   | Match feature_path -> return feature_path
   | Cannot_disambiguate ->
-    begin match Repo_root.program_started_in with
-    | Error _ ->
-      raise_s [%sexp "cannot disambiguate among features"
-                   , (matching_features : Feature_path.t list)]
-    | Ok repo_root ->
-      let%map desired_family = Workspace_hgrc.extract_root_feature_from_hgrc repo_root in
-      begin match desired_family with
-      | Error error ->
-        raise_s
-          [%sexp
-            "cannot disambiguate among features, and cannot determine your repo family",
-            { matching_features : Feature_path.t list
-            ; error             : Error.t
-            }
-          ]
-      | Ok desired_family ->
-        let (matching_features_in_this_repo, matching_features_in_other_repos) =
-          List.partition_tf matching_features ~f:(fun feature_path ->
-            Feature_name.equal (Feature_path.root feature_path) desired_family)
-        in
-        if List.is_empty matching_features_in_other_repos
-        then
-          raise_s [%sexp "cannot disambiguate among features"
-                       , (matching_features_in_this_repo : Feature_path.t list)];
-        begin match
-          find_preferred_feature_path_heuristic
-            ~matching_features:matching_features_in_this_repo
-            ~partial_name_prefix
-        with
-        | Match feature_path -> feature_path
-        | No_match ->
-          raise_s
-            [%sexp (sprintf "\
-cannot disambiguate among features, and none of them are in the %s repo"
-                      (Feature_name.to_string desired_family) : string)
-                 , (matching_features_in_other_repos : Feature_path.t list)
-            ]
-        | Cannot_disambiguate ->
+    (match Repo_root.program_started_in with
+     | Error _ ->
+       raise_s [%sexp "cannot disambiguate among features"
+                    , (matching_features : Feature_path.t list)]
+     | Ok repo_root ->
+       let%map desired_family = Workspace_hgrc.extract_root_feature_from_hgrc repo_root in
+       (match desired_family with
+        | Error error ->
           raise_s
             [%sexp
-              (sprintf "cannot disambiguate among features in the %s repo"
-                 (Feature_name.to_string desired_family) : string),
-              { matching_features_in_this_repo   : Feature_path.t list
-              ; matching_features_in_other_repos : Feature_path.t list
+              "cannot disambiguate among features, and cannot determine your repo family",
+              { matching_features : Feature_path.t list
+              ; error             : Error.t
               }
             ]
-        end
-      end
-    end
+        | Ok desired_family ->
+          let (matching_features_in_this_repo, matching_features_in_other_repos) =
+            List.partition_tf matching_features ~f:(fun feature_path ->
+              Feature_name.equal (Feature_path.root feature_path) desired_family)
+          in
+          (if List.is_empty matching_features_in_other_repos
+           then
+             raise_s [%sexp "cannot disambiguate among features"
+                          , (matching_features_in_this_repo : Feature_path.t list)]);
+          (match
+             find_preferred_feature_path_heuristic
+               ~matching_features:matching_features_in_this_repo
+               ~partial_name_prefix
+           with
+           | Match feature_path -> feature_path
+           | No_match ->
+             raise_s
+               [%sexp (sprintf "\
+cannot disambiguate among features, and none of them are in the %s repo"
+                         (Feature_name.to_string desired_family) : string)
+                    , (matching_features_in_other_repos : Feature_path.t list)
+               ]
+           | Cannot_disambiguate ->
+             raise_s
+               [%sexp
+                 (sprintf "cannot disambiguate among features in the %s repo"
+                    (Feature_name.to_string desired_family) : string),
+                 { matching_features_in_this_repo   : Feature_path.t list
+                 ; matching_features_in_other_repos : Feature_path.t list
+                 }
+               ])))
 ;;
 
 let feature_path_of_string_or_partial_name_exn partial_name_prefix ~namespace =
@@ -480,7 +476,7 @@ let current_bookmark () =
   let client_config = Client_config.get () in
   let result =
     if Client_config.may_infer_feature_path_from_current_bookmark client_config
-    then
+    then (
       match Repo_root.program_started_in with
       | Error _ as e -> return e
       | Ok repo_root ->
@@ -492,7 +488,7 @@ let current_bookmark () =
         match%map Hg.current_bookmark repo_root with
         | Error _ as e -> e
         | Ok feature_path_string ->
-          Or_error.try_with (fun () -> Feature_path.of_string feature_path_string)
+          Or_error.try_with (fun () -> Feature_path.of_string feature_path_string))
     else
       Deferred.Or_error.error_string "feature-path inference is disabled via [.ferc]"
   in
@@ -896,18 +892,18 @@ module Which_features = struct
         else return Which_features.All_features
       else
       if List.is_empty features
-      then
+      then (
         let%map features =
           if default_to_current_bookmark
-          then
+          then (
             match%map current_bookmark () with
             | Error err  -> if not allow_empty_selection then Error.raise err else []
-            | Ok feature -> [ feature ]
+            | Ok feature -> [ feature ])
           else return []
         in
         if List.is_empty features && not allow_empty_selection
         then failwith (concat [ "specify some features or use " ; Switch.all ])
-        else features_list features ~rec_
+        else features_list features ~rec_)
       else
         return (features_list features ~rec_))
   ;;

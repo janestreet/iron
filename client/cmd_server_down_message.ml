@@ -97,11 +97,10 @@ let roll_start_command =
        let open! Deferred.Let_syntax in
        let%bind t = Server_down_message.load_exn Server_down_message.prod_path in
        let%bind old_message =
-         begin match Server_down_message.get_temporary_message t with
+         match Server_down_message.get_temporary_message t with
          | Some msg -> return msg
          | None ->
            Reader.file_contents (Abspath.to_string Server_down_message.roll_etc_path)
-         end
        in
        edit_message old_message
          ~f:(fun message ->

@@ -141,8 +141,7 @@ module Stable = struct
         ; session_tip
         ; creation_time
         ; reviewer_in_session
-          = begin
-            { user_name = context.user_name
+          = { user_name = context.user_name
             ; is_whole_feature_follower = false
             ; is_whole_feature_reviewer =
                 (* When Iron was using V2 the logic was such that review client would
@@ -150,7 +149,6 @@ module Stable = struct
                    has the desirated effect *)
                 true
             }
-          end
         ; diff4s_in_session
         ; remote_rev_zero
         ; remote_repo_path

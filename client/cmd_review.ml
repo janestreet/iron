@@ -75,21 +75,19 @@ let code_change_hunks_of_diff4 ~reviewer ~context ~rev_names ~file_names ~header
       Diamond.classify ~equal:File_contents_hash.(=) hashes
     in
     if not (Diff4_class.is_shown files_diff4_class)
-       || begin
-         match reviewer with
-         | `Whole_diff_plus_ignored -> false
-         | `Reviewer reviewer ->
-           match Diff4.may_review diff4 reviewer with
-           | `Dropped_from_follow
-           | `Dropped_from_review
-           | `Review_ownership_change ->
-               true
-           | `Nothing_to_review_or_follow
-           | `Follow_lines
-           | `Review_lines -> false
-       end
+    || (match reviewer with
+        | `Whole_diff_plus_ignored -> false
+        | `Reviewer reviewer ->
+          match Diff4.may_review diff4 reviewer with
+          | `Dropped_from_follow
+          | `Dropped_from_review
+          | `Review_ownership_change ->
+            true
+          | `Nothing_to_review_or_follow
+          | `Follow_lines
+          | `Review_lines -> false)
     then return []
-    else
+    else (
       let contents = fast_cat_or_empty fast_hg_cat_table in
       let%bind contents = Diamond.Deferred.all (Diamond.map files ~f:contents) in
       Pdiff4.Std.Patdiff4.hunks
@@ -99,7 +97,7 @@ let code_change_hunks_of_diff4 ~reviewer ~context ~rev_names ~file_names ~header
         ~context
         ~rev_names ~file_names ~header_file_name
         ~scrutiny ~contents ()
-      |> return
+      |> return)
 ;;
 
 let attributes_contents ~show_file_followers (attributed_file : Attributed_file.t) =
@@ -276,11 +274,10 @@ let pull_and_update
     | `Is_not_ancestor | `Unknown | `No_local_feature ->
       match%bind Lazy_deferred.force_exn is_clean with
       | Error cleanliness_error ->
-        return begin
-          match local_feature_tip_or_error with
-          | Ok _ as ok -> ok (* We can't pull, so try to live with where we are. *)
-          | Error _ -> Error (cannot_pull cleanliness_error)
-        end
+        return
+          (match local_feature_tip_or_error with
+           | Ok _ as ok -> ok (* We can't pull, so try to live with where we are. *)
+           | Error _ -> Error (cannot_pull cleanliness_error))
       | Ok repo_is_clean ->
         let%bind () =
           Hg.pull ~repo_is_clean repo_root (`Feature feature_path)
@@ -323,14 +320,14 @@ let pull_and_update
     in
     if feature_is_active_bookmark
     then Deferred.unit
-    else
+    else (
       match%bind Lazy_deferred.force_exn is_clean with
       | Error cleanliness_error ->
         failwiths "Iron needs to [hg update] but won't" cleanliness_error
           [%sexp_of: Error.t]
       | Ok repo_is_clean ->
         Hg.update repo_root (`Feature feature_path)
-          ~clean_after_update:(Yes repo_is_clean)
+          ~clean_after_update:(Yes repo_is_clean))
   in
   Cmd_workspace.If_enabled.update_satellite_repos ~center_repo_root:repo_root
 ;;
@@ -366,99 +363,99 @@ let print_introduction_summary_for_review
       ~display_ascii
       ~max_output_columns
   =
-  begin match (warn_reviewer : Account_for_reviewer_warnings.t option) with
-  | None -> ()
-  | Some { reviewer_in_feature
-         ; line_count_to_finish_session
-         ; line_count_to_goal
-         } ->
-    if not (Reviewer.equal reviewer_in_session reviewer_in_feature)
-    then begin
-      Print.printf "\
+  (match (warn_reviewer : Account_for_reviewer_warnings.t option) with
+   | None -> ()
+   | Some { reviewer_in_feature
+          ; line_count_to_finish_session
+          ; line_count_to_goal
+          } ->
+     (if not (Reviewer.equal reviewer_in_session reviewer_in_feature)
+      then (
+        Print.printf "\
 Warning: what you need to review may have changed since this session was created.
 Consider committing or forgetting your current session:
 ";
-      let table =
-        let rows =
-          let rows = ref [] in
-          let module S = struct
-            module type S = sig
-              type t
-              include Equal.S      with type t := t
-              include Stringable.S with type t := t
-            end
-          end in
-          let check (type a) title (module M : S.S with type t = a) field =
-            let in_session = Field.get field reviewer_in_session in
-            let in_feature = Field.get field reviewer_in_feature in
-            if not (M.equal in_session in_feature)
-            then rows := (title, M.to_string in_session, M.to_string in_feature) :: !rows
+        let table =
+          let rows =
+            let rows = ref [] in
+            let module S = struct
+              module type S = sig
+                type t
+                include Equal.S      with type t := t
+                include Stringable.S with type t := t
+              end
+            end in
+            let check (type a) title (module M : S.S with type t = a) field =
+              let in_session = Field.get field reviewer_in_session in
+              let in_feature = Field.get field reviewer_in_feature in
+              if not (M.equal in_session in_feature)
+              then
+                rows := (title, M.to_string in_session, M.to_string in_feature) :: !rows
+            in
+            Reviewer.Fields.iter
+              ~user_name:(check "user name" (module User_name))
+              ~is_whole_feature_reviewer:
+                (check "is whole-feature reviewer" (module Bool))
+              ~is_whole_feature_follower:
+                (check "is whole-feature follower" (module Bool));
+            List.rev !rows
           in
-          Reviewer.Fields.iter
-            ~user_name:(check "user name" (module User_name))
-            ~is_whole_feature_reviewer:(check "is whole-feature reviewer" (module Bool))
-            ~is_whole_feature_follower:(check "is whole-feature follower" (module Bool));
-          List.rev !rows
+          let columns =
+            Ascii_table.Column.(
+              [ string ~header:"reviewer"   (cell (fun (value, _, _) -> value))
+              ; string ~header:"in session" (cell (fun (_, value, _) -> value))
+              ; string ~header:"in feature" (cell (fun (_, _, value) -> value))
+              ])
+          in
+          Ascii_table.create ~columns ~rows
         in
-        let columns =
-          Ascii_table.Column.(
-            [ string ~header:"reviewer"   (cell (fun (value, _, _) -> value))
-            ; string ~header:"in session" (cell (fun (_, value, _) -> value))
-            ; string ~header:"in feature" (cell (fun (_, _, value) -> value))
-            ])
-        in
-        Ascii_table.create ~columns ~rows
-      in
-      Cmd_show.print_table table ~display_ascii ~max_output_columns;
-      Print.printf "\n";
-    end;
-    if Client_config.(get () |> show_commit_session_warning)
-    then begin
-      match line_count_to_goal.from_session_end
-          , line_count_to_goal.from_brain_if_session_was_committed
-      with
-      | Known (Ok line_count_from_session_end_to_goal)
-      , Known (Ok line_count_from_brain_if_session_was_committed_to_goal) ->
-        let num_lines_from_session_end_to_goal_that_must_be_reviewed =
-          line_count_from_session_end_to_goal.must_review
-        in
-        let num_lines_that_would_remain_if_the_session_was_committed =
-          line_count_from_brain_if_session_was_committed_to_goal.must_review
-        in
-        let num_lines_in_session_that_must_be_reviewed =
-          Line_count.Review.must_review line_count_to_finish_session
-        in
-        if num_lines_from_session_end_to_goal_that_must_be_reviewed > 0
-        || (num_lines_that_would_remain_if_the_session_was_committed <
-            num_lines_in_session_that_must_be_reviewed
-            + num_lines_from_session_end_to_goal_that_must_be_reviewed)
-        then begin
-          Print.printf "\
+        Cmd_show.print_table table ~display_ascii ~max_output_columns;
+        Print.printf "\n"));
+     (if Client_config.(get () |> show_commit_session_warning)
+      then (
+        match line_count_to_goal.from_session_end
+            , line_count_to_goal.from_brain_if_session_was_committed
+        with
+        | Known (Ok line_count_from_session_end_to_goal)
+        , Known (Ok line_count_from_brain_if_session_was_committed_to_goal) ->
+          let num_lines_from_session_end_to_goal_that_must_be_reviewed =
+            line_count_from_session_end_to_goal.must_review
+          in
+          let num_lines_that_would_remain_if_the_session_was_committed =
+            line_count_from_brain_if_session_was_committed_to_goal.must_review
+          in
+          let num_lines_in_session_that_must_be_reviewed =
+            Line_count.Review.must_review line_count_to_finish_session
+          in
+          if num_lines_from_session_end_to_goal_that_must_be_reviewed > 0
+          || (num_lines_that_would_remain_if_the_session_was_committed <
+              num_lines_in_session_that_must_be_reviewed
+              + num_lines_from_session_end_to_goal_that_must_be_reviewed)
+          then (
+            Print.printf "\
 Warning: the feature has changed since this session was created.  It may be more suitable
 to review the feature to its most recent tip.  Consider committing your session:
 ";
-          let table =
-            let columns =
-              Ascii_table.Column.(
-                let int = int ~show_zero:true in
-                [ int ~header:"remaining in session"
-                    (cell (const num_lines_in_session_that_must_be_reviewed))
-                ; int ~header:"session end to tip"
-                    (cell
-                       (const num_lines_from_session_end_to_goal_that_must_be_reviewed))
-                ; int ~header:"remaining if commit"
-                    (cell
-                       (const num_lines_that_would_remain_if_the_session_was_committed))
-                ])
+            let table =
+              let columns =
+                Ascii_table.Column.(
+                  let int = int ~show_zero:true in
+                  [ int ~header:"remaining in session"
+                      (cell (const num_lines_in_session_that_must_be_reviewed))
+                  ; int ~header:"session end to tip"
+                      (cell
+                         (const num_lines_from_session_end_to_goal_that_must_be_reviewed))
+                  ; int ~header:"remaining if commit"
+                      (cell
+                         (const num_lines_that_would_remain_if_the_session_was_committed))
+                  ])
+              in
+              Ascii_table.create ~columns ~rows:[()]
             in
-            Ascii_table.create ~columns ~rows:[()]
-          in
-          Cmd_show.print_table table ~display_ascii ~max_output_columns;
-          Print.printf "\n";
-        end;
-      | _ -> ()
-    end;
-  end;
+            Cmd_show.print_table table ~display_ascii ~max_output_columns;
+            Print.printf "\n";
+          );
+        | _ -> ())));
   let count_total = List.length diff4s_to_review in
   let count_reviewed =
     List.count diff4s_to_review ~f:Diff4_to_review.is_reviewed
@@ -549,10 +546,8 @@ let create_files_for_review
       Map.map map ~f:(fun cached_file ->
         Lazy_deferred.create (fun () ->
           Throttle.enqueue avoid_too_many_open_files (fun () ->
-            begin
-              if is_testing_client_raises_creating_hunks ()
-              then failwithf "exn: %s" (Abspath.to_string cached_file) ()
-            end;
+            (if is_testing_client_raises_creating_hunks ()
+             then failwithf "exn: %s" (Abspath.to_string cached_file) ());
             Reader.file_contents (Abspath.to_string cached_file)))))
     |> Rev.Compare_by_hash.Table.of_alist_exn
   in
@@ -577,12 +572,11 @@ let confirm_review_session_id_exn repo_root
       ~action ~feature_path ~for_ ~(which_session : Which_session.t)
       ~display_ascii ~max_output_columns
   =
-  begin match which_session with
-  | This_session _ -> ()
-  | Current_session ->
-    if not !Interactive.interactive
-    then failwith "review_session_id is mandatory when non-interactive"
-  end;
+  (match which_session with
+   | This_session _ -> ()
+   | Current_session ->
+     if not !Interactive.interactive
+     then failwith "review_session_id is mandatory when non-interactive");
   let%bind rev_zero =
     match repo_root with
     | Error _ -> return None
@@ -629,7 +623,7 @@ let confirm_review_session_id_exn repo_root
     let confirmed =
       if not !Interactive.interactive
       then return true
-      else begin
+      else (
         print_introduction_summary_for_review
           ~feature_path ~review_session_tip
           ~reviewer_in_session
@@ -646,8 +640,7 @@ let confirm_review_session_id_exn repo_root
              feature_path
              (if not (User_name.equal for_ User_name.unix_login)
               then " for " ^ User_name.to_string for_
-              else ""))
-      end
+              else "")))
     in
     match%map confirmed with
     | true  -> `Id review_session_id
@@ -964,13 +957,13 @@ let catch_up_review_loop ~warn_if_no_session ~repo_root ~feature_path
     let%bind reaction =
       Get_catch_up_session.rpc_to_server_exn { feature_path; for_ }
     in
-    if raw then begin
+    if raw then (
       reaction
       |> [%sexp_of: Get_catch_up_session.Reaction.t]
       |> Sexp.to_string_hum
       |> print_endline;
-      return (`Finished ())
-    end else begin
+      return (`Finished ()))
+    else (
       match reaction with
       | `Up_to_date ->
         if first_session && warn_if_no_session
@@ -1032,7 +1025,7 @@ let catch_up_review_loop ~warn_if_no_session ~repo_root ~feature_path
          | `Commit_session -> assert false);
         (* Maybe by now there is another session to review *)
         `Repeat false
-    end)
+    ))
 ;;
 
 let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~reason
@@ -1079,13 +1072,14 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
       else return (`Finished ())
     | Ok ({ status; feature_tip; remote_rev_zero = _; remote_repo_path; may_second }
           as reaction) ->
-      if only_print_session then begin
+      if only_print_session
+      then (
         reaction
         |> [%sexp_of: Get_review_session.Reaction.t]
         |> Sexp.to_string_hum
         |> print_endline;
-        return (`Finished ())
-      end else begin
+        return (`Finished ()))
+      else (
         let maybe_remind_to_second () =
           if User_name.equal for_ User_name.unix_login && may_second
           then print_endline "Please consider seconding the feature, if it is ready.";
@@ -1126,13 +1120,13 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
                 && Set.mem files (Diff4_to_review.path_in_repo_at_f2 d))
               in
               if Array.is_empty diff4s_to_review
-              then begin
+              then (
                 maybe_remind_to_second ();
                 if first_session then
                   print_endline "Nothing to review in the specified files \
                                  in the current session";
-                None
-              end else Some diff4s_to_review
+                None)
+              else Some diff4s_to_review
           in
           match diff4s_to_review with
           | None -> return (`Finished ())
@@ -1191,8 +1185,7 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
                 | `Cancelled -> ()
             in
             (* Maybe by now there is another session to review *)
-            `Repeat false
-      end)
+            `Repeat false))
 ;;
 
 let catch_up_review_command =

@@ -1416,7 +1416,7 @@ let recover_diff_of_its_latest_release t =
     in
     if not is_released_feature
     then None
-    else
+    else (
       let { Released_feature.
             feature_id               = _
           ; feature_path             = _
@@ -1443,5 +1443,5 @@ let recover_diff_of_its_latest_release t =
            ; included_features       = includes
            ; diff_from_base_to_tip   = Known (Ok diff_from_base_to_tip)
            ; latest_release          = None
-           }
+           })
 ;;

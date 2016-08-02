@@ -144,11 +144,10 @@ module In_feature = struct
 
   let equal t1 t2 =
     Feature_path.equal t1.feature_path t2.feature_path
-    && begin match t1.info, t2.info with
+    && (match t1.info, t2.info with
       | Root r1, Root r2 -> Root.equal r1 r2
       | Non_root n1, Non_root n2 -> Non_root.equal n1 n2
-      | (Root _ | Non_root _), _ -> false
-    end
+      | (Root _ | Non_root _), _ -> false)
   ;;
 
   let create ~feature_path ~base_facts ~base_cr_soons ~tip_facts ~tip_cr_soons
@@ -279,9 +278,9 @@ module In_feature_tree = struct
     let inactive = find t.inactive_by_assignee in
     if not include_active
     then inactive
-    else
+    else (
       let active = find t.active_by_assignee in
-      Cr_soon_multiset.union active inactive
+      Cr_soon_multiset.union active inactive)
   ;;
 
   let is_empty t =
@@ -295,33 +294,29 @@ module In_feature_tree = struct
   ;;
 
   let update_feature t (in_feature : In_feature.t) =
-    begin match in_feature.info with
-    | Root root ->
-      Var.set t.root (Some root)
-    | Non_root non_root ->
-      let key = in_feature.feature_path in
-      match Hashtbl.find t.non_root_by_path key with
-      | Some var -> Var.set var non_root
-      | None ->
-        let var = Var.create non_root in
-        Incr.set_cutoff (Var.watch var)
-          (Incr.Cutoff.create (fun ~old_value ~new_value ->
-             Non_root.equal old_value new_value));
-        Hashtbl.add_exn t.non_root_by_path ~key ~data:var;
-        set_non_roots t;
-    end;
+    (match in_feature.info with
+     | Root root ->
+       Var.set t.root (Some root)
+     | Non_root non_root ->
+       let key = in_feature.feature_path in
+       match Hashtbl.find t.non_root_by_path key with
+       | Some var -> Var.set var non_root
+       | None ->
+         let var = Var.create non_root in
+         Incr.set_cutoff (Var.watch var)
+           (Incr.Cutoff.create (fun ~old_value ~new_value ->
+              Non_root.equal old_value new_value));
+         Hashtbl.add_exn t.non_root_by_path ~key ~data:var;
+         set_non_roots t);
     Incr.stabilize ();
   ;;
 
   let remove t feature_path =
-    begin
-      if Feature_path.is_root feature_path
-      then Var.set t.root None
-      else if Hashtbl.mem t.non_root_by_path feature_path then begin
-        Hashtbl.remove t.non_root_by_path feature_path;
-        set_non_roots t;
-      end
-    end;
+    (if Feature_path.is_root feature_path
+     then Var.set t.root None
+     else if Hashtbl.mem t.non_root_by_path feature_path then (
+       Hashtbl.remove t.non_root_by_path feature_path;
+       set_non_roots t));
     Incr.stabilize ();
   ;;
 
@@ -396,10 +391,9 @@ let remove_feature t feature_path =
   let feature_tree = get_feature_tree t feature_path in
   In_feature_tree.remove feature_tree feature_path;
   if In_feature_tree.is_empty feature_tree
-  then begin
+  then (
     In_feature_tree.disallow_future_use feature_tree;
-    Hashtbl.remove t.feature_tree_by_root (Feature_path.root feature_path);
-  end;
+    Hashtbl.remove t.feature_tree_by_root (Feature_path.root feature_path));
 ;;
 
 let rename_non_root_feature t ~from ~to_ =

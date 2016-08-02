@@ -119,15 +119,14 @@ it directly with:
          Workspaces_status.compute_all ()
        in
        if name_only
-       then begin
+       then (
          unclean_workspaces
          |> List.map ~f:Unclean_workspace.feature_path
          |> Feature_path.Set.of_list
          |> Set.to_list
          |> List.iter ~f:(fun feature_path ->
-           print_endline (Feature_path.to_string feature_path))
-       end
-       else begin
+           print_endline (Feature_path.to_string feature_path)))
+       else (
          let my_host = Unix.gethostname () in
          let table =
            let columns, rows = unclean_workspaces_columns_and_rows unclean_workspaces in
@@ -136,12 +135,10 @@ it directly with:
              ~display_ascii
              ~max_output_columns
          in
-         if not (List.is_empty unclean_workspaces) then begin
+         if not (List.is_empty unclean_workspaces)
+         then (
            print_endline (sprintf "Unclean workspaces on %s:" my_host);
-           print_endline table
-         end
-       end
-    )
+           print_endline table)))
 ;;
 
 let compute_and_update_server_exn ~for_ which_features =
@@ -219,15 +216,14 @@ When this is disabled the command fails, unless " ; Switch.do_nothing_if_not_ena
            Interactive.printf "Unclean workspaces detection is not enabled, and the \
                                switch %s was supplied.\nExiting with code 0\n"
              Switch.do_nothing_if_not_enabled
-         else begin
+         else (
            Client_config.Workspaces.are_enabled_exn client_config;
            failwith
              (sprintf "Unclean workspaces detection is not enabled.\n\
                        Consider enabling the functionality via your [.ferc], \
                        or supply %s"
-                Switch.do_nothing_if_not_enabled)
-         end
-       else begin
+                Switch.do_nothing_if_not_enabled))
+       else (
          let%bind which_features = force which_features in
          (* Does the -for test in the client to fail early, since the walk is lengthy *)
          if not am_functional_testing
@@ -249,9 +245,7 @@ When this is disabled the command fails, unless " ; Switch.do_nothing_if_not_ena
                   assert (not include_descendants); (* allow_rec_flag is set to false *)
                   feature_path))
          in
-         compute_and_update_server_exn ~for_ which_features
-       end
-    )
+         compute_and_update_server_exn ~for_ which_features))
 ;;
 
 let check_command =

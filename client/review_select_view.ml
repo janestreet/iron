@@ -112,7 +112,7 @@ let navigate ~to_string ~available ~configuration direction =
   let length = Array.length menu in
   if length = 0
   then None
-  else Some begin
+  else Some (
     let by_name a b = String.compare (to_string a) (to_string b) in
     let current =
       match direction with
@@ -131,8 +131,7 @@ let navigate ~to_string ~available ~configuration direction =
         let delta = match direction with `Pred_view -> -1 | `Succ_view -> 1 in
         Int.((index + delta) % length)
     in
-    menu.(next_index)
-  end
+    menu.(next_index))
 ;;
 
 let toggle ~menu_name ~to_string ~display_prefix_in_list ~available ~configuration =
@@ -180,8 +179,9 @@ let toggle ~menu_name ~to_string ~display_prefix_in_list ~available ~configurati
       | ""           -> Ok (if Queue.is_empty selection then `Empty else `Show_again)
       | _            -> parse_input input
     in
-    if help then begin
-      printf "\
+    (if help
+     then
+       printf "\
 Use the following command to toggle the item selected
 ?              : Show this help
 a|<enter>      : Show the diff again
@@ -190,8 +190,7 @@ none           : Select none of the available items
 ([0-9]+ )+     : Toggle some items based on their index. Ranges: %%d-%%d
 (re:)?<rgx>    : Toggle items matching the regexp provided
 q|quit         : Quit
-";
-    end;
+");
     Option.iter message ~f:(printf "<!> %s\n");
     match%bind
       Interactive.ask_dispatch_gen ~f "Toggle item selection ?/all/none/[0-9]+"
@@ -200,19 +199,17 @@ q|quit         : Quit
     | `Quit -> return `Quit
     | `Empty ->
       let module Choice = Review_util.Choice in
-      begin
-        match%bind
-          Interactive.ask_dispatch_with_help
-            "No item selected. "
-            [ Interactive.Choice.default Choice.Mode.selected_files
-            ; Choice.Mode.file_by_file
-            ; Choice.Mode.global_diff
-            ; Choice.quit
-            ]
-        with
-        | `Selected_files -> loop ()
-        | (`File_by_file | `Global_diff | `Quit) as other -> return other
-      end
+      (match%bind
+         Interactive.ask_dispatch_with_help
+           "No item selected. "
+           [ Interactive.Choice.default Choice.Mode.selected_files
+           ; Choice.Mode.file_by_file
+           ; Choice.Mode.global_diff
+           ; Choice.quit
+           ]
+       with
+       | `Selected_files -> loop ()
+       | (`File_by_file | `Global_diff | `Quit) as other -> return other)
     | `Show_again ->
       let selection =
         List.map (Queue.to_list selection) ~f:(fun i -> available.(i))
@@ -243,12 +240,12 @@ q|quit         : Quit
       in
       let hit = ref false in
       for key = 0 to length - 1 do
-        if toggle key then begin
+        if toggle key
+        then (
           hit := true;
           if Hash_set.mem present key
           then Queue.filter_inplace selection ~f:(fun index -> not (Int.equal index key))
-          else Queue.enqueue selection key
-        end
+          else Queue.enqueue selection key)
       done;
       let message = Option.some_if (not !hit) "no match found" in
       loop ?message ()

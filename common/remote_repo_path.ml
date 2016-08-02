@@ -72,10 +72,9 @@ let%test_unit _ =
 let family t =
   match t with
   | Ssh { host = "hg"; path } ->
-    begin match List.map (Abspath.to_list path) ~f:File_name.to_string with
-    | "hg" :: family :: _ -> Some family
-    | _ -> None
-    end
+    (match List.map (Abspath.to_list path) ~f:File_name.to_string with
+     | "hg" :: family :: _ -> Some family
+     | _ -> None)
   | File _ | Ssh _ -> None
 ;;
 

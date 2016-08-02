@@ -141,19 +141,19 @@ let eval
                ~reviewed_by: (eval_allow_review_for_users ~known_groups reviewed_by)
                ~reviewed_for:(eval_allow_review_for_users ~known_groups reviewed_for))
       | Define_build_projection (name, { default_scrutiny; require_low_review_file }) ->
-        if Hashtbl.mem build_projections name
-        then
-          Error_context.error_s e
-            [%sexp "multiply defined build projection", (name : Build_projection_name.t)];
-        begin match Map.find obligations_global.scrutinies default_scrutiny with
-        | None ->
-          Error_context.error_s e
-            [%sexp "undefined scrutiny", (default_scrutiny : Scrutiny_name.t)]
-        | Some default_scrutiny ->
-          Hashtbl.add_exn build_projections ~key:name
-            ~data:(Build_projection.create ~name ~default_scrutiny
-                     ~require_low_review_file)
-        end;
+        (if Hashtbl.mem build_projections name
+         then
+           Error_context.error_s e
+             [%sexp "multiply defined build projection"
+                  , (name : Build_projection_name.t)]);
+        (match Map.find obligations_global.scrutinies default_scrutiny with
+         | None ->
+           Error_context.error_s e
+             [%sexp "undefined scrutiny", (default_scrutiny : Scrutiny_name.t)]
+         | Some default_scrutiny ->
+           Hashtbl.add_exn build_projections ~key:name
+             ~data:(Build_projection.create ~name ~default_scrutiny
+                      ~require_low_review_file))
       | Define_tags define_tags ->
         List.iter define_tags ~f:(fun tag ->
           if Hash_set.mem tags tag
@@ -203,12 +203,10 @@ remove %s from .fe/obligations-repo.sexp that are also in .fe/obligations-global
     check_duplicate_global "groups" [%sexp_of: Group_name.Set.t]
       (let keys map = map |> Map.keys |> Group_name.Set.of_list in
        Set.inter (keys groups) (keys obligations_global.groups));
-    begin
-      let known_users = Set.union obligations_global.users known_users in
-      match Groups.check_users groups ~known_users with
-      | Ok ()     -> ()
-      | Error err -> Error_context.raise e err
-    end;
+    (let known_users = Set.union obligations_global.users known_users in
+     match Groups.check_users groups ~known_users with
+     | Ok ()     -> ()
+     | Error err -> Error_context.raise e err);
     shared_t
       { build_projections            = build_projections
                                        |> Hashtbl.to_alist

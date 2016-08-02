@@ -1,6 +1,6 @@
-open Core.Std
-open Async.Std
-open Import
+open! Core.Std
+open! Async.Std
+open! Import
 
 let workspaces_are_enabled () = Client_config.(get () |> Workspaces.are_enabled)
 
@@ -69,14 +69,14 @@ let dir_command =
        Or_error.try_with (fun () ->
          let feature_path_option = ok_exn feature_path_option in
          if basedir
-         then
+         then (
            if Option.is_some feature_path_option
            then failwith "you cannot supply both a FEATURE and -basedir"
-           else `Basedir
-         else
+           else `Basedir)
+         else (
            match feature_path_option with
            | None -> failwith "specify a feature or supply -basedir"
-           | Some feature_path -> `Feature_dir feature_path
+           | Some feature_path -> `Feature_dir feature_path)
        )
      in
      fun () ->
@@ -97,7 +97,7 @@ let dir_command =
 
 let repo_for_hg_operations_exn feature_path ~use =
   if not (workspaces_are_enabled ())
-  then begin
+  then (
     let repo_root = ok_exn Repo_root.program_started_in in
     let check_repo_family_exn =
       let%bind repo_root_feature =
@@ -108,26 +108,24 @@ let repo_for_hg_operations_exn feature_path ~use =
       | Error e1 ->
         (* that way we can still test the functionality by creating a valid .hgrc but it
            will still be ok most of the tests where we do not have such as .hgrc *)
-        begin
-          if am_functional_testing
-          then return ()
-          else
-            match%bind
-              Deferred.Or_error.try_with ~extract_exn:true (fun () ->
-                Workspace_util.find_remote_repo_path_exn feature_path)
-            with
-            | Ok remote_repo_path ->
-              Hg.ensure_local_repo_is_in_family repo_root remote_repo_path
-            | Error e2 ->
-              raise_s
-                [%sexp
-                  (sprintf !"\
+        if am_functional_testing
+        then return ()
+        else (
+          match%bind
+            Deferred.Or_error.try_with ~extract_exn:true (fun () ->
+              Workspace_util.find_remote_repo_path_exn feature_path)
+          with
+          | Ok remote_repo_path ->
+            Hg.ensure_local_repo_is_in_family repo_root remote_repo_path
+          | Error e2 ->
+            raise_s
+              [%sexp
+                (sprintf !"\
 your working directory must be inside a clone of the [%{Feature_name}] family,
 and fe cannot determine the repo family it's in" feature_root : string)
-                , (e1 : Error.t)
-                , (e2 : Error.t)
-                ]
-        end
+              , (e1 : Error.t)
+              , (e2 : Error.t)
+              ])
       | Ok repo_root_feature ->
         if Feature_name.equal repo_root_feature feature_root
         then return ()
@@ -139,8 +137,8 @@ but is inside a clone of the [%{Feature_name}] family"
             feature_root repo_root_feature ()
     in
     let%map () = check_repo_family_exn in
-    repo_root
-  end else
+    repo_root)
+  else (
     let use_clone () =
       let%map repo_clone =
         Repo_clone.force ~root_feature:(Feature_path.root feature_path)
@@ -188,10 +186,9 @@ but is inside a clone of the [%{Feature_name}] family"
              some satellite feature.  Let it be. *)
           return repo_root
         else if Feature_path.(=) current_workspace feature_path
-                || begin match use with
-                  | `Share -> false
-                  | `Clone | `Share_or_clone_if_share_does_not_exist -> true
-                end
+             || (match use with
+                 | `Share -> false
+                 | `Clone | `Share_or_clone_if_share_does_not_exist -> true)
         then default_workspace_logic ()
         else
           raise_s
@@ -200,7 +197,7 @@ but is inside a clone of the [%{Feature_name}] family"
             , { current_workspace                 : Feature_path.t
               ; supplied_feature  = (feature_path : Feature_path.t)
               }
-            ]
+            ])
 ;;
 
 let repo_for_hg_operations_command =
@@ -229,16 +226,16 @@ let repo_for_hg_operations_use_clone_exn features =
   let default () = return (ok_exn Repo_root.program_started_in) in
   if not (workspaces_are_enabled ())
   then default ()
-  else
+  else (
     match List.hd features with
     | None -> default ()
     | Some feature ->
       if List.exists features ~f:(fun feature' ->
         Feature_name.(<>) (Feature_path.root feature) (Feature_path.root feature'))
       then default ()
-      else
+      else (
         let%map repo_clone = Repo_clone.force ~root_feature:(Feature_path.root feature) in
-        Repo_clone.repo_root repo_clone
+        Repo_clone.repo_root repo_clone))
 ;;
 
 module Select_features_in_my_todo = struct
@@ -381,7 +378,7 @@ running other workspace commands."
        let%bind () =
          if List.is_empty which_features_in_my_todo
          then Deferred.unit
-         else
+         else (
            (* pull in all clones and replenish spare shares *)
            let%bind clones = Repo_clone.list () in
            Deferred.List.iter clones ~how:(`Max_concurrent_jobs max_concurrent_jobs)
@@ -391,7 +388,7 @@ running other workspace commands."
                | None -> Deferred.unit
                | Some desired_num_spares ->
                  Repo_clone.refresh_spare_shares clone
-                   ~desired_num_spares ~update_to:(Repo_clone.tip_on_server clone))
+                   ~desired_num_spares ~update_to:(Repo_clone.tip_on_server clone)))
        in
        let%bind features =
          get_features_in_my_todo ~for_ ~which_features_in_my_todo
@@ -442,12 +439,12 @@ running other workspace commands."
                     clone of the family, if it still exists. *)
                  if Feature_path.is_root feature_path
                  then return () (* we already know that feature_path does not exist *)
-                 else
+                 else (
                    let%map (_ : Repo_clone.t Or_error.t) =
                      Monitor.try_with_or_error (fun () ->
                        Repo_clone.force ~root_feature:(Feature_path.root feature_path))
                    in
-                   ())
+                   ()))
     )
 ;;
 
@@ -517,7 +514,7 @@ let confirm_or_dry_run shares ~dry_run ~action ~process_share =
   let%bind () =
     if not (dry_run || !Interactive.interactive)
     then return ()
-    else
+    else (
       let printf f =
         ksprintf (fun s ->
           if dry_run
@@ -527,7 +524,7 @@ let confirm_or_dry_run shares ~dry_run ~action ~process_share =
       in
       if no_shares
       then printf "No workspace selected\n"
-      else
+      else (
         let is_plural = List.length shares > 1 in
         printf "Proceeding will %s %s:\n%s"
           action
@@ -537,7 +534,7 @@ let confirm_or_dry_run shares ~dry_run ~action ~process_share =
                 [ "  "
                 ; Feature_path.to_string (Feature_share.feature_path share)
                 ; "\n"
-                ])))
+                ])))))
   in
   let%bind should_proceed =
     if no_shares
@@ -545,15 +542,14 @@ let confirm_or_dry_run shares ~dry_run ~action ~process_share =
     else
     if dry_run || not !Interactive.interactive
     then return (not dry_run)
-    else begin
+    else (
       let%bind should_proceed = Interactive.ask_yn "Proceed? " ~default:false in
       let%map () =
         if not should_proceed
         then Interactive.print_endline "Aborted.\n"
         else Deferred.unit
       in
-      should_proceed
-    end
+      should_proceed)
   in
   if not should_proceed
   then Deferred.unit
@@ -699,12 +695,11 @@ unpushed changes and fail instead, in order to preserve those changes.
      fun () ->
        let open! Deferred.Let_syntax in
        let%bind which_features = force which_features in
-       begin match which_features with
-       | Features [] when not workspaces_without_feature ->
-         failwithf "Specify some features, or use [%s]."
-           workspaces_without_feature_switch ()
-       | _ -> ()
-       end;
+       (match which_features with
+        | Features [] when not workspaces_without_feature ->
+          failwithf "Specify some features, or use [%s]."
+            workspaces_without_feature_switch ()
+        | _ -> ());
        let%bind exclude_features_in_my_todo =
          get_features_in_my_todo ~for_
            ~which_features_in_my_todo:exclude_features_in_my_todo
@@ -730,11 +725,9 @@ unpushed changes and fail instead, in order to preserve those changes.
          List.filter shares ~f:(fun share ->
            let share_path = Feature_share.feature_path share in
            not (Set.mem excluded share_path)
-           && begin
-             Which_features.mem which_features share_path
-             || (workspaces_without_feature
-                 && not (Set.mem existing_features share_path))
-           end)
+           && (Which_features.mem which_features share_path
+               || (workspaces_without_feature
+                   && not (Set.mem existing_features share_path))))
        in
        confirm_or_dry_run shares ~dry_run ~action:"delete"
          ~process_share:Feature_share.delete
@@ -773,16 +766,14 @@ Check on the localhost that the user has a workspace for a specified feature or 
          match clone_or_feature |> ok_exn with
          | `Clone_of_root_feature_of feature ->
            let root_feature = feature |> ok_exn |> Feature_path.root in
-           begin match%map Repo_clone.find ~root_feature with
-           | Some (_ : Repo_clone.t) -> true
-           | None -> false
-           end
+           (match%map Repo_clone.find ~root_feature with
+            | Some (_ : Repo_clone.t) -> true
+            | None -> false)
 
          | `Feature feature ->
-           begin match%map Feature_share.find (ok_exn feature) with
-           | Some (_ : Feature_share.t) -> true
-           | None -> false
-           end
+           (match%map Feature_share.find (ok_exn feature) with
+            | Some (_ : Feature_share.t) -> true
+            | None -> false)
        in
        printf "%b\n" exists
     )

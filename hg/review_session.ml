@@ -102,10 +102,9 @@ module Stable = struct
               { user_name = context.user_name
               ; is_whole_feature_follower = false
               ; is_whole_feature_reviewer =
-                  begin match reviewer with
-                  | Whole_feature_reviewer | Whole_feature_reviewer_plus_ignored -> true
-                  | Normal_reviewer _ -> false
-                  end
+                  (match reviewer with
+                   | Whole_feature_reviewer | Whole_feature_reviewer_plus_ignored -> true
+                   | Normal_reviewer _ -> false)
               }
           ; id
           ; diff4s
@@ -636,10 +635,10 @@ let set_is_locked_internal t is_locked =
 ;;
 
 let set_is_locked t query is_locked =
-  if not (Bool.equal t.is_locked is_locked) then begin
+  if not (Bool.equal t.is_locked is_locked)
+  then (
     record t query (`Set_is_locked is_locked);
-    set_is_locked_internal t is_locked;
-  end;
+    set_is_locked_internal t is_locked)
 ;;
 
 let reviewed_v1_compatible_internal t diff4_ids =
@@ -664,13 +663,13 @@ let reviewed t query session_id diff4_ids ~compute_review_kind ~is_using_locked_
         if Reviewable_diff4.is_reviewed diff4_in_session
         then
           `Fst (Diff4.path_in_repo_at_f2 diff4_in_session.diff4)
-        else
+        else (
           let review_kind = compute_review_kind diff4_in_session.diff4 in
-          `Snd { Diff4_in_session.Id.And_review_kind. diff4_id; review_kind })
+          `Snd { Diff4_in_session.Id.And_review_kind. diff4_id; review_kind }))
     in
     if not (List.is_empty already_reviewed_files)
     && not even_if_some_files_are_already_reviewed
-    then
+    then (
       let already_reviewed_files = Path_in_repo.Set.of_list already_reviewed_files in
       let msg =
         (if Set.length already_reviewed_files > 1
@@ -678,15 +677,14 @@ let reviewed t query session_id diff4_ids ~compute_review_kind ~is_using_locked_
          else "This file is"
         ) ^ " already reviewed"
       in
-      error_s [%sexp (msg : string), (already_reviewed_files : Path_in_repo.Set.t)]
-    else begin
-      if not (List.is_empty diff4_id_and_review_kinds) then begin
+      error_s [%sexp (msg : string), (already_reviewed_files : Path_in_repo.Set.t)])
+    else (
+      if not (List.is_empty diff4_id_and_review_kinds)
+      then (
         record t query (`Reviewed diff4_id_and_review_kinds);
         reviewed_internal t diff4_id_and_review_kinds;
-        if is_using_locked_sessions then set_is_locked t query true;
-      end;
-      Ok ()
-    end
+        if is_using_locked_sessions then set_is_locked t query true);
+      Ok ())
 ;;
 
 let unreviewed_internal t diff4_ids =
@@ -704,10 +702,10 @@ let unreviewed t query session_id diff4_ids =
       | Ok () -> Ok diff4_id)
     |> Or_error.combine_errors
     |> Or_error.map ~f:(fun diff4_ids ->
-      if not (List.is_empty diff4_ids) then begin
+      if not (List.is_empty diff4_ids)
+      then (
         record t query (`Unreviewed diff4_ids);
-        unreviewed_internal t diff4_ids;
-      end)
+        unreviewed_internal t diff4_ids));
 ;;
 
 let set_to_nothing_reviewed_internal t =

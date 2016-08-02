@@ -79,15 +79,14 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
         (`Push_to_and_overwrite remote_repo_path)
     | `Released_and_cleared _ | `Released_and_archived as disposition ->
       let%bind () =
-        begin match Feature_path.parent feature_path with
+        match Feature_path.parent feature_path with
         | Error _ -> return ()
         | Ok parent_path ->
           Hg.set_bookmark repo_root (Feature parent_path) ~to_:(`Rev feature.tip)
             (`Push_to_and_advance remote_repo_path)
-        end
       in
       let%bind () =
-        begin match disposition with
+        match disposition with
         | `Released_and_cleared _ -> Deferred.unit
         | `Released_and_archived ->
           let%bind () =
@@ -95,12 +94,11 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
           in
           Hg.delete_bookmarks repo_root [ Feature feature_path ]
             (`Push_to remote_repo_path)
-        end
       in
       if am_functional_testing
       || not (Set.mem feature.send_email_upon Send_email_upon.release)
       then return ()
-      else begin
+      else (
         let%map iron_config = force Iron_config.as_per_IRON_CONFIG in
         let reply_to =
           (* This prevents followup discussion on the release from going to as-hydra.
@@ -115,8 +113,7 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
           ?reply_to
           ~subject:(sprintf !"feature was released: %{Feature_path}" feature_path)
           ~recipients:(List.map (Set.to_list send_release_email_to)
-                         ~f:Email_address.to_string)
-      end
+                         ~f:Email_address.to_string))
   in
   let%bind () =
     match disposition with
@@ -138,32 +135,30 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
                 ]
        | `Released_and_archived -> "Released and archived.")
   in
-  begin
-    match disposition with
-    | `Not_released__push_to_hydra -> Deferred.unit
-    | `Released_and_cleared _ | `Released_and_archived ->
-      if not (Cmd_workspace.workspaces_are_enabled ())
-      then Deferred.unit
-      else
-        match Feature_path.parent feature_path with
-        | Error _ -> Deferred.unit
-        | Ok parent_path ->
-          match%bind Feature_share.find parent_path with
-          | None -> Deferred.unit
-          | Some parent_workspace ->
-            if true
-            then Deferred.unit
-            else
-              let parent_repo_root = Feature_share.center_repo_root parent_workspace in
-              Interactive.Job.run "Updating parent workspace to new released tip"
-                ~f:(fun () ->
-                  Cmd_review.pull_and_update
-                    ~repo_root:parent_repo_root
-                    ~remote_repo_path
-                    ~feature_path:parent_path
-                    ~review_session_tip:feature.tip
-                    ~feature_tip:feature.tip)
-  end
+  match disposition with
+  | `Not_released__push_to_hydra -> Deferred.unit
+  | `Released_and_cleared _ | `Released_and_archived ->
+    if not (Cmd_workspace.workspaces_are_enabled ())
+    then Deferred.unit
+    else (
+      match Feature_path.parent feature_path with
+      | Error _ -> Deferred.unit
+      | Ok parent_path ->
+        match%bind Feature_share.find parent_path with
+        | None -> Deferred.unit
+        | Some parent_workspace ->
+          if true
+          then Deferred.unit
+          else (
+            let parent_repo_root = Feature_share.center_repo_root parent_workspace in
+            Interactive.Job.run "Updating parent workspace to new released tip"
+              ~f:(fun () ->
+                Cmd_review.pull_and_update
+                  ~repo_root:parent_repo_root
+                  ~remote_repo_path
+                  ~feature_path:parent_path
+                  ~review_session_tip:feature.tip
+                  ~feature_tip:feature.tip)))
 ;;
 
 let command =

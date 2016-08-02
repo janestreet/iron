@@ -26,7 +26,7 @@ let check_result
       nodes
       (edges : Node.t Edge.t list)
       result =
-  try
+  try (
     match result with
     | Ok sorted ->
       let index_by_node =
@@ -44,22 +44,21 @@ let check_result
         then failwiths "sort output did not respect edge" edge
                [%sexp_of: Node.t Edge.t]);
     | Error cycle ->
-      begin match cycle with
-      | [] -> failwith "cycle unexpectedly empty"
-      | first :: rest ->
-        let assert_edge edge =
-          if not (List.mem edges edge ~equal:(Edge.equal Node.equal))
-          then failwiths "missing edge" edge [%sexp_of: Node.t Edge.t];
-        in
-        let rec check_cycle node rest =
-          match rest with
-          | [] -> assert_edge { from = node; to_ = first }
-          | node2 :: rest ->
-            assert_edge { from = node; to_ = node2 };
-            check_cycle node2 rest
-        in
-        check_cycle first rest
-      end
+      (match cycle with
+       | [] -> failwith "cycle unexpectedly empty"
+       | first :: rest ->
+         let assert_edge edge =
+           if not (List.mem edges edge ~equal:(Edge.equal Node.equal))
+           then failwiths "missing edge" edge [%sexp_of: Node.t Edge.t];
+         in
+         let rec check_cycle node rest =
+           match rest with
+           | [] -> assert_edge { from = node; to_ = first }
+           | node2 :: rest ->
+             assert_edge { from = node; to_ = node2 };
+             check_cycle node2 rest
+         in
+         check_cycle first rest))
   with exn ->
     raise_s
       [%sexp

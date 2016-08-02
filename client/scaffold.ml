@@ -59,7 +59,7 @@ end = struct
       let repo =
         if String.(=) repo "self"
         then `Center
-        else
+        else (
           let revision =
             match id with
             | Some id -> id
@@ -69,7 +69,7 @@ end = struct
           `Satellite { Satellite_internal.
                        remote_repo_path = Remote_repo_path.of_string repo
                      ; revision
-                     }
+                     })
       in
       let subtrees =
         List.map others ~f:(fun sub ->

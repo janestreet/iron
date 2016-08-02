@@ -116,7 +116,8 @@ opportunity to edit it.  Otherwise, the email is sent without requiring a confir
          Option.value_map cc ~default:[] ~f:Set.to_list
          |> List.map ~f:User_name.to_string
        in
-       if just_print_recipients then begin
+       if just_print_recipients
+       then (
          let recipients =
            if no_email_to_send
            then []
@@ -125,18 +126,19 @@ opportunity to edit it.  Otherwise, the email is sent without requiring a confir
              |> List.sort ~cmp:String.compare
          in
          List.iter recipients ~f:print_endline;
-         return ()
-       end else if no_email_to_send then begin
+         return ())
+       else if no_email_to_send
+       then (
          print_string "all users are up-to-date.  there is no email to send!\n";
-         Deferred.unit
-       end else
+         Deferred.unit)
+       else (
          let rec loop_until_sent_or_quit draft_msg =
            let (subject, body) = parse_subject draft_msg in
            let%bind () = warn body ~subject users in
            match%bind
              if not !Interactive.interactive
              then return `Yes
-             else
+             else (
                let%bind () =
                  match next_bookmark_update with
                  | No_update_expected_due_to_iron_bug _
@@ -151,7 +153,7 @@ Warning: a bookmark update is expected since %s.\n"
                  [ Choice.create 'y' `Yes  "send the remind mail"
                  ; Choice.create 'n' `No   "do not send the remind mail"
                  ; Choice.create 'e' `Edit "edit the remind mail"
-                 ]
+                 ])
            with
            | `No   ->
              print_string "Aborted\n";
@@ -204,5 +206,5 @@ Warning: a bookmark update is expected since %s.\n"
              ]
          in
          loop_until_sent_or_quit draft_msg
-    )
+    ))
 ;;

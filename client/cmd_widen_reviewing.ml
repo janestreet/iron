@@ -33,7 +33,7 @@ let command =
        let reviewing =
          if not (Feature.user_is_currently_reviewing feature first_owner)
          then add (User_name.Set.singleton first_owner)
-         else
+         else (
            let forbidden_whole_feature_reviewers =
              match feature.reviewing with
              | `All -> failwith "cannot widen review; everyone is already reviewing"
@@ -45,7 +45,7 @@ let command =
            then add forbidden_whole_feature_reviewers
            else if is_none feature.seconder
            then failwith "feature is not seconded; a seconder must run [fe second]"
-           else `All
+           else `All)
        in
        if Reviewing.equal feature.reviewing reviewing
        then failwiths "report Iron bug in widen-reviewing" feature

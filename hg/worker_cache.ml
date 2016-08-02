@@ -415,14 +415,14 @@ let persist_properties t properties =
 ;;
 
 let set_max_size t ~max_size =
-  if max_size <> t.properties.max_size then begin
+  if max_size <> t.properties.max_size
+  then (
     let set_max_size by_rev =
       ignore (By_rev.set_max_size by_rev ~max_size : [ `Dropped of int ])
     in
     set_max_size t.worker_obligations;
     set_max_size t.worker_rev_facts;
-    persist_properties t { t.properties with max_size };
-  end
+    persist_properties t { t.properties with max_size });
 ;;
 
 let set_status t ~status =

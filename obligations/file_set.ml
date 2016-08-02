@@ -91,25 +91,24 @@ let synthesize ~desired ~universe =
         }
       ];
   let add_remaining sexp_string =
-    lazy begin
+    lazy (
       let t = sexp_string |> Sexp.of_string |> [%of_sexp: t] in
       match Error_context.within ~file:Path.root (fun e -> eval t ~universe e) with
       | Error _ -> None
       | Ok set ->
         if Set.length set <= 2
         then None
-        else
+        else (
           let excess = Set.diff set desired in
           if not (Set.is_empty excess)
           then None
-          else
+          else (
             let remaining_desired = Set.diff desired set in
             Some (if Set.is_empty remaining_desired
                   then t
                   else union [ t
                              ; files (Set.to_list remaining_desired)
-                             ])
-    end
+                             ]))))
   in
   let heuristics         =
     [ lazy (if Set.length desired = universe_length

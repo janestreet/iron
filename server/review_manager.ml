@@ -154,15 +154,14 @@ let brain t = t.brain.brain
 let invariant t =
   Invariant.invariant [%here] t [%sexp_of: t] (fun () ->
     let check f = Invariant.check_field t f in
-    begin match t.review_goal, t.indexed_diff4s with
-    | Known (Ok review_goal), Known (Ok could_use) ->
-      Brain.check_diff4s_needed_to_extend_brain_exn
-        t.brain.brain
-        ~reviewer:(reviewer t)
-        ~goal:(Review_goal.diff2s review_goal)
-        ~could_use
-    | _ -> ()
-    end;
+    (match t.review_goal, t.indexed_diff4s with
+     | Known (Ok review_goal), Known (Ok could_use) ->
+       Brain.check_diff4s_needed_to_extend_brain_exn
+         t.brain.brain
+         ~reviewer:(reviewer t)
+         ~goal:(Review_goal.diff2s review_goal)
+         ~could_use
+     | _ -> ());
     Fields.iter
       ~user_name:(check User_name.invariant)
       ~is_whole_feature_follower:ignore
@@ -297,7 +296,7 @@ let set_brain t brain =
       match diff4s with
       | [] ->
         if phys_equal t.brain brain
-        then begin
+        then (
           (* We set [t.brain] to the goal so that the [phys_equal] optimization in
              [diff4s_to_goal] will apply in the future.  And we return [t.brain] so that
              the [phys_equal] test below applies, and we don't persist an identical
@@ -305,8 +304,7 @@ let set_brain t brain =
              because even in cases where [brain] is at [review_goal], their
              deserialization won't be [phys_equal]. *)
           t.brain.at_review_goal <- Some review_goal;
-          t.brain
-        end
+          t.brain)
         else { Brain_with_goal. brain = brain.brain; at_review_goal = Some review_goal }
       | _::_ ->
         let reviewer = reviewer t in
@@ -336,7 +334,7 @@ let set_brain t brain =
         in
         if not should_extend_brain_implicitly
         then brain
-        else
+        else (
           let at_review_goal =
             if all_diff4s_are_implicitly_reviewed
             then Some review_goal
@@ -346,15 +344,15 @@ let set_brain t brain =
             Brain.extend brain.brain
               ~with_:implicitly_reviewed_diff4s ~reviewer ~mark_kind:User
           in
-          { Brain_with_goal.brain; at_review_goal }
+          { Brain_with_goal.brain; at_review_goal })
   in
   (* This check avoids deleting empty sessions needlessly when calling [set_brain t
      t.brain] *)
-  if not (phys_equal brain t.brain); then begin
+  if not (phys_equal brain t.brain);
+  then (
     t.brain <- brain;
     persist_brain t;
-    clear_current_session t;
-  end
+    clear_current_session t)
 ;;
 
 let check_session_id t session_id =
@@ -403,7 +401,7 @@ let update_crs t crs ~(base_facts : Rev_facts.t Or_pending.t) =
   let crs =
     if List.is_empty crs
     then Ok []
-    else
+    else (
       match base_facts with
       | Pending_since _ -> error_string "it is not known whether base is CR clean"
       | Known base_facts ->
@@ -415,7 +413,7 @@ let update_crs t crs ~(base_facts : Rev_facts.t Or_pending.t) =
         | Ok base_is_cr_clean ->
           if base_is_cr_clean
           then Ok crs
-          else error_string "base is not CR clean"
+          else error_string "base is not CR clean")
   in
   set_crs t crs ~persist:true;
 ;;
@@ -456,10 +454,9 @@ let create user_name ~is_whole_feature_follower ~is_whole_feature_reviewer
 let what_to_do_with_session t ~(which_session : Which_session.t) =
   match t.current_session with
   | None ->
-    begin match which_session with
-    | Current_session -> `No_current_session
-    | This_session supplied -> Error.raise (Session_id.no_session_error ~supplied)
-    end
+    (match which_session with
+     | Current_session -> `No_current_session
+     | This_session supplied -> Error.raise (Session_id.no_session_error ~supplied))
   | Some session ->
     let must_use_it =
       match which_session with
@@ -487,15 +484,14 @@ let what_to_do_with_session t ~(which_session : Which_session.t) =
 ;;
 
 let forget_from_brain_internal_exn t ~what_to_forget =
-  begin match t.current_session with
-  | None -> ()
-  | Some session ->
-    (* Forgetting when the session is locked is authorized, as long as no files are
-       reviewed. *)
-    if Review_session.have_done_some_review session
-    then failwith "cannot forget -- some files are marked as reviewed in the current \
-                   review session"
-  end;
+  (match t.current_session with
+   | None -> ()
+   | Some session ->
+     (* Forgetting when the session is locked is authorized, as long as no files are
+        reviewed. *)
+     if Review_session.have_done_some_review session
+     then failwith "cannot forget -- some files are marked as reviewed in the current \
+                    review session");
   let brain =
     match what_to_forget with
     | `All -> []
@@ -540,7 +536,7 @@ cannot create review session -- the feature has problems that need to be fixed"
   in
   if List.is_empty from_brain_to_goal
   then `Up_to_date
-  else
+  else (
     let session =
       Review_session.create
         ~reviewer:(reviewer t)
@@ -552,7 +548,7 @@ cannot create review session -- the feature has problems that need to be fixed"
         t.serializer
     in
     set_current_session t (Some session);
-    `Review_session session
+    `Review_session session)
 ;;
 
 let register_catch_up t query review_session = function
@@ -915,7 +911,7 @@ module Review_authorization = struct
       else if are_acting_for_themselves_or_for_invalid_user
                 ~for_:reviewed_for ~by:reviewed_by
       then Reviewed__no_catch_up_as_per_user_info
-      else begin
+      else (
         let for_user_with_only_follow_lines =
           match
             line_count_remaining_to_review review_manager current_feature_goal_subset
@@ -940,8 +936,7 @@ module Review_authorization = struct
           { catch_up_kind = { reviewed_by; reason }
           ; for_user_with_only_follow_lines
           ; reviewed_for
-          }
-      end)
+          }))
   ;;
 
   let unauthorized_for_user_with_only_follow_lines = function
@@ -971,10 +966,9 @@ let set_session_is_locked_exn t review_authorization query ~which_session is_loc
   match t.current_session with
   | None -> failwith "user has no session"
   | Some session ->
-    begin match (which_session : Which_session.t) with
-    | Current_session -> ()
-    | This_session supplied_id -> ok_exn (check_session_id t supplied_id);
-    end;
+    (match (which_session : Which_session.t) with
+     | Current_session -> ()
+     | This_session supplied_id -> ok_exn (check_session_id t supplied_id));
     Review_authorization.requires_witness review_authorization;
     Review_session.set_is_locked session query is_locked;
 ;;
@@ -1017,27 +1011,26 @@ let forget_from_current_session_exn t review_authorization query session_id ~wha
   | None -> failwith "there is no current session"
   | Some current_session ->
     Review_authorization.requires_witness review_authorization;
-    begin match what_to_forget with
-    | `All ->
-      ok_exn (Review_session.set_to_nothing_reviewed current_session query session_id);
-    | `Files paths_in_repo ->
-      let ids_by_path =
-        current_session
-        |> Review_session.diff4s_in_session_not_implicitly_reviewed
-        |> Array.map ~f:(fun diff ->
-          Review_session.Diff4_in_session.path_in_repo_at_f2 diff,
-          Review_session.Diff4_in_session.id diff)
-        |> Array.to_list
-        |> Path_in_repo.Table.of_alist_multi
-      in
-      let diff4_in_session_ids =
-        paths_in_repo
-        |> List.filter_map ~f:(Hashtbl.find ids_by_path)
-        |> List.concat
-      in
-      ok_exn (Review_session.unreviewed
-                current_session query session_id diff4_in_session_ids)
-    end;
+    (match what_to_forget with
+     | `All ->
+       ok_exn (Review_session.set_to_nothing_reviewed current_session query session_id);
+     | `Files paths_in_repo ->
+       let ids_by_path =
+         current_session
+         |> Review_session.diff4s_in_session_not_implicitly_reviewed
+         |> Array.map ~f:(fun diff ->
+           Review_session.Diff4_in_session.path_in_repo_at_f2 diff,
+           Review_session.Diff4_in_session.id diff)
+         |> Array.to_list
+         |> Path_in_repo.Table.of_alist_multi
+       in
+       let diff4_in_session_ids =
+         paths_in_repo
+         |> List.filter_map ~f:(Hashtbl.find ids_by_path)
+         |> List.concat
+       in
+       ok_exn (Review_session.unreviewed
+                 current_session query session_id diff4_in_session_ids));
     maybe_advance_brain t;
 ;;
 
@@ -1075,15 +1068,14 @@ let commit_session_then_create_catch_up_to_goal_exn__allow_all t query ~reason =
       let ids =
         match reason with
         | `Review_authorization review_authorization ->
-          begin match Review_authorization.should_register_catch_up review_authorization with
-          | None -> []
-          | Some kind ->
-            Review_session.diff4s_in_session_not_implicitly_reviewed session
-            |> Array.map ~f:Diff4_in_session.id
-            |> Array.to_list
-            |> List.map ~f:(fun id ->
-              { Catch_up_session.Id_and_kind. id; kind })
-          end
+          (match Review_authorization.should_register_catch_up review_authorization with
+           | None -> []
+           | Some kind ->
+             Review_session.diff4s_in_session_not_implicitly_reviewed session
+             |> Array.map ~f:Diff4_in_session.id
+             |> Array.to_list
+             |> List.map ~f:(fun id ->
+               { Catch_up_session.Id_and_kind. id; kind }))
         | `Release ->
           let should_generate_catch_up =
             Staged.unstage
@@ -1107,11 +1099,10 @@ let commit_session_then_create_catch_up_to_goal_exn__allow_all t query ~reason =
 let mark_fully_reviewed t query reason =
   let review_goal = ok_known_exn t.review_goal in
   let indexed_diff4s = ok_known_exn t.indexed_diff4s in
-  begin match reason with
-  | `Review_authorization review_authorization ->
-    Review_authorization.requires_witness review_authorization
-  | `Internal_mark__no_catch_up_allow_for_all -> ()
-  end;
+  (match reason with
+   | `Review_authorization review_authorization ->
+     Review_authorization.requires_witness review_authorization
+   | `Internal_mark__no_catch_up_allow_for_all -> ());
   commit_session_then_create_catch_up_to_goal_exn__allow_all t query ~reason;
   clear_current_session t;
   let diff4s =
@@ -1174,11 +1165,10 @@ let de_alias_brain t user_name_by_alias =
   else
   if have_session_in_progress t
   then `Did_not_de_alias_due_to_review_session_in_progress
-  else begin
+  else (
     clear_current_session t;
     set_brain t { brain = de_aliased_brain; at_review_goal = None };
-    `De_aliased
-  end
+    `De_aliased)
 ;;
 
 let deserializer = Deserializer.with_serializer (fun serializer ->

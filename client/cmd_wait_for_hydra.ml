@@ -75,7 +75,7 @@ let check_cleanliness_and_update ~feature_path ~remote_repo_path
       let repo_is_clean = ok_exn repo_is_clean in
       if not actually_update_if_update_requested
       then Deferred.unit
-      else begin
+      else (
         let%bind () =
           Hg.pull ~repo_is_clean repo_root
             ~from:remote_repo_path (`Feature feature_path)
@@ -84,8 +84,7 @@ let check_cleanliness_and_update ~feature_path ~remote_repo_path
           Hg.update repo_root (`Feature feature_path)
             ~clean_after_update:(Yes repo_is_clean)
         in
-        Cmd_workspace.If_enabled.update_satellite_repos ~center_repo_root:repo_root
-      end
+        Cmd_workspace.If_enabled.update_satellite_repos ~center_repo_root:repo_root)
 ;;
 
 let pipe_find pipe ~f =
@@ -140,7 +139,7 @@ let main { Fe.Wait_for_hydra.Action.
       let pipe, pipe_writer = Pipe.create () in
       Pipe.write_without_pushback pipe_writer (`Updated feature);
       let start_feature_updates_subscription =
-        lazy (don't_wait_for begin
+        lazy (don't_wait_for (
           let%bind feature_updates =
             Iron_protocol.Notify_on_feature_updates.rpc_to_server_exn
               { feature_id; when_to_first_notify = Now }
@@ -151,8 +150,7 @@ let main { Fe.Wait_for_hydra.Action.
               | `Updated feature -> `Updated feature
               | `Archived -> `Archived)
           in
-          Pipe.close pipe_writer;
-        end)
+          Pipe.close pipe_writer))
       in
       let last_non_pending_feature = ref None in
       let is_last_non_pending_feature feature =
@@ -161,14 +159,12 @@ let main { Fe.Wait_for_hydra.Action.
         | Some feature' -> phys_equal feature feature'
       in
       let maybe_check_remote_again feature =
-        don't_wait_for
-          begin
-            let%map () = Clock.after (sec 5.) in
-            if is_last_non_pending_feature feature
-            && not (Pipe.is_closed pipe_writer)
-            then Pipe.write_without_pushback pipe_writer
-                   (`Check_remote_again feature)
-          end
+        don't_wait_for (
+          let%map () = Clock.after (sec 5.) in
+          if is_last_non_pending_feature feature
+          && not (Pipe.is_closed pipe_writer)
+          then Pipe.write_without_pushback pipe_writer
+                 (`Check_remote_again feature))
       in
       let process_event_queue event_queue =
         let event =
@@ -194,36 +190,32 @@ let main { Fe.Wait_for_hydra.Action.
         match event with
         | `Skip -> return (`Wait (!waiting_status).reason_for_waiting)
         | `Check_remote_again feature ->
-          begin
-            match%map check_remote feature with
-            | `Different_tips _ as reason_to_wait ->
-              maybe_check_remote_again feature;
-              `Wait reason_to_wait
-            | `Finished _ as finished -> finished
-          end
+          (match%map check_remote feature with
+           | `Different_tips _ as reason_to_wait ->
+             maybe_check_remote_again feature;
+             `Wait reason_to_wait
+           | `Finished _ as finished -> finished)
 
         | `Updated (feature : Feature.t) ->
-          begin
-            last_non_pending_feature := None;
-            if not (Feature_path.equal feature_path feature.feature_path)
-            then
-              raise_s
-                [%sexp
-                  "feature was renamed while waiting for hydra",
-                  { waiting_for = (feature_path         : Feature_path.t)
-                  ; renamed_to  = (feature.feature_path : Feature_path.t)
-                  ; feature_id                          : Feature_id.t
-                  }
-                ];
-            match%map wait_status feature with
-            | `Expecting_bookmark_update _ as reason_to_wait ->
-              `Wait reason_to_wait
-            | `Finished _ as finished -> finished
-            | `Different_tips _ as reason_to_wait ->
-              last_non_pending_feature := Some feature;
-              maybe_check_remote_again feature;
-              `Wait reason_to_wait
-          end
+          last_non_pending_feature := None;
+          (if not (Feature_path.equal feature_path feature.feature_path)
+           then
+             raise_s
+               [%sexp
+                 "feature was renamed while waiting for hydra",
+                 { waiting_for = (feature_path         : Feature_path.t)
+                 ; renamed_to  = (feature.feature_path : Feature_path.t)
+                 ; feature_id                          : Feature_id.t
+                 }
+               ]);
+          (match%map wait_status feature with
+           | `Expecting_bookmark_update _ as reason_to_wait ->
+             `Wait reason_to_wait
+           | `Finished _ as finished -> finished
+           | `Different_tips _ as reason_to_wait ->
+             last_non_pending_feature := Some feature;
+             maybe_check_remote_again feature;
+             `Wait reason_to_wait)
       in
       match%map
         pipe_find pipe ~f:(fun event_queue ->

@@ -1,5 +1,5 @@
-open Core.Std
-open Import
+open! Core.Std
+open! Import
 
 module Index = struct
   type t =
@@ -58,28 +58,26 @@ end = struct
       | Group [ Group _ as t ] -> simplify_in_depth t
       | Group [] -> Lines []
       | Group [ Lines _ as lines ; Group group ] ->
-        begin match group with
-        | [ ]   -> Group [ lines ]
-        | [ t ] -> simplify_in_depth (Group [ lines ; t ])
-        | _::_ ->
-          let group = List.map group ~f:simplify_in_depth in
-          if List.for_all group
-               ~f:(function Group _ | Lines [] -> true | Lines (_::_) -> false)
-          then
-            Group (lines :: group)
-          else
-            Group [ lines ; Group group ]
-        end
+        (match group with
+         | [ ]   -> Group [ lines ]
+         | [ t ] -> simplify_in_depth (Group [ lines ; t ])
+         | _::_ ->
+           let group = List.map group ~f:simplify_in_depth in
+           if List.for_all group
+                ~f:(function Group _ | Lines [] -> true | Lines (_::_) -> false)
+           then
+             Group (lines :: group)
+           else
+             Group [ lines ; Group group ])
       | Group group ->
         Group (List.map group ~f:simplify_in_depth)
     in
     let rec simplify_top t =
       match t with
       | Group group ->
-        begin match group with
-        | [ t ] -> simplify_top t
-        | [] | _::_ -> group
-        end
+        (match group with
+         | [ t ] -> simplify_top t
+         | [] | _::_ -> group)
       | Lines _ -> [ t ]
     in
     simplify_top (simplify_in_depth t)
@@ -217,7 +215,7 @@ let nested_views ?hunk_name t =
       if number_of_views_shown > 1
       || is_incomplete_view
       || not (Diff_algo.Id.is_simple_diff id)
-      then
+      then (
         let hunk_name =
           (* We decide to repeat the hunk label only if there are more than one view so
              because there might be a lot of space between the last time we saw the
@@ -229,7 +227,7 @@ let nested_views ?hunk_name t =
         in
         Some [ Header.title
                  (sprintf "%sView%s : %s"
-                    hunk_name (Index.with_space_if_non_trivial index) view_name) ]
+                    hunk_name (Index.with_space_if_non_trivial index) view_name) ])
       else None
     in
     let blocks =
@@ -291,24 +289,24 @@ let file_and_rev_names_information ~use_file_separator ~in_scope t =
   let files_and_revs =
     List.concat
       [ (if shall_include_file_names
-         then
+         then (
            match t.scrutiny with
            | None -> []
            | Some scrutiny ->
-             [ sprintf "scrutiny %s" (File_scrutiny.to_string_hum scrutiny) ]
+             [ sprintf "scrutiny %s" (File_scrutiny.to_string_hum scrutiny) ])
          else []
         )
       ; (if shall_include_file_names
-         then
+         then (
            let files = Diamond.pretty_short_description ~label:"file" t.file_names in
-           if List.length files = 1 then [] else align_alist files
+           if List.length files = 1 then [] else align_alist files)
          else []
         )
       ; (if shall_include_rev_names
-         then
+         then (
            let revs = Diamond.pretty_short_description ~label:"" t.rev_names in
            [ String.concat ~sep:" | "
-               (List.map revs ~f:(fun (name, rev) -> name^" "^rev)) ]
+               (List.map revs ~f:(fun (name, rev) -> name^" "^rev)) ])
          else []
         )
       ]

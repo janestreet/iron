@@ -188,23 +188,22 @@ let save t =
       ; "[paths]"
       ; "default = " ^ remote_repo_path
       ];
-    begin match t.kind with
-    | `Clone | `Satellite_repo | `Fake_for_testing -> ()
-    | `Feature { feature_path; feature_id = _ } ->
-      let feature = Feature_path.to_string feature_path in
-      Writer.newline w;
-      List.iter ~f:(Writer.write_line w)
-        [ "[defaults]"
-        ; "incoming = -r " ^ feature
-        ; "outgoing = -r " ^ feature
-        ; "pull     = -r " ^ feature
-        ; "# The remote repo path is specified explicitly here to prevent pushing"
-        ; "# to other repos.  If you push to some other repo without pushing to"
-        ; "# the remote repo specified here, fe's unclean workspaces check may miss"
-        ; "# those changesets."
-        ; "push     = -r " ^ feature ^ " " ^ remote_repo_path
-        ];
-    end;
+    (match t.kind with
+     | `Clone | `Satellite_repo | `Fake_for_testing -> ()
+     | `Feature { feature_path; feature_id = _ } ->
+       let feature = Feature_path.to_string feature_path in
+       Writer.newline w;
+       List.iter ~f:(Writer.write_line w)
+         [ "[defaults]"
+         ; "incoming = -r " ^ feature
+         ; "outgoing = -r " ^ feature
+         ; "pull     = -r " ^ feature
+         ; "# The remote repo path is specified explicitly here to prevent pushing"
+         ; "# to other repos.  If you push to some other repo without pushing to"
+         ; "# the remote repo specified here, fe's unclean workspaces check may miss"
+         ; "# those changesets."
+         ; "push     = -r " ^ feature ^ " " ^ remote_repo_path
+         ]);
     Deferred.unit
   )
 ;;

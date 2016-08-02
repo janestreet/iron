@@ -63,7 +63,7 @@ let load repo_root : t Deferred.t =
   Hashtbl.iteri obligations.by_path ~f:(fun ~key:path_in_repo ~data:review_attributes ->
     let tags = review_attributes.tags in
     if not (Set.is_empty tags)
-    then
+    then (
       let dir, file_name = Path_in_repo.split_dir_file_exn path_in_repo in
       Hashtbl.add_multi read_table
         ~key:dir
@@ -73,7 +73,7 @@ let load repo_root : t Deferred.t =
             (Repo_root.append repo_root path_in_repo |> Abspath.to_string)
           in
           Tagged_file.create ~file_name ~tags ~lines
-        )));
+        ))));
   let%map alist =
     Deferred.List.map (Hashtbl.to_alist read_table) ~f:(fun (enclosing_dir, tagged_files) ->
     let%map tagged_files = Deferred.List.map tagged_files ~f:Fn.id in

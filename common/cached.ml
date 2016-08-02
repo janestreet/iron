@@ -167,7 +167,7 @@ let compute_cached_result (type a) (t : a t) ~depends_on =
   in
   if List.exists depends_on ~f:(fun (t : Invalidator.t) ->
     Virtual_time.( >= ) t.last_changed_at computation_initiated_at)
-  then
+  then (
     let sexp =
       (* Force the creation of the sexp here to guarantee consistency of the values,
          since some of the values contained are mutable. *)
@@ -177,7 +177,7 @@ let compute_cached_result (type a) (t : a t) ~depends_on =
     { cached_result with
       result = Or_error.error "Cached.compute_result modified one of its invalidators"
                  sexp [%sexp_of: Sexp.t]
-    }
+    })
   else cached_result
 ;;
 
@@ -219,7 +219,7 @@ let check t ~ignore_diffs_in_errors =
     let set_cache_to = cached_result.result in
     if is_correct t ~was_cached_as ~set_cache_to ~ignore_diffs_in_errors
     then Ok ()
-    else begin
+    else (
       set t cached_result;
       let sexp_of_a = t.sexp_of_a in
       error_s
@@ -228,8 +228,7 @@ let check t ~ignore_diffs_in_errors =
           { was_cached_as : a Or_error.t
           ; set_cache_to  : a Or_error.t
           }
-        ]
-    end
+        ])
 ;;
 
 let force_set_for_test_exn t result =

@@ -12,13 +12,12 @@ type t =
 let to_run_at_shutdown = Bag.create ()
 
 let run t =
-  begin match t.to_run_at_shutdown_elt with
-  | None -> ()
-  | Some elt ->
-    t.to_run_at_shutdown_elt <- None;
-    Bag.remove to_run_at_shutdown elt;
-    Ivar.fill t.start ();
-  end;
+  (match t.to_run_at_shutdown_elt with
+   | None -> ()
+   | Some elt ->
+     t.to_run_at_shutdown_elt <- None;
+     Bag.remove to_run_at_shutdown elt;
+     Ivar.fill t.start ());
   t.finished
 ;;
 

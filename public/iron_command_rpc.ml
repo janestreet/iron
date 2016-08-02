@@ -18,11 +18,10 @@ let rpcs_ref = ref []
 let rpcs = lazy !rpcs_ref
 
 let rpc_descriptions =
-  lazy begin
+  lazy (
     List.concat_map (force rpcs) ~f:(fun { Command_rpc_info. name; versions } ->
       List.map (Set.to_list (versions ())) ~f:(fun version ->
-        { Rpc.Description. name; version }))
-  end
+        { Rpc.Description. name; version })))
 ;;
 
 module Make

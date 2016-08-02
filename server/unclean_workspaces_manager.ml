@@ -100,13 +100,12 @@ let set_reason t user_name feature_path machine reason =
     let status = ref `Was_already_set in
     Hashtbl.update by_machine machine ~f:(fun previous ->
       status :=
-        begin match previous with
-        | None -> `Done
-        | Some previous_reason ->
-          if Unclean_workspace_reason.equal previous_reason reason
-          then `Was_already_set
-          else `Done
-        end;
+        (match previous with
+         | None -> `Done
+         | Some previous_reason ->
+           if Unclean_workspace_reason.equal previous_reason reason
+           then `Was_already_set
+           else `Done);
       reason);
     !status
 
@@ -179,11 +178,10 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
 let remove_user_exn t _query user_name =
   if not (Hashtbl2_pair.mem1 t.entries user_name)
   then raise_s [%sexp "no such user", (user_name : User_name.t)]
-  else begin
+  else (
     Hashtbl.remove t.query_by_user user_name;
     Hashtbl2_pair.remove_all1 t.entries user_name;
-    Serializer.remove_subtree t.serializer ~dir:(user_subtree user_name)
-  end;
+    Serializer.remove_subtree t.serializer ~dir:(user_subtree user_name))
 ;;
 
 let remove_machine_exn t query user_name machine =
@@ -193,22 +191,20 @@ let remove_machine_exn t query user_name machine =
     let removed = ref false in
     List.iter (Hashtbl.to_alist by_feature_path) ~f:(fun (feature_path, by_machine) ->
       if Hashtbl.mem by_machine machine
-      then begin
+      then (
         removed := true;
         Hashtbl.remove by_machine machine;
         if Hashtbl.is_empty by_machine
-        then Hashtbl2_pair.remove_exn t.entries user_name feature_path
-      end
-    );
-    if not !removed
-    then
-      raise_s
-        [%sexp
-          "no such machine for user",
-          { user    = (user_name : User_name.t)
-          ; machine : Machine.t
-          }
-        ];
+        then Hashtbl2_pair.remove_exn t.entries user_name feature_path));
+    (if not !removed
+     then
+       raise_s
+         [%sexp
+           "no such machine for user",
+           { user    = (user_name : User_name.t)
+           ; machine : Machine.t
+           }
+         ]);
     persist_user t query user_name;
 ;;
 
@@ -222,32 +218,30 @@ let update t query
   let was_changed = ref false in
   let remove_from_machines feature_path by_machine =
     if Hashtbl.mem by_machine machine
-    then begin
+    then (
       was_changed := true;
       Hashtbl.remove by_machine machine;
       if Hashtbl.is_empty by_machine
-      then Hashtbl2_pair.remove_exn t.entries user_name feature_path
-    end
+      then Hashtbl2_pair.remove_exn t.entries user_name feature_path)
   in
-  begin match Hashtbl2_pair.find1 t.entries user_name with
-  | None -> ()
-  | Some by_feature_path ->
-    match clean_workspaces with
-    | `At_least_these feature_paths ->
-      Set.iter (Feature_path.Set.of_list feature_paths) ~f:(fun feature_path ->
-        Option.iter (Hashtbl.find by_feature_path feature_path)
-          ~f:(remove_from_machines feature_path))
+  (match Hashtbl2_pair.find1 t.entries user_name with
+   | None -> ()
+   | Some by_feature_path ->
+     match clean_workspaces with
+     | `At_least_these feature_paths ->
+       Set.iter (Feature_path.Set.of_list feature_paths) ~f:(fun feature_path ->
+         Option.iter (Hashtbl.find by_feature_path feature_path)
+           ~f:(remove_from_machines feature_path))
 
-    | `Complement_of_those_listed_as_unclean ->
-      let listed_as_unclean =
-        unclean_workspaces
-        |> List.map ~f:Unclean_workspace.feature_path
-        |> Feature_path.Set.of_list
-      in
-      List.iter (Hashtbl.to_alist by_feature_path) ~f:(fun (feature_path, by_machine) ->
-        if not (Set.mem listed_as_unclean feature_path)
-        then remove_from_machines feature_path by_machine)
-  end;
+     | `Complement_of_those_listed_as_unclean ->
+       let listed_as_unclean =
+         unclean_workspaces
+         |> List.map ~f:Unclean_workspace.feature_path
+         |> Feature_path.Set.of_list
+       in
+       List.iter (Hashtbl.to_alist by_feature_path) ~f:(fun (feature_path, by_machine) ->
+         if not (Set.mem listed_as_unclean feature_path)
+         then remove_from_machines feature_path by_machine));
   List.iter unclean_workspaces ~f:(fun { Unclean_workspace. feature_path; reason } ->
     match set_reason t user_name feature_path machine reason with
     | `Was_already_set -> ()

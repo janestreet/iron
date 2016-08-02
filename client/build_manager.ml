@@ -58,7 +58,7 @@ let process_run ~prog ~args ~timeout () =
 ;;
 
 let exe =
-  lazy begin
+  lazy (
     (* We use the [emacsclient] in the user's PATH rather than an absolute path -- this is
        a client side module and thus this offers more hook for customization from the
        user. *)
@@ -89,8 +89,7 @@ let exe =
           then String.chop_suffix_exn ~suffix:quote line
           else line
         in
-        Ok line
-  end
+        Ok line)
 ;;
 
 module Jenga = struct

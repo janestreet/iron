@@ -44,7 +44,7 @@ let compute_unclean_workspace ~repo_root =
 let maybe_send_push_event ~repo_root =
   if not Client_config.(get () |> send_push_events_to_server)
   then Deferred.unit
-  else begin
+  else (
     let tip = Hg.create_rev repo_root Revset.dot in
     let get_feature_id_from_server ~repo_root =
       let%bind feature_path = Hg.current_bookmark repo_root in
@@ -55,7 +55,7 @@ let maybe_send_push_event ~repo_root =
         | No             -> `Do_not_send_push_event
         | Yes feature_id -> `Send_push_to feature_id
     in
-    match%bind begin
+    match%bind (
       match%bind Workspace_hgrc.extract_info repo_root with
       | Error _ -> get_feature_id_from_server ~repo_root
       | Ok info ->
@@ -66,14 +66,13 @@ let maybe_send_push_event ~repo_root =
         | `Fake_for_testing ->
           if am_functional_testing
           then get_feature_id_from_server ~repo_root
-          else return `Do_not_send_push_event
-    end with
+          else return `Do_not_send_push_event)
+    with
     | `Do_not_send_push_event -> return ()
     | `Send_push_to feature_id ->
       match%bind tip with
       | Error _ -> return ()
-      | Ok tip  -> Push_events.Add.rpc_to_server_exn { feature_id; tip }
-  end
+      | Ok tip  -> Push_events.Add.rpc_to_server_exn { feature_id; tip })
 ;;
 
 let main ~repo_root ~hook_name =

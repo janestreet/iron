@@ -83,7 +83,7 @@ let create ~columns ~rows = T { columns; rows }
 let to_string ?force_unicode_bars (T t) ~display_ascii ~max_output_columns =
   if List.is_empty t.rows
   then ""
-  else
+  else (
     let bars =
       if display_ascii && Option.is_none force_unicode_bars
       then `Ascii
@@ -92,7 +92,7 @@ let to_string ?force_unicode_bars (T t) ~display_ascii ~max_output_columns =
     (if display_ascii
      then Ascii_table.to_string_noattr
      else Ascii_table.to_string)
-      t.columns t.rows ~bars ~limit_width_to:max_output_columns
+      t.columns t.rows ~bars ~limit_width_to:max_output_columns)
 ;;
 
 let is_empty (T t) = List.is_empty t.rows

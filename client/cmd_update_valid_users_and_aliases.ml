@@ -26,14 +26,14 @@ let command =
        let%bind input =
          if read_from_stdin
          then Reader.file_contents "/dev/stdin"
-         else
+         else (
            let%map process =
              Process.run
                ~prog:"jadmin"
                ~args:[ "corpdir"; "query"; "-sexp"; "-attr"; "username"; "-attr"; "alias"]
                ()
            in
-           process |> ok_exn
+           process |> ok_exn)
        in
        let corpdir_user_list =
          Sexp.list_of_string_conv_exn input [%of_sexp: corpdir_user list]

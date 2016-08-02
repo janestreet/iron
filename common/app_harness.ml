@@ -56,7 +56,7 @@ module Lock_file = struct
     in
     if not is_locked
     then failwithf "Lock file %s is not locked by any process" lock_file ()
-    else
+    else (
       match Core.Std.Lock_file.Nfs.get_hostname_and_pid lock_file with
       | None -> failwithf "unable to read hostname and pid from %s" lock_file ()
       | Some (host, pid) ->
@@ -65,7 +65,7 @@ module Lock_file = struct
         then
           failwithf "Hostname in lockfile %s doesn't match current hostname %s"
             host my_host ()
-        else host, pid
+        else (host, pid))
   ;;
 end
 
@@ -119,7 +119,7 @@ let start ~init_stds ~log_format ~main ~basedir ~mode ~fg () =
   upon Deferred.unit (fun () ->
    release_io ();
    if keep_stdout_and_stderr && init_stds
-   then begin
+   then (
      (* Multiple runs usually append to the same "keep" files, so these separator
         lines are helpful for distinguishing the output of one run from another. *)
      let now = Core.Std.Time.now () in
@@ -127,18 +127,17 @@ let start ~init_stds ~log_format ~main ~basedir ~mode ~fg () =
        Core.Std.Printf.fprintf oc !"%s Daemonized with tags=%{Sexp}\n%!"
          (Core.Std.Time.to_string_abs now ~zone:Core.Std.Time.Zone.local)
          ([%sexp_of: (string * string) list] tags)
-     )
-   end
+     ))
   );
   let main =
     Monitor.try_with ~extract_exn:true (fun () ->
       Log.Global.info ~tags !"Starting up";
-      begin match mode with
-      | `Prod -> ()
-      | `Dev ->
-        Log.Global.set_level `Debug;
-        Log.Global.debug "logging at level `Debug because we're in dev mode";
-      end;
+      (match mode with
+       | `Prod -> ()
+       | `Dev ->
+         Log.Global.set_level `Debug;
+         Log.Global.debug "logging at level `Debug because we're in dev mode";
+      );
       main ~basedir
     )
   in

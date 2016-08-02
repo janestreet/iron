@@ -1,6 +1,6 @@
-open Core.Std
-open Async.Std
-open Import
+open! Core.Std
+open! Async.Std
+open! Import
 
 let diff =
 
@@ -33,7 +33,7 @@ let diff =
        let%bind () =
          if do_not_pull
          then return ()
-         else
+         else (
            let revs =
              let revs = Rev.Compare_by_hash.Hash_set.create () in
              List.iter brain ~f:(fun { base; tip; num_lines_in_diff = _ } ->
@@ -42,7 +42,7 @@ let diff =
              );
              Hash_set.to_list revs
            in
-           Hg.pull ~even_if_unclean:true repo_root ~from:remote_repo_path (`Revs revs)
+           Hg.pull ~even_if_unclean:true repo_root ~from:remote_repo_path (`Revs revs))
        in
        Cmd_review.print_diff4s
          ~repo_root
@@ -69,9 +69,9 @@ let show_brain feature_path ~for_ ~what_to_show ~display_ascii
   let%map brain =
     if not sort_build_order
     then return brain
-    else
+    else (
       let repo_root = ok_exn Repo_root.program_started_in in
-      Build_order.sort repo_root brain Diff2.path_in_repo_at_tip
+      Build_order.sort repo_root brain Diff2.path_in_repo_at_tip)
   in
   let brain = List.map brain ~f:Diff4.create_from_scratch_to_diff2 in
   print_string
@@ -135,7 +135,7 @@ let forget =
        | `All ->
          if not !Interactive.interactive
          then forget ()
-         else begin
+         else (
            let%bind brain =
              show_brain feature_path ~for_ ~what_to_show:what_to_forget
                ~display_ascii ~max_output_columns ~sort_build_order:false
@@ -144,7 +144,7 @@ let forget =
            then
              Interactive.print_endline
                "Your brain is already empty; there is nothing to forget."
-           else begin
+           else (
              let%bind () = Interactive.print_endline "" in
              match%bind
                Interactive.ask_yn ~default:false
@@ -152,10 +152,7 @@ let forget =
                     (Feature_path.to_string feature_path))
              with
              | true -> forget ()
-             | false -> Interactive.print_endline "Quit"
-           end
-         end
-    )
+             | false -> Interactive.print_endline "Quit")))
 ;;
 
 let show =

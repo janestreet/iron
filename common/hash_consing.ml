@@ -50,10 +50,10 @@ module Module_name = struct
   let module_name_without_libname module_name =
     if not (String.is_prefix module_name ~prefix:"Iron_")
     then module_name
-    else
+    else (
       match String.lsplit2 module_name ~on:'.' with
       | Some (_libname, module_name) -> module_name
-      | None -> module_name
+      | None -> module_name)
   ;;
 end
 

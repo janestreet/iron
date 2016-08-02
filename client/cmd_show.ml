@@ -165,10 +165,9 @@ module Attribute = struct
     | Reviewers -> Feature.reviewers_exn feature ~sort:`Decreasing_review |> users
     | Reviewing               -> Reviewing.to_sexp_hum feature.reviewing
     | Seconder                ->
-      begin match feature.seconder with
-      | None -> "not seconded" |> [%sexp_of: string]
-      | Some user -> user |> [%sexp_of: User_name.t]
-      end
+      (match feature.seconder with
+       | None -> "not seconded" |> [%sexp_of: string]
+       | Some user -> user |> [%sexp_of: User_name.t])
     | Send_email_to           ->
       feature.send_email_to |> [%sexp_of: Email_address.Set.t]
     | Send_email_upon         ->
@@ -183,15 +182,13 @@ module Attribute = struct
     | Whole_feature_reviewers -> feature.whole_feature_reviewers    |> user_set
     | Next_steps              -> feature.next_steps |> [%sexp_of: Next_step.t list]
     | User_defined key        ->
-      begin match Map.find feature.properties key with
-      | None -> raise_s [%sexp "undefined property", (key : string)]
-      | Some sexp -> sexp
-      end
+      (match Map.find feature.properties key with
+       | None -> raise_s [%sexp "undefined property", (key : string)]
+       | Some sexp -> sexp)
     | Users_with_review_session_in_progress ->
-      begin match feature.users_with_review_session_in_progress with
-      | Ok users  -> users |> user_set
-      | Error err -> Error.raise err
-      end
+      (match feature.users_with_review_session_in_progress with
+       | Ok users  -> users |> user_set
+       | Error err -> Error.raise err)
     | Users_with_unclean_workspaces ->
       feature.users_with_unclean_workspaces
       |> Map.keys
@@ -203,10 +200,10 @@ module Attribute = struct
 end
 
 let print_table ascii_table ~display_ascii ~max_output_columns =
-  if not (Ascii_table.is_empty ascii_table) then begin
+  if not (Ascii_table.is_empty ascii_table)
+  then (
     print_newline ();
-    print_string (Ascii_table.to_string ascii_table ~display_ascii ~max_output_columns)
-  end
+    print_string (Ascii_table.to_string ascii_table ~display_ascii ~max_output_columns))
 ;;
 
 let user_names_to_string user_names =
@@ -242,12 +239,11 @@ let or_pending ~is_archived name or_pending rows_a =
 let rev_facts ~is_archived =
   let maybe opt f = Option.value_map opt ~default:[] ~f in
   fun ?update_expected_since name rev rev_facts_or_pending ->
-    [ name,
-      begin match update_expected_since with
-      | None -> [], Rev.to_string_hum rev
-      | Some since ->
-        [`Yellow], sprintf "%s (%s)" (Rev.to_string_hum rev) (pending_for ~since)
-      end
+    [ name
+    , (match update_expected_since with
+       | None -> [], Rev.to_string_hum rev
+       | Some since ->
+         [`Yellow], sprintf "%s (%s)" (Rev.to_string_hum rev) (pending_for ~since))
     ]
     @ maybe rev_facts_or_pending (fun rev_facts_or_pending ->
       or_pending ~is_archived (concat [ name; " facts" ]) rev_facts_or_pending
@@ -477,17 +473,13 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
                  (Rev_facts.Is_ancestor.check is_ancestor
                     ~ancestor:base ~descendant:tip)))
       ; block "release into me"
-          (List.concat
-             [ begin match has_children with
-                 | None | Some false -> []
-                 | Some true ->
-                   List.concat
-                     [ maybe release_process release_process_row
-                     ; maybe who_can_release_into_me who_can_release_into_me_row
-                     ]
-               end
-               ;
-             ])
+          (match has_children with
+           | None | Some false -> []
+           | Some true ->
+             List.concat
+               [ maybe release_process release_process_row
+               ; maybe who_can_release_into_me who_can_release_into_me_row
+               ])
       ; maybe send_email_upon (fun send_email_upon ->
           if Set.equal send_email_upon Send_email_upon.default
           then []
@@ -495,7 +487,7 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
       ; maybe send_email_to (fun send_email_to ->
           if Set.is_empty send_email_to
           then []
-          else
+          else (
             let attrs =
               let enabled =
                 match send_email_upon with
@@ -504,7 +496,7 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
               in
               if enabled then [] else [ `Dim ]
             in
-            send_email_to_row ~attrs send_email_to)
+            send_email_to_row ~attrs send_email_to))
       ; maybe properties property_rows
       ; block "locks"
           (maybe locked (fun locked ->
@@ -710,45 +702,43 @@ let show_whole_feature
       ~show_unclean_workspaces_table
   =
   print_string (header feature.feature_path);
-  if show_description then print_string (render_description feature.description);
-  if show_attribute_table then begin
-    printf "\n%s"
-      (attribute_table feature ~display_ascii ~max_output_columns
-         ~show_feature_id:false
-         ~show_lock_reasons
-         ~show_inheritable_attributes
-         ~show_next_steps:true);
-  end;
-  begin match feature.cr_summary with
-  | Ok cr_summary -> print_cr_table cr_summary ~display_ascii ~max_output_columns
-  | Error e ->
-    printf "\n%s\n"
-      (Error.create "not showing crs" e [%sexp_of: Error.t]
-       |> [%sexp_of: Error.t]
-       |> Sexp.to_string_hum)
-  end;
-  begin match feature.line_count_by_user with
-  | Ok line_count_by_user ->
-    print_line_count_table line_count_by_user ~display_ascii ~max_output_columns
-      ~show_completed_review;
-  | Error e ->
-    printf "\n%s\n"
-      (Error.create "not showing line counts" e [%sexp_of: Error.t]
-       |> [%sexp_of: Error.t]
-       |> Sexp.to_string_hum)
-  end;
-  if show_review_sessions_in_progress_table then begin
-    match feature.users_with_review_session_in_progress with
-    | Ok users ->
-      if not (Set.is_empty users)
-      then print_review_sessions_in_progress_table users
-             ~display_ascii ~max_output_columns
-    | Error _ -> ()
-  end;
-  if show_unclean_workspaces_table then begin
-    print_unclean_workspaces_table feature.users_with_unclean_workspaces
-      ~display_ascii ~max_output_columns
-  end;
+  (if show_description then print_string (render_description feature.description));
+  (if show_attribute_table
+   then (
+     printf "\n%s"
+       (attribute_table feature ~display_ascii ~max_output_columns
+          ~show_feature_id:false
+          ~show_lock_reasons
+          ~show_inheritable_attributes
+          ~show_next_steps:true)));
+  (match feature.cr_summary with
+   | Ok cr_summary -> print_cr_table cr_summary ~display_ascii ~max_output_columns
+   | Error e ->
+     printf "\n%s\n"
+       (Error.create "not showing crs" e [%sexp_of: Error.t]
+        |> [%sexp_of: Error.t]
+        |> Sexp.to_string_hum));
+  (match feature.line_count_by_user with
+   | Ok line_count_by_user ->
+     print_line_count_table line_count_by_user ~display_ascii ~max_output_columns
+       ~show_completed_review;
+   | Error e ->
+     printf "\n%s\n"
+       (Error.create "not showing line counts" e [%sexp_of: Error.t]
+        |> [%sexp_of: Error.t]
+        |> Sexp.to_string_hum));
+  (if show_review_sessions_in_progress_table
+   then (
+     match feature.users_with_review_session_in_progress with
+     | Ok users ->
+       if not (Set.is_empty users)
+       then print_review_sessions_in_progress_table users
+              ~display_ascii ~max_output_columns
+     | Error _ -> ()));
+  (if show_unclean_workspaces_table
+   then (
+     print_unclean_workspaces_table feature.users_with_unclean_workspaces
+       ~display_ascii ~max_output_columns));
   printf "%s"
     (render_included_features feature ~display_ascii ~max_output_columns
        ~show_attribute_table ~show_description ~show_included_feature_details
@@ -776,7 +766,7 @@ let display_included_features_org_mode (feature : Feature.t) ~depth
   in
   if List.is_empty included_features
   then return ()
-  else begin
+  else (
     print_string (org_header ~depth "Included feature names");
     List.map included_features ~f:Released_feature.feature_path
     |> List.dedup ~compare:Feature_path.compare
@@ -784,7 +774,7 @@ let display_included_features_org_mode (feature : Feature.t) ~depth
       printf "- %s\n" (Feature_path.to_string feature_path));
     if not show_included_feature_details
     then return ()
-    else begin
+    else (
       print_string (org_header ~depth "Included features");
       Deferred.List.iter included_features ~f:(fun (r : Released_feature.t) ->
         let depth =
@@ -797,21 +787,18 @@ let display_included_features_org_mode (feature : Feature.t) ~depth
         printf "%s%s" (org_header ~depth "Attributes")
           (Ascii_table.to_string (Released_feature.attribute_table r) ~display_ascii
              ~max_output_columns:Int.max_value);
-        begin match show_diff_stat with
-        | None -> return ()
-        | Some repo_root ->
-          print_string (org_header ~depth "Affected files");
-          let%bind output =
-            Hg.diff repo_root ~from:r.base ~to_:(`Rev r.tip)
-              (* Don't show changes in files in [.projections] except for [spec.txt]. *)
-              ~args:["--stat"; "set:(** - (.projections/** - .projections/spec.txt))" ]
-          in
-          let output = ok_exn output in
-          List.iter (String.split_lines output) ~f:(fun line -> printf ":%s\n" line);
-          return ()
-        end);
-    end;
-  end;
+        (match show_diff_stat with
+         | None -> return ()
+         | Some repo_root ->
+           print_string (org_header ~depth "Affected files");
+           let%bind output =
+             Hg.diff repo_root ~from:r.base ~to_:(`Rev r.tip)
+               (* Don't show changes in files in [.projections] except for [spec.txt]. *)
+               ~args:["--stat"; "set:(** - (.projections/** - .projections/spec.txt))" ]
+           in
+           let output = ok_exn output in
+           List.iter (String.split_lines output) ~f:(fun line -> printf ":%s\n" line);
+           return ()))))
 ;;
 
 let show_org_mode (feature : Feature.t) ~show_attribute_table
@@ -823,25 +810,25 @@ let show_org_mode (feature : Feature.t) ~show_attribute_table
   let feature_path = feature.feature_path in
   let depth = 1 in
   display_header_org_mode feature_path ~depth;
-  if show_description then display_description_org_mode ~description:feature.description;
-  if show_attribute_table then begin
-    print_string (org_header ~depth:(depth + 1) "Attributes");
-    print_string
-      (attribute_table feature ~display_ascii ~max_output_columns
-         ~show_feature_id:false ~show_lock_reasons ~show_inheritable_attributes
-         ~show_next_steps);
-  end;
+  (if show_description then display_description_org_mode ~description:feature.description);
+  (if show_attribute_table
+   then (
+     print_string (org_header ~depth:(depth + 1) "Attributes");
+     print_string
+       (attribute_table feature ~display_ascii ~max_output_columns
+          ~show_feature_id:false ~show_lock_reasons ~show_inheritable_attributes
+          ~show_next_steps)));
   display_included_features_org_mode feature ~depth ~show_description
     ~show_diff_stat ~show_included_feature_details ~included_features_order;
 ;;
 
 let print_user_list users =
-  if not (List.is_empty users) then begin
+  if not (List.is_empty users)
+  then (
     users
     |> List.map ~f:User_name.to_string
     |> concat ~sep:"\n"
-    |> print_endline;
-  end
+    |> print_endline)
 ;;
 
 let command =
@@ -913,11 +900,12 @@ let command =
          not (omit_unclean_workspaces_table
               || Client_config.Cmd.Show.omit_unclean_workspaces_table client_config)
        in
-       if print_attribute then begin
+       if print_attribute
+       then (
          List.iter Attribute.all ~f:(fun attribute ->
            print_endline (Sexp.to_string (Attribute.sexp_of_t attribute)));
-         return ();
-       end else
+         return ())
+       else (
          let%bind what_feature =
            Command.Param.resolve_maybe_archived_feature_spec_exn
              (ok_exn maybe_archived_feature)
@@ -927,18 +915,17 @@ let command =
              { what_feature; what_diff = None }
          in
          if sexp
-         then begin
+         then (
            feature
            |> [%sexp_of: Feature.t]
            |> Sexp.to_string_hum
            |> print_endline;
-           return ()
-         end
-         else begin
+           return ())
+         else (
            let show_diff_stat =
              if not show_diff_stat
              then return None
-             else
+             else (
                let not_in_clone () =
                  failwith (sprintf "%s requires being in a clone of %s"
                              Switch.show_diff_stat
@@ -954,7 +941,7 @@ let command =
                  let%bind rev_zero = Hg.create_rev_zero repo_root in
                  if not (Rev.equal_node_hash rev_zero feature.rev_zero)
                  then not_in_clone ();
-                 return (Some repo_root)
+                 return (Some repo_root))
            in
            let%bind show_diff_stat = show_diff_stat in
            match attributes with
@@ -965,7 +952,7 @@ let command =
                     ~included_features_order ~show_lock_reasons
                     ~show_inheritable_attributes
                     ~show_next_steps:true
-             else begin
+             else (
                show_whole_feature feature ~display_ascii ~max_output_columns
                  ~show_attribute_table ~show_description ~show_included_feature_details
                  ~included_features_order ~show_inheritable_attributes
@@ -973,8 +960,7 @@ let command =
                  ~show_lock_reasons
                  ~show_review_sessions_in_progress_table
                  ~show_unclean_workspaces_table;
-               return ()
-             end
+               return ())
            | [ Reviewers ] ->
              Feature.reviewers_exn feature ~sort:`Decreasing_review |> print_user_list;
              return ()
@@ -992,9 +978,7 @@ let command =
              |> [%sexp_of: (Attribute.t * Sexp.t) list]
              |> Sexp.to_string_hum
              |> print_endline;
-             return ()
-         end
-    )
+             return ())))
 ;;
 
 let header_and_description feature_path ~description =

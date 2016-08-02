@@ -98,7 +98,7 @@ let of_matches ~file_names ~context diamond matches =
       let context_between_len = List.length context_between in
       if context_between_len <= context * 2
       && (last_of_seg1_is_shown || Segment.is_shown seg2)
-      then begin
+      then (
         (* These two segments are too close, we are going to merge them *)
         let slice = Diamond.map2 seg1.slice seg2.slice ~f:(fun sl1 sl2 ->
           let { Slice.range = r1; lines = l1 } = sl1 in
@@ -115,44 +115,42 @@ let of_matches ~file_names ~context diamond matches =
               (Diamond.map slice ~f:(fun slice -> slice |> Slice.lines |> Array.of_list))
         in
         let merged = { Segment.slice ; diff4_class } in
-        current_segment := Some (merged, Segment.is_shown seg2)
-      end else begin
+        current_segment := Some (merged, Segment.is_shown seg2))
+      else (
         (* distribute the context accordingly *)
         let split_at = Int.min context (context_between_len / 2) in
-        if Segment.is_shown seg1 then begin
+        if Segment.is_shown seg1
+        then (
           let split_seg1 =
             if Segment.is_shown seg2
             then split_at
             else context
           in
           let seg1 = Segment.append seg1 (head context_between split_seg1) in
-          Queue.enqueue segments seg1;
-        end;
+          Queue.enqueue segments seg1);
         let split_seg2 =
           if Segment.is_shown seg1
           then split_at
           else context
         in
         let seg2 = Segment.prepend (tail context_between split_seg2) seg2 in
-        current_segment := Some (seg2, Segment.is_shown seg2);
-      end
+        current_segment := Some (seg2, Segment.is_shown seg2));
   in
   let finalize () =
-    begin match !current_segment with
-    | None -> ()
-    | Some (segment, _) ->
-      if Segment.is_shown segment then begin
-        let post_common = head (List.rev !current_rev_common) context in
-        Queue.enqueue segments (Segment.append segment post_common)
-      end;
-    end;
+    (match !current_segment with
+     | None -> ()
+     | Some (segment, _) ->
+       if Segment.is_shown segment
+       then (
+         let post_common = head (List.rev !current_rev_common) context in
+         Queue.enqueue segments (Segment.append segment post_common)));
     current_segment := None;
     current_rev_common := [];
     Queue.to_list segments
   in
   let enqueue_source_lines match_lines source_lines =
     if not (Diamond.for_all source_lines ~f:List.is_empty)
-    then begin
+    then (
       let slice =
         Diamond.map3 file_names match_lines source_lines
           ~f:(fun source line_number lines ->
@@ -162,8 +160,7 @@ let of_matches ~file_names ~context diamond matches =
         Diamond.classify ~equal:equal_for_classify
           (Diamond.map slice ~f:(fun slice -> slice |> Slice.lines |> Array.of_list))
       in
-      enqueue_segment { Segment.slice ; diff4_class };
-    end
+      enqueue_segment { Segment.slice ; diff4_class });
   in
   let fold_matches (match_lines, source_lines) matches =
     (* Grab the actual lines from matching line numbers. *)
@@ -219,10 +216,10 @@ let diff_common_sequence a b =
   if false
   then
     Patience_diff.matches ~compare:Pervasives.compare a b
-  else
+  else (
     let matches = ref [] in
     Plain_diff.iter_matches ~f:(fun elt -> matches := elt::!matches) a b;
-    List.rev !matches
+    List.rev !matches)
 ;;
 
 let%test_module "lcs" = (module struct
@@ -244,9 +241,9 @@ let of_files ?(verbose=false) ?(force_should_split_files_in_hunks=false)
   let lines = Diamond.map diamond ~f:String.split_lines in
   let arrays = Diamond.map lines ~f:Array.of_list in
 
-  if verbose
-  then Debug.amf [%here] "input:\n%s"
-         ([%sexp_of: string Array.t Diamond.t] arrays |> Sexp.to_string_hum);
+  (if verbose
+   then Debug.amf [%here] "input:\n%s"
+          ([%sexp_of: string Array.t Diamond.t] arrays |> Sexp.to_string_hum));
 
   let files_diff4_class =
     let equal_for_classify (rev1, lines1) (rev2, lines2) =
@@ -257,13 +254,14 @@ let of_files ?(verbose=false) ?(force_should_split_files_in_hunks=false)
   in
 
   if not (Diff_algo.should_split_files_in_hunks files_diff4_class
-          || force_should_split_files_in_hunks) then
+          || force_should_split_files_in_hunks)
+  then
     [ { Segment.
         slice = Diamond.map2 file_names lines ~f:(fun source -> Slice.create ~source 0)
       ; diff4_class  = files_diff4_class
       }
     ]
-  else
+  else (
 
   (* PCS = "patience common subsequence" *)
   let pcs geta getb =
@@ -279,10 +277,11 @@ let of_files ?(verbose=false) ?(force_should_split_files_in_hunks=false)
   let pcs_old_base_old_tip = pcs Diamond.b1 Diamond.f1 in
   let pcs_new_base_new_tip = pcs Diamond.b2 Diamond.f2 in
 
-  if verbose
-  then Debug.amf [%here] "PCS:\n  old_base-old_tip: %s\n  new_base-new_tip: %s"
-         ([%sexp_of: (string*int*int) Array.t] pcs_old_base_old_tip |> Sexp.to_string_hum)
-         ([%sexp_of: (string*int*int) Array.t] pcs_new_base_new_tip |> Sexp.to_string_hum);
+  (if verbose
+   then
+     Debug.amf [%here] "PCS:\n  old_base-old_tip: %s\n  new_base-new_tip: %s"
+       ([%sexp_of: (string*int*int) Array.t] pcs_old_base_old_tip |> Sexp.to_string_hum)
+       ([%sexp_of: (string*int*int) Array.t] pcs_new_base_new_tip |> Sexp.to_string_hum));
 
   let matches =
     let for_polymorphic_cmp (line, _, _) : string = line in
@@ -291,9 +290,9 @@ let of_files ?(verbose=false) ?(force_should_split_files_in_hunks=false)
       (Array.map ~f:for_polymorphic_cmp pcs_new_base_new_tip)
   in
 
-  if verbose
-  then Debug.amf [%here] "matches: %s"
-         ([%sexp_of: (int*int) list] matches |> Sexp.to_string_hum);
+  (if verbose
+   then Debug.amf [%here] "matches: %s"
+          ([%sexp_of: (int*int) list] matches |> Sexp.to_string_hum));
 
   let indexes_of_matches =
     List.map matches
@@ -313,12 +312,12 @@ let of_files ?(verbose=false) ?(force_should_split_files_in_hunks=false)
       )
   in
 
-  if verbose
-  then Debug.amf [%here] "indexes of matches:\n%s"
-         (String.concat ~sep:"\n" (List.map indexes_of_matches ~f:(fun d ->
-            sprintf "%s %s" ([%sexp_of: int Diamond.t] d |> Sexp.to_string)
-              (Diamond.f2 arrays).(Diamond.f2 d))));
+  (if verbose
+   then Debug.amf [%here] "indexes of matches:\n%s"
+          (String.concat ~sep:"\n" (List.map indexes_of_matches ~f:(fun d ->
+             sprintf "%s %s" ([%sexp_of: int Diamond.t] d |> Sexp.to_string)
+               (Diamond.f2 arrays).(Diamond.f2 d)))));
 
   indexes_of_matches
-  |> of_matches ~file_names ~context lines
+  |> of_matches ~file_names ~context lines)
 ;;

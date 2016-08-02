@@ -43,12 +43,11 @@ let load_state ~root_directory ~server_config ~only_checking_invariants =
 let load_state_and_start_async_rpc_server ~basedir =
   let basedir = Abspath.of_string basedir in
   let%bind server_config = Iron_config.load_exn ~basedir in
-  begin match server_config.host with
-  | "localhost" -> ()
-  | expected_host ->
-    let actual_host = Unix.gethostname () in
-    [%test_result: string] actual_host ~expect:expected_host
-  end;
+  (match server_config.host with
+   | "localhost" -> ()
+   | expected_host ->
+     let actual_host = Unix.gethostname () in
+     [%test_result: string] actual_host ~expect:expected_host);
   let root_directory = Abspath.append basedir (Relpath.of_string "export") in
   let%bind state =
     load_state ~root_directory ~server_config ~only_checking_invariants:false

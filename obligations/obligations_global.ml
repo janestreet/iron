@@ -81,14 +81,12 @@ let eval declarations =
   let process_declaration (declaration : Declaration.t) =
     match declaration with
     | Define_scrutiny (name, scrutiny) ->
-      begin
-        match
-          Hashtbl.add scrutinies ~key:name ~data:(Scrutiny.create name scrutiny)
-        with
-        | `Ok -> ()
-        | `Duplicate ->
-          raise_s [%sexp "multiply defined scrutiny", (name : Scrutiny_name.t)]
-      end;
+      (match
+         Hashtbl.add scrutinies ~key:name ~data:(Scrutiny.create name scrutiny)
+       with
+       | `Ok -> ()
+       | `Duplicate ->
+         raise_s [%sexp "multiply defined scrutiny", (name : Scrutiny_name.t)])
     | Define_tags define_tags ->
       List.iter define_tags ~f:(fun tag ->
         if Hash_set.mem tags tag
@@ -101,21 +99,19 @@ let eval declarations =
     | Disallow_useless_dot_fe -> disallow_useless_dot_fe := true
     | Users people -> List.iter people ~f:(fun user -> Hash_set.add users user)
     | Obligations_version format ->
-      begin match !obligations_version with
-      | Some _ -> failwith "multiple Obligations_version specifications"
-      | None -> obligations_version := Some format
-      end
+      (match !obligations_version with
+       | Some _ -> failwith "multiple Obligations_version specifications"
+       | None -> obligations_version := Some format)
     | Cr_comment_format format ->
-      begin match !obligations_version with
-      | Some _ -> failwith "multiple Cr_comment_format specifications"
-      | None ->
-        let (version : Obligations_version.t) =
-          match format with
-          | V1         -> V1
-          | V2_sql_xml -> V2
-        in
-        obligations_version := Some version
-      end
+      (match !obligations_version with
+       | Some _ -> failwith "multiple Cr_comment_format specifications"
+       | None ->
+         let (version : Obligations_version.t) =
+           match format with
+           | V1         -> V1
+           | V2_sql_xml -> V2
+         in
+         obligations_version := Some version)
   in
   Or_error.try_with (fun () ->
     List.iter declarations ~f:process_declaration;

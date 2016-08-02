@@ -35,10 +35,10 @@ module Concise = struct
   type nonrec t = t
 
   let sexp_of_crs_count_or_error crs =
-    begin match crs with
-    | Error _ -> "<error>"
-    | Ok list -> sprintf "%s items" (Int.to_string_hum (List.length list))
-    end |> [%sexp_of: string]
+    (match crs with
+     | Error _ -> "<error>"
+     | Ok list -> sprintf "%s items" (Int.to_string_hum (List.length list)))
+    |> [%sexp_of: string]
   ;;
 
   let sexp_of_t

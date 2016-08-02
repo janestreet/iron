@@ -11,7 +11,7 @@ let controller_name_for_pruning root_feature =
 let prune ~root_feature rev =
   if am_functional_testing
   then return ()
-  else
+  else (
     match%map
       Interactive.Job.run !"Pruning head: %{Rev#hum}" rev
         ~f:(fun () ->
@@ -26,7 +26,7 @@ let prune ~root_feature rev =
     | Error (_       : Error.t) ->
       (* We don't fail in this case because [hydra prune] often exits nonzero even when
          it succeeds. *)
-      ()
+      ())
 ;;
 
 let prune_command =

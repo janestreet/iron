@@ -80,10 +80,10 @@ end = struct
              | Not_paused
              | Timed_out -> ()
              | Paused ({ resume; _ } as paused') ->
-               if phys_equal paused paused' then begin
+               if phys_equal paused paused'
+               then (
                  t.state <- Timed_out;
-                 Ivar.fill resume ();
-               end);
+                 Ivar.fill resume ()));
         don't_wait_for
           (let%map () = Ivar.read resume in
            match Clock.Event.abort timeout_event () with
@@ -167,7 +167,7 @@ let path_to_string t path =
 
 let add_cache_invalidator t invalidator =
   if not (List.mem ~equal:Cached.Invalidator.equal t.cache_invalidators invalidator)
-  then t.cache_invalidators <- invalidator :: t.cache_invalidators
+  then (t.cache_invalidators <- invalidator :: t.cache_invalidators)
 ;;
 
 let prior_changes_synced_to_file_system t = Throttle.prior_jobs_done t.shared.todo

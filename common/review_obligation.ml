@@ -298,8 +298,10 @@ let%test_module _ = (module struct
           Debug.eprints "subsets" increasing_subsets [%sexp_of: User_name.Set.t list];
         with_return (fun return ->
           List.iter increasing_subsets ~f:(fun users ->
-            if is_satisfied t ~by:users then begin
-              if debug then begin
+            if is_satisfied t ~by:users
+            then (
+              if debug
+              then (
                 let rec is_satisfied_tautology = function
                   | All_of users when Set.is_empty users -> true
                   | And ts -> List.for_all ts ~f:is_satisfied_tautology
@@ -309,15 +311,13 @@ let%test_module _ = (module struct
                 in
                 if not (is_satisfied_tautology t)
                 then
-                  Debug.eprints "is_satisfied" (t, users) [%sexp_of: t * User_name.Set.t];
-              end;
+                  Debug.eprints "is_satisfied" (t, users) [%sexp_of: t * User_name.Set.t]);
               [%test_pred: int] (fun num -> num <= Set.length users)
                 num_reviewers_lower_bound;
               (* All remaining subsets include that subset so they also satisfy [t] and
                  their length is strictly bigger, so the predicate checked by the test is
                  implied.  Just skip them then. *)
-              return.return ()
-            end)))
+              return.return ()))))
   ;;
 
   let users strings =

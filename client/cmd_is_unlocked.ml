@@ -26,10 +26,10 @@ To see what is locked for a feature, use:
        let check_lock_names =
          if check_all
          then Lock_name.all
-         else begin
-           if List.is_empty lock_names then failwith "must specify which locks to check";
-           lock_names
-         end
+         else (
+           (if List.is_empty lock_names
+            then failwith "must specify which locks to check");
+           lock_names)
        in
        let feature_path = ok_exn feature_path in
        let%map locked = Get_locked.rpc_to_server_exn { feature_path } in
@@ -41,6 +41,5 @@ To see what is locked for a feature, use:
        if not (List.is_empty locked)
        then
          raise_s
-           [%sexp "locked", (locked : (Lock_name.t * Feature.Locked.t list) list)]
-    )
+           [%sexp "locked", (locked : (Lock_name.t * Feature.Locked.t list) list)])
 ;;

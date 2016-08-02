@@ -207,15 +207,13 @@ let change t (update : Iron_protocol.Push_events.Change.Action.t) =
   | Clear_users users ->
     let users = User_name.Set.of_list users in
     Hashtbl.filter_inplace t.push_events ~f:(fun by_rev ->
-      begin
-        Lru.to_alist by_rev
-        |> List.filter_map ~f:(fun (rev, event) ->
-          if User_name.Set.mem users (Push_event.by event)
-          then Some rev
-          else None)
-        |> List.iter ~f:(fun rev ->
-          ignore (Lru.remove by_rev rev : [ `Ok | `No_such_key ]))
-      end;
+      (Lru.to_alist by_rev
+       |> List.filter_map ~f:(fun (rev, event) ->
+         if User_name.Set.mem users (Push_event.by event)
+         then Some rev
+         else None)
+       |> List.iter ~f:(fun rev ->
+         ignore (Lru.remove by_rev rev : [ `Ok | `No_such_key ])));
       not (Lru.is_empty by_rev))
 ;;
 

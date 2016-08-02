@@ -184,15 +184,14 @@ let add t ~rpc_name ~rpc_version query ~sexp_of_action =
     Or_error.errorf
       "exceeded the global maximum number of feature update subscriptions (%d)"
       t.properties.max_subscriptions_global
-  else begin
+  else (
     let subscription =
       Subscription_t.create ~rpc_name ~rpc_version query ~sexp_of_action
     in
     let elt = Bag.add t.subscriptions subscription in
     Hashtbl.set t.subscription_counts ~key:by ~data:(user_subscription_count + 1);
     t.subscription_count_global <- t.subscription_count_global + 1;
-    Ok (Subscription.create elt)
-  end
+    Ok (Subscription.create elt))
 ;;
 
 let remove t (s : Subscription.t) =
@@ -253,10 +252,9 @@ let drop_all_by_user t query by_whom =
      removed from the state and the subscription limits. *)
   let some_subscription_was_dropped = ref false in
   let drop_msg =
-    lazy begin
+    lazy (
       Error.create "subscription was dropped"
-        query [%sexp_of: Iron_protocol.With_event_subscriptions.Action.t Query.t]
-    end
+        query [%sexp_of: Iron_protocol.With_event_subscriptions.Action.t Query.t])
   in
   Bag.iter t.subscriptions ~f:(fun subscription ->
     let drop_it =
@@ -265,12 +263,11 @@ let drop_all_by_user t query by_whom =
       | `All_users -> true
     in
     if drop_it
-    then
-      begin
-        Subscription_t.close subscription (`Dropped (force drop_msg));
-        some_subscription_was_dropped := true;
-      end);
-  if not !some_subscription_was_dropped then
+    then (
+      Subscription_t.close subscription (`Dropped (force drop_msg));
+      some_subscription_was_dropped := true));
+  if not !some_subscription_was_dropped
+  then
     raise_s
       [%sexp
         "no subscriptions to drop for"

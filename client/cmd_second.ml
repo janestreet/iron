@@ -66,15 +66,13 @@ features, one can second it once and for all using:
        let%bind () =
          if not !Interactive.interactive
          then return ()
-         else begin
+         else (
            let%bind reaction =
              Prepare_to_second.rpc_to_server_exn
                { feature_path; even_though_empty; even_though_owner }
            in
-           dialog ~feature_path ~display_ascii ~max_output_columns reaction
-         end
+           dialog ~feature_path ~display_ascii ~max_output_columns reaction)
        in
        Second.rpc_to_server_exn
-         { feature_path; even_though_empty; even_though_owner  }
-    )
+         { feature_path; even_though_empty; even_though_owner })
 ;;

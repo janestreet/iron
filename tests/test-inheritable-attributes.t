@@ -71,23 +71,23 @@ Check that inheritable attributes recurse down more than one level.
   > -set-inheritable-whole-feature-reviewers "" \
   > -set-inheritable-property ticket=FE-290
   $ fe show root -inheritable-attributes
-  ((owners (user3)) (properties ((ticket FE-290) (not-a-property yet))))
+  ((owners (user3)) (properties ((not-a-property yet) (ticket FE-290))))
   $ fe create root/child4 -d child4
   $ fe show child4 -inheritable-attributes
-  ((owners (user3)) (properties ((ticket FE-290) (not-a-property yet))))
+  ((owners (user3)) (properties ((not-a-property yet) (ticket FE-290))))
   $ fe create root/child4/grandchild -d grandchild
   $ fe show grandchild -inheritable-attributes
-  ((owners (user3)) (properties ((ticket FE-290) (not-a-property yet))))
+  ((owners (user3)) (properties ((not-a-property yet) (ticket FE-290))))
   $ fe show grandchild -properties -owners
   ((Owners (unix-login-for-testing user3))
-   (Properties ((ticket FE-290) (not-a-property yet))))
+   (Properties ((not-a-property yet) (ticket FE-290))))
 
 Check that show-inheritable-attributes flag works.
 
   $ fe change root -set-inheritable-crs-shown-in-todo-only-for-users-reviewing false
   $ fe show root -inheritable-attributes
   ((crs_shown_in_todo_only_for_users_reviewing (false)) (owners (user3))
-   (properties ((ticket FE-290) (not-a-property yet))))
+   (properties ((not-a-property yet) (ticket FE-290))))
   $ fe change root -set-inheritable-release-process continuous
   $ fe show root -show-inheritable-attributes \
   >  | grep -B 100 -- '-----' \
@@ -95,8 +95,8 @@ Check that show-inheritable-attributes flag works.
   | inheritable attributes  |                         |
   |   CRs shown in todo for | all                     |
   |   owner                 | user3                   |
-  |   ticket                | FE-290                  |
   |   not-a-property        | yet                     |
+  |   ticket                | FE-290                  |
   |   release process       | continuous              |
   |---------------------------------------------------|
   $ fe change root -remove-inheritable-crs-shown-in-todo-only-for-users-reviewing

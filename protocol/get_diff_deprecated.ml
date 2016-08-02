@@ -88,11 +88,10 @@ module Stable = struct
           { V2.
             feature_path
           ; what_diff =
-              begin match reviewer with
-              | Whole_feature_reviewer              -> Whole_diff
-              | Whole_feature_reviewer_plus_ignored -> Whole_diff_plus_ignored
-              | Normal_reviewer user_name           -> For user_name
-              end
+              (match reviewer with
+               | Whole_feature_reviewer              -> Whole_diff
+               | Whole_feature_reviewer_plus_ignored -> Whole_diff_plus_ignored
+               | Normal_reviewer user_name           -> For user_name)
           }
       ;;
     end

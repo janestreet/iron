@@ -147,7 +147,7 @@ module Stable = struct
         let review_lines =
           if not user_is_reviewing
           then `Not_reviewing
-          else
+          else (
             let review =
               Line_count.Review.to_review_column_shown line_count.review
                 ~have_potentially_blocking_review_session_in_progress:
@@ -156,7 +156,7 @@ module Stable = struct
             `Lines { Review_lines.V1.
                      review
                    ; follow = line_count.review.follow
-                   }
+                   })
         in
         let catch_up_lines = Ok (Line_count.Catch_up.total line_count.catch_up) in
         { feature_path

@@ -429,23 +429,21 @@ include Register_map_reaction_in_client
     (struct
       (* The sort is done client side to avoid unnecessary work in Iron server. *)
       let of_server_reaction (action : action) (reaction : reaction) =
-        begin match reaction.status with
-        | `Up_to_date | `Bookmark_update_is_pending -> ()
-        | `Review_session review_session ->
-          Array.sort review_session.diff4s_in_session ~cmp:(fun t1 t2 ->
-            Diff4_in_session.compare_by_path_in_repo_at_f2_for_review
-              t1.diff4_in_session
-              t2.diff4_in_session);
-        end;
-        begin match action.which_session with
-          | Current_session -> ()
-          | This_session supplied ->
-            match reaction.status with
-            | `Up_to_date | `Bookmark_update_is_pending ->
-              Error.raise (Session_id.no_session_error ~supplied)
-            | `Review_session review_session ->
-              ok_exn (Session_id.check ~actual:review_session.review_session_id ~supplied)
-        end;
+        (match reaction.status with
+         | `Up_to_date | `Bookmark_update_is_pending -> ()
+         | `Review_session review_session ->
+           Array.sort review_session.diff4s_in_session ~cmp:(fun t1 t2 ->
+             Diff4_in_session.compare_by_path_in_repo_at_f2_for_review
+               t1.diff4_in_session
+               t2.diff4_in_session));
+        (match action.which_session with
+         | Current_session -> ()
+         | This_session supplied ->
+           match reaction.status with
+           | `Up_to_date | `Bookmark_update_is_pending ->
+             Error.raise (Session_id.no_session_error ~supplied)
+           | `Review_session review_session ->
+             ok_exn (Session_id.check ~actual:review_session.review_session_id ~supplied));
         reaction
     end)
 

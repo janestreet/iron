@@ -242,7 +242,7 @@ let%test_unit _ =
 ;;
 
 let match_ ~prefix of_what =
-  lazy begin
+  lazy (
     let leader =
       match of_what with
       | `Of_full_name    -> "()"
@@ -264,8 +264,7 @@ let match_ ~prefix of_what =
     fun t ->
       match Regex.get_matches regex (to_string t) ~max:1 with
       | Ok [ matches ] -> Regex.Match.get ~sub:(`Index 2) matches
-      | Ok ([]|_::_::_) | Error _ -> None
-  end
+      | Ok ([]|_::_::_) | Error _ -> None)
 ;;
 
 let%test_unit _ =
@@ -352,14 +351,12 @@ let complete ~iter_features ~prefix of_what =
     let have_children = Feature_path_hash_set.create () in
     let matches = ref [] in
     iter_features ~f:(fun feature_path ->
-      begin match parent feature_path with
-      | Ok parent -> Hash_set.add have_children parent
-      | Error _   -> ()
-      end;
-      begin match force match_ feature_path with
-      | None -> ()
-      | Some match_ -> matches := (feature_path, match_) :: !matches
-      end);
+      (match parent feature_path with
+       | Ok parent -> Hash_set.add have_children parent
+       | Error _   -> ());
+      (match force match_ feature_path with
+       | None -> ()
+       | Some match_ -> matches := (feature_path, match_) :: !matches));
     let has_children feature_path = Hash_set.mem have_children feature_path in
     match !matches with
     | [ single_match, _ ] ->

@@ -102,10 +102,10 @@ let diff_of_change
     let lines = ref [] in
     let f_hunk_break =
       if include_hunk_breaks
-      then begin fun a b ->
-        let header = Header.add_hunk_break header a b in
-        lines := List.rev_append (Header.to_string header) !lines
-      end
+      then (
+        fun a b ->
+          let header = Header.add_hunk_break header a b in
+          lines := List.rev_append (Header.to_string header) !lines)
       else (fun _ _ -> ())
     in
     Patdiff_core.iter_ansi
@@ -204,14 +204,14 @@ let make_ddiff_algo_fun ~id ?(hint=[]) a b ~include_hunk_breaks ~diff4_class
     if List.is_empty (force with_hunk_breaks_a_inner)
     || List.is_empty (force with_hunk_breaks_b_inner)
     then (force with_hunk_breaks_a_inner, force with_hunk_breaks_b_inner)
-    else
+    else (
       let full_context_a_inner =
         inner_diff ~with_hunk_breaks:false ~header:a_header change_A
       in
       let full_context_b_inner =
         inner_diff ~with_hunk_breaks:false ~header:b_header change_B
       in
-      full_context_a_inner, full_context_b_inner
+      full_context_a_inner, full_context_b_inner)
   in
   let make_slice lines = Slice.create ~source:"" 0 lines in
   let change =
@@ -430,7 +430,7 @@ let display_forget ~context slices =
 
 let display_errors errors =
   if List.is_empty errors then None
-  else
+  else (
     let diff =
       List.concat_map errors ~f:(fun error ->
         error
@@ -450,7 +450,7 @@ let display_errors errors =
       ; blocks = [ error_block ]
       }
     in
-    Some view
+    Some view)
 ;;
 
 let lines t ~context slices =

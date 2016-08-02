@@ -13,10 +13,10 @@ let strip_crs_exn format ~replace_with ~extra_cr_comment_headers file =
   in
   let offsets : Cr_comment.Raw.With_file_positions.t -> _ =
     if Option.is_some replace_with
-    then
+    then (
       fun { content_start; cr; _ } ->
-        content_start, content_start + String.length (Cr_comment.Raw.content cr)
-    else
+        content_start, content_start + String.length (Cr_comment.Raw.content cr))
+    else (
       fun { start_index = comment_start; end_index; _ } ->
         let comment_stop = end_index + 1 in
         let rec extend_left = function
@@ -36,7 +36,7 @@ let strip_crs_exn format ~replace_with ~extra_cr_comment_headers file =
         | `Bol _,        `Stop stop -> comment_start, stop
         | `Start start,  `Eof stop  -> start, stop
         | `Start start,  `Eol stop  -> start, stop - 1
-        | `Start _,      `Stop _    -> comment_start, comment_stop
+        | `Start _,      `Stop _    -> comment_start, comment_stop)
   in
   let chunks =
     let stop = String.length contents in
@@ -71,7 +71,7 @@ let command =
        flag "-extra-cr-comment-header" (listed string)
          ~doc:"STR additional header to recognize as a CR"
      and files =
-       map (anon (non_empty_sequence
+       map (anon (non_empty_sequence_as_pair
                     ("FILE" %: resolved_file_path_arg_type)))
          ~f:(fun (x, l) -> x :: l)
      in
@@ -99,9 +99,7 @@ let command =
          in
          if in_place then
            Writer.save (Abspath.to_string file) ~contents
-         else begin
+         else (
            print_string contents;
-           Writer.flushed stdout
-         end)
-    )
+           Writer.flushed stdout)))
 ;;

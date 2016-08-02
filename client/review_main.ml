@@ -19,11 +19,10 @@ let available_views hunk = List.map (Hunk.views hunk) ~f:(fun view ->
 ;;
 
 let default_view_configuration =
-  lazy begin
+  lazy (
     let module Patdiff4_config = Pdiff4.Std.User_config in
     Patdiff4_config.get ()
-    |> Patdiff4_config.view_configuration
-  end
+    |> Patdiff4_config.view_configuration)
 ;;
 
 let with_default_view_configuration = function
@@ -128,198 +127,195 @@ let rec hunk_by_hunk : type a.
       let%bind () = reviewed t [ file_elt ] in
       file_by_file t
 
-    | Some hunk_elt -> begin
-        let hunk = Review_ring.Elt.value hunk_elt in
-        let view_ids = available_view_ids hunk in
-        let%bind () = show_hunks ?view_configuration [ hunk ] in
-        let hunk_index = Review_ring.Elt.index hunk_elt in
-        let total = Review_ring.length hunk_ring in
-        let module Choice = Review_util.Choice in
-        let choices =
-          [ Choice.quit
-          ; Interactive.Choice.default (Choice.show_again   "hunk")
-          ; Choice.reviewed     "hunk"
-          ; Choice.not_reviewed "hunk"
-          ; Choice.previous     "hunk"
-          ; Choice.Mode.file_by_file
-          ; Choice.Mode.global_diff
-          ; Choice.Mode.selected_files
-          ] in
-        let choices =
-          if M.may_commit_session
-          then choices @ [ Choice.commit_session ]
-          else choices
-        in
-        let choices =
-          if List.length view_ids > 1
-          then choices
-               @ [ Interactive.Choice.create 'v' `View "Change the view configuration"
-                 ; Interactive.Choice.create '>' `Succ_view "Show next view available"
-                 ; Interactive.Choice.create '<' `Pred_view "Show previous view available"
-                 ]
-          else choices
-        in
-        let question =
-          sprintf
-            "[%d/%d] %s : Hunk [%d/%d] Mark as reviewed?"
-            file.index_in_review t.number_of_files file.name
-            (succ hunk_index) total
-        in
-        match%bind Interactive.ask_dispatch_with_help question choices with
-        | `Reviewed ->
-          Review_ring.delete hunk_ring hunk_elt;
-          hunk_by_hunk ()
+    | Some hunk_elt ->
+      let hunk = Review_ring.Elt.value hunk_elt in
+      let view_ids = available_view_ids hunk in
+      let%bind () = show_hunks ?view_configuration [ hunk ] in
+      let hunk_index = Review_ring.Elt.index hunk_elt in
+      let total = Review_ring.length hunk_ring in
+      let module Choice = Review_util.Choice in
+      let choices =
+        [ Choice.quit
+        ; Interactive.Choice.default (Choice.show_again   "hunk")
+        ; Choice.reviewed     "hunk"
+        ; Choice.not_reviewed "hunk"
+        ; Choice.previous     "hunk"
+        ; Choice.Mode.file_by_file
+        ; Choice.Mode.global_diff
+        ; Choice.Mode.selected_files
+        ] in
+      let choices =
+        if M.may_commit_session
+        then choices @ [ Choice.commit_session ]
+        else choices
+      in
+      let choices =
+        if List.length view_ids > 1
+        then choices
+             @ [ Interactive.Choice.create 'v' `View "Change the view configuration"
+               ; Interactive.Choice.create '>' `Succ_view "Show next view available"
+               ; Interactive.Choice.create '<' `Pred_view "Show previous view available"
+               ]
+        else choices
+      in
+      let question =
+        sprintf
+          "[%d/%d] %s : Hunk [%d/%d] Mark as reviewed?"
+          file.index_in_review t.number_of_files file.name
+          (succ hunk_index) total
+      in
+      (match%bind Interactive.ask_dispatch_with_help question choices with
+       | `Reviewed ->
+         Review_ring.delete hunk_ring hunk_elt;
+         hunk_by_hunk ()
 
-        | `Not_reviewed ->
-          Review_ring.goto_next hunk_ring;
-          hunk_by_hunk ()
+       | `Not_reviewed ->
+         Review_ring.goto_next hunk_ring;
+         hunk_by_hunk ()
 
-        | `Previous ->
-          Review_ring.goto_previous hunk_ring;
-          hunk_by_hunk ()
+       | `Previous ->
+         Review_ring.goto_previous hunk_ring;
+         hunk_by_hunk ()
 
-        | `Show_again -> hunk_by_hunk ?view_configuration ()
+       | `Show_again -> hunk_by_hunk ?view_configuration ()
 
-        | `Quit -> return `Quit
+       | `Quit -> return `Quit
 
-        | `Commit_session -> return `Commit_session
+       | `Commit_session -> return `Commit_session
 
-        | `File_by_file   -> file_by_file t
-        | `Global_diff    -> global_diff t
-        | `Selected_files -> selected_files t
+       | `File_by_file   -> file_by_file t
+       | `Global_diff    -> global_diff t
+       | `Selected_files -> selected_files t
 
-        | (`Succ_view | `Pred_view) as direction ->
-          let view_configuration = navigate ?view_configuration hunk direction in
-          hunk_by_hunk ~view_configuration ()
+       | (`Succ_view | `Pred_view) as direction ->
+         let view_configuration = navigate ?view_configuration hunk direction in
+         hunk_by_hunk ~view_configuration ()
 
-        | `View ->
-          let view_configuration = with_default_view_configuration view_configuration in
-          let configuration, update_configuration =
-            get_and_update_view_configuration view_configuration hunk
-          in
-          match%bind
-            Review_select_view.toggle
-              ~menu_name:"Views available"
-              ~to_string:Diff_algo.Id.to_string
-              ~display_prefix_in_list:None
-              ~available:view_ids
-              ~configuration
-          with
-          | `Quit         -> return `Quit
-          | `File_by_file -> file_by_file t
-          | `Global_diff  -> global_diff t
-          | `New_configuration configuration ->
-            let view_configuration = update_configuration configuration in
-            hunk_by_hunk ~view_configuration ()
-      end
+       | `View ->
+         let view_configuration = with_default_view_configuration view_configuration in
+         let configuration, update_configuration =
+           get_and_update_view_configuration view_configuration hunk
+         in
+         match%bind
+           Review_select_view.toggle
+             ~menu_name:"Views available"
+             ~to_string:Diff_algo.Id.to_string
+             ~display_prefix_in_list:None
+             ~available:view_ids
+             ~configuration
+         with
+         | `Quit         -> return `Quit
+         | `File_by_file -> file_by_file t
+         | `Global_diff  -> global_diff t
+         | `New_configuration configuration ->
+           let view_configuration = update_configuration configuration in
+           hunk_by_hunk ~view_configuration ())
 
 and file_by_file : type a. a t -> result Deferred.t = fun t ->
   let module M = (val t.m : M with type t = a) in
   match Review_ring.current t.file_ring with
   | None -> return `Reviewed
-  | Some file_elt -> begin
-      let file = Review_ring.Elt.value file_elt in
-      let%bind () =
-        match M.open_file_in_emacs with
-        | Some f when M.always_open_file_in_emacs -> f file.file
-        | _ -> return ()
+  | Some file_elt ->
+    let file = Review_ring.Elt.value file_elt in
+    let%bind () =
+      match M.open_file_in_emacs with
+      | Some f when M.always_open_file_in_emacs -> f file.file
+      | _ -> return ()
+    in
+    let%bind hunk_ring = file.hunks in
+    let hunk_ring = ok_exn hunk_ring in
+    let hunks = Review_ring.values hunk_ring in
+    if List.is_empty hunks
+    then (
+      let%bind () = reviewed t [ file_elt ] in
+      file_by_file t)
+    else (
+      let%bind () = show_hunks hunks in
+      let hunk_by_hunk_options =
+        let should_offer_hunk_by_hunk_mode =
+          match hunks with
+          | [] -> false
+          | [ hunk ] -> List.length (Hunk.views hunk) > 1
+          | _::_::_ -> true
+        in
+        if not should_offer_hunk_by_hunk_mode
+        then []
+        else [ Review_util.Choice.Mode.hunk_by_hunk ]
       in
-      let%bind hunk_ring = file.hunks in
-      let hunk_ring = ok_exn hunk_ring in
-      let hunks = Review_ring.values hunk_ring in
-      if List.is_empty hunks
-      then begin
-        let%bind () = reviewed t [ file_elt ] in
-        file_by_file t
-      end
-      else
-        let%bind () = show_hunks hunks in
-        let hunk_by_hunk_options =
-          let should_offer_hunk_by_hunk_mode =
-            match hunks with
-            | [] -> false
-            | [ hunk ] -> List.length (Hunk.views hunk) > 1
-            | _::_::_ -> true
-          in
-          if not should_offer_hunk_by_hunk_mode
-          then []
-          else [ Review_util.Choice.Mode.hunk_by_hunk ]
+      let navigate_options =
+        let has_multiple_views hunk_elt =
+          List.length (Hunk.views (Review_ring.Elt.value hunk_elt)) > 1
         in
-        let navigate_options =
-          let has_multiple_views hunk_elt =
-            List.length (Hunk.views (Review_ring.Elt.value hunk_elt)) > 1
-          in
-          match List.find (Review_ring.to_list hunk_ring) ~f:has_multiple_views with
-          | None -> []
-          | Some first_hunk_with_multiple_views ->
-            [ Interactive.Choice.create '>'
-                (`Navigate (first_hunk_with_multiple_views, `Succ_view))
-                "Enter hunk-by-hunk mode and show next view available"
-            ; Interactive.Choice.create '<'
-                (`Navigate (first_hunk_with_multiple_views, `Pred_view))
-                "Enter hunk-by-hunk mode and show previous view available"
-            ]
-        in
-        let emacs_options =
-          match M.open_file_in_emacs with
-          | Some f when not M.always_open_file_in_emacs ->
-            [ Interactive.Choice.create 'e'
-                (`Open_file_in_emacs f) "Open current file in Emacs"
-            ]
-          | _ -> []
-        in
-        let module Choice = Review_util.Choice in
-        let commit_session_option =
-          if M.may_commit_session
-          then [ Choice.commit_session ]
-          else []
-        in
-        let question =
-          let index = file.index_in_review in
-          sprintf "[%d/%d] %s Mark as reviewed?"
-            index t.number_of_files file.name
-        in
-        match%bind
-          Interactive.ask_dispatch_with_help question (
-            [ Interactive.Choice.default (Choice.show_again "file")
-            ; Choice.reviewed       "file"
-            ; Choice.not_reviewed   "file"
-            ; Choice.previous       "file"
-            ]
-            @ emacs_options
-            @ hunk_by_hunk_options
-            @ navigate_options
-            @ commit_session_option
-            @
-            [ Choice.Mode.global_diff
-            ; Choice.Mode.selected_files
-            ; Choice.quit
-            ])
-        with
-        | `Quit -> return `Quit
-        | `Commit_session -> return `Commit_session
-        | `Reviewed ->
-          let%bind () = reviewed t [ file_elt ] in
-          file_by_file t
-        | `Not_reviewed ->
-          Review_ring.goto_next t.file_ring;
-          file_by_file t
-        | `Previous ->
-          Review_ring.goto_previous t.file_ring;
-          file_by_file t
-        | `Open_file_in_emacs open_file ->
-          let file = Review_ring.Elt.value file_elt in
-          let%bind () = open_file file.file in
-          file_by_file t
-        | `Hunk_by_hunk   -> hunk_by_hunk t file_elt
-        | `Navigate (hunk, ((`Succ_view | `Pred_view) as direction)) ->
-          let view_configuration = navigate (Review_ring.Elt.value hunk) direction in
-          ok_exn (Review_ring.goto hunk_ring hunk);
-          hunk_by_hunk ~view_configuration t file_elt
-        | `Show_again     -> file_by_file t
-        | `Global_diff    -> global_diff t
-        | `Selected_files -> selected_files t
-    end
+        match List.find (Review_ring.to_list hunk_ring) ~f:has_multiple_views with
+        | None -> []
+        | Some first_hunk_with_multiple_views ->
+          [ Interactive.Choice.create '>'
+              (`Navigate (first_hunk_with_multiple_views, `Succ_view))
+              "Enter hunk-by-hunk mode and show next view available"
+          ; Interactive.Choice.create '<'
+              (`Navigate (first_hunk_with_multiple_views, `Pred_view))
+              "Enter hunk-by-hunk mode and show previous view available"
+          ]
+      in
+      let emacs_options =
+        match M.open_file_in_emacs with
+        | Some f when not M.always_open_file_in_emacs ->
+          [ Interactive.Choice.create 'e'
+              (`Open_file_in_emacs f) "Open current file in Emacs"
+          ]
+        | _ -> []
+      in
+      let module Choice = Review_util.Choice in
+      let commit_session_option =
+        if M.may_commit_session
+        then [ Choice.commit_session ]
+        else []
+      in
+      let question =
+        let index = file.index_in_review in
+        sprintf "[%d/%d] %s Mark as reviewed?"
+          index t.number_of_files file.name
+      in
+      (match%bind
+         Interactive.ask_dispatch_with_help question (
+           [ Interactive.Choice.default (Choice.show_again "file")
+           ; Choice.reviewed       "file"
+           ; Choice.not_reviewed   "file"
+           ; Choice.previous       "file"
+           ]
+           @ emacs_options
+           @ hunk_by_hunk_options
+           @ navigate_options
+           @ commit_session_option
+           @
+           [ Choice.Mode.global_diff
+           ; Choice.Mode.selected_files
+           ; Choice.quit
+           ])
+       with
+       | `Quit -> return `Quit
+       | `Commit_session -> return `Commit_session
+       | `Reviewed ->
+         let%bind () = reviewed t [ file_elt ] in
+         file_by_file t
+       | `Not_reviewed ->
+         Review_ring.goto_next t.file_ring;
+         file_by_file t
+       | `Previous ->
+         Review_ring.goto_previous t.file_ring;
+         file_by_file t
+       | `Open_file_in_emacs open_file ->
+         let file = Review_ring.Elt.value file_elt in
+         let%bind () = open_file file.file in
+         file_by_file t
+       | `Hunk_by_hunk   -> hunk_by_hunk t file_elt
+       | `Navigate (hunk, ((`Succ_view | `Pred_view) as direction)) ->
+         let view_configuration = navigate (Review_ring.Elt.value hunk) direction in
+         ok_exn (Review_ring.goto hunk_ring hunk);
+         hunk_by_hunk ~view_configuration t file_elt
+       | `Show_again     -> file_by_file t
+       | `Global_diff    -> global_diff t
+       | `Selected_files -> selected_files t))
 
 and multiple_files
   : type a. a t
@@ -333,7 +329,9 @@ and multiple_files
       Deferred.List.all (List.map files ~f:(fun file -> file.hunks))
     in
     let hunks = List.concat_map hunks ~f:(fun hunk -> Review_ring.values (ok_exn hunk)) in
-    if List.is_empty hunks then return `Reviewed else
+    if List.is_empty hunks
+    then return `Reviewed
+    else (
       let rec loop () =
         let%bind () = show_hunks hunks in
         let%bind () = Interactive.print_endline "Selection:" in
@@ -370,7 +368,7 @@ and multiple_files
         | `Selected_files -> selected_files t
         | `Global_diff    -> global_diff t
       in
-      loop ()
+      loop ())
 
 and selected_files : type a. a t -> result Deferred.t
   = fun t ->
@@ -427,18 +425,16 @@ let files (type t) (module M : M with type t = t) files =
   let module Choice = Review_util.Choice in
   match%bind
     Interactive.ask_dispatch_with_help "How do you want to do this review?"
-      begin
-        [ Interactive.Choice.default Choice.Mode.file_by_file
-        ; Choice.Mode.global_diff
-        ; Choice.Mode.selected_files
-        ]
-        @ (if M.may_commit_session
-           then [ Choice.commit_session ]
-           else []
-          )
-        @ [ Choice.quit
-          ]
-      end
+      ([ Interactive.Choice.default Choice.Mode.file_by_file
+       ; Choice.Mode.global_diff
+       ; Choice.Mode.selected_files
+       ]
+       @ (if M.may_commit_session
+          then [ Choice.commit_session ]
+          else []
+         )
+       @ [ Choice.quit
+         ])
   with
   | `Quit           -> return `Quit
   | `Commit_session -> return `Commit_session

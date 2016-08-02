@@ -96,11 +96,10 @@ let diff =
                 } =
          get_catch_up_session_exn feature_path for_
        in
-       begin match session_id with
-       | Current_session -> ()
-       | This_session session_id ->
-         ok_exn (Session_id.check ~actual:catch_up_session_id ~supplied:session_id)
-       end;
+       (match session_id with
+        | Current_session -> ()
+        | This_session session_id ->
+          ok_exn (Session_id.check ~actual:catch_up_session_id ~supplied:session_id));
        let%bind () =
          if not may_modify_local_repo
          then return ()
@@ -185,11 +184,10 @@ This command is deprecated and has been subsumed by " ; subsumed_by ; ".
              catch_up_session_id
            ; diff4s_to_catch_up
            ;  _ } ->
-         begin match which_session with
-         | Current_session -> ()
-         | This_session session_id ->
-           ok_exn (Session_id.check ~actual:catch_up_session_id ~supplied:session_id)
-         end;
+         (match which_session with
+          | Current_session -> ()
+          | This_session session_id ->
+            ok_exn (Session_id.check ~actual:catch_up_session_id ~supplied:session_id));
          let diff4s_in_session =
            List.map diff4s_to_catch_up ~f:Diff4_to_catch_up.diff4_in_session
          in
@@ -264,31 +262,29 @@ let show =
        let get_attribute : Attribute.t -> Sexp.t = function
          | Session_id -> catch_up_session_id |> [%sexp_of: Session_id.t]
        in
-       begin match attributes with
-       | [] ->
-         if not omit_header_and_description then
-           Cmd_review.print_catch_up_header_and_description catch_up_session;
-         if not omit_attribute_table then
-           Cmd_review.print_catch_up_attribute_table catch_up_session
-             ~display_ascii ~max_output_columns;
-         Cmd_review.print_introduction_summary_for_review
-           ~feature_path
-           ~review_session_tip:catch_up_session_tip
-           ~reviewer_in_session
-           ~warn_reviewer:None
-           ~diff4s_to_review
-           ~display_ascii
-           ~max_output_columns;
-       | [ attribute ] ->
-         print_endline (get_attribute attribute |> Sexp.to_string_hum)
-       | attributes ->
-         attributes
-         |> List.map ~f:(fun attribute -> attribute, get_attribute attribute)
-         |> [%sexp_of: (Attribute.t * Sexp.t) list]
-         |> Sexp.to_string_hum
-         |> print_endline
-       end
-    )
+       (match attributes with
+        | [] ->
+          if not omit_header_and_description then
+            Cmd_review.print_catch_up_header_and_description catch_up_session;
+          if not omit_attribute_table then
+            Cmd_review.print_catch_up_attribute_table catch_up_session
+              ~display_ascii ~max_output_columns;
+          Cmd_review.print_introduction_summary_for_review
+            ~feature_path
+            ~review_session_tip:catch_up_session_tip
+            ~reviewer_in_session
+            ~warn_reviewer:None
+            ~diff4s_to_review
+            ~display_ascii
+            ~max_output_columns;
+        | [ attribute ] ->
+          print_endline (get_attribute attribute |> Sexp.to_string_hum)
+        | attributes ->
+          attributes
+          |> List.map ~f:(fun attribute -> attribute, get_attribute attribute)
+          |> [%sexp_of: (Attribute.t * Sexp.t) list]
+          |> Sexp.to_string_hum
+          |> print_endline))
 ;;
 
 let command =

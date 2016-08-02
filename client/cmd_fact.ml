@@ -90,11 +90,11 @@ let cmd_spec_remove =
 let print_evidence evidence ~machine =
   if machine
   then printf !"%s\n" (Sexp.to_string_mach (Fact.Evidence.sexp_of_t evidence))
-  else
+  else (
     let { Fact.Evidence.asserter; assertion_time; comment } = evidence in
     printf !"asserter: %{User_name}\n" asserter;
     printf !"assertion_time: %{Time}\n" assertion_time;
-    printf !"comment: %s\n" comment
+    printf !"comment: %s\n" comment)
 ;;
 
 let cmd_show =
@@ -135,7 +135,7 @@ let print_specs specs ~machine ~display_ascii ~max_output_columns =
   if machine
   then List.iter specs ~f:(fun spec ->
     printf "%s\n" (Sexp.to_string_mach ([%sexp_of: Fact.Spec.Id.t * Fact.Spec.t] spec)))
-  else
+  else (
     let col header get = Ascii_table.Column.(string ~header (cell get)) in
     let spec_id = col "spec id" (fun (id, _) -> Fact.Spec.Id.to_string id) in
     let description = col "description" (fun (_, spec) -> Fact.Spec.description spec) in
@@ -155,7 +155,7 @@ let print_specs specs ~machine ~display_ascii ~max_output_columns =
     in
     let columns = [spec_id; description; scope_keys; asserters] in
     let table = Ascii_table.create ~columns ~rows:specs in
-    printf "%s" (Ascii_table.to_string table ~display_ascii ~max_output_columns)
+    printf "%s" (Ascii_table.to_string table ~display_ascii ~max_output_columns))
 ;;
 
 let cmd_spec_list =

@@ -128,7 +128,7 @@ let check_low_review_files t repo_root ~manifest ~cwd =
       ~f:(fun build_projection ->
         if not build_projection.require_low_review_file
         then return ()
-        else begin
+        else (
           let low_review_file_in_repo =
             Path_in_repo.low_review_file build_projection.name
           in
@@ -173,8 +173,7 @@ let check_low_review_files t repo_root ~manifest ~cwd =
               then
                 Error_context.error_s e
                   [%sexp "files are not low review", (extraneous : Path_in_repo.Set.t)])
-            |> ok_exn;
-        end);
+            |> ok_exn))
 ;;
 
 module type Error = sig
@@ -230,18 +229,18 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
           let rec loop ancestor ~is_proper_ancestor =
             let dot_fe = Path_in_repo.extend ancestor File_name.dot_fe in
             if Hash_set.mem manifest dot_fe
-            then begin
+            then (
               Hash_set.add dot_fes_to_load dot_fe;
               if is_proper_ancestor then Hash_set.add dot_fes_used_in_subdirectory dot_fe;
-              dot_fe
-            end else begin
+              dot_fe)
+            else (
               Hash_set.add maybe_untracked_dot_fes dot_fe;
               match Path_in_repo.parent ancestor with
               | Some parent -> loop parent ~is_proper_ancestor:true
               | None ->
                 no_dot_fe := dir :: !no_dot_fe;
-                dot_fe (* doesn't matter what's here, since we'll report an error *)
-            end
+                (* doesn't matter what's here, since we'll report an error *)
+                dot_fe)
           in
           let dot_fe = loop dir ~is_proper_ancestor:false in
           (dot_fe, files))
@@ -272,16 +271,17 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
         let dot_fe_path = maybe_relativize repo_root dot_fe ~cwd in
         let%bind dot_fe_exists = Sys.file_exists_exn (Path.to_string dot_fe_path) in
         let declarations =
-          if not dot_fe_exists then begin
+          if not dot_fe_exists
+          then (
             deleted := dot_fe_path :: !deleted;
-            return []
-          end else
+            return [])
+          else (
             match%map
               Reader.load_annotated_sexps (Path.to_string dot_fe_path)
                 Dot_fe.Declaration.of_annotated_sexp
             with
             | Error error -> syntax_errors := error :: !syntax_errors; []
-            | Ok declarations -> declarations
+            | Ok declarations -> declarations)
         in
         let%map declarations = declarations in
         (dot_fe, declarations)
@@ -374,24 +374,22 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
       in
       let do_full_repo_checks =
         Option.is_none skip_full_repo_checks
-        && begin match dirs with
+        && (match dirs with
           | `All -> true
           | `Below dir -> Path_in_repo.equal dir Path_in_repo.root
-          | `Only_this _ -> false
-        end
+          | `Only_this _ -> false)
       in
       let%bind () =
-        (if not do_full_repo_checks
-       then return ()
-       else begin
-         report_unused_projections t;
-         report_unused_tags t;
-         if obligations_repo.obligations_global.disallow_useless_dot_fe
-         && not (Hash_set.is_empty useless_dot_fes)
-         then report_errors "useless .fe.sexp file" (useless_dot_fes |> Hash_set.to_list)
-                (module Path_in_repo);
-         check_low_review_files t repo_root ~manifest ~cwd;
-       end)
+        if not do_full_repo_checks
+        then return ()
+        else (
+          report_unused_projections t;
+          report_unused_tags t;
+          if obligations_repo.obligations_global.disallow_useless_dot_fe
+          && not (Hash_set.is_empty useless_dot_fes)
+          then report_errors "useless .fe.sexp file" (useless_dot_fes |> Hash_set.to_list)
+                 (module Path_in_repo);
+          check_low_review_files t repo_root ~manifest ~cwd)
       in
       return t
     )

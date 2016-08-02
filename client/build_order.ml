@@ -111,10 +111,10 @@ end = struct
     let rec compute_dir_dependencies path_in_project =
       if Hashtbl.mem dir_dependencies path_in_project
       then return ()
-      else begin
-        if verbose
-        then Debug.ams [%here] "compute_dir_dependencies" path_in_project
-               [%sexp_of: Path_in_project.t];
+      else (
+        (if verbose
+         then Debug.ams [%here] "compute_dir_dependencies" path_in_project
+                [%sexp_of: Path_in_project.t]);
         (* We set the key here to avoid recomputation -- we set it to the correct value
            later, once we've computed it. *)
         Hashtbl.set dir_dependencies ~key:path_in_project ~data:Path_in_project.Set.empty;
@@ -129,10 +129,10 @@ end = struct
               let%bind depends_on =
                 if not (String.is_suffix file ~suffix:".libdeps")
                 then return []
-                else
+                else (
                   let libdeps_file = Abspath.extend dir (File_name.of_string file) in
                   Reader.load_sexps_exn (Abspath.to_string libdeps_file)
-                    [%of_sexp: Libname.t]
+                    [%of_sexp: Libname.t])
               in
               let depends_on =
                 List.filter_map depends_on ~f:(fun libname ->
@@ -153,8 +153,7 @@ end = struct
         in
         Hashtbl.set dir_dependencies ~key:path_in_project
           ~data:(Path_in_project.Set.union_list depends_ons);
-        return ();
-      end
+        return ())
     in
     let%bind () =
       Deferred.List.iter ~how:`Parallel dirs ~f:compute_dir_dependencies
@@ -172,7 +171,7 @@ let dirs_in_build_order project_root ~dirs ~additional_dependencies libmap =
          [%sexp_of: Dir_dependencies.t];
   if Hashtbl.for_all dir_dependencies ~f:Set.is_empty
   then Or_error.error_string "no directory dependencies -- missing *.libdeps files"
-  else
+  else (
     let module Edge = Topological_sort.Edge in
     let nodes = Hashtbl.keys dir_dependencies in
     let edges =
@@ -186,7 +185,7 @@ let dirs_in_build_order project_root ~dirs ~additional_dependencies libmap =
     in
     if verbose
     then Debug.ams [%here] "edges" edges [%sexp_of: Path_in_project.t Edge.t list];
-    Topological_sort.sort (module Path_in_project) nodes edges
+    Topological_sort.sort (module Path_in_project) nodes edges)
 ;;
 
 module File_dependencies : sig
@@ -490,7 +489,7 @@ let staged_sort repo_root list path_in_repo =
     (* There's no sorting to do, and we'd like to avoid spurious errors in case the sort
        fails. *)
     return Fn.id
-  else
+  else (
     let default_sort list =
       List.sort list ~cmp:(fun a1 a2 ->
         Path_in_repo.default_review_compare (path_in_repo a1) (path_in_repo a2))
@@ -518,16 +517,15 @@ Warning: files are in alphabetical order because there are no build artifacts.
           default_sort list;
         | (list, missing_dependencies) ->
           if not (List.is_empty missing_dependencies)
-          then begin
+          then (
             eprintf "\
 Warning: files may not be in build order because of missing build artifacts.
 
 ";
             if verbose
             then Debug.ams [%here] "missing_dependencies" missing_dependencies
-                   [%sexp_of: Path_in_repo.t list];
-          end;
-          list
+                   [%sexp_of: Path_in_repo.t list]);
+          list)
 ;;
 
 let sort repo_root list path_in_repo =

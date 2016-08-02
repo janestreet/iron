@@ -90,12 +90,13 @@ If no [-file] switches are provided, the diff for all files is shown.
            in
            Known (Ok diff4s)
        in
-       if raw then begin
+       if raw
+       then (
          print_endline (diff4s
                         |> [%sexp_of: Diff4.t list Or_error.t Or_pending.t]
                         |> Sexp.to_string_hum);
-         return ();
-       end else begin
+         return ())
+       else (
          match diff4s with
          | Pending_since since ->
            if is_archived
@@ -108,25 +109,23 @@ If no [-file] switches are provided, the diff for all files is shown.
            die "diffs cannot be computed" error [%sexp_of: Error.t];
          | Known (Ok diff4s) ->
            let%bind diff4s =
-             begin
-               if sort_build_order
-               then Build_order.sort repo_root diff4s Diff4.path_in_repo_at_f2
-               else return
-                      (List.sort diff4s ~cmp:(fun d1 d2 ->
-                         Path_in_repo.default_review_compare
-                           (Diff4.path_in_repo_at_f2 d1)
-                           (Diff4.path_in_repo_at_f2 d2)))
-             end
+             if sort_build_order
+             then Build_order.sort repo_root diff4s Diff4.path_in_repo_at_f2
+             else return
+                    (List.sort diff4s ~cmp:(fun d1 d2 ->
+                       Path_in_repo.default_review_compare
+                         (Diff4.path_in_repo_at_f2 d1)
+                         (Diff4.path_in_repo_at_f2 d2)))
            in
            if summary
-           then begin
+           then (
              print_string
                (Ascii_table.to_string
                   (Diff4.summary diff4s ~sort:false) (* already sorted above *)
                   ~display_ascii
                   ~max_output_columns);
-             return ();
-           end else begin
+             return ())
+           else (
              let%bind () =
                (if not may_modify_local_repo
                 then return ()
@@ -138,8 +137,5 @@ If no [-file] switches are provided, the diff for all files is shown.
                ~repo_root
                ~diff4s
                ~reviewer
-               ~context
-           end
-       end
-    )
+               ~context)))
 ;;

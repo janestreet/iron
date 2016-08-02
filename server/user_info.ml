@@ -192,17 +192,16 @@ let complete t ~prefix (which : Iron_protocol.Complete.Which_user_info.t) =
     if String.is_prefix ~prefix string
     then completions := string :: !completions
   in
-  begin match which with
-  | Existing_user ->
-    Hash_set.iter t.existing_users
-      ~f:(fun u -> maybe_add User_name.to_string u)
-  | Typo ->
-    User_name_by_alternate_name.iteri t.typos
-      ~f:(fun ~key:u ~data:_ -> maybe_add Alternate_name.to_string u)
-  | Alias ->
-    User_name_by_alternate_name.iteri t.aliases_seen
-      ~f:(fun ~key:u ~data:_ -> maybe_add Alternate_name.to_string u)
-  end;
+  (match which with
+   | Existing_user ->
+     Hash_set.iter t.existing_users
+       ~f:(fun u -> maybe_add User_name.to_string u)
+   | Typo ->
+     User_name_by_alternate_name.iteri t.typos
+       ~f:(fun ~key:u ~data:_ -> maybe_add Alternate_name.to_string u)
+   | Alias ->
+     User_name_by_alternate_name.iteri t.aliases_seen
+       ~f:(fun ~key:u ~data:_ -> maybe_add Alternate_name.to_string u));
   !completions
 ;;
 
@@ -269,13 +268,14 @@ module User_set = struct
     let add t user_names ~idempotent =
       let hset = get_field t in
       let present, absent = Set.partition_tf user_names ~f:(Hash_set.mem hset) in
-      if Set.is_empty present || idempotent then begin
-        if not (Set.is_empty absent) then begin
-          Set.iter absent ~f:(Hash_set.add hset);
-          persist t;
-        end;
-        Ok ()
-      end else
+      if Set.is_empty present || idempotent
+      then (
+        (if not (Set.is_empty absent)
+         then (
+           Set.iter absent ~f:(Hash_set.add hset);
+           persist t));
+        Ok ())
+      else
         Or_error.error_s
           [%sexp
             (sprintf "user%s already in the set [%s]" (maybe_s present) set_name : string)
@@ -286,13 +286,14 @@ module User_set = struct
     let remove t user_names ~idempotent =
       let hset = get_field t in
       let present, absent = Set.partition_tf user_names ~f:(Hash_set.mem hset) in
-      if Set.is_empty absent || idempotent then begin
-        if not (Set.is_empty present) then begin
-          Set.iter present ~f:(Hash_set.remove hset);
-          persist t;
-        end;
-        Ok ()
-      end else
+      if Set.is_empty absent || idempotent
+      then (
+        (if not (Set.is_empty present)
+         then (
+           Set.iter present ~f:(Hash_set.remove hset);
+           persist t));
+        Ok ())
+      else
         Or_error.error_s
           [%sexp
             (sprintf "user%s not in the set [%s]" (maybe_s absent) set_name : string)
@@ -401,15 +402,13 @@ let define_typos_exn t (definitions : Iron_protocol.Define_typos.Definition.t li
         | Some resolved ->
           failwithf !"%{User_name} is already %s for %{User_name}" means name resolved ()
       );
-      begin
-        match
-          User_name_by_alternate_name.to_user_name_opt t.aliases_seen typo_as_unresolved
-        with
-        | None -> ()
-        | Some not_alias ->
-          failwithf !"%{Alternate_name} is already an alias for %{User_name}"
-            typo not_alias ()
-      end;
+      (match
+         User_name_by_alternate_name.to_user_name_opt t.aliases_seen typo_as_unresolved
+       with
+       | None -> ()
+       | Some not_alias ->
+         failwithf !"%{Alternate_name} is already an alias for %{User_name}"
+           typo not_alias ());
       User_name_by_alternate_name.add_exn typos ~alternate_name:typo ~user_name:means
         ~on_error:typo_conflict)
   in

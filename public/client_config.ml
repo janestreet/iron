@@ -409,17 +409,16 @@ module M = struct
       t.send_push_events_to_server <- bool
     | `show_commit_session_warning bool -> t.show_commit_session_warning <- bool
     | `add_flag_to (cmd, args) ->
-      begin match cmd with
-      | `crs    -> Cmd_crs.update    t.cmd_crs    args
-      | `list   -> Cmd_list.update   t.cmd_list   args
-      | `obligations_show -> Cmd_obligations_show.update t.cmd_obligations_show args
-      | `rebase -> Cmd_rebase.update t.cmd_rebase args
-      | `review -> Cmd_review.update t.cmd_review args
-      | `show   -> Cmd_show.update   t.cmd_show   args
-      | `star   -> Cmd_star.update   t.cmd_star   args
-      | `todo   -> Cmd_todo.update   t.cmd_todo   args
-      | `wait_for_hydra -> Cmd_wait_for_hydra.update t.cmd_wait_for_hydra args
-      end
+      (match cmd with
+       | `crs    -> Cmd_crs.update    t.cmd_crs    args
+       | `list   -> Cmd_list.update   t.cmd_list   args
+       | `obligations_show -> Cmd_obligations_show.update t.cmd_obligations_show args
+       | `rebase -> Cmd_rebase.update t.cmd_rebase args
+       | `review -> Cmd_review.update t.cmd_review args
+       | `show   -> Cmd_show.update   t.cmd_show   args
+       | `star   -> Cmd_star.update   t.cmd_star   args
+       | `todo   -> Cmd_todo.update   t.cmd_todo   args
+       | `wait_for_hydra -> Cmd_wait_for_hydra.update t.cmd_wait_for_hydra args)
     | `directory_order paths -> Directory_order.update t.directory_order paths
   ;;
 end
@@ -503,38 +502,37 @@ working on.  For more information, including how to start using workspaces, see:
   let get_exn t =
     if are_enabled t
     then t.workspaces
-    else
+    else (
       let message =
         [ "\
 You do not have fe workspaces set up.  See the README below for more information.
 
 "
         ; readme ()
-        ; begin match errors () with
-          | [] -> ""
-          | errors ->
-            concat [ "\
+        ; (match errors () with
+           | [] -> ""
+           | errors ->
+             concat [ "\
 
 Your .ferc is currently invalid, which might be the cause:
 
 "
-                   ; errors |> [%sexp_of: Error.t list] |> Sexp.to_string_hum
-                   ; "\n"
-                   ; "\
+                    ; errors |> [%sexp_of: Error.t list] |> Sexp.to_string_hum
+                    ; "\n"
+                    ; "\
 
 Fix your .ferc and check it with:
 
   $ fe tools validate-ferc
 
 "
-                   ]
-        end
+                    ])
         ; "\
 
 Workspace not set up"
         ]
       in
-      failwith (concat message)
+      failwith (concat message))
   ;;
 
   let are_enabled_exn t = ignore (get_exn t : Workspace_config.t)

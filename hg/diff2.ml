@@ -20,11 +20,10 @@ include Structurally_comparable.Make(Stable.V2)
 let invariant t =
   Invariant.invariant [%here] t [%sexp_of: t] (fun () ->
     let check f = Invariant.check_field t f in
-    begin match t.base.attributes, t.tip.attributes with
-    | `Present _, `Present _ -> ()
-    | `Absent, _ | _, `Absent ->
-      [%test_result: Path_in_repo.t] t.tip.path_in_repo ~expect:t.base.path_in_repo;
-    end;
+    (match t.base.attributes, t.tip.attributes with
+     | `Present _, `Present _ -> ()
+     | `Absent, _ | _, `Absent ->
+       [%test_result: Path_in_repo.t] t.tip.path_in_repo ~expect:t.base.path_in_repo);
     Fields.iter
       ~base:(check Attributed_file.invariant)
       ~tip:(check Attributed_file.invariant)
@@ -58,14 +57,13 @@ let may_review t ~include_may_follow reviewer =
   in
   may_review t.base reviewer
   || may_review t.tip reviewer
-  || begin
+  || (
     let involved_in_ownership_change = involved_in_ownership_change t in
     (* If someone is going to review the ownership change, then a whole-feature
        reviewer/follower should too. *)
     if reviewer.is_whole_feature_reviewer
     then not (Set.is_empty involved_in_ownership_change)
-    else Set.mem involved_in_ownership_change reviewer.user_name
-  end
+    else Set.mem involved_in_ownership_change reviewer.user_name)
 ;;
 
 let may_reviewers t ~include_file_followers =

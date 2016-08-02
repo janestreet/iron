@@ -9,11 +9,10 @@ include Validated_string.Make_regex (struct
 let unix_login =
   of_string
     (if am_functional_testing
-     then
-       begin match Sys.getenv "IRON_USER" with
+     then (
+       match Sys.getenv "IRON_USER" with
        | None -> "unix-login-for-testing"
-       | Some s -> s
-       end
+       | Some s -> s)
      else Core.Std.Unix.getlogin ())
 ;;
 

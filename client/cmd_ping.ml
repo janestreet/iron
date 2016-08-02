@@ -24,26 +24,23 @@ let command =
      fun () ->
        let open! Deferred.Let_syntax in
        if watch
-       then
-         begin
-           Deferred.forever () (fun () ->
-             let%bind result =
-               Monitor.try_with_or_error ~extract_exn:true
-                 (fun () -> Ping.rpc_to_server_exn ())
-             in
-             print_endline
-               (match result with
-                | Ok () -> "Ok"
-                | Error err -> Error.to_string_hum err);
-             Clock.after (sec 2.)
-           );
-           Deferred.never ()
-         end
-       else
+       then (
+         Deferred.forever () (fun () ->
+           let%bind result =
+             Monitor.try_with_or_error ~extract_exn:true
+               (fun () -> Ping.rpc_to_server_exn ())
+           in
+           print_endline
+             (match result with
+              | Ok () -> "Ok"
+              | Error err -> Error.to_string_hum err);
+           Clock.after (sec 2.)
+         );
+         Deferred.never ())
+       else (
          let%map () =
            Deferred.List.iter ~how (List.init count ~f:Fn.id) ~f:(fun _ ->
              Ping.rpc_to_server_exn ())
          in
-         print_elapsed [%here]
-    )
+         print_elapsed [%here]))
 ;;

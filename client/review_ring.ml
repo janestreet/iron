@@ -43,7 +43,8 @@ let pointed t =
 ;;
 
 let move_pointer direction t =
-  if not (Array.is_empty t.elements) then begin
+  if not (Array.is_empty t.elements)
+  then (
     let delta =
       match direction with
       | `forward  -> 1
@@ -58,10 +59,9 @@ let move_pointer direction t =
       else
       if t.deleted.(index)
       then loop index
-      else t.pointer <- index
+      else (t.pointer <- index)
     in
-    loop initial_index
-  end
+    loop initial_index)
 ;;
 
 let goto_next t = move_pointer `forward t
@@ -79,10 +79,10 @@ let current t =
 ;;
 
 let _delete_current t =
-  if not (Array.is_empty t.elements) then begin
+  if not (Array.is_empty t.elements)
+  then (
     t.deleted.(t.pointer) <- true;
-    goto_next t;
-  end;
+    goto_next t)
 ;;
 
 let values t =
@@ -96,15 +96,15 @@ let mem t elt =
   Int.(=) t.check_code (Elt.check_code elt)
 
 let delete t elt =
-  if not (mem t elt)
-  then failwith "Review_ring.delete. Not a element of that ring";
+  (if not (mem t elt)
+   then failwith "Review_ring.delete. Not a element of that ring");
   let len = Array.length t.elements in
   let index = Elt.index elt in
-  if index >= 0 && index < len then begin
+  if index >= 0 && index < len
+  then (
     t.deleted.(index) <- true;
-    if t.pointer = index then
-      goto_next t
-  end
+    if t.pointer = index
+    then goto_next t)
 ;;
 
 let to_list t =
@@ -123,7 +123,7 @@ let goto t elt =
   then Or_error.error_string "Elt not a member of review ring"
   else if t.deleted.(elt.index)
   then Or_error.error_string "Elt was deleted"
-  else begin
+  else (
     t.pointer <- elt.index;
-    Ok ()
-  end
+    Ok ())
+;;

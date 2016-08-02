@@ -506,11 +506,10 @@ let needs_bookmark_update t =
   || is_pending t.tip_facts
   || is_pending t.cr_soons
   || is_pending t.diff_from_base_to_tip
-  || begin match t.hydra_master_state with
-    | None -> false
-    | Some hydra_master_state ->
-      not (Rev.has_prefix t.tip hydra_master_state.tip)
-  end
+  || (match t.hydra_master_state with
+      | None -> false
+      | Some hydra_master_state ->
+        not (Rev.has_prefix t.tip hydra_master_state.tip))
 ;;
 
 let would_ask_for_a_bookmark_update t =
@@ -537,27 +536,28 @@ let compute_next_bookmark_update t =
     | None | Some { status = `Done; _ } ->
       Option.is_some (would_ask_for_a_bookmark_update t : Bounded_hydra_retry.t option)
   in
-  if am_expecting_bookmark_update then begin
+  if am_expecting_bookmark_update
+  then (
     match t.next_bookmark_update with
     | Update_expected_since _ as x -> x
     | No_update_expected | No_update_expected_due_to_iron_bug _ ->
-      Update_expected_since (Time.now ());
-  end else if not (needs_bookmark_update t)
+      Update_expected_since (Time.now ()))
+  else if not (needs_bookmark_update t)
   then No_update_expected
-  else
+  else (
     match t.latest_bookmark_update with
     | Error error -> No_update_expected_due_to_iron_bug error
     | Ok () ->
       No_update_expected_due_to_iron_bug
-        (Error.of_string "Iron was unable to process this feature")
+        (Error.of_string "Iron was unable to process this feature"))
 ;;
 
 let refresh_next_bookmark_update t =
   let new_value = compute_next_bookmark_update t in
-  if Next_bookmark_update.compare t.next_bookmark_update new_value <> 0 then begin
+  if Next_bookmark_update.compare t.next_bookmark_update new_value <> 0
+  then (
     invalidate_dependents t;
-    t.next_bookmark_update <- new_value;
-  end;
+    t.next_bookmark_update <- new_value)
 ;;
 
 let invariant t =
@@ -823,7 +823,7 @@ let create_exn query
   then failwith "only root features can specify a remote repo path"
   else if is_none remote_repo_path && Feature_path.num_parts feature_path = 1
   then failwith "a root feature must specify a remote repo path"
-  else
+  else (
     let creation =
       Query.with_action query
         { Attributes.
@@ -846,7 +846,7 @@ let create_exn query
     set_diffs t pending pending;
     Serializer.set_contents serializer
       ~file:creation_file creation (module Persist.Creation);
-    t
+    t)
 ;;
 
 let review_goal t =
@@ -879,7 +879,7 @@ let record t query action =
     (* Make sure to invalidate the cache in the case where the event are not recorded.
        This is handled by the serializer directly in the other case. *)
     invalidate_dependents t
-  else begin
+  else (
     let query = Query.with_action query action in
     t.queries <- query :: t.queries;
     match t.serializer with
@@ -892,8 +892,7 @@ let record t query action =
       ()
     | Some serializer ->
       Serializer.append_to serializer ~file:queries_file query
-        (module Persist.Action_query);
-  end
+        (module Persist.Action_query))
 ;;
 
 let include_released_feature t released_feature =
@@ -908,10 +907,10 @@ let clear_included_features t =
 ;;
 
 let set_next_base_update_internal t (value : Next_base_update.t) =
-  begin match t.next_base_update_expected with
-  | None -> ()
-  | Some { update_expected = _; expiration } -> Timed_event.abort_if_possible expiration
-  end;
+  (match t.next_base_update_expected with
+   | None -> ()
+   | Some { update_expected = _; expiration } ->
+     Timed_event.abort_if_possible expiration);
   let next_base_update_expected =
     match value with
     | No_update_expected -> None
@@ -932,27 +931,26 @@ let expect_next_base_update_exn t ~for_ rev =
       [%sexp "invalid expected next base.  This is already the feature's base"
            , (rev : Rev.t)
       ]
-  else begin
+  else (
     set_next_base_update_internal t
       (Update_expected
          { rev
          ; by = for_
          ; expected_since = Time.now ()
          });
-    invalidate_dependents t;
-  end
+    invalidate_dependents t)
 ;;
 
 let fire_next_base_update_expiration_if_applicable t ~expiration_id =
   match t.next_base_update_expected with
   | None -> ()
   | Some { update_expected = _; expiration } ->
-    if Timed_event.has_id expiration expiration_id then begin
+    if Timed_event.has_id expiration expiration_id
+    then (
       t.next_base_update_expected <- None;
       t.bounded_hydra_retry <- Bounded_hydra_retry.empty;
       invalidate_dependents t;
-      refresh_next_bookmark_update t
-    end
+      refresh_next_bookmark_update t)
 ;;
 
 let set_base t query rev =
@@ -980,10 +978,10 @@ let set_feature_path t query feature_path =
 
 let set_has_bookmark t query has_bookmark =
   let should_set = not (Bool.equal t.has_bookmark has_bookmark) in
-  if should_set then begin
+  if should_set
+  then (
     record t query (`Set_has_bookmark has_bookmark);
-    t.has_bookmark <- has_bookmark;
-  end;
+    t.has_bookmark <- has_bookmark)
 ;;
 
 let set_seconder t query user =
@@ -1040,11 +1038,10 @@ let set_xcrs_shown_in_todo_only_for_users_reviewing t query bool =
 let set_owners t query owners =
   if List.is_empty owners
   then error_string "must have at least one owner"
-  else begin
+  else (
     record t query (`Set_owners owners);
     t.owners <- owners;
-    Ok ()
-  end
+    Ok ())
 ;;
 
 let set_whole_feature_followers t query users =
@@ -1175,19 +1172,19 @@ let apply_bookmark_update t bookmark_update =
      set [override_next_pending_status_if_needed] to prevent this.  If hydra were more
      reactive (i.e. sent a synchronize-state right after iron-hydra jobs finish), we could
      probably get rid of this. *)
-  begin match t.hydra_master_state with
-  | None -> ()
-  | Some { tip = last_known_hydra_tip
-         ; status = _
-         ; override_next_pending_status_if_needed = _
-         } ->
-    if Rev.has_prefix t.tip last_known_hydra_tip
-    then t.hydra_master_state <-
-        Some { status = `Done
-             ; tip = last_known_hydra_tip
-             ; override_next_pending_status_if_needed = true
-             }
-  end;
+  (match t.hydra_master_state with
+   | None -> ()
+   | Some { tip = last_known_hydra_tip
+          ; status = _
+          ; override_next_pending_status_if_needed = _
+          } ->
+     if Rev.has_prefix t.tip last_known_hydra_tip
+     then (
+       t.hydra_master_state <-
+         Some { status = `Done
+              ; tip = last_known_hydra_tip
+              ; override_next_pending_status_if_needed = true
+              }));
   refresh_next_bookmark_update t;
 ;;
 
@@ -1246,24 +1243,20 @@ let update_bookmark t query =
       let bookmark_update =
         { Bookmark_update.
           base_facts =
-            begin match Rev_facts.check base_facts base with
-            | Error e -> error e; None
-            | Ok (_ : bool) -> Some base_facts
-            end
+            (match Rev_facts.check base_facts base with
+             | Error e -> error e; None
+             | Ok (_ : bool) -> Some base_facts)
         ; tip
         ; tip_facts =
-            begin match Rev_facts.check tip_facts tip with
-            | Error e -> error e; None
-            | Ok (_ : bool) -> Some tip_facts
-            end
+            (match Rev_facts.check tip_facts tip with
+             | Error e -> error e; None
+             | Ok (_ : bool) -> Some tip_facts)
         ; base_is_ancestor_of_tip =
-            begin
-              match Rev_facts.Is_ancestor.check base_is_ancestor_of_tip
-                      ~ancestor:base ~descendant:tip
-              with
-              | Error e -> error e; None
-              | Ok (_ : bool) -> Some base_is_ancestor_of_tip
-            end
+            (match Rev_facts.Is_ancestor.check base_is_ancestor_of_tip
+                     ~ancestor:base ~descendant:tip
+             with
+             | Error e -> error e; None
+             | Ok (_ : bool) -> Some base_is_ancestor_of_tip)
         }
       in
       Ok bookmark_update, !errors
@@ -1310,11 +1303,12 @@ let remove_properties t query props =
   let unknown_props =
     Set.filter props ~f:(fun prop -> not (Hashtbl.mem t.properties prop))
   in
-  if Set.is_empty unknown_props then begin
+  if Set.is_empty unknown_props
+  then (
     record t query (`Remove_properties props);
     Set.iter props ~f:(fun prop -> Hashtbl.remove t.properties prop);
-    Ok ()
-  end else
+    Ok ())
+  else
     error "unknown properties" unknown_props [%sexp_of: Property.Set.t]
 ;;
 
@@ -1323,11 +1317,12 @@ let remove_inheritable_properties t query props =
   let unknown_props =
     Set.filter props ~f:(fun prop -> not (Map.mem properties prop))
   in
-  if Set.is_empty unknown_props then begin
+  if Set.is_empty unknown_props
+  then (
     record t query (`Remove_inheritable_properties props);
     Feature_inheritable_attributes.remove_properties t.inheritable_attributes props;
-    Ok ()
-  end else
+    Ok ())
+  else
     error "unknown properties" unknown_props [%sexp_of: Property.Set.t]
 ;;
 
@@ -1525,28 +1520,26 @@ let change t query (updates : Change_feature.Update.t list) =
       User_names.remove t.whole_feature_reviewers users set_whole_feature_reviewers
         ~desc:"not currently a whole-feature reviewer"
     | `Add_reviewing users ->
-      begin match t.reviewing with
-      | `All -> error_string "everyone is already reviewing"
-      | `Whole_feature_reviewers ->
-        User_names.add t.whole_feature_reviewers users set_reviewing
-          ~desc:"already reviewing"
-      | `All_but not_reviewing ->
-        User_names.remove not_reviewing users set_reviewing_all_but
-          ~desc:"already reviewing"
-      | `Only reviewing ->
-        User_names.add reviewing users set_reviewing ~desc:"already reviewing"
-      end
+      (match t.reviewing with
+       | `All -> error_string "everyone is already reviewing"
+       | `Whole_feature_reviewers ->
+         User_names.add t.whole_feature_reviewers users set_reviewing
+           ~desc:"already reviewing"
+       | `All_but not_reviewing ->
+         User_names.remove not_reviewing users set_reviewing_all_but
+           ~desc:"already reviewing"
+       | `Only reviewing ->
+         User_names.add reviewing users set_reviewing ~desc:"already reviewing")
     | `Remove_reviewing users ->
-      begin match t.reviewing with
-      | `All -> Ok (set_reviewing_all_but users)
-      | `Whole_feature_reviewers ->
-        User_names.remove t.whole_feature_reviewers users set_reviewing
-          ~desc:"not reviewing"
-      | `All_but not_reviewing ->
-        User_names.add not_reviewing users set_reviewing_all_but ~desc:"not reviewing"
-      | `Only reviewing ->
-        User_names.remove reviewing users set_reviewing ~desc:"not reviewing"
-      end
+      (match t.reviewing with
+       | `All -> Ok (set_reviewing_all_but users)
+       | `Whole_feature_reviewers ->
+         User_names.remove t.whole_feature_reviewers users set_reviewing
+           ~desc:"not reviewing"
+       | `All_but not_reviewing ->
+         User_names.add not_reviewing users set_reviewing_all_but ~desc:"not reviewing"
+       | `Only reviewing ->
+         User_names.remove reviewing users set_reviewing ~desc:"not reviewing")
     | `Add_send_email_to users ->
       Email_addresses.add (send_email_to t) users set_send_email_to
         ~desc:"already sending email to"

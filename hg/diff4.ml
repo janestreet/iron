@@ -355,7 +355,7 @@ let num_lines ({ diamond ; errors ; num_lines_in_diff } as t) reviewer =
      is not obliged at any of the four points on the diamond. *)
   else if is_forget t
   then 1 + num_lines_in_diff
-  else
+  else (
     match may_review t reviewer with
     | `Nothing_to_review_or_follow -> 0 (* no review *)
     | `Dropped_from_review | `Dropped_from_follow ->
@@ -424,7 +424,7 @@ let num_lines ({ diamond ; errors ; num_lines_in_diff } as t) reviewer =
         then 0
         else 1
       in
-      conservative_approach_waiting_for_proper_fix + raw_num_lines_in_diff
+      conservative_approach_waiting_for_proper_fix + raw_num_lines_in_diff)
 ;;
 
 let is_implicitly_reviewed t reviewer = num_lines t reviewer = 0

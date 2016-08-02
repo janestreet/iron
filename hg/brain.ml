@@ -142,12 +142,13 @@ let diff4s_needed_to_extend_brain (brain : t)
                spurious implicitly reviewed diff in the session, and maybe spurious
                sessions if a session would contain nothing else. *)
             (used := true; true)
-          else
+          else (
             match Diff4.create_rev_update ~from_:brain_diff2 ~to_:goal_diff2 with
             | Error _ -> false
-            | Ok diff4 -> used := true; need diff4; true
+            | Ok diff4 -> used := true; need diff4; true)
       in
-      if not already_in_brain then begin
+      if not already_in_brain
+      then (
         let extend_brain =
           match Hashtbl.find could_use.by_output goal_diff2 with
           | None -> None
@@ -165,11 +166,11 @@ let diff4s_needed_to_extend_brain (brain : t)
         in
         match extend_brain with
         | None               -> need (Diff4.create_from_scratch_to_diff2 goal_diff2)
-        | Some (diff4, used) -> need diff4; used := true
-      end);
+        | Some (diff4, used) -> need diff4; used := true));
     (* Remove every diff2 in the reviewer's brain that shouldn't be there. *)
     Hashtbl.iter brain ~f:(fun ({ diff2 = know; mark_kind = _}, used) ->
-      if not !used then
+      if not !used
+      then (
         let possibilities =
           match Hashtbl.find could_use.by_input know with
           | None -> None
@@ -193,7 +194,7 @@ let diff4s_needed_to_extend_brain (brain : t)
           | None       -> Diff4.create_forget know
           | Some diff4 -> diff4
         in
-        need diff4 ~output_num_lines:0);
+        need diff4 ~output_num_lines:0));
     !needed
   with exn ->
     raise_s
@@ -250,10 +251,10 @@ let extend (brain : t) ~(with_ : Diff4s.t)
             | Internal__fully_reviewed -> mark_kind
             | User ->
               if Diff4.is_implicitly_reviewed diff4 reviewer
-              then
+              then (
                 match previous_mark_kind with
                 | None -> Internal__fully_reviewed
-                | Some mark_kind -> mark_kind
+                | Some mark_kind -> mark_kind)
               else mark_kind
           in
           { Marked_diff2.

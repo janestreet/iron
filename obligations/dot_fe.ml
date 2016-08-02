@@ -279,16 +279,14 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
             Partial_attributes.merge prev partial_attributes ~file ~error_context:e));
       partial_attributes
     | Build_projections build_projection_names ->
-      begin
-        match
-          List.map build_projection_names ~f:(fun b -> b, ())
-          |> Build_projection_name.Table.of_alist_report_all_dups
-        with
-        | `Ok _ -> ()
-        | `Duplicate_keys bs ->
-          Error_context.error_s e
-            [%sexp "duplicate build projections", (bs : Build_projection_name.t list)]
-      end;
+      (match
+         List.map build_projection_names ~f:(fun b -> b, ())
+         |> Build_projection_name.Table.of_alist_report_all_dups
+       with
+       | `Ok _ -> ()
+       | `Duplicate_keys bs ->
+         Error_context.error_s e
+           [%sexp "duplicate build projections", (bs : Build_projection_name.t list)]);
       let undefined =
         List.filter build_projection_names ~f:(fun build_projection_name ->
           not (Map.mem build_projections build_projection_name))
@@ -337,30 +335,28 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
           [%sexp "undefined scrutiny", (scrutiny_name : Scrutiny_name.t)];
       { partial_attributes with scrutiny_name = Some scrutiny_name }
     | Tags tags ->
-      begin
-        match
-          List.map tags ~f:(fun t -> t, ())
-          |> Tag.Table.of_alist_report_all_dups
-        with
-        | `Ok _ -> ()
-        | `Duplicate_keys ts ->
-          Error_context.error_s e [%sexp "duplicate tags", (ts : Tag.t list)]
-      end;
-      if not used_in_subdirectory_declaration_is_allowed
-         && not (List.is_empty tags)
-         && not (Set.exists files_in_directory ~f:file_name_can_have_tags)
-      then
-        Error_context.error_s e
-          [%sexp "no file in directory supporting tags", (tags : Tag.t list)];
+      (match
+         List.map tags ~f:(fun t -> t, ())
+         |> Tag.Table.of_alist_report_all_dups
+       with
+       | `Ok _ -> ()
+       | `Duplicate_keys ts ->
+         Error_context.error_s e [%sexp "duplicate tags", (ts : Tag.t list)]);
+      (if not used_in_subdirectory_declaration_is_allowed
+       && not (List.is_empty tags)
+       && not (Set.exists files_in_directory ~f:file_name_can_have_tags)
+       then
+         Error_context.error_s e
+           [%sexp "no file in directory supporting tags", (tags : Tag.t list)]);
       let undefined = List.filter tags ~f:(fun tag -> not (Set.mem known_tags tag)) in
-      if not (List.is_empty undefined)
-      then
-        Error_context.error_s e
-          [%sexp
-            (sprintf "undefined %s"
-               (one_or_more "tag" (List.length undefined)) : string)
-          , (undefined : Tag.t list)
-          ];
+      (if not (List.is_empty undefined)
+       then
+         Error_context.error_s e
+           [%sexp
+             (sprintf "undefined %s"
+                (one_or_more "tag" (List.length undefined)) : string)
+           , (undefined : Tag.t list)
+           ]);
       { partial_attributes with
         tags = Some (Tag.Set.of_list tags)
       }
@@ -369,12 +365,12 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
     | More_than_max_reviewers more_than_max_reviewers ->
       { partial_attributes with more_than_max_reviewers = Some more_than_max_reviewers }
     | Used_in_subdirectory ->
-      if not used_in_subdirectory_declaration_is_allowed
-      then Error_context.errorf e "unnecessary Used_in_subdirectory declaration" ();
-      if depth > 0
-         && Obligations_version.is_at_least_version obligations_version ~version:V3
-      then Error_context.errorf e
-             "Used_in_subdirectory is not allowed inside a Local declaration" ();
+      (if not used_in_subdirectory_declaration_is_allowed
+       then Error_context.errorf e "unnecessary Used_in_subdirectory declaration" ());
+      (if depth > 0
+       && Obligations_version.is_at_least_version obligations_version ~version:V3
+       then Error_context.errorf e
+              "Used_in_subdirectory is not allowed inside a Local declaration" ());
       partial_attributes
   in
   Error_context.within ~file:dot_fe (fun e ->
@@ -451,11 +447,9 @@ let establish ({ Review_attributes.
       (Scrutiny scrutiny_name)
   @ if_changed Fields.owner User_name.equal
       (Owner (User_name.to_unresolved_name owner))
-  @ begin
-    if is_none given && not (Review_obligation.has_a_may_reviewer review_obligation)
-    then []
-    else [ Declaration.Reviewed_by (Reviewed_by.synthesize review_obligation) ]
-  end
+  @ (if is_none given && not (Review_obligation.has_a_may_reviewer review_obligation)
+     then []
+     else [ Declaration.Reviewed_by (Reviewed_by.synthesize review_obligation) ])
   @ [ let local = [] in
       let local : Declaration.syntax list =
         if fewer_than_min_reviewers

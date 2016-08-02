@@ -137,20 +137,20 @@ let command =
        in
        let descendants_of = ok_exn descendants_of in
        if name_only && not sort_most_recently_archived_first
-       then begin
+       then (
          let%map feature_paths =
            List_feature_names.rpc_to_server_exn { descendants_of; depth; use_archived }
          in
          feature_paths
          |> List.sort ~cmp:Feature_path.compare
          |> List.iter ~f:(fun feature_path ->
-           print_endline (Feature_path.to_string feature_path))
-       end else begin
+           print_endline (Feature_path.to_string feature_path)))
+       else (
          let%map features =
            List_features.rpc_to_server_exn { descendants_of; depth; use_archived }
          in
          if not (List.is_empty features)
-         then
+         then (
            let features =
              let cmp : List_features.Reaction.one -> List_features.Reaction.one -> int =
                if sort_most_recently_archived_first
@@ -172,14 +172,12 @@ let command =
            then
              List.iter features ~f:(fun f ->
                print_endline (Feature_path.to_string f.feature_path))
-           else
+           else (
              let preserve_input_ordering = sort_most_recently_archived_first in
              print_string
                (table { features
                       ; preserve_input_ordering
                       ; display_ascii
                       ; max_output_columns
-                      })
-       end
-    )
+                      })))))
 ;;

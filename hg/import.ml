@@ -8,13 +8,13 @@ let line_count string =
   let n = String.length string in
   if n = 0
   then 0
-  else
+  else (
     let r = ref 0 in
     for i = 0 to n - 1 do
       if has_newline_at i then incr r;
     done;
     if not (has_newline_at (n - 1)) then incr r;
-    !r
+    !r)
 ;;
 
 let ignore_worker_invariant_on_server _ = ()

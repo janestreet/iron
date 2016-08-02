@@ -86,9 +86,9 @@ module Stats = struct
         | Percentile index ->
           if length = 0
           then Float.nan
-          else
+          else (
             let index = Int.to_float (index * length) /. 100. in
-            array.(max 0 (min (Int.of_float index) (pred length)))
+            array.(max 0 (min (Int.of_float index) (pred length))))
       in
       stat, value)
   ;;
@@ -329,12 +329,12 @@ To display stats on those values, see [show].
              ])
          in
          let table = Ascii_table.create ~columns ~rows:data_points in
-         if not (Ascii_table.is_empty table) then begin
+         if not (Ascii_table.is_empty table)
+         then (
            print_endline (sprintf "%s: %s"
                             (Feature_path.to_string feature_path)
                             (Metric_name.to_string metric_name));
-           print_endline (Ascii_table.to_string table ~display_ascii ~max_output_columns)
-         end
+           print_endline (Ascii_table.to_string table ~display_ascii ~max_output_columns))
        in
        let include_metric_name =
          match only_metrics with
@@ -411,10 +411,10 @@ Metrics are shown for all features in the requested subtree(s), aggregated by -d
                ~f:(fun metric_regex -> Regex.matches metric_regex metric_name))
        in
        let print_table ~name table =
-         if not (Ascii_table.is_empty table) then begin
+         if not (Ascii_table.is_empty table)
+         then (
            print_endline name;
-           print_endline (Ascii_table.to_string table ~display_ascii ~max_output_columns)
-         end
+           print_endline (Ascii_table.to_string table ~display_ascii ~max_output_columns))
        in
        List.iter which_metrics ~f:(fun metric_name ->
          print_table ~name:(Metric_name.to_string metric_name)

@@ -37,7 +37,7 @@ let create_repo_if_it_does_not_exist name ~repo_root_abspath ~create_repo =
   let%map () =
     if is_directory
     then Deferred.unit (* already created. nothing to do. *)
-    else
+    else (
       let lockfile = Abspath.to_string repo_root_abspath ^ ".lock" in
       match%bind
         Deferred.Or_error.try_with ~extract_exn:true (fun () ->
@@ -67,7 +67,7 @@ let create_repo_if_it_does_not_exist name ~repo_root_abspath ~create_repo =
                one last time if the directory exists already. *)
             match%bind Sys.is_directory_exn (Abspath.to_string repo_root_abspath) with
             | true -> Deferred.unit (* already created. nothing to do. *)
-            | false -> create_repo ())
+            | false -> create_repo ()))
   in
   Repo_root.of_abspath repo_root_abspath
 ;;

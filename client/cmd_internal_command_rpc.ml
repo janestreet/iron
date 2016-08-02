@@ -13,20 +13,18 @@ let supported_by_iron_lib =
      in
      fun () ->
        let rpc_descriptions = force Iron_command_rpc.rpc_descriptions in
-       if names_only
-       then
-         begin
-           rpc_descriptions
-           |> List.map ~f:Rpc_description.name
-           |> String.Set.of_list
-           |> Set.iter ~f:print_endline
-         end
-       else
-         print_endline
-           (Ascii_table.to_string
-              (Rpc_description.to_ascii_table rpc_descriptions)
-              ~display_ascii
-              ~max_output_columns);
+       (if names_only
+        then (
+          rpc_descriptions
+          |> List.map ~f:Rpc_description.name
+          |> String.Set.of_list
+          |> Set.iter ~f:print_endline)
+        else
+          print_endline
+            (Ascii_table.to_string
+               (Rpc_description.to_ascii_table rpc_descriptions)
+               ~display_ascii
+               ~max_output_columns));
        return ()
     )
 ;;

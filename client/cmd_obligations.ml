@@ -319,9 +319,9 @@ let synthesize =
               directory will be deleted as part of the transition. *)
            if Relpath.is_prefix ~prefix:(Relpath.of_string ".projections") relpath
            then None
-           else
+           else (
              let dir, file = Relpath.split_dir_file_exn relpath in
-             Some (dir, (file, attribute)))
+             Some (dir, (file, attribute))))
          |> Relpath.Table.of_alist_multi
          |> Hashtbl.map ~f:(fun alist ->
            Dot_fe.synthesize (File_name.Map.of_alist_exn alist))

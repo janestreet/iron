@@ -621,17 +621,15 @@ let%test_unit _ =
 
 let with_temp_dir ?in_dir name ~f =
   let open Async.Std in
-  begin
+  let%bind in_dir =
     match in_dir with
     | Some in_dir ->
-      Unix.mkdir ~p:() (Abspath.to_string in_dir)
-      >>| fun () ->
+      let%map () = Unix.mkdir ~p:() (Abspath.to_string in_dir) in
       in_dir
     | None ->
       return (Abspath.of_string Filename.temp_dir_name)
-  end >>= fun in_dir ->
-  Unix.mkdtemp (Abspath.to_string (Abspath.extend in_dir name))
-  >>= fun dir ->
+  in
+  let%bind dir = Unix.mkdtemp (Abspath.to_string (Abspath.extend in_dir name)) in
   let dir = Abspath.of_string dir in
   let cleanup = Cleanup.create (fun () -> Abspath.rm_rf_exn dir) in
   Monitor.protect (fun () -> f dir)

@@ -133,12 +133,12 @@ let%test_module _ = (module struct
     let files = sort files in
     let tree = M.of_alist files in
     M.invariant tree;
-    if debug then begin
+    if debug
+    then (
       List.iter files ~f:(fun (p, v) ->
         Printf.printf !"%{Path_in_repo} %{Sexp}\n" p ([%sexp_of: t] v));
       Debug.eprints "files" files [%sexp_of: (Path_in_repo.t * t) list];
-      Debug.eprints "tree" tree [%sexp_of: M.t];
-    end;
+      Debug.eprints "tree" tree [%sexp_of: M.t]);
     [%test_result: (Path_in_repo.t * t) list]
       ~expect:files
       (tree |> M.to_alist |> sort)
@@ -154,7 +154,7 @@ let%test_module _ = (module struct
     let abc = [ "a"; "b"; "c" ] in
     let rec gen_t ~depth path =
       if depth = 0 then []
-      else
+      else (
         let files =
           List.rev_map files ~f:(fun (file, v) ->
             Path_in_repo.extend path (File_name.of_string file), v)
@@ -162,7 +162,7 @@ let%test_module _ = (module struct
         List.rev_append files
           (List.concat_map abc ~f:(fun str ->
              gen_t ~depth:(pred depth)
-               (Path_in_repo.extend path (File_name.of_string str))))
+               (Path_in_repo.extend path (File_name.of_string str)))))
     in
     test (gen_t ~depth:4 Path_in_repo.root)
   ;;

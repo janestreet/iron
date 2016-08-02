@@ -38,8 +38,8 @@ let edit =
          in
          let new_description = ok_exn new_description in
          if String.equal new_description initial_description
-         then begin print_endline "You didn't change the description."; Deferred.unit end
-         else begin
+         then (print_endline "You didn't change the description."; Deferred.unit)
+         else (
            let rules = Pdiff4.User_config.get () |> Pdiff4.User_config.diff_config in
            print_endline (Patdiff_lib.Patdiff_core.patdiff ~rules ()
                             ~from_:{ name = "old"; text = initial_description }
@@ -54,11 +54,9 @@ let edit =
            with
            | `No -> return ()
            | `Yes -> set_description_exn feature_path new_description
-           | `Edit -> loop new_description
-         end
+           | `Edit -> loop new_description)
        in
-       loop initial_description
-    )
+       loop initial_description)
 ;;
 
 let set =
@@ -102,11 +100,9 @@ let show =
        let n = String.length description in
        if n = 0
        then print_string "<no description>\n"
-       else begin
+       else (
          print_string description;
-         if not (Char.equal description.[ n - 1 ] '\n') then print_newline ();
-       end
-    )
+         if not (Char.equal description.[ n - 1 ] '\n') then print_newline ()))
 ;;
 
 let command =

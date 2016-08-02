@@ -172,11 +172,12 @@ module Spare_shares = struct
                      [%sexp_of: Abspath.t];
               `Finished (Ok (Repo_root.of_abspath dst_repo_root_abspath)))
     in
-    (if verbose
-     then match result with
-       | Ok _ -> ()
-       | Error error ->
-         Verbose.message "failed to claim share" error [%sexp_of: Error.t]);
+    if verbose
+    then (
+      match result with
+      | Ok _ -> ()
+      | Error error ->
+        Verbose.message "failed to claim share" error [%sexp_of: Error.t]);
     result
   ;;
 
@@ -232,7 +233,7 @@ module Spare_shares = struct
     Deferred.repeat_until_finished num_existing_spares (fun num_spares_available ->
       if num_spares_available >= desired_num_spares
       then return (`Finished ())
-      else begin
+      else (
         let share = Uuid.create () in
         let%bind repo_root =
           Hg.share t.repo_root
@@ -242,8 +243,7 @@ module Spare_shares = struct
         let repo_root = ok_exn repo_root in
         let%bind () = Hg.update repo_root (`Rev update_to) ~clean_after_update:No in
         let%map () = move share ~from:`Staging ~to_:`Spare in
-        `Repeat (num_spares_available + 1)
-      end);
+        `Repeat (num_spares_available + 1)))
   ;;
 end
 

@@ -52,7 +52,7 @@ be updated during that process, by adding the following in one's ferc file:
          Interactive.printf "Auto update of clean workspaces is not enabled, and \
                              the switch %s was supplied.\nExiting with code 0\n"
            Switch.do_nothing_if_not_enabled
-       else begin
+       else (
          Client_config.Workspaces.are_enabled_exn client_config;
          let%bind shares =
            let%map shares = Feature_share.list () in
@@ -85,7 +85,5 @@ be updated during that process, by adding the following in one's ferc file:
          in
          updates
          |> Or_error.combine_errors_unit
-         |> ok_exn
-       end
-    )
+         |> ok_exn))
 ;;

@@ -93,11 +93,10 @@ let deploy =
              List.find_map all_possibilities ~f:(fun file ->
                if Core.Std.Sys.file_exists_exn file then Some file else None)
            in
-           begin match file_found with
-           | None -> failwiths "cannot find an hgrc to roll" (`Tried all_possibilities)
-                       [%sexp_of: [ `Tried of string list ]]
-           | Some _ as o -> o
-           end
+           (match file_found with
+            | None -> failwiths "cannot find an hgrc to roll" (`Tried all_possibilities)
+                        [%sexp_of: [ `Tried of string list ]]
+            | Some _ as o -> o)
          | "none" -> None
          | file -> Some file
        in

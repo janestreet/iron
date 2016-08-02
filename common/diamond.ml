@@ -268,7 +268,7 @@ let pretty_short_description ~label { b1 ; b2 ; f1 ; f2 } =
       [ label "old base" , b1
       ; label "old tip"  , f1
       ]
-  else
+  else (
     match same_bs, same_fs with
     | true, true ->
       if String.equal b1 f1
@@ -299,7 +299,7 @@ let pretty_short_description ~label { b1 ; b2 ; f1 ; f2 } =
       ; label "old tip"   , f1
       ; label "new base"  , b2
       ; label "new tip"   , f2
-      ]
+      ])
 ;;
 
 let pretty_short_rev_names ~equal { b1 ; b2 ; f1 ; f2 } =

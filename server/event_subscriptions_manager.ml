@@ -78,10 +78,9 @@ end = struct
   let add t query key ~initial =
     let bag = Hashtbl.find_or_add t key ~default:Bag.create in
     let (reader, writer) = Pipe.create () in
-    begin match initial with
-    | None -> ()
-    | Some v -> Pipe.write_without_pushback writer (Ok v)
-    end;
+    (match initial with
+     | None -> ()
+     | Some v -> Pipe.write_without_pushback writer (Ok v));
     let subscription = { Subscription. subscriber = Query.by query; writer } in
     let elt = Bag.add bag subscription in
     upon (Pipe.closed writer) (fun () ->

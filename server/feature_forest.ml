@@ -101,13 +101,12 @@ let invariant invariant_a t =
       ~node_by_path:(check (fun node_by_path ->
         Hashtbl.iteri node_by_path ~f:(fun ~key:feature_path ~data:({ Node. children; _ } as node) ->
           Node.invariant invariant_a node;
-          begin match Feature_path.parent_and_basename feature_path with
-          | None, root ->
-            assert (Hashtbl.mem t.root_by_name root);
-          | Some parent_path, child ->
-            assert (Hashtbl.mem (Node.children (find_node_exn t parent_path)) child);
-            assert (mem t parent_path)
-          end;
+          (match Feature_path.parent_and_basename feature_path with
+           | None, root ->
+             assert (Hashtbl.mem t.root_by_name root);
+           | Some parent_path, child ->
+             assert (Hashtbl.mem (Node.children (find_node_exn t parent_path)) child);
+             assert (mem t parent_path));
           Hashtbl.iteri children ~f:(fun ~key:child ~data:node ->
             assert (phys_equal node
                       (find_node_exn t (Feature_path.extend feature_path child)))))))
@@ -151,13 +150,13 @@ let has_children_exn t feature_path = Node.has_children (find_node_exn t feature
 let check_add t feature_path =
   if mem t feature_path
   then error "feature already exists" feature_path [%sexp_of: Feature_path.t]
-  else
+  else (
     match Feature_path.parent feature_path with
     | Error _ -> Ok ()
     | Ok parent_path ->
       if mem t parent_path
       then Ok ()
-      else error "parent feature does not exist" parent_path [%sexp_of: Feature_path.t]
+      else error "parent feature does not exist" parent_path [%sexp_of: Feature_path.t])
 ;;
 
 let add_exn t feature_path value =
@@ -178,13 +177,12 @@ let add_exn t feature_path value =
 ;;
 
 let rec add_ancestors t feature_path ~f =
-  if not (mem t feature_path) then begin
-    begin match Feature_path.parent feature_path with
-    | Error _ -> ()
-    | Ok parent_path -> add_ancestors t parent_path ~f
-    end;
-    add_exn t feature_path (f ())
-  end;
+  if not (mem t feature_path)
+  then (
+    (match Feature_path.parent feature_path with
+     | Error _ -> ()
+     | Ok parent_path -> add_ancestors t parent_path ~f);
+    add_exn t feature_path (f ()))
 ;;
 
 let change_exn t feature_path f = Node.change (find_node_exn t feature_path) f
@@ -227,20 +225,20 @@ let complete t ~prefix of_what =
 let rec list_descendants node_by_name ~depth accum =
   if depth = 0
   then accum
-  else
+  else (
     let depth = depth - 1 in
     Hashtbl.fold node_by_name ~init:accum ~f:(fun ~key:_ ~data:node accum ->
       list_descendants node.Node.children ~depth
-        ((node.feature_path, node.value) :: accum))
+        ((node.feature_path, node.value) :: accum)))
 ;;
 
 let list t ~descendants_of ~depth =
   if depth < 0
   then error "negative depth is not allowed" depth [%sexp_of: int]
-  else
+  else (
     match (descendants_of : Which_ancestor.t) with
     | Any_root -> Ok (list_descendants t.root_by_name ~depth [])
     | Feature feature_path ->
       Or_error.map (find_node t feature_path) ~f:(fun node ->
-        list_descendants node.children ~depth [ (node.feature_path, node.value) ])
+        list_descendants node.children ~depth [ (node.feature_path, node.value) ]))
 ;;

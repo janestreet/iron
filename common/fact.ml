@@ -218,13 +218,13 @@ module Db = struct
     then Or_error.error "user not authorized for assertion"
            (spec_id, asserter)
            ([%sexp_of: Spec.Id.t * User_name.t])
-    else
+    else (
       let evidence_by_scope =
         Hashtbl.find_or_add t.evidence spec_id ~default:Scope.Table.create
       in
       let evidence = { Evidence.asserter; assertion_time; comment } in
       Hashtbl.set evidence_by_scope ~key:scope ~data:evidence;
-      Ok ()
+      Ok ())
   ;;
 
   let remove_fact t spec_id scope =

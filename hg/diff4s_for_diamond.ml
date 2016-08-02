@@ -282,10 +282,10 @@ let attributed_files_diamonds cache revs attributed_files_by_paths
     |> Map.map ~f:List.hd_exn
     |> Map.data
   in
-  if verbose then begin
-    Verbose.message "attributed_files_diamonds"
-      (`Result result :: debug) sexp_of_debug
-  end;
+  (if verbose
+   then
+     Verbose.message "attributed_files_diamonds"
+       (`Result result :: debug) sexp_of_debug);
   result
 ;;
 

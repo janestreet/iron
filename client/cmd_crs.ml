@@ -84,14 +84,14 @@ let command =
        let incompatible option =
          failwith (option ^ " is incompatible with -soon/someday")
        in
-       if soon || someday then begin
-         if Option.is_some feature_owner then incompatible "-owner";
-         if show_summary_only then incompatible "-summary";
-         if xcrs_only then incompatible "-xcrs-only";
-       end;
-       if not soon && include_active_cr_soons
-       then
-         failwithf "%s is only meaningful with -soon" Switch.include_active_cr_soons ();
+       (if soon || someday
+        then (
+          (if Option.is_some feature_owner then incompatible "-owner");
+          (if show_summary_only then incompatible "-summary");
+          (if xcrs_only then incompatible "-xcrs-only")));
+       (if not soon && include_active_cr_soons
+        then
+          failwithf "%s is only meaningful with -soon" Switch.include_active_cr_soons ());
        let%bind or_error = Prepare_for_crs.rpc_to_server { feature_path } in
        let owner_for_crs, alternate_names, aliases =
          match or_error with
@@ -111,15 +111,14 @@ let command =
             if the bookmark is current, then it used to be active at this revision, and
             it still means that we're grepping the right feature. *)
          let%bind bookmark_or_error = Hg.current_bookmark repo_root in
-         begin match bookmark_or_error with
-         | Error _ -> ()
-         | Ok bookmark ->
-           if not (String.equal (Feature_path.to_string feature_path) bookmark) then
-             failwithf "cannot grep for feature '%s' since current bookmark is '%s'"
-               (Feature_path.to_string feature_path)
-               bookmark
-               ();
-         end;
+         (match bookmark_or_error with
+          | Error _ -> ()
+          | Ok bookmark ->
+            if not (String.equal (Feature_path.to_string feature_path) bookmark) then
+              failwithf "cannot grep for feature '%s' since current bookmark is '%s'"
+                (Feature_path.to_string feature_path)
+                bookmark
+                ());
          let%map { due_now; due_soon; due_someday } = grep repo_root ~aliases in
          let grepped_crs =
            let due_soon = List.map due_soon ~f:Cr_soon.cr_comment in
@@ -129,13 +128,14 @@ let command =
            | false, true  -> due_someday
            | false, false -> due_now
          in
-         if show_summary_only then
+         if show_summary_only
+         then (
            let summary =
              Cr_comment.Summary.create grepped_crs ~feature_owner ~alternate_names
            in
            Option.iter (Cr_comment.Summary.to_ascii_table summary) ~f:(fun ascii_table ->
              print_string (Ascii_table.to_string ascii_table ~display_ascii
-                             ~max_output_columns))
+                             ~max_output_columns)))
          else
            print_cr_comments ~crs:grepped_crs ~for_or_all ~alternate_names ~feature_owner
              ~drop_content ~xcrs_only
@@ -159,7 +159,8 @@ let command =
            in
            print_cr_soons_in_feature ~cr_soons ~drop_content
          | false ->
-           if show_summary_only then begin
+           if show_summary_only
+           then (
              let%map summary =
                Get_cr_summary.rpc_to_server_exn { feature_path }
              in
@@ -167,14 +168,12 @@ let command =
              Option.iter (Cr_comment.Summary.to_ascii_table summary)
                ~f:(fun ascii_table ->
                  print_string (Ascii_table.to_string ascii_table ~display_ascii
-                                 ~max_output_columns))
-           end else begin
+                                 ~max_output_columns)))
+           else (
              let%map crs =
                Get_crs.rpc_to_server_exn { feature_path; for_or_all }
              in
              let crs = ok_exn crs in
              print_cr_comments ~crs ~for_or_all ~alternate_names ~feature_owner
-               ~drop_content ~xcrs_only;
-           end
-    )
+               ~drop_content ~xcrs_only))
 ;;

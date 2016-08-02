@@ -390,7 +390,7 @@ let show =
                [%sexp_of: Feature_path.t * User_name.t]
            in
            if for_all
-           then begin print_endline (Error.to_string_hum error); return () end
+           then (print_endline (Error.to_string_hum error); return ())
            else Error.raise error
          | `Review_session
              { Get_review_session.Review_session.
@@ -434,42 +434,41 @@ let show =
              | Reviewer ->
                reviewer_in_session |> [%sexp_of: Reviewer.t]
            in
-           begin match attributes with
-           | [] ->
-             let diff4s_to_review = Array.to_list diff4s_to_review in
-             let%map diff4s_to_review =
-               if not sort_build_order
-               then return diff4s_to_review
-               else
-                 Build_order.sort
-                   (ok_exn Repo_root.program_started_in)
-                   diff4s_to_review
-                   Diff4_to_review.path_in_repo_at_f2
-             in
-             Cmd_review.print_introduction_summary_for_review
-               ~feature_path
-               ~review_session_tip
-               ~reviewer_in_session
-               ~warn_reviewer:
-                 (Some
-                    { reviewer_in_feature
-                    ; line_count_to_finish_session
-                    ; line_count_to_goal
-                    })
-               ~diff4s_to_review
-               ~display_ascii
-               ~max_output_columns;
-           | [ attribute ] when not as_sexp ->
-             print_endline (get_attribute attribute |> Sexp.to_string_hum);
-             return ();
-           | attributes ->
-             List.map attributes
-               ~f:(fun attribute -> attribute, get_attribute attribute)
-             |> [%sexp_of: (Attribute.t * Sexp.t) list]
-             |> Sexp.to_string_hum
-             |> print_endline;
-             return ();
-           end;
+           (match attributes with
+            | [] ->
+              let diff4s_to_review = Array.to_list diff4s_to_review in
+              let%map diff4s_to_review =
+                if not sort_build_order
+                then return diff4s_to_review
+                else
+                  Build_order.sort
+                    (ok_exn Repo_root.program_started_in)
+                    diff4s_to_review
+                    Diff4_to_review.path_in_repo_at_f2
+              in
+              Cmd_review.print_introduction_summary_for_review
+                ~feature_path
+                ~review_session_tip
+                ~reviewer_in_session
+                ~warn_reviewer:
+                  (Some
+                     { reviewer_in_feature
+                     ; line_count_to_finish_session
+                     ; line_count_to_goal
+                     })
+                ~diff4s_to_review
+                ~display_ascii
+                ~max_output_columns;
+            | [ attribute ] when not as_sexp ->
+              print_endline (get_attribute attribute |> Sexp.to_string_hum);
+              return ();
+            | attributes ->
+              List.map attributes
+                ~f:(fun attribute -> attribute, get_attribute attribute)
+              |> [%sexp_of: (Attribute.t * Sexp.t) list]
+              |> Sexp.to_string_hum
+              |> print_endline;
+              return ())
        in
        match for_ with
        | `User user -> show_session ~for_:user

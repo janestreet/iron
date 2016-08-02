@@ -127,7 +127,7 @@ let show_supported_iron_rpcs_command =
          rpcs command_rpc_names Iron_command_rpc.rpc_descriptions
        in
        if as_sexp
-       then begin
+       then (
          let module M = struct
            type t =
              { rpcs_to_server : Rpc_description.t list
@@ -137,13 +137,12 @@ let show_supported_iron_rpcs_command =
          { M.rpcs_to_server; command_rpcs }
          |> [%sexp_of: M.t]
          |> Sexp.to_string
-         |> print_endline
-       end else begin
+         |> print_endline)
+       else (
          print_endline "RPCs to server:";
          print_as_table rpcs_to_server;
          print_endline "Command RPCs:";
-         print_as_table command_rpcs;
-       end;
+         print_as_table command_rpcs);
        return ()
     )
 ;;

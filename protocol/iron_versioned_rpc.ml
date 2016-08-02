@@ -118,11 +118,10 @@ let rpcs_ref = ref []
 let rpcs = lazy !rpcs_ref
 
 let rpc_descriptions =
-  lazy begin
+  lazy (
     List.concat_map (force rpcs) ~f:(fun { Iron_rpc. name; versions; _ } ->
       List.map (Set.to_list (versions ())) ~f:(fun version ->
-        { Rpc.Description. name; version }))
-  end
+        { Rpc.Description. name; version })))
 ;;
 
 let command =
@@ -374,7 +373,7 @@ module Make_pipe_rpc
                of_server_reaction action reaction))
         in
         let reader, writer = Pipe.create () in
-        don't_wait_for begin
+        don't_wait_for (
           let%bind () =
             Pipe.transfer pipe writer ~f:(fun elt ->
               let result = Or_error.bind (Or_error.join elt) map_reaction in
@@ -387,8 +386,7 @@ module Make_pipe_rpc
            | Error error ->
              Pipe.write_without_pushback_if_open writer (Error error)
           );
-          Pipe.close writer;
-        end;
+          Pipe.close writer);
         reader)
   ;;
 

@@ -46,13 +46,12 @@ let command =
        let open! Deferred.Let_syntax in
        let feature_path_option = ok_exn feature_path_option in
        if satellites_only
-       then begin
-         if Option.is_some feature_path_option
-         then failwithf "when [%s] is provided you can't pass a feature argument"
-                satellites_only_switch ();
-         main Satellites_only
-       end
-       else begin
+       then (
+         (if Option.is_some feature_path_option
+          then failwithf "when [%s] is provided you can't pass a feature argument"
+                 satellites_only_switch ());
+         main Satellites_only)
+       else (
          let%bind feature_path =
            match feature_path_option with
            | Some feature_path -> return feature_path
@@ -60,7 +59,5 @@ let command =
              let%map feature_path = Command.Param.current_bookmark () in
              ok_exn feature_path
          in
-         main (Feature feature_path)
-       end
-    )
+         main (Feature feature_path)))
 ;;

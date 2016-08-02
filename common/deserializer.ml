@@ -107,18 +107,18 @@ module T = struct
           let%bind f2_exists = file_exists f2 in
           if f2_exists
           then one p2 f2 None
-          else
+          else (
             let%map a = one p1 f1 None in
-            upgrade a
+            upgrade a)
         | Sequence_of (persistent, in_file) ->
           let%bind file_exists = file_exists in_file in
           if not file_exists
           then Deferred.return []
-          else
+          else (
             let module M = (val persistent) in
             Throttle.enqueue throttle (fun () ->
               Reader.load_sexps_exn (Abspath.to_string (extend in_file))
-                [%of_sexp: M.Persist.t])
+                [%of_sexp: M.Persist.t]))
         | Bind (t, f) ->
           let%bind a = load t ~root_directory ~serializer in
           load (f a) ~root_directory ~serializer

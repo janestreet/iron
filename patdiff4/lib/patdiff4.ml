@@ -1,5 +1,5 @@
-open Core.Std
-open Import
+open! Core.Std
+open! Import
 
 module View_ids_computed = struct
   type t =
@@ -104,15 +104,13 @@ let diff
     ~include_hunk_breaks:true
     ~rev_names ~file_names ~header_file_name
     ~context ~scrutiny:None ~contents ()
-  |>
-  begin
-    if false
-    then Hunk.list_to_lines
-    else (fun hunks ->
-      hunks
-      |> List.map ~f:Hunk.to_lines
-      |> List.concat_map ~f:(List.concat_map ~f:(fun (hunk : Hunk.Lines.t) -> hunk.lines)))
-  end
+  |> (if false
+      then Hunk.list_to_lines
+      else (fun hunks ->
+        hunks
+        |> List.map ~f:Hunk.to_lines
+        |> List.concat_map
+             ~f:(List.concat_map ~f:(fun (hunk : Hunk.Lines.t) -> hunk.lines))))
 ;;
 
 let hunks

@@ -207,12 +207,12 @@ let hg_user_value =
   lazy_deferred (fun () ->
     if is_some (Sys.getenv hg_user_env_var)
     then return `Already_set
-    else
+    else (
       let user = User_name.(to_string unix_login) in
       let email = sprintf "%s@janestreet.com" user in
       match%map Unix.Passwd.getbyname user with
       | None -> `Inferred email
-      | Some { gecos; _ } -> `Inferred (sprintf "%s <%s>" gecos email))
+      | Some { gecos; _ } -> `Inferred (sprintf "%s <%s>" gecos email)))
 ;;
 
 let env () =
@@ -273,13 +273,11 @@ let hg_with_optional_repo_root :
       (Process.run ~accept_nonzero_exit ?working_dir ~prog:hg_executable
          ~args ~env () : a Or_error.t Deferred.t)
     | Capture_output ->
-      begin
-        match%bind Process.create ?working_dir ~prog:hg_executable ~args ~env () with
-        | Error _ as e -> return e
-        | Ok process ->
-          let%map output = Process.collect_output_and_wait process in
-          Ok output
-      end
+      (match%bind Process.create ?working_dir ~prog:hg_executable ~args ~env () with
+       | Error _ as e -> return e
+       | Ok process ->
+         let%map output = Process.collect_output_and_wait process in
+         Ok output)
     | Create_process ->
       Process.create ?working_dir ~prog:hg_executable ~args ~env ()
     | Share_io ->
@@ -802,12 +800,12 @@ let greatest_common_ancestor repo_root revsets =
 let is_ancestor repo_root ~ancestor ~descendant =
   if Rev.equal_node_hash ancestor descendant
   then return true
-  else
+  else (
     let%map first_greatest_common_ancestor =
       create_rev_exn repo_root
         (Revset.first_greatest_common_ancestor [ ancestor; descendant ])
     in
-    Rev.equal_node_hash first_greatest_common_ancestor ancestor;
+    Rev.equal_node_hash first_greatest_common_ancestor ancestor);
 ;;
 
 let list_bookmarks repo_root =
@@ -946,13 +944,12 @@ let approximate_should_pull_revset repo_root (revset : Revset.t) =
     (* If the revision looks like a rev 40 or rev 12, let's avoid pulling needlessly. In
        theory, it could be a bookmark that happens to be only written with hexadecimal
        characters, but how likely is that? *)
-    begin match Node_hash.First_12.of_string string with
-    | _ -> doesnt_exist_locally ()
-    | exception _ ->
-      match Rev.of_string_40 string with
-      | _ -> doesnt_exist_locally ()
-      | exception _ -> always_pull
-    end
+    (match Node_hash.First_12.of_string string with
+     | _ -> doesnt_exist_locally ()
+     | exception _ ->
+       match Rev.of_string_40 string with
+       | _ -> doesnt_exist_locally ()
+       | exception _ -> always_pull)
   | _ -> always_pull
 ;;
 
@@ -964,7 +961,7 @@ let approximate_should_pull_revset repo_root (revset : Revset.t) =
 let pull ?(even_if_unclean = false) ?repo_is_clean repo_root ~from what_to_pull =
   if target_repo_is_root_repo repo_root from
   then return () (* Don't need to pull and pulling would lock up. *)
-  else
+  else (
     let%bind should_pull =
       match what_to_pull with
       | `Feature _     -> return true
@@ -977,14 +974,14 @@ let pull ?(even_if_unclean = false) ?repo_is_clean repo_root ~from what_to_pull 
     in
     if not should_pull
     then return ()
-    else
+    else (
       (* We delay the clean check until we know we're really going to pull. *)
       let%bind () =
         if even_if_unclean
         then return ()
-        else
+        else (
           let%map Repo_is_clean = status_cleanliness_exn ?repo_is_clean repo_root in
-          ()
+          ())
       in
       let pull revs to_string to_string_hum =
         Interactive.Job.run "Pulling %s%s"
@@ -1019,7 +1016,7 @@ let pull ?(even_if_unclean = false) ?repo_is_clean repo_root ~from what_to_pull 
         | `Revset revset          -> pull_revset    [ revset ]
         | `All_revs               -> pull_revs      []
       in
-      ok_exn pull_result
+      ok_exn pull_result))
 ;;
 
 let parent repo_root =
@@ -1149,7 +1146,7 @@ let clone remote_repo_path ~dst_repo_root_abspath__delete_if_exists =
 let push repo_root bookmarks ~to_ ~overwrite_bookmark =
   if target_repo_is_root_repo repo_root to_ || List.is_empty bookmarks
   then return (Ok ()) (* Don't need to push and pushing would lock up. *)
-  else begin
+  else (
     let msg =
       match bookmarks with
       | [ bookmark ] ->
@@ -1179,7 +1176,7 @@ let push repo_root bookmarks ~to_ ~overwrite_bookmark =
     let check_bookmarks_were_pushed () =
       if overwrite_bookmark
       then return (Ok ())
-      else
+      else (
         (* In practice, we only push one bookmark when not using -B.  For the jane repo,
            this check takes about 1s.  We think that's acceptable since the main use of
            push is in [rebase] and [release], where the performance is relatively less
@@ -1214,7 +1211,7 @@ let push repo_root bookmarks ~to_ ~overwrite_bookmark =
                   }
                 ]))
         in
-        Or_error.combine_errors_unit results
+        Or_error.combine_errors_unit results)
     in
     match output.exit_status with
     | Ok () -> check_bookmarks_were_pushed ()
@@ -1224,8 +1221,7 @@ let push repo_root bookmarks ~to_ ~overwrite_bookmark =
          && not (Regex.matches updating_bookmark_failed output.stderr)
       then check_bookmarks_were_pushed ()
       else error ()
-    | Error _ -> error ()
-  end
+    | Error _ -> error ())
 ;;
 
 let delete_bookmarks repo_root bookmarks maybe_push =
@@ -1235,12 +1231,12 @@ let delete_bookmarks repo_root bookmarks maybe_push =
   let%bind () =
     if List.is_empty to_delete
     then return ()
-    else
+    else (
       let%map result =
         hg ~repo_root "bookmark" ~how:Share_io
           ~args:("--delete" :: List.map to_delete ~f:Bookmark.to_string)
       in
-      ok_exn result
+      ok_exn result)
   in
   match maybe_push with
   | `Do_not_push -> return ()
@@ -1514,7 +1510,7 @@ let rebase ?merge_tool ?repo_is_clean
                 not a tty, it simply reads (and fails if there is no input). *)
              ; "--config"; "ui.interactive=true"
              ]
-             @ begin match merge_tool with
+             @ (match merge_tool with
                | None ->
                  [ "--config"
                  ; sprintf "ui.merge=/usr/bin/merge -A -L %s -L %s -L %s"
@@ -1532,8 +1528,7 @@ let rebase ?merge_tool ?repo_is_clean
                    [ "--config"; sprintf "merge-tools.user-merge.%s=%s" name value ]
                  in
                  config "executable" (Abspath.to_string executable)
-                 @ config "args" args
-             end)
+                 @ config "args" args))
   with
   | Error e ->
     (* In theory, repo_is_clean doesn't necessarily hold anymore after a failed merge: we
@@ -1542,39 +1537,37 @@ let rebase ?merge_tool ?repo_is_clean
     abort_rebase ~clean_after_update:(Yes repo_is_clean)
       "Merge failed" (error "aborted rebase because merge failed" e [%sexp_of: Error.t])
   | Ok () ->
-    begin
-      if not abort_on_merge_conflicts
-      then return (Ok ())
-      else
-        match%bind
-          Monitor.try_with_or_error ~extract_exn:true
-            (fun () -> is_conflict_free_exn repo_root)
-        with
-        | Ok true  -> return (Ok ())
-        | Ok false ->
-          abort_rebase ~clean_after_update:(Yes repo_is_clean)
-            (sprintf "Merge has conflicts and %s is provided"
-               Switch.abort_on_merge_conflicts)
-            (Or_error.error_string "aborted rebase because of merge conflicts")
-        | Error err ->
-          abort_rebase ~clean_after_update:(Yes repo_is_clean)
-            (sprintf "Failed while grepping for conflicts and %s is provided"
-               Switch.abort_on_merge_conflicts)
-            (error "aborted rebase, error while grepping for conflicts"
-               err [%sexp_of: Error.t])
-    end >>=? fun () ->
-    begin
-      match post_merge_validation_hook with
-      | None -> return (Ok ())
-      | Some f ->
-        match%bind Monitor.try_with_join_or_error ~extract_exn:true f with
-        | Ok () -> return (Ok ())
-        | Error err ->
-          abort_rebase ~clean_after_update:(Yes repo_is_clean)
-            "Post merge validation failed"
-            (error "aborted rebase because of post merge validation error"
-               err [%sexp_of: Error.t])
-    end >>=? fun () ->
+    (if not abort_on_merge_conflicts
+     then return (Ok ())
+     else (
+       match%bind
+         Monitor.try_with_or_error ~extract_exn:true
+           (fun () -> is_conflict_free_exn repo_root)
+       with
+       | Ok true  -> return (Ok ())
+       | Ok false ->
+         abort_rebase ~clean_after_update:(Yes repo_is_clean)
+           (sprintf "Merge has conflicts and %s is provided"
+              Switch.abort_on_merge_conflicts)
+           (Or_error.error_string "aborted rebase because of merge conflicts")
+       | Error err ->
+         abort_rebase ~clean_after_update:(Yes repo_is_clean)
+           (sprintf "Failed while grepping for conflicts and %s is provided"
+              Switch.abort_on_merge_conflicts)
+           (error "aborted rebase, error while grepping for conflicts"
+              err [%sexp_of: Error.t]))
+    ) >>=? fun () ->
+    (match post_merge_validation_hook with
+     | None -> return (Ok ())
+     | Some f ->
+       match%bind Monitor.try_with_join_or_error ~extract_exn:true f with
+       | Ok () -> return (Ok ())
+       | Error err ->
+         abort_rebase ~clean_after_update:(Yes repo_is_clean)
+           "Post merge validation failed"
+           (error "aborted rebase because of post merge validation error"
+              err [%sexp_of: Error.t])
+    ) >>=? fun () ->
     let%bind resolve_result =
       hg ~repo_root "resolve" ~how:Share_io ~args:["-m"; "-q"]
     in
@@ -1603,24 +1596,22 @@ let rename ?repo_is_clean repo_root remote_repo_path (renames : Rename.t list) =
       ?repo_is_clean
   in
   let%bind bookmarks = list_bookmarks repo_root in
-  begin
-    let conflicting_bookmarks =
-      List.filter_map bookmarks ~f:(fun bookmark ->
-        try Some (Feature_path.of_string (fst (String.lsplit2_exn bookmark ~on:'@')))
-        with _ -> None)
-      |> Feature_path.Set.of_list
-    in
-    let relevant_conflicting_bookmarks =
-      List.filter bookmarks_to_pull_and_delete ~f:(Set.mem conflicting_bookmarks)
-    in
-    if not (List.is_empty relevant_conflicting_bookmarks)
-    then
-      raise_s
-        [%sexp
-          "cannot rename with conflicting bookmarks"
-        , (relevant_conflicting_bookmarks : Feature_path.t list)
-        ]
-  end;
+  (let conflicting_bookmarks =
+     List.filter_map bookmarks ~f:(fun bookmark ->
+       try Some (Feature_path.of_string (fst (String.lsplit2_exn bookmark ~on:'@')))
+       with _ -> None)
+     |> Feature_path.Set.of_list
+   in
+   let relevant_conflicting_bookmarks =
+     List.filter bookmarks_to_pull_and_delete ~f:(Set.mem conflicting_bookmarks)
+   in
+   if not (List.is_empty relevant_conflicting_bookmarks)
+   then
+     raise_s
+       [%sexp
+         "cannot rename with conflicting bookmarks"
+       , (relevant_conflicting_bookmarks : Feature_path.t list)
+       ]);
   (* This pull/change/push sequence is racy (the bookmarks could move while we're
      doing the renaming), but hg doesn't provide any way of avoiding the race.  We
      can't even go faster than calling [set_bookmark] sequentially n times.
@@ -1736,7 +1727,7 @@ let status repo_root (changed : Status.Changed.t) =
   in
   if not might_have_changes
   then return []
-  else
+  else (
     let args =
       match changed with
       | Changed_by rev -> [ "--change"; Rev.to_string_40 rev ]
@@ -1750,7 +1741,7 @@ let status repo_root (changed : Status.Changed.t) =
       hg ~repo_root "status" ~how:Capture_stdout
         ~args:("-marC" :: args)
     in
-    Status.parse (String.split_lines (ok_exn lines))
+    Status.parse (String.split_lines (ok_exn lines)))
 ;;
 
 let tags repo_root rev =
@@ -1857,11 +1848,10 @@ let cat repo_root rev files ~dir =
        [1]
        hg cat seems to fail with code 1 if a file isn't found, and if not, then the caller
        would blow up trying to read the filename we stick in the map, so we are fine. *)
-    begin match output with
-    | { exit_status = Ok (); stdout = ""; stderr = _ } -> ()
-    | _ -> failwiths "hg cat failed" (hg_executable, "cat" :: args, output)
-             [%sexp_of: string * string list * Process.Output.t]
-    end;
+    (match output with
+     | { exit_status = Ok (); stdout = ""; stderr = _ } -> ()
+     | _ -> failwiths "hg cat failed" (hg_executable, "cat" :: args, output)
+              [%sexp_of: string * string list * Process.Output.t]);
     return
       (Path_in_repo.Map.of_alist_exn
          (List.map files ~f:(fun file ->
@@ -1904,13 +1894,13 @@ module Scaffold = struct
     in
     if not scaffold_requires_global_tag_or_rev_hash
     then Ok revision
-    else
+    else (
       match Rev.of_string_40 revision with
       | _rev -> Ok revision
       | exception exn ->
         Or_error.error "\
 scaffold file must use either a global tag or a 40-char revision hash"
-          exn [%sexp_of: Exn.t]
+          exn [%sexp_of: Exn.t])
   ;;
 end
 

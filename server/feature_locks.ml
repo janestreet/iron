@@ -151,22 +151,22 @@ let unlock t ~for_ ~lock_name ~even_if_permanent =
       let locks =
         List.filter locks ~f:(fun locked ->
           let locked_by_this_user = Locked.is_locked_by locked for_ in
-          if locked_by_this_user then begin
-            this_user_had_lock := true;
-            if Locked.is_permanent locked
-            && not even_if_permanent
-            then
-              Or_error.error
-                (sprintf "This lock is permanent -- consider using %s"
-                   Switch.even_if_permanent)
-                locked [%sexp_of: Locked.t]
-              |> return.return
-          end;
+          (if locked_by_this_user
+           then (
+             this_user_had_lock := true;
+             if Locked.is_permanent locked
+             && not even_if_permanent
+             then
+               Or_error.error
+                 (sprintf "This lock is permanent -- consider using %s"
+                    Switch.even_if_permanent)
+                 locked [%sexp_of: Locked.t]
+               |> return.return));
           not locked_by_this_user)
       in
       if !this_user_had_lock
       then (set_locks t lock_name locks; Ok ())
-      else
+      else (
         let message =
           sprintf !"not locked for %s by %{User_name}"
             (Lock_name.to_string_hum lock_name)
@@ -178,5 +178,5 @@ let unlock t ~for_ ~lock_name ~even_if_permanent =
             { locks : Locked.t list
             }
           ]
-    )
+      ))
 ;;

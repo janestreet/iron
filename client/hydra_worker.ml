@@ -34,7 +34,8 @@ end = struct
   let () = add "toplevel"
 
   let print ()  =
-    if !profile then begin
+    if !profile
+    then (
       match Queue.to_list !all with
       | [] -> ()
       | { start; _ } :: next ->
@@ -58,8 +59,7 @@ end = struct
             print ("  " ^ prefix) start end_ children;
             prev := end_)
         in
-        print "" start (Time.now ()) next
-    end
+        print "" start (Time.now ()) next)
   ;;
 
 end
@@ -371,7 +371,7 @@ let all_obligations
       | rev :: revs ->
         if Map.mem obligations_by_rev rev
         then loop obligations_by_rev revs
-        else
+        else (
           let%bind { Worker_obligations. obligations; _ } =
             compute_obligations repo_root ~repo_is_clean rev
               ~fake_attribute ~aliases ~worker_cache_session
@@ -383,7 +383,7 @@ let all_obligations
             let obligations_by_rev =
               Map.add obligations_by_rev ~key:rev ~data:obligations
             in
-            loop obligations_by_rev revs
+            loop obligations_by_rev revs)
     in
     loop obligations_by_rev all_revs
 ;;
@@ -416,7 +416,7 @@ let run_without_server
   let%bind () =
     if not testing_incremental_rev_facts
     then return ()
-    else begin
+    else (
       assert (can_compute_incrementally fake_attribute);
       printf "Check equality of tip facts computed from scratch and incrementally...\n";
       let%bind (_ : Worker_rev_facts.t * Obligations.t Or_error.t) =
@@ -444,8 +444,7 @@ let run_without_server
       [%test_result: Worker_rev_facts.t]
         ~message:"inconsistent tip worker_rev_facts results"
         ~expect:tip_facts_from_scratch tip_facts_incremental;
-      return ()
-    end
+      return ())
   in
   let%bind ( { Worker_rev_facts.
                rev_facts   = tip_facts
@@ -715,10 +714,9 @@ let serverless_command =
        let%bind tip = Hg.create_rev repo_root Revset.dot in
        let tip = ok_exn tip in
        let%bind base =
-         begin match base_opt with
+         match base_opt with
          | None -> infer_base_of_bookmark Remote_repo_path.jane_submissions repo_root tip
          | Some base -> Raw_rev.resolve_exn base ~in_:(Ok repo_root)
-         end
        in
        printf !"Assuming base = %s, tip = %s, bookmark = %s\n"
          (Rev.to_string_40 base)

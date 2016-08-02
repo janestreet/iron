@@ -8,14 +8,14 @@ module Feature_info = Todo.Feature_info
 let preceding_text = ref false
 
 let print_table title ~columns ~rows ~display_ascii ~max_output_columns =
-  if not (List.is_empty rows) then begin
+  if not (List.is_empty rows)
+  then (
     if !preceding_text then printf "\n";
     preceding_text := true;
     printf "%s:\n%s" title
       (Ascii_table.to_string (Ascii_table.create ~columns ~rows)
          ~display_ascii
-         ~max_output_columns)
-  end;
+         ~max_output_columns))
 ;;
 
 let assigned_table_name = "CRs and review line counts"
@@ -31,7 +31,8 @@ let feature_display_attributes ~next_steps ~review_is_enabled ~feature_path_exis
 ;;
 
 let show_assigned assigned ~display_ascii ~max_output_columns =
-  if not (List.is_empty assigned) then begin
+  if not (List.is_empty assigned)
+  then (
     let rows =
       Feature_table.create assigned
         Assigned.feature_path
@@ -90,8 +91,7 @@ let show_assigned assigned ~display_ascii ~max_output_columns =
             (if_assigned (fun { may_second; _ } -> if may_second then "second" else ""))
         ])
     in
-    print_table assigned_table_name ~columns ~rows ~display_ascii ~max_output_columns;
-  end
+    print_table assigned_table_name ~columns ~rows ~display_ascii ~max_output_columns)
 ;;
 
 let show_unclean_workspaces
@@ -128,7 +128,8 @@ let show_feature_info feature_info ~table_name ~display_ascii ~max_output_column
                    ~feature_path_exists:true
              in
              (attrs, feature)))
-      ] @ begin
+      ]
+      @ (
         let empty = ([], "") in
         let cell field =
           cell (fun (_, a) -> Option.value_map a ~default:(Ok 0) ~f:field)
@@ -168,16 +169,15 @@ let show_feature_info feature_info ~table_name ~display_ascii ~max_output_column
         ; int_or_error ~header:"CRs"   (cell Feature_info.num_crs)
         ; int_or_error ~header:"XCRs"  (cell Feature_info.num_xcrs)
         ; int_or_error ~header:"#left" (cell Feature_info.num_reviewers_with_review_remaining)
-        ]
-      end @ [
-        string ~header:"next step"
-          (attr_cell (fun (_, feature_info_option) ->
-             match feature_info_option with
-             | None -> ([], "")
-             | Some (feature_info : Feature_info.t) ->
-               Next_step.to_attrs_and_string feature_info.next_steps
-                 ~review_is_enabled:feature_info.review_is_enabled))
-      ])
+        ])
+      @ [ string ~header:"next step"
+            (attr_cell (fun (_, feature_info_option) ->
+               match feature_info_option with
+               | None -> ([], "")
+               | Some (feature_info : Feature_info.t) ->
+                 Next_step.to_attrs_and_string feature_info.next_steps
+                   ~review_is_enabled:feature_info.review_is_enabled))
+        ])
   in
   print_table table_name ~columns ~rows ~display_ascii ~max_output_columns
 ;;
@@ -307,14 +307,12 @@ let command =
      fun () ->
        let open! Deferred.Let_syntax in
        let feature_path_option = ok_exn feature_path_option in
-       begin
-         if do_not_show_cr_soons && my_cr_soons
-         then failwithf "The flags [%s] and [%s] and mutually exclusive"
-                Switch.do_not_show_cr_soons switch_my_cr_soons ();
-         if do_not_show_unclean_workspaces && my_unclean_workspaces
-         then failwithf "The flags [%s] and [%s] and mutually exclusive"
-                Switch.do_not_show_unclean_workspaces switch_my_unclean_workspaces ();
-       end;
+       (if do_not_show_cr_soons && my_cr_soons
+        then failwithf "The flags [%s] and [%s] and mutually exclusive"
+               Switch.do_not_show_cr_soons switch_my_cr_soons ());
+       (if do_not_show_unclean_workspaces && my_unclean_workspaces
+        then failwithf "The flags [%s] and [%s] and mutually exclusive"
+               Switch.do_not_show_unclean_workspaces switch_my_unclean_workspaces ());
        let client_config = Client_config.get () in
        let do_not_show_cr_soons =
          do_not_show_cr_soons
@@ -367,7 +365,7 @@ let command =
            } =
          if not (releasable || releasable_names)
          then reaction
-         else
+         else (
            let should_include next_steps =
              List.mem next_steps Next_step.Release
            in
@@ -380,7 +378,7 @@ let command =
                List.filter reaction.watched  ~f:(fun t -> should_include t.next_steps)
            ; cr_soons = Cr_soon_multiset.empty
            ; bookmarks_without_feature = []
-           }
+           })
        in
        let feature_paths = ref Feature_path.Set.empty in
        let list ?(if_ = const true) l get_feature_path =
@@ -390,31 +388,31 @@ let command =
                 (List.map (List.filter l ~f:if_) ~f:get_feature_path))
        in
        if bookmarks_without_feature_names
-       then begin
+       then (
          bookmarks_without_feature
          |> List.concat_map ~f:(fun (_remote_repo_path, bookmarks) ->
            List.map bookmarks ~f:Bookmark_without_feature.bookmark)
          |> String.Set.of_list
-         |> Set.iter ~f:print_endline;
-       end
-       else begin
-         if crs_and_review_names then list assigned Assigned.feature_path;
-         if my_unclean_workspaces_names
-         then Map.iteri unclean_workspaces ~f:(fun ~key:_machine ~data:unclean_workspaces ->
-           list unclean_workspaces Unclean_workspace.feature_path);
-         if review_names
-         then list assigned Assigned.feature_path ~if_:Assigned.has_review_lines;
-         if follow_names
-         then list assigned Assigned.feature_path ~if_:Assigned.has_follow_lines;
-         if catch_up_names
-         then list assigned Assigned.feature_path ~if_:Assigned.has_catch_up_lines;
-         if owned_by_me_names   then list owned   Feature_info.feature_path;
-         if watched_by_me_names then list watched Feature_info.feature_path;
-         if releasable_names    then begin
-           list assigned Assigned.feature_path;
-           list owned    Feature_info.feature_path;
-           list watched  Feature_info.feature_path;
-         end;
+         |> Set.iter ~f:print_endline)
+       else (
+         (if crs_and_review_names
+          then list assigned Assigned.feature_path);
+         (if my_unclean_workspaces_names
+          then
+            Map.iteri unclean_workspaces ~f:(fun ~key:_machine ~data:unclean_workspaces ->
+              list unclean_workspaces Unclean_workspace.feature_path));
+         (if review_names
+          then list assigned Assigned.feature_path ~if_:Assigned.has_review_lines);
+         (if follow_names
+          then list assigned Assigned.feature_path ~if_:Assigned.has_follow_lines);
+         (if catch_up_names
+          then list assigned Assigned.feature_path ~if_:Assigned.has_catch_up_lines);
+         (if owned_by_me_names   then list owned   Feature_info.feature_path);
+         (if watched_by_me_names then list watched Feature_info.feature_path);
+         (if releasable_names then (
+            list assigned Assigned.feature_path;
+            list owned    Feature_info.feature_path;
+            list watched  Feature_info.feature_path));
          if crs_and_review_names
          || my_unclean_workspaces_names
          || review_names
@@ -426,7 +424,7 @@ let command =
          then
            Set.iter !feature_paths ~f:(fun feature_path ->
              print_endline (Feature_path.to_string feature_path))
-         else begin
+         else (
            (* We force to show everything if nothing is set to be shown, because it
               doesn't make sense to show nothing.  Otherwise we only show what is
               requested. *)
@@ -453,8 +451,5 @@ let command =
                   ~max_output_columns;
            if force_show
            then show_bookmarks_without_feature bookmarks_without_feature ~display_ascii
-                  ~max_output_columns;
-         end
-       end
-    )
+                  ~max_output_columns)))
 ;;

@@ -139,54 +139,47 @@ let is_shown t = Option.is_some (Shown_class.of_class t)
 
 let classify ~equal:eq ~b1 ~b2 ~f1 ~f2 =
   if eq b1 b2
-  then begin
+  then
     if eq b2 f1
-    then begin
+    then
       if eq f1 f2
       then `b1_b2_f1_f2
       else `b1_b2_f1
-    end
-    else begin
+    else
       if eq b2 f2
       then `b1_b2_f2
-      else begin
+      else
         if eq f1 f2
         then `b1_b2__f1_f2
         else `b1_b2
-      end
-    end
-  end
-  else if eq b1 f1
-  then begin
-    if eq f1 f2
-    then `b1_f1_f2
-    else begin
-      if eq b2 f2
-      then `b1_f1__b2_f2
-      else `b1_f1
-    end
-  end
-  else if eq b1 f2
-  then begin
-    if eq b2 f1
-    then `b1_f2__b2_f1
-    else `b1_f2
-  end
-  else begin
-    if eq b2 f1
-    then begin
+  else
+    if eq b1 f1
+    then
       if eq f1 f2
-      then `b2_f1_f2
-      else `b2_f1
-    end
-    else if eq b2 f2
-    then `b2_f2
-    else begin
-      if eq f1 f2
-      then `f1_f2
-      else `conflict
-    end
-  end
+      then `b1_f1_f2
+      else
+        if eq b2 f2
+        then `b1_f1__b2_f2
+        else `b1_f1
+    else
+      if eq b1 f2
+      then
+        if eq b2 f1
+        then `b1_f2__b2_f1
+        else `b1_f2
+      else
+        if eq b2 f1
+        then
+          if eq f1 f2
+          then `b2_f1_f2
+          else `b2_f1
+        else
+          if eq b2 f2
+          then `b2_f2
+          else
+            if eq f1 f2
+            then `f1_f2
+            else `conflict
 ;;
 
 (* Reading the code above can be a bit difficult. The tests are probably more

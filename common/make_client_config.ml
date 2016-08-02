@@ -27,14 +27,13 @@ module Make (X : Config) = struct
       Or_error.try_with (fun () ->
         let file = Abspath.to_string file in
         if Core.Std.Sys.file_exists_exn file
-        then begin
+        then (
           (* That way we get located errors happening either in [t_of_sexp] or [update] *)
           let execute sexp = X.update x (X.Statement.t_of_sexp sexp) in
           List.iter (load_sexps_conv_or_errors file execute) ~f:(function
             | `Result () -> ()
             | `Error (exc, annot) ->
-              add_error (Error.of_exn (Sexp.Annotated.get_conv_exn ~file ~exc annot)))
-        end)
+              add_error (Error.of_exn (Sexp.Annotated.get_conv_exn ~file ~exc annot)))))
       |> function
       | Ok () -> ()
       | Error error ->
@@ -45,26 +44,23 @@ module Make (X : Config) = struct
     x, List.rev !errors
   ;;
 
-  let default_files = lazy begin
+  let default_files = lazy (
     X.always_loaded_if_present
     @ (if not Iron_options.load_user_configs
        then []
-       else
+       else (
          match Core.Std.Sys.getenv "HOME" with
          | None -> []
-         | Some home -> [ Abspath.of_string (home ^/ X.home_basename) ])
-  end
+         | Some home -> [ Abspath.of_string (home ^/ X.home_basename) ])))
   ;;
 
-  let default_files_doc = lazy begin
+  let default_files_doc = lazy (
     List.map ~f:Abspath.to_string X.always_loaded_if_present
-    @ [ "$HOME/" ^ X.home_basename ]
-  end
+    @ [ "$HOME/" ^ X.home_basename ])
   ;;
 
-  let blocking_load_and_memoize_exn = lazy begin
-    blocking_load_files (force default_files)
-  end
+  let blocking_load_and_memoize_exn = lazy (
+    blocking_load_files (force default_files))
   ;;
 
   let%test_unit _ =
@@ -115,7 +111,7 @@ are expected to be found.
          let%bind files =
            if List.is_empty files
            then return (force default_files)
-           else
+           else (
              let%map files = Deferred.List.map files ~f:(fun file ->
                let file =
                  Path.resolve_relative_to_program_started_in (Path.of_string file)
@@ -126,7 +122,7 @@ are expected to be found.
              in
              files
              |> Or_error.combine_errors
-             |> ok_exn
+             |> ok_exn)
          in
          let errors = snd (blocking_load_files files) in
          List.iter errors ~f:(fun exn ->

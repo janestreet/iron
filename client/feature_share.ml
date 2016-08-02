@@ -215,13 +215,13 @@ let share_or_clone_and_update
       | Some root_feature -> from_local_clone root_feature
       | None ->
         if true
-        then
+        then (
           (* couldn't find it in fe, just clone from the remote path *)
           let%map dst_repo_root =
             Hg.clone remote_repo_path
               ~dst_repo_root_abspath__delete_if_exists:dst_repo_root_abspath
           in
-          ok_exn dst_repo_root, remote_repo_path
+          ok_exn dst_repo_root, remote_repo_path)
         else
           raise_s
             [%sexp
@@ -347,7 +347,7 @@ let force { Workspace_hgrc.Feature. feature_id;  feature_path } =
         let%bind () =
           if am_functional_testing
           then Deferred.unit
-          else begin
+          else (
             match%bind
               Abspath.file_exists_exn
                 (Abspath.extend enclosing_repo_root_abspath
@@ -365,15 +365,14 @@ let force { Workspace_hgrc.Feature. feature_id;  feature_path } =
                   ~args:[ "libmap.sexp"; ".omake-ocaml-bin" ]
                   ()
               in
-              jenga_process
-              |> ok_exn
-              |> (ignore : Process.t -> unit)
               (* We allow this call to fail.  For example, we do not want to prevent the
                  creation of a workspace if the jenga conf files have conflicts or
                  compilation errors.  The target can be created later.  We do not wait on
                  the command so that a slow building of the jengaroot does not slow down
                  [fe create]. *)
-          end
+              jenga_process
+              |> ok_exn
+              |> (ignore : Process.t -> unit))
         in
         Interactive.printf !"done setting up share of %{Feature_path}\n" feature_path)
   in
@@ -542,14 +541,14 @@ let removing t ~f =
        | Some dir ->
          if Relpath.is_empty dir
          then return (`Finished ())
-         else
+         else (
            let dir_abspath = Abspath.append basedir dir in
            let%bind children = Sys.ls_dir (Abspath.to_string dir_abspath) in
            if List.is_empty children
-           then
+           then (
              let%map () = Unix.rmdir (Abspath.to_string dir_abspath) in
-             `Repeat dir
-           else return (`Finished ()))
+             `Repeat dir)
+           else return (`Finished ())))
 ;;
 
 let check_workspace_invariant t =

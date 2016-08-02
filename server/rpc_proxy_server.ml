@@ -75,10 +75,9 @@ let handle_rpc t connection ~rpc_tag ~version responder buf ~pos ~len =
   in
   match Hashtbl.find response_by_description description with
   | Some result ->
-    begin match result with
-    | Ok buf      -> handle_response buf ~pos:0 ~len:(Bigstring.length buf)
-    | Error error -> handle_error error
-    end
+    (match result with
+     | Ok buf      -> handle_response buf ~pos:0 ~len:(Bigstring.length buf)
+     | Error error -> handle_error error)
   | None ->
     log ~level:`Debug
       [%sexp
@@ -95,10 +94,9 @@ let handle_rpc t connection ~rpc_tag ~version responder buf ~pos ~len =
       Rpc.Rpc.Expert.dispatch connection ~rpc_tag ~version buf ~pos ~len
         ~handle_response ~handle_error
     in
-    begin match status with
-    | `Ok -> ()
-    | `Connection_closed -> handle_error lost_connection_error
-    end
+    (match status with
+     | `Ok -> ()
+     | `Connection_closed -> handle_error lost_connection_error)
 ;;
 
 let simple_server ~where_to_listen ~real_server =

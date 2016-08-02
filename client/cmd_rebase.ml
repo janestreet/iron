@@ -107,15 +107,16 @@ let main { Fe.Rebase.Action.
           }
         ];
   let%bind () =
-    if Rev.equal_node_hash old_tip old_base then begin
+    if Rev.equal_node_hash old_tip old_base
+    then (
       (* The feature is empty -- just set the bookmark. *)
       let%bind () =
         Hg.set_bookmark repo_root (Feature feature_path) ~to_:(`Rev new_base)
-        `Do_not_push
+          `Do_not_push
       in
       Hg.update repo_root (`Feature feature_path)
-        ~clean_after_update:(Yes repo_is_clean)
-    end else
+        ~clean_after_update:(Yes repo_is_clean))
+    else (
       let post_merge_validation_hook =
         Option.map post_merge_validation_hook ~f:(fun { prog; args } ->
           fun () ->
@@ -129,7 +130,7 @@ let main { Fe.Rebase.Action.
           repo_root feature_path ~old_tip ~old_base ~new_base ~feature_id
           ?merge_tool ~repo_is_clean
       in
-      ok_exn result
+      ok_exn result)
   in
   (* We push before setting the base on the server, because the push is slow and the set
      is fast.  If we did things in the other order, there is a race that happens in
@@ -159,16 +160,15 @@ let main { Fe.Rebase.Action.
   let%bind () =
     if not am_functional_testing
     then Deferred.unit
-    else
-      begin match Sys.getenv "IRON_FUNCTIONAL_TESTING_REBASE_RACE" with
+    else (
+      match Sys.getenv "IRON_FUNCTIONAL_TESTING_REBASE_RACE" with
       | None -> Deferred.unit
       | Some cmd ->
         let%bind process =
           Process.create ~prog:"/bin/bash" ~args:[ "-c" ; cmd ] ()
         in
         let%map output = Process.collect_output_and_wait (ok_exn process) in
-        Print.printf !"%{sexp:Process.Output.t}\n" output;
-      end
+        Print.printf !"%{sexp:Process.Output.t}\n" output)
   in
   let%bind () =
     Cmd_change.change_feature ~feature_path ~updates:[ `Set_base new_base ] ()

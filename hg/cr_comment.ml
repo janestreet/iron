@@ -151,11 +151,11 @@ end = struct
       let c = Relpath.compare t1.path t2.path in
       if c <> 0
       then c
-      else
+      else (
         let c = Int.compare t1.start_line t2.start_line in
         if c <> 0
         then c
-        else Int.compare t1.start_col t2.start_col
+        else Int.compare t1.start_col t2.start_col)
     ;;
 
     let compare t1 t2 =
@@ -260,14 +260,15 @@ end = struct
       (* Works backwards from "X?CR" to find a comment starter. *)
       let rec check_backwards ~last pos =
         let end_lines regex = Some (end_lines regex (pos + 1)) in
-        if pos < 0 then
+        if pos < 0
+        then (
           match last with
           | `semi -> end_lines lisp_regex
           | `hash -> end_lines sh_regex
           | `slashes n -> if n >= 2 then end_lines c_line_regex else None
           | `dashes n -> if n >= 2 then end_lines sql_regex else None
-          | `star | `not_special -> None
-        else
+          | `star | `not_special -> None)
+        else (
           let curr_char = file_contents.[pos] in
           let check_backwards last = check_backwards ~last (pos - 1) in
           match last, curr_char with
@@ -294,7 +295,7 @@ end = struct
           | `not_special, '#' -> check_backwards `hash
           | `not_special, '-' when after_format V2_sql_xml -> check_backwards (`dashes 1)
           | `not_special, (' ' | '\t' | '\n') -> check_backwards `not_special
-          | `not_special, _ -> None
+          | `not_special, _ -> None)
       in
       check_backwards ~last:`not_special (content_start_pos - 1)
   ;;
@@ -305,9 +306,10 @@ end = struct
     let map, _last_line =
       let init = (Int.Map.singleton (-1) 1, 1) in
       String.foldi file_contents ~init ~f:(fun pos ((map, prev_line) as acc) c ->
-        if Char.equal c '\n' then
+        if Char.equal c '\n'
+        then (
           let curr_line = prev_line + 1 in
-          (Map.add map ~key:pos ~data:curr_line, curr_line)
+          Map.add map ~key:pos ~data:curr_line, curr_line)
         else
           acc)
     in
@@ -378,11 +380,11 @@ module Processed = struct
 
   let compute_assignee ~file_owner ~reported_by ~for_ ~due ~is_xcr =
     if is_xcr
-    then
+    then (
       match reported_by with
       | None -> Assignee.Feature_owner
-      | Some user -> This user
-    else
+      | Some user -> This user)
+    else (
       match for_ with
       | Some user -> This user
       | None ->
@@ -398,7 +400,7 @@ module Processed = struct
             if Unresolved_name.(=) user
                  Unresolved_name.ignored_file_virtuser_fe_compatibility
             then This (Option.value reported_by ~default:user)
-            else This user
+            else This user)
   ;;
 
   let recompute_assignee t ~file_owner =
@@ -626,7 +628,7 @@ module Cr_soon = struct
         let c = Int.compare (hash t1) (hash t2) in
         if c <> 0
         then c
-        else
+        else (
           let c =
             Digest.compare
               (unshared_t t1).digest_of_condensed_content
@@ -634,11 +636,11 @@ module Cr_soon = struct
           in
           if c <> 0
           then c
-          else
+          else (
             let c = Relpath.compare (path t1) (path t2) in
             if c <> 0
             then c
-            else Unresolved_name.compare (assignee t1) (assignee t2)
+            else Unresolved_name.compare (assignee t1) (assignee t2)))
       ;;
     end
 
@@ -820,15 +822,14 @@ end = struct
       let content = raw.Raw.content in
       match Regex.get_matches_exn ~max:1 comment_regex content with
       | [] ->
-        begin match Regex.get_matches_exn ~max:1 property_regex content with
-        | [] -> error "Invalid CR comment" content String.sexp_of_t
-        | m :: _ ->
-          let get field_name = Regex.Match.get ~sub:(`Name field_name) m in
-          match get "key", get "value" with
-          | Some key, Some value -> Ok (`Property (String.strip key, String.strip value))
-          | None, _ | _, None ->
-            error "Invalid property specification" content String.sexp_of_t
-        end
+        (match Regex.get_matches_exn ~max:1 property_regex content with
+         | [] -> error "Invalid CR comment" content String.sexp_of_t
+         | m :: _ ->
+           let get field_name = Regex.Match.get ~sub:(`Name field_name) m in
+           match get "key", get "value" with
+           | Some key, Some value -> Ok (`Property (String.strip key, String.strip value))
+           | None, _ | _, None ->
+             error "Invalid property specification" content String.sexp_of_t)
       | m :: _ ->
         let get field_name = Regex.Match.get ~sub:(`Name field_name) m in
         match get "from_user" with
@@ -1012,12 +1013,12 @@ let maybe_incremental_grep repo_root format ~incremental_based_on ~file_owner =
          } ->
     if not (Cr_comment_format.equal base_cr_format format)
     then recompute_from_scratch ()
-    else
+    else (
       let%bind status =
         Hg.status repo_root (Between { src = base_rev; dst = `Working_copy })
       in
       if List.is_empty status then return base_crs
-      else
+      else (
         let%bind files_at_tip = Hg.files repo_root in
         let active_files = Hg.Status.dst_path_in_repo status in
         let%map crs_in_active_files =
@@ -1041,13 +1042,13 @@ let maybe_incremental_grep repo_root format ~incremental_based_on ~file_owner =
               (due_by_path_in_repo : Due_by_path_in_repo.t) =
           let maybe_recompute_assignee f =
             if should_recompute_assignee
-            then
+            then (
               let file_owner =
                 match file_owner path_in_repo with
                 | Error _  -> None
                 | Ok owner -> Some owner
               in
-              (fun cr -> f cr ~file_owner)
+              (fun cr -> f cr ~file_owner))
             else Fn.id
           in
           add_crs due_now  due_by_path_in_repo.due_now  path_in_repo
@@ -1066,5 +1067,5 @@ let maybe_incremental_grep repo_root format ~incremental_based_on ~file_owner =
         { Crs_due_now_and_soon.
           due_now  = !due_now
         ; due_soon = !due_soon
-        }
+        }))
 ;;

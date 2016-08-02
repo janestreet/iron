@@ -50,10 +50,10 @@ let message t =
     let now = Time.now () in
     if Time.(>=) now t.expires_at
     then default
-    else
+    else (
       let span = Time.diff t.expires_at now in
       sprintf "%s\n\nRestoration of the service expected in %s or before"
-        (String.rstrip t.message) (Time.Span.to_short_string span)
+        (String.rstrip t.message) (Time.Span.to_short_string span))
 ;;
 
 let set_temporary_message t ~expires_in message =

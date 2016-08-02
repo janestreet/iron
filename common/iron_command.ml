@@ -32,7 +32,7 @@ let in_async param =
              match exn |> [%sexp_of: exn] with
              | Sexp.Atom str -> to_string_hum str
              | sexp -> Sexp.to_string_hum sexp));
-      don't_wait_for begin
+      don't_wait_for (
         let%bind () = within' ~monitor main in
         (* We close stdout and stderr to make sure they are flushed before we call
            [shutdown]. *)
@@ -40,8 +40,7 @@ let in_async param =
           Deferred.List.iter ~how:`Parallel [ stdout; stderr ] ~f:(fun writer ->
             Writer.close writer ~force_close:(Deferred.never ()))
         in
-        shutdown 0
-      end;
+        shutdown 0);
       (never_returns (Scheduler.go ()) : unit)
   ]
 ;;

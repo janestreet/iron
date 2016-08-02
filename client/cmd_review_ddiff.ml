@@ -56,13 +56,13 @@ Or, staging the computation of ddiffs:
        and tip =
          flag "-tip"  (optional string) ~doc:"rev the hg revision for the tip"
        in
-       lazy begin match base, tip with
-         | None     , None     -> None
-         | Some base, Some tip -> Some (Diamond.of_one_edge base tip)
-         | None     , Some _
-         | Some _   , None     ->
-           failwith "either supply both -base and -tip or none of them"
-       end
+       lazy
+         (match base, tip with
+          | None     , None     -> None
+          | Some base, Some tip -> Some (Diamond.of_one_edge base tip)
+          | None     , Some _
+          | Some _   , None     ->
+            failwith "either supply both -base and -tip or none of them")
      in
      fun () ->
        let open! Deferred.Let_syntax in

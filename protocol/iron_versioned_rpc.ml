@@ -376,7 +376,7 @@ module Make_pipe_rpc
         don't_wait_for (
           let%bind () =
             Pipe.transfer pipe writer ~f:(fun elt ->
-              let result = Or_error.bind (Or_error.join elt) map_reaction in
+              let result = Or_error.bind (Or_error.join elt) ~f:map_reaction in
               if is_error result then Pipe.close_read pipe;
               result)
           in

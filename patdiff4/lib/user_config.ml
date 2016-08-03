@@ -35,7 +35,7 @@ module Dot_patdiff = struct
       let module Patdiff_config = Patdiff_lib.Configuration in
       let config =
         Option.try_with (fun () ->
-          Option.bind (Core.Std.Sys.getenv "HOME") (fun home ->
+          Option.bind (Core.Std.Sys.getenv "HOME") ~f:(fun home ->
             match Core.Std.Sys.file_exists (home ^/ dot_patdiff4) with
             | `Yes | `Unknown -> None
             | `No ->

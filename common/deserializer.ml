@@ -60,7 +60,7 @@ module T = struct
 
   let with_serializer f = With_serializer f
 
-  let bind t f = Bind (t, f)
+  let bind t ~f = Bind (t, f)
 
   let map t ~f = Bind (t, (fun x -> Const (f x)))
 

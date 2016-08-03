@@ -232,7 +232,7 @@ module In_feature_tree = struct
     let non_root_by_path = Feature_path.Table.create () in
     let non_roots       = Var.create [] in
     let active =
-      Incr.bind (Var.watch non_roots) (fun non_roots ->
+      Incr.bind (Var.watch non_roots) ~f:(fun non_roots ->
         Incr.map (Incr.all non_roots) ~f:(fun non_roots ->
           Cr_soon_multiset.unions
             (List.map non_roots ~f:Non_root.active)))

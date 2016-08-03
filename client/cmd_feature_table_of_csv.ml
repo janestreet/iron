@@ -33,7 +33,7 @@ let get_columns (headers : _ Fe.Feature_table_of_csv.Row.t) data =
         (Ascii_table.Column.cell
            (fun (_, data) ->
               Option.value ~default:""
-                (Option.bind data (fun data ->
+                (Option.bind data ~f:(fun data ->
                    array_safe_get (Fe.Feature_table_of_csv.Row.other_columns data) i)))))
   in
   feature_path_column :: other_columns

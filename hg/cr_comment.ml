@@ -840,7 +840,7 @@ end = struct
           in
           let reported_by = unresolved_name reported_by in
           let is_xcr = is_some (get "is_xcr") in
-          let for_ = Option.bind (get "for") unresolved_name in
+          let for_ = Option.bind (get "for") ~f:unresolved_name in
           let due =
             match get "due" with
             | None           -> Ok Due.Now

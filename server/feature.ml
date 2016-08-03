@@ -860,7 +860,7 @@ let review_goal t =
     Known tip_facts,
     Known base_is_ancestor_of_tip,
     Known diff_from_base_to_tip ->
-    Or_error.bind diff_from_base_to_tip (fun diff_from_base_to_tip ->
+    Or_error.bind diff_from_base_to_tip ~f:(fun diff_from_base_to_tip ->
       Review_goal.create diff_from_base_to_tip
         ~base_facts ~tip_facts ~base_is_ancestor_of_tip)
   | _ ->
@@ -1636,7 +1636,7 @@ let change t query (updates : Change_feature.Update.t list) =
       ) as update -> Ok (update :> Action.t)
   in
   List.map updates ~f:(fun update ->
-    update, Result.bind (action_for update) (apply_change_internal t query))
+    update, Result.bind (action_for update) ~f:(apply_change_internal t query))
 ;;
 
 let deserializer = Deserializer.with_serializer (fun serializer ->

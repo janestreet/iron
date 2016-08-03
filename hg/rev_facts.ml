@@ -226,7 +226,7 @@ let check_gen
       ~if_check_fails
   =
   let check msg f field =
-    Or_error.bind (f (Field.get field t) rev) (function
+    Or_error.bind (f (Field.get field t) rev) ~f:(function
       | true -> Ok true
       | false ->
         match if_check_fails with

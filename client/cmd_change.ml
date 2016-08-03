@@ -203,7 +203,7 @@ let command =
                ~f:(fun bool -> `Set_xcrs_shown_in_todo_only_for_users_reviewing bool)
            ; Option.map set_owners
                ~f:(fun users -> `Set_owners users)
-           ; Option.bind set_properties (fun properties ->
+           ; Option.bind set_properties ~f:(fun properties ->
                if Map.is_empty properties
                then None
                else Some (`Set_properties properties))

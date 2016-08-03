@@ -120,7 +120,7 @@ let navigate ~to_string ~available ~configuration direction =
       | `Succ_view -> List.max_elt configuration ~cmp:by_name
     in
     let index =
-      Option.bind current (fun value ->
+      Option.bind current ~f:(fun value ->
         Option.map ~f:fst
           (Array.findi menu ~f:(fun _ alpha -> by_name value alpha = 0)))
     in

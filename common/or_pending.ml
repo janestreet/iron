@@ -70,7 +70,7 @@ include Monad.Make (struct
 
     let map = `Custom map
 
-    let bind t f =
+    let bind t ~f =
       match t with
       | Pending_since time -> Pending_since time
       | Known x -> f x
@@ -120,7 +120,7 @@ module Or_error = struct
 
       let map = `Custom map
 
-      let bind t f =
+      let bind t ~f =
         match t with
         | Pending_since time -> Pending_since time
         | Known ((Error _) as error) -> Known error

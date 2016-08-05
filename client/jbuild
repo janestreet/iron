@@ -1,0 +1,17 @@
+(library (
+  (name iron_client)
+  (public_name iron.client)
+  (libraries (
+    core
+    core_extended
+    async
+    async_extended
+    iron_common
+    iron_hg
+    iron_obligations
+    iron_protocol
+    iron
+    patdiff_lib
+    pdiff4
+    re2
+  ))))

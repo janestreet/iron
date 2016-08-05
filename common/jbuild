@@ -1,0 +1,11 @@
+(library (
+  (name iron_common)
+  (public_name iron.common)
+  (libraries (
+    async
+    async_extended
+    core
+    incremental_lib
+    re2
+    textutils
+  ))))

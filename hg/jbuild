@@ -1,0 +1,10 @@
+(library (
+  (name iron_hg)
+  (public_name iron.hg)
+  (libraries (
+    async
+    core
+    iron_common
+    iron_obligations
+    re2
+    ))))

@@ -1,0 +1,31 @@
+(executables
+ ((names (fe))
+  (public_release ((build_and_install ((fe fe)))))
+  (review_help true)
+  (libraries (async
+              core
+              iron_client
+              iron_common
+              iron_hg
+              iron_obligations
+              iron_protocol
+              iron_server))))
+
+(rule
+ ((targets (supported-internal-rpcs-for-review))
+  (deps (fe.exe))
+  (action "./fe.exe internal rpc-to-server supported-by-client \
+             -max-output-columns 500 \
+             >supported-internal-rpcs-for-review")))
+
+(rule
+ ((targets (supported-public-rpcs-for-review))
+  (deps (fe.exe))
+  (action "./fe.exe internal show-supported-iron-rpcs \
+             -max-output-columns 500 \
+             >supported-public-rpcs-for-review")))
+
+(alias
+ ((name DEFAULT)
+  (deps (supported-internal-rpcs-for-review
+         supported-public-rpcs-for-review))))

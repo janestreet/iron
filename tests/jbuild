@@ -1,0 +1,13 @@
+
+(unified_tests
+ ((target fe-runtest)
+  (deps (../bin/fe.exe
+         (glob_files *.t)
+         (files_recursively_in bin)
+         (files_recursively_in lib)
+         (files_recursively_in etc)
+         (files_recursively_in sample-repos)
+         ../hg/hgrc
+         ))
+  (setup_script "bin/setup-script")
+  ))

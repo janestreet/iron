@@ -1,0 +1,11 @@
+(library (
+  (name iron)
+  (public_name iron.ml-api)
+  (libraries (
+    async
+    core
+    core_extended
+    iron_common
+    iron_hg
+    iron_protocol
+  ))))

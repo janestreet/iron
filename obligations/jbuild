@@ -1,0 +1,8 @@
+(library
+ ((name iron_obligations)
+  (public_name iron.obligations)
+  (libraries
+   (async
+    core
+    iron_common
+    re2))))

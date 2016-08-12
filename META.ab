@@ -2,7 +2,7 @@
 package "client" (
   version = "$(pkg_version)"
   description = ""
-  requires = "async async_extended bin_prot core core_extended fieldslib iron.common iron.hg iron.ml-api iron.obligations iron.pdiff4 iron.protocol patdiff.lib ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib re2 sexplib typerep variantslib"
+  requires = "async async_extended bin_prot command_rpc core core_extended fieldslib iron.common iron.hg iron.ml-api iron.obligations iron.pdiff4 iron.protocol patdiff.lib ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib re2 sexplib typerep variantslib"
   archive(byte  ) = "iron_client.cma"
   archive(native) = "iron_client.cmxa"
   plugin(byte  ) = "iron_client.cma"
@@ -13,7 +13,7 @@ package "client" (
 package "common" (
   version = "$(pkg_version)"
   description = ""
-  requires = "async async_extended bin_prot core fieldslib incremental ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib re2 sexplib textutils typerep variantslib"
+  requires = "async async_interactive bin_prot core fieldslib incremental ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib re2 sexplib textutils typerep variantslib"
   archive(byte  ) = "iron_common.cma"
   archive(native) = "iron_common.cmxa"
   plugin(byte  ) = "iron_common.cma"
@@ -35,7 +35,7 @@ package "hg" (
 package "ml-api" (
   version = "$(pkg_version)"
   description = ""
-  requires = "async bin_prot core core_extended fieldslib iron.common iron.hg iron.protocol ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib sexplib typerep variantslib"
+  requires = "async bin_prot command_rpc core core_extended fieldslib iron.common iron.hg iron.protocol ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib sexplib typerep variantslib"
   archive(byte  ) = "iron.cma"
   archive(native) = "iron.cmxa"
   plugin(byte  ) = "iron.cma"
@@ -68,7 +68,7 @@ package "pdiff4" (
 package "protocol" (
   version = "$(pkg_version)"
   description = ""
-  requires = "async bin_prot core fieldslib iron.common iron.hg ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib sexplib typerep variantslib"
+  requires = "async async_extended async_interactive bin_prot command_rpc core fieldslib iron.common iron.hg ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib sexplib typerep variantslib"
   archive(byte  ) = "iron_protocol.cma"
   archive(native) = "iron_protocol.cmxa"
   plugin(byte  ) = "iron_protocol.cma"

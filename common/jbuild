@@ -3,7 +3,7 @@
   (public_name iron.common)
   (libraries (
     async
-    async_extended
+    async_interactive
     core
     incremental_lib
     re2

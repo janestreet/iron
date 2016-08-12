@@ -4,8 +4,6 @@ open! Core.Std
    introduce the aliases that we need to deal with Iron modules *)
 include Export
 
-module Command_rpc = Async_extended.Std.Command_rpc
-
 module type Unit = sig
   type t = unit
   [@@deriving sexp_of]

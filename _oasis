@@ -2,7 +2,7 @@ OASISFormat:           0.4
 OCamlVersion:          >= 4.03.0
 FindlibVersion:        >= 1.3.2
 Name:                  iron
-Version:               114.04+57
+Version:               114.05+64
 Synopsis:              Code review system.
 Authors:               Jane Street Group, LLC <opensource@janestreet.com>
 Copyrights:            (C) 2016 Jane Street Group LLC <opensource@janestreet.com>
@@ -53,6 +53,7 @@ Library iron
                 Wait_for_hydra
   BuildDepends: async,
                 bin_prot,
+                command_rpc,
                 core,
                 core_extended,
                 fieldslib,
@@ -184,6 +185,7 @@ Library iron_client
   BuildDepends: async,
                 async_extended,
                 bin_prot,
+                command_rpc,
                 core,
                 core_extended,
                 fieldslib,
@@ -315,7 +317,7 @@ Library iron_common
                 Who_can_release_into_me,
                 Wrap_stable
   BuildDepends: async,
-                async_extended,
+                async_interactive,
                 bin_prot,
                 core,
                 fieldslib,
@@ -539,7 +541,10 @@ Library iron_protocol
                 With_unclean_workspaces,
                 With_worker_cache
   BuildDepends: async,
+                async_extended,
+                async_interactive,
                 bin_prot,
+                command_rpc,
                 core,
                 fieldslib,
                 iron_common,

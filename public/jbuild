@@ -3,6 +3,7 @@
   (public_name iron.ml-api)
   (libraries (
     async
+    command_rpc
     core
     core_extended
     iron_common

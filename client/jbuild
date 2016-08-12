@@ -2,10 +2,11 @@
   (name iron_client)
   (public_name iron.client)
   (libraries (
-    core
-    core_extended
     async
     async_extended
+    command_rpc
+    core
+    core_extended
     iron_common
     iron_hg
     iron_obligations

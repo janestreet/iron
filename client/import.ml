@@ -8,7 +8,6 @@ include Iron_obligations.Std
 include Iron_hg.Std
 include Iron_protocol
 
-module Command_rpc = Async_extended.Std.Command_rpc
 module Iron_command_rpc = Iron.Iron_command_rpc
 
 module Abspath = struct

@@ -2,8 +2,11 @@
  ((name iron_protocol)
   (public_name iron.protocol)
   (libraries
-   (core
-    async
+   (async
+    async_interactive
+    async_extended ;; for Durable
+    command_rpc
+    core
     iron_common
     iron_hg
     ))))

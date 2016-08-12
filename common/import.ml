@@ -5,7 +5,7 @@ module String      = Iron_string
 module Time        = Iron_time
 module Clock       = Clock_ns
 module Clock_ns    = struct end
-module Interactive = Async_extended.Std.Interactive
+module Interactive = Async_interactive
 
 include Stable_module_types
 

@@ -144,8 +144,8 @@ let attribute_table t =
 let for_testing =
   let scrutiny = Scrutiny.for_testing in
   let reviewers = List.map ~f:User_name.of_string ["jdoe"; "fbar"] in
-  let min_file_reviewers = scrutiny.value.min_file_reviewers in
-  let max_file_reviewers = scrutiny.value.max_file_reviewers in
+  let min_file_reviewers = scrutiny.min_file_reviewers in
+  let max_file_reviewers = scrutiny.max_file_reviewers in
   let more_than_max_reviewers  = Int.O.(List.length reviewers > max_file_reviewers) in
   let fewer_than_min_reviewers = Int.O.(List.length reviewers < min_file_reviewers) in
   create
@@ -153,10 +153,10 @@ let for_testing =
     ~tags:Tag.Set.empty
     ~fewer_than_min_reviewers
     ~followers:User_name.Set.empty
-    ~is_read_by_whole_feature_reviewers:scrutiny.value.read_by_whole_feature_reviewers
+    ~is_read_by_whole_feature_reviewers:scrutiny.read_by_whole_feature_reviewers
     ~more_than_max_reviewers
     ~owner:(User_name.of_string "jdoe")
     ~review_obligation:(Review_obligation.all_of (User_name.Set.of_list reviewers))
-    ~scrutiny_level:scrutiny.value.level
+    ~scrutiny_level:scrutiny.level
     ~scrutiny_name:scrutiny.name
 ;;

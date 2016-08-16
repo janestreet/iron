@@ -59,9 +59,9 @@ module Stable = struct
   end
 
   module From_server_to_worker = struct
-    module V4 = struct
+    module V5 = struct
       type t =
-        { worker_obligations : Worker_obligations.V3.t By_rev.V1.t
+        { worker_obligations : Worker_obligations.V4.t By_rev.V1.t
         ; worker_rev_facts   : Worker_rev_facts.V1.t   By_rev.V1.t
         ; properties         : Properties.V2.t
         }
@@ -78,13 +78,13 @@ module Stable = struct
         }
       ;;
     end
-    module Model = V4
+    module Model = V5
   end
 
   module From_worker_back_to_server = struct
-    module V3 = struct
+    module V4 = struct
       type t =
-        { worker_obligations : Worker_obligations.V3.t By_rev.V1.t
+        { worker_obligations : Worker_obligations.V4.t By_rev.V1.t
         ; worker_rev_facts   : Worker_rev_facts.V1.t   By_rev.V1.t
         }
       [@@deriving bin_io, compare, sexp]
@@ -95,7 +95,7 @@ module Stable = struct
         }
       ;;
     end
-    module Model = V3
+    module Model = V4
   end
 end
 

@@ -124,6 +124,12 @@ EOF
          ))
           " > $HOME/.ferc
     fi
+
+    # Bring in the bashrc that we distribute for use with iron.
+    source $IRON_TEST_DIR/../bin/bashrc
+    # Reset the variable in case the USER running the test has it defined in
+    # their environment.
+    OLD_CDF_FEATURE=""
 }
 
 export -f start_test

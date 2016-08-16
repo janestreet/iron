@@ -49,3 +49,9 @@ tracefile=/j/office/app/hg/prod/jhg/fix_tracefile.py
 
 # Add [hg distclean]
 distclean=/j/office/app/hg/prod/jhg/distclean_v1.py
+
+# In hg >= 3.5, bookmark names with length greater than 255 cause
+# problems with pushes due to the use of the new bundle2 protocol.
+# This extension gets around this by not using bundle2 to exchange
+# bookmark names.
+allow_long_bookmark_names=/j/office/app/hg/prod/jhg/allow_long_bookmarks_v1.py

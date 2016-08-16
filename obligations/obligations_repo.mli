@@ -11,12 +11,9 @@ module Declaration : sig
   val scaffold_requires_global_tag_or_rev_hash : t -> bool
 end
 
-type deprecated_use_cr_spec
-
 type t = private
   { build_projections    : Build_projection.t Build_projection_name.Map.t
   ; tags                 : Tag.Set.t
-  ; use_cr_spec          : deprecated_use_cr_spec
   ; users                : Unresolved_name.Set.t
   ; groups               : Groups.t
   ; obligations_global   : Obligations_global.t
@@ -36,5 +33,5 @@ val eval
   -> t Or_error.t
 
 module Stable : sig
-  module V3 : Stable_without_comparator with type t = t
+  module V4 : Stable_without_comparator with type t = t
 end

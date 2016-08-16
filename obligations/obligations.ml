@@ -5,15 +5,15 @@ module Stable_format = struct
   module Obligations_repo = Obligations_repo.Stable
   module Review_attributes = Review_attributes.Stable
 
-  module V3 = struct
+  module V4 = struct
     type t =
-      { obligations_repo : Obligations_repo.V3.t
+      { obligations_repo : Obligations_repo.V4.t
       ; by_path          : (Path_in_repo.V1.t * Review_attributes.V2.t) list
       }
     [@@deriving bin_io, compare, fields, sexp]
   end
 
-  module Model = V3
+  module Model = V4
 end
 
 open! Core.Std
@@ -166,12 +166,12 @@ let check_low_review_files t repo_root ~manifest ~cwd =
               let missing = Set.diff actual stated in
               if not (Set.is_empty missing)
               then
-                Error_context.error_s e
+                Error_context.raise_s e
                   [%sexp "missing low-review files", (missing : Path_in_repo.Set.t)];
               let extraneous = Set.diff stated actual in
               if not (Set.is_empty extraneous)
               then
-                Error_context.error_s e
+                Error_context.raise_s e
                   [%sexp "files are not low review", (extraneous : Path_in_repo.Set.t)])
             |> ok_exn))
 ;;
@@ -312,9 +312,14 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
       (* Evaluate the .fe.sexp file in each directory we need. *)
       let useless_dot_fes = Hash_set.copy dot_fes_to_load in
       let invalid = ref [] in
+      let scrutiny_names_of_files_affected_by_dot_fe = Path_in_repo.Table.create () in
       let by_path =
         Hashtbl.to_alist dirs_to_compute
         |> List.concat_map ~f:(fun (dir, (dot_fe, files_in_directory)) ->
+          let scrutiny_names_of_files_affected_by_dot_fe =
+            Hashtbl.find_or_add scrutiny_names_of_files_affected_by_dot_fe dot_fe
+              ~default:Scrutiny_name.Hash_set.create
+          in
           let declarations = Hashtbl.find_exn declarations_by_dot_fe dot_fe in
           let used_in_subdirectory =
             ok_exn
@@ -354,19 +359,46 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
           with
           | Error e -> invalid := e :: !invalid; []
           | Ok attributes_by_file ->
-            let attributes_by_file = Map.to_alist attributes_by_file in
             let attributes_by_file =
               if has_dot_fe
               then attributes_by_file
-              else
-                List.filter attributes_by_file ~f:(fun (file, _) ->
-                  not (File_name.equal file File_name.dot_fe))
+              else Map.remove attributes_by_file File_name.dot_fe
             in
+            let attributes_by_file = Map.to_alist attributes_by_file in
+            List.iter attributes_by_file ~f:(fun (_, attributes) ->
+              Hash_set.add scrutiny_names_of_files_affected_by_dot_fe
+                attributes.scrutiny_name);
             List.map attributes_by_file ~f:(fun (file, attributes) ->
               (Path_in_repo.extend dir file, attributes)))
         |> Path_in_repo.Table.of_alist_exn
       in
       report_errors "invalid .fe.sexp file" !invalid (module Error);
+      Hashtbl.iteri scrutiny_names_of_files_affected_by_dot_fe
+        ~f:(fun ~key:dot_fe ~data:scrutiny_names ->
+          Hashtbl.change by_path dot_fe ~f:(Option.map ~f:(fun dot_fe_attributes ->
+            let obligations_read_by =
+              List.map (Hash_set.to_list scrutiny_names) ~f:(fun scrutiny_name ->
+                match
+                  Map.find obligations_repo.obligations_global.scrutinies scrutiny_name
+                with
+                | Some scrutiny -> scrutiny.obligations_read_by
+                | None ->
+                  raise_s
+                    [%sexp "This [.fe.sexp] file affects file of undefined scrutiny"
+                         , [%here]
+                         , { dot_fe        : Path_in_repo.t
+                           ; scrutiny_name : Scrutiny_name.t
+                           }
+                    ])
+            in
+            let augmented_obligations =
+              Review_obligation.and_
+                (Review_attributes.review_obligation dot_fe_attributes
+                 :: obligations_read_by)
+            in
+            Review_attributes.with_review_obligation dot_fe_attributes
+              ~review_obligation:augmented_obligations
+          )));
       let t =
         { obligations_repo = `Actual obligations_repo
         ; by_path
@@ -399,16 +431,16 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
 ;;
 
 module Stable = struct
-  module V3 = struct
+  module V4 = struct
 
-    module Stable_format = Stable_format.V3
+    module Stable_format = Stable_format.V4
 
     let of_model { obligations_repo
                  ; by_path
                  } =
       match obligations_repo with
       | `Fake ->
-        failwith "Obligations.Stable.V1.of_model: \
+        failwith "Obligations.Stable.V4.of_model: \
                   unexpected serialization of fake obligations"
       | `Actual obligations_repo ->
         { Stable_format.

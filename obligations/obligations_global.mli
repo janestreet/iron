@@ -4,7 +4,9 @@ open! Core.Std
 open! Import
 
 module Declaration : sig
-  type t [@@deriving sexp]
+  type t [@@deriving sexp_of]
+
+  val of_annotated_sexp : Sexp.Annotated.t -> t
 end
 
 (** A file's worth of declarations once evaluated *)
@@ -18,10 +20,14 @@ type t = private
   }
 [@@deriving sexp_of]
 
-val eval : Declaration.t list -> t Or_error.t
+val eval
+  : Declaration.t list
+  -> obligations_global : Path.t
+  -> aliases : User_name_by_alternate_name.t
+  -> t Or_error.t
 
 module Stable : sig
-  module V3 : sig
+  module V4 : sig
     include Stable_without_comparator with type t = t
     val hash : t -> int
   end

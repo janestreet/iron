@@ -63,6 +63,23 @@ Show the list of workspaces present in the local disk.
   root/child1
   root/child2
 
+Show the feature path for the current workspace.
+  $ old_dir=$(pwd)
+  $ cdf root/child1
+  $ fe workspace pwd
+  root/child1
+  $ cdf root/child2
+  $ fe workspace pwd
+  root/child2
+
+fe workspace pwd when not in a workspace directory.
+
+  $ cd ~
+  $ fe workspace pwd
+  Current directory is not in an Iron workspace.
+  [1]
+  $ cd "$old_dir"
+
 Check the existence of some workspaces and clones.
 
   $ fe workspace exists root/child1

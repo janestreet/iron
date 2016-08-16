@@ -7,6 +7,7 @@ let prod_bin_directory = Filename.concat prod_directory "bin"
 let prod_etc_directory = Filename.concat prod_directory "etc"
 let deployed_exe  = Filename.concat prod_bin_directory "fe"
 let deployed_hgrc = Filename.concat prod_etc_directory "hgrc"
+let deployed_bashrc = Filename.concat prod_etc_directory "bashrc"
 let deployed_check_obligations = Filename.concat prod_bin_directory "check-obligations"
 
 let generic_deploy_arguments =
@@ -68,43 +69,38 @@ let deploy =
            ~doc:"(EXE|self|none) which executable to roll (defaults to self)"
       +> flag "-hgrc" (optional_with_default "default" file)
            ~doc:"(HGRC|default|none) which hgrc to roll"
+      +> flag "-bashrc" (optional_with_default "default" file)
+           ~doc:"(BASHRC|default|none) which bashrc to roll"
       +> flag "-no-backup-check" no_arg
            ~doc:" do not check the invariants of the last backup with the exe about to \
                  be rolled"
       ++ generic_deploy_arguments)
-    (fun exe hgrc no_backup_check remaining_arguments () ->
+    (fun exe hgrc bashrc no_backup_check remaining_arguments () ->
        let exe =
          match exe with
-         | "self" -> Some Sys.executable_name
          | "none" -> None
-         | file -> Some file
+         | "self" -> Some Sys.executable_name
+         | file   -> Some file
        in
+       let exe_dir = Filename.dirname Sys.executable_name in
        let hgrc =
          match hgrc with
-         | "default" ->
-           let exe_dir = Filename.dirname Sys.executable_name in
-           let hgrc_when_rolling_from_repo = sprintf "%s/../hg/hgrc" exe_dir in
-           let hgrc_when_rolling_from_app_dir = sprintf "%s/../../etc/hgrc" exe_dir in
-           let all_possibilities =
-             [ hgrc_when_rolling_from_repo
-             ; hgrc_when_rolling_from_app_dir ]
-           in
-           let file_found =
-             List.find_map all_possibilities ~f:(fun file ->
-               if Core.Std.Sys.file_exists_exn file then Some file else None)
-           in
-           (match file_found with
-            | None -> failwiths "cannot find an hgrc to roll" (`Tried all_possibilities)
-                        [%sexp_of: [ `Tried of string list ]]
-            | Some _ as o -> o)
-         | "none" -> None
-         | file -> Some file
+         | "none"    -> None
+         | "default" -> Some (exe_dir ^/ "../hg/hgrc")
+         | file      -> Some file
        in
-       if not no_backup_check then
-         Option.iter exe ~f:check_exe_on_last_backup;
+       let bashrc =
+         match bashrc with
+         | "none"    -> None
+         | "default" -> Some (exe_dir ^/ "bashrc")
+         | file      -> Some file
+       in
+       (if not no_backup_check
+        then Option.iter exe ~f:check_exe_on_last_backup);
        List.iter
-         [ exe, deployed_exe
-         ; hgrc, deployed_hgrc
+         [ exe   , deployed_exe
+         ; hgrc  , deployed_hgrc
+         ; bashrc, deployed_bashrc
          ]
          ~f:(fun (src_opt, dst) ->
            match src_opt with

@@ -108,7 +108,7 @@ let of_matches ~file_names ~context diamond matches =
           }
         ) in
         let diff4_class =
-          if Diff4_class.compare seg1.diff4_class seg2.diff4_class = 0
+          if Diff4_class.equal seg1.diff4_class seg2.diff4_class
           then seg1.diff4_class
           else (* Recompute it *)
             Diamond.classify ~equal:equal_for_classify

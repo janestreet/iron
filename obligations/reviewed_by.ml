@@ -42,7 +42,7 @@ let eval t e ~aliases ~allowed_users ~known_groups =
   let review_obligation = loop t e in
   if not (Review_obligation.is_satisfied review_obligation
             ~by:(Review_obligation.may_reviewers review_obligation))
-  then Error_context.error_s e [%sexp "unsatisfiable review obligation", (t : t)];
+  then Error_context.raise_s e [%sexp "unsatisfiable review obligation", (t : t)];
   review_obligation
 ;;
 

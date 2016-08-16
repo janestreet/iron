@@ -145,7 +145,7 @@ module Partial_attributes = struct
       merge_ok (fun m1 m2 ->
         if not (M.equal m1 m2)
         then
-          Error_context.error_s error_context
+          Error_context.raise_s error_context
             [%sexp
               (sprintf "inconsistent %s for %s" error_message (File_name.to_string file) :
                  string)
@@ -197,14 +197,17 @@ module Partial_attributes = struct
       match scrutiny_name with
       | Error _ as x -> x
       | Ok scrutiny_name ->
-        let { Scrutiny. value = scrutiny; _ } =
-          Map.find_exn obligations_global.scrutinies scrutiny_name
+        let { Scrutiny.
+              min_file_reviewers
+            ; max_file_reviewers
+            ; level
+            ; read_by_whole_feature_reviewers
+            ; _
+            } = Map.find_exn obligations_global.scrutinies scrutiny_name
         in
         let num_reviewers_lower_bound =
           Review_obligation.num_reviewers_lower_bound review_obligation
         in
-        let min_file_reviewers = scrutiny.min_file_reviewers in
-        let max_file_reviewers = scrutiny.max_file_reviewers in
         let fewer_than_min_reviewers = num_reviewers_lower_bound < min_file_reviewers in
         let more_than_max_reviewers  = num_reviewers_lower_bound > max_file_reviewers in
         let fewer_than_min_reviewers_expected =
@@ -242,11 +245,10 @@ there are %s and only %d required, so must have (Fewer_than_min_reviewers false)
                 ~fewer_than_min_reviewers
                 ~followers
                 ~more_than_max_reviewers
-                ~is_read_by_whole_feature_reviewers:
-                  scrutiny.read_by_whole_feature_reviewers
+                ~is_read_by_whole_feature_reviewers:read_by_whole_feature_reviewers
                 ~owner
                 ~review_obligation
-                ~scrutiny_level:scrutiny.level
+                ~scrutiny_level:level
                 ~scrutiny_name)
   ;;
 end
@@ -285,7 +287,7 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
        with
        | `Ok _ -> ()
        | `Duplicate_keys bs ->
-         Error_context.error_s e
+         Error_context.raise_s e
            [%sexp "duplicate build projections", (bs : Build_projection_name.t list)]);
       let undefined =
         List.filter build_projection_names ~f:(fun build_projection_name ->
@@ -293,7 +295,7 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
       in
       if not (List.is_empty undefined)
       then
-        Error_context.error_s e
+        Error_context.raise_s e
           [%sexp
             (sprintf "undefined build %s"
                (one_or_more "projection" (List.length undefined)) : string)
@@ -331,7 +333,7 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
     | Scrutiny scrutiny_name ->
       if not (Map.mem scrutinies scrutiny_name)
       then
-        Error_context.error_s e
+        Error_context.raise_s e
           [%sexp "undefined scrutiny", (scrutiny_name : Scrutiny_name.t)];
       { partial_attributes with scrutiny_name = Some scrutiny_name }
     | Tags tags ->
@@ -341,17 +343,17 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
        with
        | `Ok _ -> ()
        | `Duplicate_keys ts ->
-         Error_context.error_s e [%sexp "duplicate tags", (ts : Tag.t list)]);
+         Error_context.raise_s e [%sexp "duplicate tags", (ts : Tag.t list)]);
       (if not used_in_subdirectory_declaration_is_allowed
        && not (List.is_empty tags)
        && not (Set.exists files_in_directory ~f:file_name_can_have_tags)
        then
-         Error_context.error_s e
+         Error_context.raise_s e
            [%sexp "no file in directory supporting tags", (tags : Tag.t list)]);
       let undefined = List.filter tags ~f:(fun tag -> not (Set.mem known_tags tag)) in
       (if not (List.is_empty undefined)
        then
-         Error_context.error_s e
+         Error_context.raise_s e
            [%sexp
              (sprintf "undefined %s"
                 (one_or_more "tag" (List.length undefined)) : string)
@@ -366,10 +368,10 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
       { partial_attributes with more_than_max_reviewers = Some more_than_max_reviewers }
     | Used_in_subdirectory ->
       (if not used_in_subdirectory_declaration_is_allowed
-       then Error_context.errorf e "unnecessary Used_in_subdirectory declaration" ());
+       then Error_context.raise_f e "unnecessary Used_in_subdirectory declaration" ());
       (if depth > 0
        && Obligations_version.is_at_least_version obligations_version ~version:V3
-       then Error_context.errorf e
+       then Error_context.raise_f e
               "Used_in_subdirectory is not allowed inside a Local declaration" ());
       partial_attributes
   in
@@ -399,7 +401,7 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
     in
     if not (List.is_empty !problems)
     then
-      Error_context.error_s e
+      Error_context.raise_s e
         [%sexp
           "invalid file attributes"
         , (List.map !problems ~f:(fun (file, error) ->

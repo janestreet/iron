@@ -2,8 +2,8 @@ open! Core.Std
 open! Import
 
 module Stable : sig
-  module V3 : Stable_without_comparator
-  module Model : module type of struct include V3 end
+  module V4 : Stable_without_comparator
+  module Model : module type of struct include V4 end
 end
 
 type t =

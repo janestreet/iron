@@ -4846,7 +4846,8 @@ let () =
            let bookmark = Feature_path.to_string feature_path in
            match Hashtbl.find_and_remove state_by_bookmark bookmark with
            | None -> Feature.set_has_bookmark feature query false;
-           | Some { bookmark = _; rev_author_or_error = _; first_12_of_rev; status } ->
+           | Some { bookmark = _; rev_info = { rev_author_or_error = _; first_12_of_rev }
+                  ; status; continuous_release_status = _; compilation_status = _ } ->
              let next_bookmark_update_before = Feature.next_bookmark_update feature in
              Feature.set_has_bookmark feature query true;
              (match
@@ -4867,7 +4868,9 @@ let () =
        (let bookmarks_without_feature =
           Hashtbl.data state_by_bookmark
           |> List.filter_map ~f:
-               (fun { bookmark; rev_author_or_error; first_12_of_rev; status = _ } ->
+               (fun { bookmark; rev_info = { rev_author_or_error; first_12_of_rev }
+                    ; status = _; continuous_release_status = _
+                    ; compilation_status = _ } ->
                   match rev_author_or_error with
                   | Error _ -> None
                   | Ok rev_author ->

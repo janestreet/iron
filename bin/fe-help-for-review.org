@@ -107,14 +107,15 @@
 : 
 : === flags ===
 : 
-:   -message                     message given to sink deploy
-:   [--]                         pass the remaining arguments to sink deploy
-:   [-fe (EXE|self|none)]        which executable to roll (defaults to self)
-:   [-hgrc (HGRC|default|none)]  which hgrc to roll
-:   [-no-backup-check]           do not check the invariants of the last backup
-:                                with the exe about to be rolled
-:   [-help]                      print this help text and exit
-:                                (alias: -?)
+:   -message                         message given to sink deploy
+:   [--]                             pass the remaining arguments to sink deploy
+:   [-bashrc (BASHRC|default|none)]  which bashrc to roll
+:   [-fe (EXE|self|none)]            which executable to roll (defaults to self)
+:   [-hgrc (HGRC|default|none)]      which hgrc to roll
+:   [-no-backup-check]               do not check the invariants of the last
+:                                    backup with the exe about to be rolled
+:   [-help]                          print this help text and exit
+:                                    (alias: -?)
 
 *** deploy-check-obligations
 
@@ -4211,6 +4212,8 @@
 :   exists                   test the existence of user workspaces
 :   kill-build               kill running build process in selected workspaces
 :   list                     list all workspaces
+:   pwd                      output the current feature path if you are currently
+:                            in a workspace directory, or fail otherwise
 :   unclean                  manage unclean workspaces
 :   update-clean-workspaces  fe update all clean workspaces on the current machine
 :   help                     explain a given subcommand (perhaps recursively)
@@ -4411,6 +4414,17 @@
 : list all workspaces
 : 
 :   fe.exe workspace list 
+: 
+: === flags ===
+: 
+:   [-help]  print this help text and exit
+:            (alias: -?)
+
+*** pwd
+
+: output the current feature path if you are currently in a workspace directory, or fail otherwise
+: 
+:   fe.exe workspace pwd 
 : 
 : === flags ===
 : 

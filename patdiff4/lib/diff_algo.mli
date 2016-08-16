@@ -19,7 +19,6 @@ end
 module View : sig
   type t =
     { id           : Id.t
-    ; jump_to_line : Jump_to_line.t
     ; blocks       : Block.t list
     }
   [@@deriving fields, sexp_of]

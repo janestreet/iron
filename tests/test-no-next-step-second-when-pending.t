@@ -23,9 +23,12 @@ Change the feature and start hydra working on it:
   $ fe internal rpc-to-server call synchronize-state <<EOF
   > ((remote_repo_path $PWD)
   >  (bookmarks (((bookmark root)
-  >               (first_12_of_rev ${tip})
-  >               (rev_author_or_error (Ok committer))
-  >               (status Pending_or_working_on_it)))))
+  >               (rev_info
+  >                 ((first_12_of_rev ${tip})
+  >                  (rev_author_or_error (Ok committer))))
+  >               (status Pending_or_working_on_it)
+  >               (continuous_release_status Not_working_on_it)
+  >               (compilation_status ())))))
   > EOF
   ((bookmarks_to_rerun ()))
 

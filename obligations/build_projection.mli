@@ -17,7 +17,7 @@ val create :
   -> t
 
 module Stable : sig
-  module V1 : sig
+  module V2 : sig
     include Stable_without_comparator with type t = t
     val hash : t -> int
   end

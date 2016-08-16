@@ -42,17 +42,17 @@ module Stable = struct
   end
 
   module Reaction = struct
-    module V5 = struct
+    module V6 = struct
       type t =
         { base                       : Rev.V1.t
         ; feature_id                 : Feature_id.V1.t
         ; need_diff4s_starting_from  : (Review_edge.V1.t * User_name.V1.Set.t) list
         ; aliases                    : User_name_by_alternate_name.V1.t
-        ; worker_cache               : Worker_cache.From_server_to_worker.V4.t
+        ; worker_cache               : Worker_cache.From_server_to_worker.V5.t
         }
       [@@deriving bin_io, sexp]
 
-      let to_model m = m
+      let to_model (m : t) = m
       let of_model t = t
     end
 
@@ -69,13 +69,13 @@ module Stable = struct
       [@@deriving bin_io, sexp]
 
       let of_model m =
-        let { V5.
+        let { V6.
               base
             ; feature_id
             ; need_diff4s_starting_from
             ; aliases
             ; _
-            } = V5.of_model m in
+            } = V6.of_model m in
         { base
         ; feature_id
         ; need_diff4s_starting_from
@@ -88,18 +88,17 @@ module Stable = struct
                    ; need_diff4s_starting_from
                    ; aliases
                    } =
-        V5.to_model
-          { V5.
-            base
+        V6.to_model
+          { base
           ; feature_id
           ; need_diff4s_starting_from
           ; aliases
-          ; worker_cache = Worker_cache.From_server_to_worker.V4.empty
+          ; worker_cache = Worker_cache.From_server_to_worker.V5.empty
           }
       ;;
     end
 
-    module Model = V5
+    module Model = V6
   end
 end
 
@@ -108,9 +107,9 @@ open! Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "hydra-worker" end)
-    (struct let version = 5 end)
+    (struct let version = 6 end)
     (Stable.Action.V2)
-    (Stable.Reaction.V5)
+    (Stable.Reaction.V6)
 
 (* Intent is to keep [1] always, and only the latest version including the worker cache *)
 include Register_old_rpc_converting_both_ways

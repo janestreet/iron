@@ -4,15 +4,15 @@ module Stable = struct
 
   module Obligations_are_valid = Rev_facts.Stable.Obligations_are_valid
 
-  module V3 = struct
+  module V4 = struct
     type t =
       { obligations_are_valid : Obligations_are_valid.V1.t
-      ; obligations           : Obligations.V3.t Or_error.V1.t
-      ; obligations_version   : Obligations_version.V1.t Or_error.V1.t
+      ; obligations           : Obligations.V4.t Or_error.V2.t
+      ; obligations_version   : Obligations_version.V1.t Or_error.V2.t
       }
     [@@deriving bin_io, compare, fields, sexp]
   end
-  module Model = V3
+  module Model = V4
 end
 
 open! Core.Std
@@ -33,7 +33,7 @@ let of_stable { Stable.Model.
               ; obligations_version
               } =
   { obligations_are_valid
-  ; obligations           = Or_error.map ~f:Obligations.Stable.V3.to_model obligations
+  ; obligations           = Or_error.map ~f:Obligations.Stable.V4.to_model obligations
   ; obligations_version
   }
 ;;
@@ -44,7 +44,7 @@ let to_stable { obligations_are_valid
               } =
   { Stable.Model.
     obligations_are_valid
-  ; obligations           = Or_error.map ~f:Obligations.Stable.V3.of_model obligations
+  ; obligations           = Or_error.map ~f:Obligations.Stable.V4.of_model obligations
   ; obligations_version
   }
 ;;
@@ -71,13 +71,13 @@ module On_server = struct
     let to_stable { obligations_repo
                   ; by_path
                   } =
-      { Obligations.Stable.V3.
+      { Obligations.Stable.V4.
         obligations_repo
       ; by_path = Obligations_consing.to_alist by_path
       }
     ;;
 
-    let of_stable { Obligations.Stable.V3.
+    let of_stable { Obligations.Stable.V4.
                     obligations_repo
                   ; by_path
                   } =
@@ -129,7 +129,7 @@ module On_server = struct
     t.obligations
     |> ok_exn
     |> Obligations.to_stable
-    |> Iron_obligations.Obligations.Stable.V3.to_model
+    |> Iron_obligations.Obligations.Stable.V4.to_model
     |> [%sexp_of: Iron_obligations.Obligations.t]
   ;;
 end

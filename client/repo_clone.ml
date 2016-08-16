@@ -28,7 +28,7 @@ let clone_repo_root_abspath ~root_feature =
 
 (* The memoization is used to ensure sure that we don't concurrently try to clone the same
    repo multiple times to the same destination directory, as can happen otherwise when we
-   have multiple [Feature_share.force] functions running concurrently.  Cloning at most
+   have multiple [Workspace.force] functions running concurrently.  Cloning at most
    once each root feature is enough *)
 let force_memo =
   Memo.general ~hashable:Feature_name.hashable (fun root_feature ->

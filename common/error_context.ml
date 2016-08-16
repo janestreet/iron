@@ -20,7 +20,7 @@ let within (type ok) ~file (f : t -> ok) : ok Or_error.t =
   | Error e -> failwiths "Iron bug" (e, file) [%sexp_of: Error.t * Path.t]
 ;;
 
-let error_x t x sexp_of_x =
+let raise_x t x sexp_of_x =
   let line, column =
     match t.sexp, t.annotated_sexp with
     | None, _ | _, None -> 0, 0
@@ -48,9 +48,9 @@ let error_x t x sexp_of_x =
          [%sexp_of: Info.t * x])
 ;;
 
-let errorf t fmt = ksprintf (fun s () -> error_x t s [%sexp_of: string]) fmt
-
-let error_s t sexp = error_x t sexp [%sexp_of: Sexp.t]
+let raise_f t fmt  = ksprintf (fun s () -> raise_x t s [%sexp_of: string]) fmt
+let raise_s t sexp = raise_x t sexp Fn.id
+let raise   t err  = raise_x t err  [%sexp_of: Error.t]
 
 let augment ?annotated_sexp ?info ?sexp t =
   let maybe old new_ =
@@ -64,5 +64,3 @@ let augment ?annotated_sexp ?info ?sexp t =
   ; annotated_sexp = maybe t.annotated_sexp annotated_sexp
   }
 ;;
-
-let raise t err = error_x t err [%sexp_of: Error.t]

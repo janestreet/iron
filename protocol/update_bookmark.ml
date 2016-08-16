@@ -21,17 +21,17 @@ module Stable = struct
   end
 
   module Action = struct
-    module V8 = struct
+    module V9 = struct
       type t =
         { feature_path         : Feature_path.V1.t
         ; feature_id           : Feature_id.V1.t
-        ; info                 : Info.V5.t Or_error.V1.t
-        ; augment_worker_cache : Worker_cache.From_worker_back_to_server.V3.t
+        ; info                 : Info.V5.t Or_error.V2.t
+        ; augment_worker_cache : Worker_cache.From_worker_back_to_server.V4.t
         }
       [@@deriving bin_io, fields, sexp]
 
       let of_model m = m
-      let to_model t = t
+      let to_model (t : t) = t
     end
 
     module V5 = struct
@@ -46,21 +46,21 @@ module Stable = struct
                    ; feature_id
                    ; info
                    } =
-        V8.to_model
-          { V8.feature_path
+        V9.to_model
+          { feature_path
           ; feature_id
           ; info
-          ; augment_worker_cache = Worker_cache.From_worker_back_to_server.V3.empty
+          ; augment_worker_cache = Worker_cache.From_worker_back_to_server.V4.empty
           }
       ;;
 
       let of_model m =
-        let { V8.
+        let { V9.
               feature_path
             ; feature_id
             ; info
             ; augment_worker_cache = _
-            } = V8.of_model m in
+            } = V9.of_model m in
         { feature_path
         ; feature_id
         ; info
@@ -68,7 +68,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V8
+    module Model = V9
   end
 
   module Reaction = struct
@@ -82,8 +82,8 @@ open Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "update-bookmark" end)
-    (struct let version = 8 end)
-    (Stable.Action.V8)
+    (struct let version = 9 end)
+    (Stable.Action.V9)
     (Stable.Reaction.V1)
 
 (* Intent is to keep [5] always, and only the latest version including the worker_cache *)

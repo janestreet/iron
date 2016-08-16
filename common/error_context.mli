@@ -24,7 +24,6 @@ val augment
   -> t
   -> t
 
-val errorf  : t -> ('r, unit, string, unit -> _) format4 -> 'r
-val error_s : t -> Sexp.t -> _
-
-val raise  : t -> Error.t -> _
+val raise_f : t -> ('r, unit, string, unit -> _) format4 -> 'r
+val raise_s : t -> Sexp.t -> _
+val raise   : t -> Error.t -> _

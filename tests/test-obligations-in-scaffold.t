@@ -1,5 +1,6 @@
   $ start_test
 
+
 Kerberos authentication doesn't work for localhost because it matches on names, so
 we resolve localhost ourselves.
 

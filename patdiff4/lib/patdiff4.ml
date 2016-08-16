@@ -104,13 +104,7 @@ let diff
     ~include_hunk_breaks:true
     ~rev_names ~file_names ~header_file_name
     ~context ~scrutiny:None ~contents ()
-  |> (if false
-      then Hunk.list_to_lines
-      else (fun hunks ->
-        hunks
-        |> List.map ~f:Hunk.to_lines
-        |> List.concat_map
-             ~f:(List.concat_map ~f:(fun (hunk : Hunk.Lines.t) -> hunk.lines))))
+  |> Hunk.list_to_lines
 ;;
 
 let hunks

@@ -11,7 +11,7 @@
  (.fe.sexp
   ((build_projections (base)) (fewer_than_min_reviewers false) (followers ())
    (is_read_by_whole_feature_reviewers true) (more_than_max_reviewers false)
-   (owner user1) (review_obligation (All_of (user1 user2 user3)))
+   (owner user1) (review_obligation (All_of (user0 user1 user2 user3)))
    (scrutiny_level 85) (scrutiny_name high)))
  (a.hack
   ((build_projections (base)) (fewer_than_min_reviewers false) (followers ())

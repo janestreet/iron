@@ -37,7 +37,7 @@ let eval t ~universe e =
     in
     if Set.is_empty matching
     then
-      Error_context.error_s e
+      Error_context.raise_s e
         [%sexp "glob did not match any files", (glob : Simple_glob.t)];
     matching
   in
@@ -47,7 +47,7 @@ let eval t ~universe e =
         Whole_regexp.matches re2 (File_name.to_string file_name))
     in
     if Set.is_empty matching
-    then Error_context.error_s e
+    then Error_context.raise_s e
            [%sexp "regexp didn't match any files", (re2 : Whole_regexp.t)];
     matching
   in
@@ -70,7 +70,7 @@ let eval t ~universe e =
       in
       if not (List.is_empty not_in_universe)
       then
-        Error_context.error_s e
+        Error_context.raise_s e
           [%sexp "reference to non-existent files", (not_in_universe : File_name.t list)];
       File_name.Set.of_list files
   in

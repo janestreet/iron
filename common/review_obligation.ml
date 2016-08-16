@@ -149,13 +149,13 @@ let none = All_of User_name.Set.empty
 let all_of users = All_of users
 
 let at_least_wide e k users =
-  if k > Set.length users then Error_context.errorf e "unsatisfiable [At_least]" ();
-  if k <= 0 then Error_context.errorf e "[At_least] must get positive int" ();
+  if k > Set.length users then Error_context.raise_f e "unsatisfiable [At_least]" ();
+  if k <= 0 then Error_context.raise_f e "[At_least] must get positive int" ();
   At_least_wide (k, users)
 ;;
 
 let or_wide e = function
-  | [] -> Error_context.errorf e "[Or] must have at least one clause" ()
+  | [] -> Error_context.raise_f e "[Or] must have at least one clause" ()
   | [ t ] -> t
   | (_ :: _ :: _) as ts -> Or_wide ts
 ;;

@@ -46,7 +46,7 @@ Show attributes.
   $ fe show root/child -remote-repo-path
   $TESTTMP/repo
 
-Check that show works both when providing and id or a feature path.
+Check that show works both when providing an id or a feature path.
 
   $ fe show root/child -feature-path
   root/child

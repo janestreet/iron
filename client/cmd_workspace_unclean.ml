@@ -65,17 +65,17 @@ module Workspaces_status = struct
     let%map unclean_workspaces =
       Deferred.List.map ~how:(`Max_concurrent_jobs 10) features ~f:(fun feature_path ->
         let%map status =
-          match%bind Feature_share.find feature_path with
-          | Some share -> Feature_share.unclean_status share
+          match%bind Workspace.find feature_path with
+          | Some share -> Workspace.unclean_status share
           | None ->
             return
               (if workspace_not_found_is_an_error
                then
-                 (Feature_share.Unclean_status.Unclean
+                 (Workspace.Unclean_status.Unclean
                     (Unclean_workspace_reason.error
                        (Error.create "workspace not found"
                           feature_path [%sexp_of: Feature_path.t])))
-               else Feature_share.Unclean_status.Clean)
+               else Workspace.Unclean_status.Clean)
         in
         match status with
         | Clean -> Hash_set.add clean_workspaces feature_path; None
@@ -87,9 +87,9 @@ module Workspaces_status = struct
   ;;
 
   let compute_all () =
-    let%bind shares = Feature_share.list () in
+    let%bind shares = Workspace.list () in
     shares
-    |> List.map ~f:Feature_share.feature_path
+    |> List.map ~f:Workspace.feature_path
     |> compute
   ;;
 end

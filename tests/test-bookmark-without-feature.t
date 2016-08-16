@@ -14,16 +14,19 @@ Initially, the feature has a bookmark.
   > ((remote_repo_path $PWD)
   >  (bookmarks (
   >    ((bookmark root)
-  >     (first_12_of_rev $REV12)
-  >     (rev_author_or_error (Ok unix-login-for-testing))
+  >     (rev_info
+  >       ((first_12_of_rev $REV12)
+  >        (rev_author_or_error (Ok unix-login-for-testing))))
   >     (status Done)
-  >    )
+  >     (continuous_release_status Not_working_on_it)
+  >     (compilation_status ()))
   >    ((bookmark root/without-feature)
-  >     (first_12_of_rev $REV12)
-  >     (rev_author_or_error (Ok unix-login-for-testing))
+  >     (rev_info
+  >       ((first_12_of_rev $REV12)
+  >        (rev_author_or_error (Ok unix-login-for-testing))))
   >     (status Done)
-  >    )
-  >  )))
+  >     (continuous_release_status Not_working_on_it)
+  >     (compilation_status ())))))
   > EOF
   ((bookmarks_to_rerun (root)))
 
@@ -40,16 +43,19 @@ An admin can clear the bookmarks without a feature.
   > ((remote_repo_path $PWD)
   >  (bookmarks (
   >    ((bookmark root)
-  >     (first_12_of_rev $REV12)
-  >     (rev_author_or_error (Ok unix-login-for-testing))
+  >     (rev_info
+  >       ((first_12_of_rev $REV12)
+  >        (rev_author_or_error (Ok unix-login-for-testing))))
   >     (status Done)
-  >    )
+  >     (continuous_release_status Not_working_on_it)
+  >     (compilation_status ()))
   >    ((bookmark root/without-feature)
-  >     (first_12_of_rev $REV12)
-  >     (rev_author_or_error (Ok unix-login-for-testing))
+  >     (rev_info
+  >       ((first_12_of_rev $REV12)
+  >        (rev_author_or_error (Ok unix-login-for-testing))))
   >     (status Done)
-  >    )
-  >  )))
+  >     (continuous_release_status Not_working_on_it)
+  >     (compilation_status ())))))
   > EOF
   ((bookmarks_to_rerun (root)))
 

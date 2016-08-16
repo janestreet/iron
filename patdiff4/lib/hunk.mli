@@ -9,7 +9,6 @@ module View_ids_shown : sig
 end
 
 
-
 type t =
   { header_file_name          : string
   ; scrutiny                  : File_scrutiny.t option
@@ -22,18 +21,6 @@ type t =
 [@@deriving fields, sexp_of]
 
 val align_alist : (string * string) list -> string list
-
-module Lines : sig
-  type t =
-    { id           : Diff_algo.Id.t
-    ; jump_to_line : Jump_to_line.t
-    ; lines        : string list
-    }
-end
-
-val to_lines
-  : t
-  -> Lines.t list
 
 val num_lines_to_review : t -> int
 

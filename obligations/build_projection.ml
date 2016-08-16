@@ -4,11 +4,11 @@ module Stable = struct
 
   module Scrutiny = Scrutiny.Stable
 
-  module V1 = struct
+  module V2 = struct
     module Unshared = struct
       type t =
         { name                    : Build_projection_name.V1.t
-        ; default_scrutiny        : Scrutiny.V1.t
+        ; default_scrutiny        : Scrutiny.V2.t
         ; require_low_review_file : bool
         }
       [@@deriving bin_io, compare, fields, sexp]
@@ -20,7 +20,7 @@ module Stable = struct
     include Hash_consing.Make_stable_public (Unshared) ()
   end
 
-  module Model = V1
+  module Model = V2
 end
 
 open! Core.Std

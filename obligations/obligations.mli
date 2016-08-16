@@ -35,10 +35,10 @@ val fake
   -> t
 
 module Stable : sig
-  module V3 : sig
+  module V4 : sig
     type model
     type t =
-      { obligations_repo : Obligations_repo.Stable.V3.t
+      { obligations_repo : Obligations_repo.Stable.V4.t
       ; by_path          : (Path_in_repo.Stable.V1.t * Review_attributes.Stable.V2.t) list
       }
     include Stable_without_comparator with type t := t

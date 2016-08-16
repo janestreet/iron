@@ -75,9 +75,12 @@ Synchronize state adds the bookmark if it does mention it.
   $ fe internal rpc-to-server call synchronize-state <<EOF
   > ((remote_repo_path $PWD)
   >  (bookmarks (((bookmark root)
-  >               (first_12_of_rev ${tip:0:12})
-  >               (rev_author_or_error (Ok committer))
-  >               (status Done)))))
+  >               (rev_info
+  >                 ((first_12_of_rev ${tip:0:12})
+  >                  (rev_author_or_error (Ok committer))))
+  >               (status Done)
+  >               (continuous_release_status Not_working_on_it)
+  >               (compilation_status ())))))
   > EOF
   ((bookmarks_to_rerun ()))
   $ fe show -has-bookmark

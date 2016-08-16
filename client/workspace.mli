@@ -1,6 +1,6 @@
-(** A feature share is an hg share of a feature in the user's workspace basedir, including
-    all the feature repo's satellites if it is scaffolded.  Share basenames are [+share+].
-*)
+(** A workspace is one or several hg shares dedicated to a feature.  Workspaces are placed
+    in the user's workspace basedir, and they include all the feature repo's satellites if
+    it is scaffolded.  Share basenames are [+share+]. *)
 
 open! Core.Std
 open! Async.Std

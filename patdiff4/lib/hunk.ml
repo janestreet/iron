@@ -242,25 +242,6 @@ let nested_views ?hunk_name t =
     view, Nesting.group blocks)
 ;;
 
-module Lines = struct
-  type t =
-    { id           : Diff_algo.Id.t
-    ; jump_to_line : Jump_to_line.t
-    ; lines        : string list
-    }
-end
-
-let to_lines t =
-  let views = nested_views ?hunk_name:None t in
-  List.filter_map views ~f:(fun (view, nesting) ->
-    let id = Diff_algo.View.id view in
-    let jump_to_line = Diff_algo.View.jump_to_line view in
-    let lines = Nesting.to_strings nesting in
-    if List.is_empty lines
-    then None
-    else Some { Lines. id ; jump_to_line ; lines })
-;;
-
 let align_alist alist =
   let max_len =
     List.fold alist ~init:0

@@ -14,15 +14,15 @@ module If_enabled = struct
 
   let create_workspace feature =
     if_enabled (fun () ->
-      let%map (_ : Feature_share.t) = Feature_share.force feature in
+      let%map (_ : Workspace.t) = Workspace.force feature in
       ())
   ;;
 
   let delete_workspace f =
     if_enabled (fun () ->
-      match%bind Feature_share.find f with
+      match%bind Workspace.find f with
       | None -> Deferred.unit
-      | Some s -> Feature_share.delete s)
+      | Some s -> Workspace.delete s)
   ;;
 
   let rename_workspaces renames =
@@ -38,9 +38,9 @@ module If_enabled = struct
       in
       Deferred.List.iter ~how:`Sequential renames
         ~f:(fun { Rename. feature_id; from; to_ } ->
-          match%bind Feature_share.find from with
+          match%bind Workspace.find from with
           | None -> Deferred.unit
-          | Some src_share -> Feature_share.move_to src_share feature_id to_))
+          | Some src_share -> Workspace.move_to src_share feature_id to_))
   ;;
 
   let update_satellite_repos ~center_repo_root =
@@ -86,9 +86,9 @@ let dir_command =
          print_endline (Repo_clone.workspaces_basedir () |> Abspath.to_string);
          Deferred.unit
        | `Feature_dir feature_path ->
-         match%map Feature_share.find feature_path with
+         match%map Workspace.find feature_path with
          | Some share ->
-           print_endline (Repo_root.to_string (Feature_share.center_repo_root share))
+           print_endline (Repo_root.to_string (Workspace.center_repo_root share))
          | None ->
            raise_s
              [%sexp "you don't have a workspace for", (feature_path : Feature_path.t)]
@@ -154,13 +154,13 @@ but is inside a clone of the [%{Feature_name}] family"
         | Yes feature_id ->
           match use with
           | `Share ->
-            let%map share = Feature_share.force { feature_id; feature_path } in
-            Feature_share.center_repo_root share
+            let%map share = Workspace.force { feature_id; feature_path } in
+            Workspace.center_repo_root share
           | `Share_or_clone_if_share_does_not_exist ->
-            match%bind Feature_share.find ~feature_id feature_path with
+            match%bind Workspace.find ~feature_id feature_path with
             | None -> use_clone ()
-            | Some feature_share ->
-              return (Feature_share.center_repo_root feature_share)
+            | Some workspace ->
+              return (Workspace.center_repo_root workspace)
     in
     match Repo_root.program_started_in with
     | Error _ -> default_workspace_logic ()
@@ -171,7 +171,7 @@ but is inside a clone of the [%{Feature_name}] family"
         | Ok repo_root_family ->
           Feature_name.equal repo_root_family (Feature_path.root feature_path)
       in
-      match Feature_share.extract_feature_from_workspace_share_path repo_root with
+      match Workspace.extract_feature_from_workspace_share_path repo_root with
       | None ->
         if repo_root_is_of_correct_family
         then return repo_root
@@ -423,13 +423,13 @@ running other workspace commands."
              ()
 
            | `Feature feature_path ->
-             match%bind Feature_share.find feature_path with
+             match%bind Workspace.find feature_path with
              | Some _ -> return ()
              | None ->
                match%bind Feature_exists.rpc_to_server_exn feature_path with
                | Yes feature_id ->
-                 let%map (_ : Feature_share.t) =
-                   Feature_share.force { feature_id; feature_path }
+                 let%map (_ : Workspace.t) =
+                   Workspace.force { feature_id; feature_path }
                  in
                  ()
 
@@ -454,9 +454,9 @@ let list_command =
      let%map_open () = return () in
      fun () ->
        let open! Deferred.Let_syntax in
-       let%map feature_shares = Feature_share.list () in
-       List.iter feature_shares ~f:(fun share ->
-         print_endline (Feature_path.to_string (Feature_share.feature_path share)))
+       let%map workspaces = Workspace.list () in
+       List.iter workspaces ~f:(fun share ->
+         print_endline (Feature_path.to_string (Workspace.feature_path share)))
     )
 ;;
 
@@ -466,7 +466,7 @@ let check_shares shares ~f =
     Deferred.List.iter ~how:(`Max_concurrent_jobs 10) shares ~f:(fun share ->
     match%map Deferred.Or_error.try_with_join (fun () -> f share) with
     | Ok () -> ()
-    | Error err -> errors := (Feature_share.feature_path share, err) :: !errors)
+    | Error err -> errors := (Workspace.feature_path share, err) :: !errors)
   in
   List.sort !errors ~cmp:(fun (f1, _) (f2, _) -> Feature_path.compare f1 f2)
 ;;
@@ -474,10 +474,10 @@ let check_shares shares ~f =
 let check_workspaces which_workspaces ~f =
   match which_workspaces with
   | `All ->
-    let%bind shares = Feature_share.list () in
+    let%bind shares = Workspace.list () in
     check_shares shares ~f
   | `Feature_path feature_path ->
-    match%bind Feature_share.find feature_path with
+    match%bind Workspace.find feature_path with
     | Some share -> check_shares [ share ] ~f
     | None ->
       return [ feature_path
@@ -495,7 +495,7 @@ let check_workspaces_invariant_command =
      fun () ->
        let open! Deferred.Let_syntax in
        let%map errors =
-         check_workspaces ~f:Feature_share.check_workspace_invariant
+         check_workspaces ~f:Workspace.check_workspace_invariant
            (match ok_exn feature_opt with
             | None -> `All
             | Some feature -> `Feature_path feature)
@@ -532,7 +532,7 @@ let confirm_or_dry_run shares ~dry_run ~action ~process_share =
           (concat
              (List.concat_map shares ~f:(fun share ->
                 [ "  "
-                ; Feature_path.to_string (Feature_share.feature_path share)
+                ; Feature_path.to_string (Workspace.feature_path share)
                 ; "\n"
                 ])))))
   in
@@ -555,7 +555,7 @@ let confirm_or_dry_run shares ~dry_run ~action ~process_share =
   then Deferred.unit
   else
     run_concurrent_actions_exn shares ~f:process_share
-      ~get_feature_path:Feature_share.feature_path ~action
+      ~get_feature_path:Workspace.feature_path ~action
       ~max_concurrent_jobs:10
 ;;
 
@@ -610,9 +610,9 @@ let select_shares ~which_features ~exclusions ~for_ ~exclude_features_in_my_todo
       ; exclude_features_in_my_todo
       ]
   in
-  let%map shares = Feature_share.list () in
+  let%map shares = Workspace.list () in
   List.filter shares ~f:(fun share ->
-    let share_path = Feature_share.feature_path share in
+    let share_path = Workspace.feature_path share in
     not (Set.mem exclusions share_path)
     && Which_features.mem which_features share_path)
 ;;
@@ -663,7 +663,7 @@ In doubt, run the command with [" ; dry_run_switch ; "] to see what would be don
          select_shares ~which_features ~exclusions ~for_ ~exclude_features_in_my_todo
        in
        confirm_or_dry_run ~dry_run ~action:"distclean" shares
-         ~process_share:Feature_share.distclean
+         ~process_share:Workspace.distclean
     )
 ;;
 
@@ -711,7 +711,7 @@ unpushed changes and fail instead, in order to preserve those changes.
            ]
        in
        let%bind shares =
-         let%bind shares = Feature_share.list () in
+         let%bind shares = Workspace.list () in
          let%map existing_features =
            List_feature_names.rpc_to_server_exn
              { descendants_of = Any_root
@@ -723,14 +723,14 @@ unpushed changes and fail instead, in order to preserve those changes.
            Feature_path.Set.of_list existing_features
          in
          List.filter shares ~f:(fun share ->
-           let share_path = Feature_share.feature_path share in
+           let share_path = Workspace.feature_path share in
            not (Set.mem excluded share_path)
            && (Which_features.mem which_features share_path
                || (workspaces_without_feature
                    && not (Set.mem existing_features share_path))))
        in
        confirm_or_dry_run shares ~dry_run ~action:"delete"
-         ~process_share:Feature_share.delete
+         ~process_share:Workspace.delete
     )
 ;;
 
@@ -771,8 +771,8 @@ Check on the localhost that the user has a workspace for a specified feature or 
             | None -> false)
 
          | `Feature feature ->
-           (match%map Feature_share.find (ok_exn feature) with
-            | Some (_ : Feature_share.t) -> true
+           (match%map Workspace.find (ok_exn feature) with
+            | Some (_ : Workspace.t) -> true
             | None -> false)
        in
        printf "%b\n" exists
@@ -807,8 +807,23 @@ this command to work for non emacs users, while offering a cleaner kill for emac
          select_shares ~which_features ~exclusions ~for_ ~exclude_features_in_my_todo
        in
        confirm_or_dry_run shares ~dry_run ~action:"kill-build"
-         ~process_share:Feature_share.kill_build
+         ~process_share:Workspace.kill_build
     )
+;;
+
+let pwd_command =
+  Command.async'
+    ~summary:"output the current feature path if you are currently in a \
+              workspace directory, or fail otherwise"
+    (let open Command.Let_syntax in
+     let%map_open () = return () in
+     fun () ->
+       let open! Deferred.Let_syntax in
+       match Or_error.map Repo_root.program_started_in
+               ~f:Workspace.extract_feature_from_workspace_share_path
+       with
+       | Ok Some p         -> printf !"%{Feature_path}\n" p; Deferred.unit
+       | Ok None | Error _ -> failwith "Current directory is not in an Iron workspace.")
 ;;
 
 let workspace_commands =
@@ -819,6 +834,7 @@ let workspace_commands =
   ; "exists"           , exists_command
   ; "kill-build"       , kill_build_command
   ; "list"             , list_command
+  ; "pwd"              , pwd_command
   ; "unclean"          , Cmd_workspace_unclean.command
   ]
 ;;

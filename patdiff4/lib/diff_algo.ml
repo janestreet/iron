@@ -17,7 +17,6 @@ end
 module View = struct
   type t =
     { id           : Id.t
-    ; jump_to_line : Jump_to_line.t
     ; blocks       : Block.t list
     }
   [@@deriving fields, sexp_of]
@@ -166,8 +165,7 @@ let resolve_diff_algo ~include_hunk_breaks ~diff4_class:_
   in
   let lines = diff_of_change ~include_hunk_breaks ~header ~context change in
   { View.id = `conflict_resolution
-  ; jump_to_line = line_start
-  ; blocks = [ { Block.hint = [] ; lines } ]
+  ; blocks  = [ { Block.hint = [] ; lines } ]
   }
 ;;
 
@@ -228,7 +226,6 @@ let make_ddiff_algo_fun ~id ?(hint=[]) a b ~include_hunk_breaks ~diff4_class
       ~include_hunk_breaks ~header ~context change
   in
   { View.id
-  ; jump_to_line = (Diamond.new_tip full_diff).Slice.range.Range.line_start
   ; blocks = [ { Block.hint ; lines } ]
   }
 ;;
@@ -272,7 +269,6 @@ let build_diff_algo_fun ~id ?(hint=[]) (from, to_) ~include_hunk_breaks ~diff4_c
       ~context full_diff
   in
   { View.id
-  ; jump_to_line = (Diamond.new_tip full_diff).Slice.range.Range.line_start
   ; blocks = [ { Block.hint ; lines } ]
   }
 ;;
@@ -345,7 +341,6 @@ let story ~dropped_hint ~dropped_elements ~in_favor_hint ~in_favor_elements =
         ~context full_diff
     in
     { View.id = `story
-    ; jump_to_line = (Diamond.new_tip full_diff).Slice.range.Range.line_start
     ; blocks =
         [ { Block.hint = [ dropped_hint ]
           ; lines = build_diff dropped_elements
@@ -445,8 +440,7 @@ let display_errors errors =
     in
     let view =
       { View.
-        id = `metadata "errors"
-      ; jump_to_line = 0
+        id     = `metadata "errors"
       ; blocks = [ error_block ]
       }
     in

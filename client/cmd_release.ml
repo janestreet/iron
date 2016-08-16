@@ -144,13 +144,13 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
       match Feature_path.parent feature_path with
       | Error _ -> Deferred.unit
       | Ok parent_path ->
-        match%bind Feature_share.find parent_path with
+        match%bind Workspace.find parent_path with
         | None -> Deferred.unit
         | Some parent_workspace ->
           if true
           then Deferred.unit
           else (
-            let parent_repo_root = Feature_share.center_repo_root parent_workspace in
+            let parent_repo_root = Workspace.center_repo_root parent_workspace in
             Interactive.Job.run "Updating parent workspace to new released tip"
               ~f:(fun () ->
                 Cmd_review.pull_and_update

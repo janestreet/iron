@@ -45,7 +45,7 @@ let eval_exn e t group =
   match Map.find t group with
   | Some users -> users
   | None ->
-    Error_context.error_s e [%sexp "no such group", (group : Group_name.t)]
+    Error_context.raise_s e [%sexp "no such group", (group : Group_name.t)]
 ;;
 
 let extend t1 ~add_or_override_with:t2 =

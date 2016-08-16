@@ -55,19 +55,19 @@ be updated during that process, by adding the following in one's ferc file:
        else (
          Client_config.Workspaces.are_enabled_exn client_config;
          let%bind shares =
-           let%map shares = Feature_share.list () in
+           let%map shares = Workspace.list () in
            let do_not_auto_update =
              Client_config.Workspaces.do_not_auto_update client_config
            in
            List.filter shares ~f:(fun share ->
-             not (Set.mem do_not_auto_update (Feature_share.feature_path share)))
+             not (Set.mem do_not_auto_update (Workspace.feature_path share)))
          in
          let%map updates =
            Deferred.List.map ~how:(`Max_concurrent_jobs 5) shares ~f:(fun share ->
-             let feature_path = Feature_share.feature_path share in
-             let repo_root = Feature_share.center_repo_root share in
+             let feature_path = Workspace.feature_path share in
+             let repo_root = Workspace.center_repo_root share in
              Monitor.try_with_or_error (fun () ->
-               match%bind Feature_share.unclean_status share with
+               match%bind Workspace.unclean_status share with
                | Unclean _ -> return ()
                | Clean ->
                  match%bind

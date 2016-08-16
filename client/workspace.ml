@@ -270,7 +270,7 @@ let share_or_clone_and_update
 
 let force { Workspace_hgrc.Feature. feature_id;  feature_path } =
   if verbose
-  then Debug.ams [%here] "Feature_share.force" feature_path [%sexp_of: Feature_path.t];
+  then Debug.ams [%here] "Workspace.force" feature_path [%sexp_of: Feature_path.t];
   let enclosing_repo_root_abspath = enclosing_repo_root_abspath feature_path in
   let tmp_location =
     let n = ref 0 in
@@ -386,7 +386,7 @@ let force { Workspace_hgrc.Feature. feature_id;  feature_path } =
 
 let find ?feature_id feature_path =
   if verbose
-  then Debug.ams [%here] "Feature_share.find" feature_path [%sexp_of: Feature_path.t];
+  then Debug.ams [%here] "Workspace.find" feature_path [%sexp_of: Feature_path.t];
   let enclosing_repo_root_abspath = enclosing_repo_root_abspath feature_path in
   match%bind Sys.is_directory_exn (Abspath.to_string enclosing_repo_root_abspath) with
   | false -> return None
@@ -672,7 +672,7 @@ let delete t =
 
 let move_to src feature_id dst_feature =
   if verbose
-  then Debug.ams [%here] "Feature_share.move_to" (src, dst_feature)
+  then Debug.ams [%here] "Workspace.move_to" (src, dst_feature)
          [%sexp_of: t * Feature_path.t];
   let enclosing_repo_root_abspath = enclosing_repo_root_abspath dst_feature in
   match%bind Sys.is_directory_exn (Abspath.to_string enclosing_repo_root_abspath) with

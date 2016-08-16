@@ -11,15 +11,14 @@ module Stable = struct
   module Groups                      = Groups.                      Stable
   module Obligations_global          = Obligations_global.          Stable
 
-  module V3 = struct
+  module V4 = struct
     module Unshared = struct
       type t =
-        { build_projections    : Build_projection.V1.t Build_projection_name.V1.Map.t
+        { build_projections    : Build_projection.V2.t Build_projection_name.V1.Map.t
         ; tags                 : Tag.V1.Set.t
-        ; use_cr_spec          : bool
         ; users                : Unresolved_name.V1.Set.t
         ; groups               : Groups.V1.t
-        ; obligations_global   : Obligations_global.V3.t
+        ; obligations_global   : Obligations_global.V4.t
         ; allow_review_for     : Allow_review_for.V1.t
         }
       [@@deriving bin_io, compare, fields, sexp]
@@ -32,18 +31,17 @@ module Stable = struct
         Fields.fold
           ~init:Hash_consing.init
           ~build_projections:(hash (Build_projection_name.V1.Map.hash
-                                       Build_projection.V1.hash))
+                                       Build_projection.V2.hash))
           ~tags:(hash Tag.V1.Set.hash)
-          ~use_cr_spec:(hash (Hashtbl.hash : bool -> int))
           ~users:(hash Unresolved_name.V1.Set.hash)
           ~groups:(hash Groups.V1.hash)
-          ~obligations_global:(hash Obligations_global.V3.hash)
+          ~obligations_global:(hash Obligations_global.V4.hash)
           ~allow_review_for:(hash Allow_review_for.V1.hash)
     end
     include Unshared
     include Hash_consing.Make_stable_public (Unshared) ()
   end
-  module Model = V3
+  module Model = V4
 end
 
 open! Core.Std
@@ -91,7 +89,6 @@ type deprecated_use_cr_spec = bool [@@deriving sexp_of]
 type t = Stable.Model.t =
    { build_projections    : Build_projection.t Build_projection_name.Map.t
    ; tags                 : Tag.Set.t
-   ; use_cr_spec          : deprecated_use_cr_spec
    ; users                : Unresolved_name.Set.t
    ; groups               : Groups.t
    ; obligations_global   : Obligations_global.t
@@ -143,12 +140,12 @@ let eval
       | Define_build_projection (name, { default_scrutiny; require_low_review_file }) ->
         (if Hashtbl.mem build_projections name
          then
-           Error_context.error_s e
+           Error_context.raise_s e
              [%sexp "multiply defined build projection"
                   , (name : Build_projection_name.t)]);
         (match Map.find obligations_global.scrutinies default_scrutiny with
          | None ->
-           Error_context.error_s e
+           Error_context.raise_s e
              [%sexp "undefined scrutiny", (default_scrutiny : Scrutiny_name.t)]
          | Some default_scrutiny ->
            Hashtbl.add_exn build_projections ~key:name
@@ -158,18 +155,18 @@ let eval
         List.iter define_tags ~f:(fun tag ->
           if Hash_set.mem tags tag
           then
-            Error_context.error_s e
+            Error_context.raise_s e
               [%sexp "multiply defined tag", (tag : Tag.t)];
           Hash_set.add tags tag;
         )
       | Define_group (group_name, users_in_group) ->
         if Hashtbl.mem groups group_name
-        then Error_context.error_s e
+        then Error_context.raise_s e
                [%sexp "multiply defined group", (group_name : Group_name.t)]
         else Hashtbl.set groups ~key:group_name ~data:users_in_group
       | Scaffold_requires_global_tag_or_rev_hash -> ()
       | Use_cr_spec ->
-        Error_context.error_s e
+        Error_context.raise_s e
           [%sexp "Use_cr_spec is deprecated.  Old projections \
                   format is no longer supported"
           ]
@@ -182,7 +179,7 @@ let eval
     let check_duplicate_global label sexp_of_a duplicate_set =
       if not (Set.is_empty duplicate_set)
       then
-        Error_context.error_s e
+        Error_context.raise_s e
           [%sexp (sprintf "\
 remove %s from .fe/obligations-repo.sexp that are also in .fe/obligations-global.sexp \
 (which comes from the scaffolded repo)"
@@ -212,7 +209,6 @@ remove %s from .fe/obligations-repo.sexp that are also in .fe/obligations-global
                                        |> Hashtbl.to_alist
                                        |> Build_projection_name.Map.of_alist_exn
       ; tags                         = known_tags
-      ; use_cr_spec                  = false
       ; users                        = known_users
       ; groups
       ; allow_review_for

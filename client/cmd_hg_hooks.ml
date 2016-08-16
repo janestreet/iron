@@ -28,7 +28,7 @@ module Hook_name = struct
 end
 
 let compute_unclean_workspace_and_update_server ~repo_root =
-  match Feature_share.extract_feature_from_workspace_share_path repo_root with
+  match Workspace.extract_feature_from_workspace_share_path repo_root with
   | None -> return ()
   | Some current_feature ->
     Cmd_workspace_unclean.compute_and_update_server_exn ~for_:User_name.unix_login

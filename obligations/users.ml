@@ -18,7 +18,7 @@ let eval_users users e ~aliases ~allowed_users =
     List.map users ~f:(fun user ->
       User_name_by_alternate_name.to_user_name aliases user)
   else
-    Error_context.error_s e
+    Error_context.raise_s e
       [%sexp "users not in obligations-global.sexp or obligations-repo.sexp",
              (missing : Unresolved_name.t list)
       ]

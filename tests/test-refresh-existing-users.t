@@ -41,9 +41,13 @@ Create a bookmark without feature.
   $ fe internal rpc-to-server call synchronize-state <<EOF
   > ((remote_repo_path $PWD)
   >  (bookmarks
-  >   (((bookmark book) (first_12_of_rev deadbeef1234)
-  >     (rev_author_or_error (Ok bookmark-user))
-  >     (status Pending_or_working_on_it)))))
+  >   (((bookmark book)
+  >     (rev_info
+  >       ((first_12_of_rev deadbeef1234)
+  >        (rev_author_or_error (Ok bookmark-user))))
+  >     (status Pending_or_working_on_it)
+  >     (continuous_release_status Not_working_on_it)
+  >     (compilation_status ())))))
   > EOF
   ((bookmarks_to_rerun ()))
 

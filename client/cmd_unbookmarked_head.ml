@@ -13,7 +13,7 @@ let prune ~root_feature rev =
   then return ()
   else (
     match%map
-      Interactive.Job.run !"Pruning head: %{Rev#hum}" rev
+      Async_interactive.Job.run !"Pruning head: %{Rev#hum}" rev
         ~f:(fun () ->
           Process.run ()
             ~prog:"/j/office/app/hydra/prod/bin/hydra"

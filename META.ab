@@ -2,7 +2,7 @@
 package "client" (
   version = "$(pkg_version)"
   description = ""
-  requires = "async async_extended bin_prot command_rpc core core_extended fieldslib iron.common iron.hg iron.ml-api iron.obligations iron.pdiff4 iron.protocol patdiff.lib ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib re2 sexplib typerep variantslib"
+  requires = "async async_extended async_interactive bin_prot command_rpc core core_extended fieldslib iron.common iron.hg iron.ml-api iron.obligations iron.pdiff4 iron.protocol patdiff.lib ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib re2 sexplib typerep variantslib"
   archive(byte  ) = "iron_client.cma"
   archive(native) = "iron_client.cmxa"
   plugin(byte  ) = "iron_client.cma"
@@ -24,7 +24,7 @@ package "common" (
 package "hg" (
   version = "$(pkg_version)"
   description = ""
-  requires = "async bin_prot core fieldslib iron.common iron.obligations ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib re2 sexplib typerep variantslib"
+  requires = "async async_interactive bin_prot core fieldslib iron.common iron.obligations ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib re2 sexplib typerep variantslib"
   archive(byte  ) = "iron_hg.cma"
   archive(native) = "iron_hg.cmxa"
   plugin(byte  ) = "iron_hg.cma"
@@ -35,7 +35,7 @@ package "hg" (
 package "ml-api" (
   version = "$(pkg_version)"
   description = ""
-  requires = "async bin_prot command_rpc core core_extended fieldslib iron.common iron.hg iron.protocol ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib sexplib typerep variantslib"
+  requires = "async async_interactive bin_prot command_rpc core core_extended fieldslib iron.common iron.hg iron.protocol ppx_assert.runtime-lib ppx_bench.runtime-lib ppx_expect.collector ppx_hash.runtime-lib ppx_inline_test.runtime-lib sexplib typerep variantslib"
   archive(byte  ) = "iron.cma"
   archive(native) = "iron.cmxa"
   plugin(byte  ) = "iron.cma"

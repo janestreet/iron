@@ -681,7 +681,7 @@ end = struct
     | Some t -> return (Ok t)
     | None ->
       let%map result =
-        Interactive.Job.run !"Checking cleanliness of %{Repo_root#hum}" repo_root
+        Async_interactive.Job.run !"Checking cleanliness of %{Repo_root#hum}" repo_root
           ~f:(fun () -> hg ~repo_root "status" ~args:[] ~how:Capture_stdout)
       in
       let report = ok_exn result in
@@ -767,7 +767,7 @@ let commit ?(metadata = String.Map.empty) repo_root ~message =
 ;;
 
 let distclean repo_root =
-  Interactive.Job.run !"Distcleaning %{Repo_root#hum}" repo_root
+  Async_interactive.Job.run !"Distcleaning %{Repo_root#hum}" repo_root
     ~f:(fun () -> hg ~repo_root "distclean" ~args:[] ~how:Share_io)
 ;;
 
@@ -901,7 +901,7 @@ let manifest repo_root source =
 ;;
 
 let outgoing repo_root (`Feature feature_path) ~to_ =
-  Interactive.Job.run !"Checking for outgoing changesets in %{Repo_root#hum}" repo_root
+  Async_interactive.Job.run !"Checking for outgoing changesets in %{Repo_root#hum}" repo_root
     ~f:(fun () ->
       match%map
         hg ~repo_root "outgoing" ~how:Capture_output
@@ -984,7 +984,7 @@ let pull ?(even_if_unclean = false) ?repo_is_clean repo_root ~from what_to_pull 
           ())
       in
       let pull revs to_string to_string_hum =
-        Interactive.Job.run "Pulling %s%s"
+        Async_interactive.Job.run "Pulling %s%s"
           (match revs with
            | [] -> "all revisions "
            | [ r ] -> concat [ to_string_hum r; " " ]
@@ -1160,7 +1160,7 @@ let push repo_root bookmarks ~to_ ~overwrite_bookmark =
              concat [ "  "; Bookmark.to_string bookmark; "\n" ])))
     in
     let%bind output =
-      Interactive.Job.run "%s" msg ~f:(fun () ->
+      Async_interactive.Job.run "%s" msg ~f:(fun () ->
         let flag = if overwrite_bookmark then "-B" else "-r" in
         hg ~repo_root "push" ~how:Capture_output
           ~args:(List.concat_map bookmarks
@@ -1373,7 +1373,7 @@ let update
      to ensure that the current working directory remains valid. *)
   let%bind () = Unix.chdir (Repo_root.to_string repo_root) in
   let%map update_result =
-    Interactive.Job.run !"Updating %{Repo_root#hum} to %s" repo_root rev_for_hum
+    Async_interactive.Job.run !"Updating %{Repo_root#hum} to %s" repo_root rev_for_hum
       ~f:(fun () ->
         hg ~repo_root "update" ~how:Share_io
           ~args:([ "-r"; rev_for_hg
@@ -1454,7 +1454,7 @@ let remove_dot_projections_if_rebasing_across_switch_to_dot_fe
   | false -> return ()
   | true ->
     let%bind () =
-      Interactive.printf "Removing .projections due to rebase across switch-to-dot-fe.\n"
+      Async_interactive.printf "Removing .projections due to rebase across switch-to-dot-fe.\n"
     in
     let%bind rm_result =
       hg ~repo_root "rm" ~how:Capture_stdout ~args:[ ".projections" ]
@@ -1479,7 +1479,7 @@ let rebase ?merge_tool ?repo_is_clean
       ~old_tip ~new_base
   in
   let%bind () =
-    Interactive.printf "Merging with %s.\n" (Rev.to_string_hum new_base)
+    Async_interactive.printf "Merging with %s.\n" (Rev.to_string_hum new_base)
   in
   let accept_nonzero_exit =
     (* [hg merge] returns 0 on success, 1 if there are unresolved files (see [hg help
@@ -1491,7 +1491,7 @@ let rebase ?merge_tool ?repo_is_clean
     | None   -> [ 1 ]
   in
   let abort_rebase ~clean_after_update message error =
-    let%bind () = Interactive.printf "%s -- aborting rebase.\n" message in
+    let%bind () = Async_interactive.printf "%s -- aborting rebase.\n" message in
     let%bind () =
       update repo_root (`Feature feature_path)
         ~discard_uncommitted_changes:true

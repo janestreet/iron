@@ -213,8 +213,8 @@ When this is disabled the command fails, unless " ; Switch.do_nothing_if_not_ena
        then
          if do_nothing_if_not_enabled
          then
-           Interactive.printf "Unclean workspaces detection is not enabled, and the \
-                               switch %s was supplied.\nExiting with code 0\n"
+           Async_interactive.printf "Unclean workspaces detection is not enabled, and \
+                                     the switch %s was supplied.\nExiting with code 0\n"
              Switch.do_nothing_if_not_enabled
          else (
            Client_config.Workspaces.are_enabled_exn client_config;

@@ -50,7 +50,7 @@ let create_repo_if_it_does_not_exist name ~repo_root_abspath ~create_repo =
         (* We reduce a bit the amount of logging "waiting for lock...". *)
         let waiting_for_lock_event =
           Clock.Event.run_after (Time.Span.of_sec 20.) (fun () ->
-            Interactive.printf !"waiting for lock on %s ...\n" name)
+            Async_interactive.printf !"waiting for lock on %s ...\n" name)
             ()
         in
         Lock_file.Nfs.critical_section lockfile
@@ -61,7 +61,7 @@ let create_repo_if_it_does_not_exist name ~repo_root_abspath ~create_repo =
               | `Ok | `Previously_aborted () -> return ()
               | `Previously_happened continue ->
                 let%bind () = continue in
-                Interactive.printf !"done waiting for lock on %s\n" name
+                Async_interactive.printf !"done waiting for lock on %s\n" name
             in
             (* Whoever we were waiting on may already have done the job for us, so check
                one last time if the directory exists already. *)

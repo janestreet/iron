@@ -286,7 +286,7 @@ let force { Workspace_hgrc.Feature. feature_id;  feature_path } =
       ~repo_root_abspath:enclosing_repo_root_abspath
       ~create_repo:(fun () ->
         let%bind () =
-          Interactive.printf !"setting up share of %{Feature_path} ...\n" feature_path
+          Async_interactive.printf !"setting up share of %{Feature_path} ...\n" feature_path
         in
         (* We first create the center repo in a temporary location, [tmp_center], and then
            create the scaffolded root in a temporary location, [tmp_enclosing_repo_root],
@@ -374,7 +374,7 @@ let force { Workspace_hgrc.Feature. feature_id;  feature_path } =
               |> ok_exn
               |> (ignore : Process.t -> unit))
         in
-        Interactive.printf !"done setting up share of %{Feature_path}\n" feature_path)
+        Async_interactive.printf !"done setting up share of %{Feature_path}\n" feature_path)
   in
   let%bind center_relative_to_enclosing_repo =
     Scaffold.Center_relative_to_enclosing_repo.load_exn
@@ -512,7 +512,7 @@ let kill_build t =
       match%bind Build_manager.Jenga.kill jenga with
       | Ok () -> return ()
       | Error killing_jenga_err ->
-        Interactive.print_s
+        Async_interactive.print_s
           [%sexp
             "jenga seems to be running but failed to terminate",
             { workspace     = (t.feature_path    : Feature_path.t)
@@ -654,7 +654,7 @@ let delete t =
             ]
       in
       removing t ~f:(fun t ->
-        Interactive.Job.run !"deleting share of %{Feature_path}" t.feature_path
+        Async_interactive.Job.run !"deleting share of %{Feature_path}" t.feature_path
           ~f:(fun () -> Abspath.rm_rf_exn (Repo_root.to_abspath t.enclosing_repo_root)))
     )
   with

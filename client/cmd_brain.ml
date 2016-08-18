@@ -133,7 +133,7 @@ let forget =
        match what_to_forget with
        | `Files _ -> forget ()
        | `All ->
-         if not !Interactive.interactive
+         if not !Async_interactive.interactive
          then forget ()
          else (
            let%bind brain =
@@ -142,17 +142,17 @@ let forget =
            in
            if List.is_empty brain
            then
-             Interactive.print_endline
+             Async_interactive.print_endline
                "Your brain is already empty; there is nothing to forget."
            else (
-             let%bind () = Interactive.print_endline "" in
+             let%bind () = Async_interactive.print_endline "" in
              match%bind
-               Interactive.ask_yn ~default:false
+               Async_interactive.ask_yn ~default:false
                  (sprintf "Really forget above diffs for [%s]?"
                     (Feature_path.to_string feature_path))
              with
              | true -> forget ()
-             | false -> Interactive.print_endline "Quit")))
+             | false -> Async_interactive.print_endline "Quit")))
 ;;
 
 let show =

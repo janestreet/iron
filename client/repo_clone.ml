@@ -56,7 +56,7 @@ let force_memo =
           ~repo_root_abspath
           ~create_repo:(fun () ->
             let%bind () =
-              Interactive.printf !"setting up clone for %{Feature_name} ...\n%!"
+              Async_interactive.printf !"setting up clone for %{Feature_name} ...\n%!"
                 root_feature
             in
             let%bind repo_root =

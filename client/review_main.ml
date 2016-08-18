@@ -136,7 +136,7 @@ let rec hunk_by_hunk : type a.
       let module Choice = Review_util.Choice in
       let choices =
         [ Choice.quit
-        ; Interactive.Choice.default (Choice.show_again   "hunk")
+        ; Async_interactive.Choice.default (Choice.show_again   "hunk")
         ; Choice.reviewed     "hunk"
         ; Choice.not_reviewed "hunk"
         ; Choice.previous     "hunk"
@@ -152,9 +152,9 @@ let rec hunk_by_hunk : type a.
       let choices =
         if List.length view_ids > 1
         then choices
-             @ [ Interactive.Choice.create 'v' `View "Change the view configuration"
-               ; Interactive.Choice.create '>' `Succ_view "Show next view available"
-               ; Interactive.Choice.create '<' `Pred_view "Show previous view available"
+             @ [ Async_interactive.Choice.create 'v' `View "Change the view configuration"
+               ; Async_interactive.Choice.create '>' `Succ_view "Show next view available"
+               ; Async_interactive.Choice.create '<' `Pred_view "Show previous view available"
                ]
         else choices
       in
@@ -164,7 +164,7 @@ let rec hunk_by_hunk : type a.
           file.index_in_review t.number_of_files file.name
           (succ hunk_index) total
       in
-      (match%bind Interactive.ask_dispatch_with_help question choices with
+      (match%bind Async_interactive.ask_dispatch_with_help question choices with
        | `Reviewed ->
          Review_ring.delete hunk_ring hunk_elt;
          hunk_by_hunk ()
@@ -249,10 +249,10 @@ and file_by_file : type a. a t -> result Deferred.t = fun t ->
         match List.find (Review_ring.to_list hunk_ring) ~f:has_multiple_views with
         | None -> []
         | Some first_hunk_with_multiple_views ->
-          [ Interactive.Choice.create '>'
+          [ Async_interactive.Choice.create '>'
               (`Navigate (first_hunk_with_multiple_views, `Succ_view))
               "Enter hunk-by-hunk mode and show next view available"
-          ; Interactive.Choice.create '<'
+          ; Async_interactive.Choice.create '<'
               (`Navigate (first_hunk_with_multiple_views, `Pred_view))
               "Enter hunk-by-hunk mode and show previous view available"
           ]
@@ -260,7 +260,7 @@ and file_by_file : type a. a t -> result Deferred.t = fun t ->
       let emacs_options =
         match M.open_file_in_emacs with
         | Some f when not M.always_open_file_in_emacs ->
-          [ Interactive.Choice.create 'e'
+          [ Async_interactive.Choice.create 'e'
               (`Open_file_in_emacs f) "Open current file in Emacs"
           ]
         | _ -> []
@@ -277,8 +277,8 @@ and file_by_file : type a. a t -> result Deferred.t = fun t ->
           index t.number_of_files file.name
       in
       (match%bind
-         Interactive.ask_dispatch_with_help question (
-           [ Interactive.Choice.default (Choice.show_again "file")
+         Async_interactive.ask_dispatch_with_help question (
+           [ Async_interactive.Choice.default (Choice.show_again "file")
            ; Choice.reviewed       "file"
            ; Choice.not_reviewed   "file"
            ; Choice.previous       "file"
@@ -334,18 +334,18 @@ and multiple_files
     else (
       let rec loop () =
         let%bind () = show_hunks hunks in
-        let%bind () = Interactive.print_endline "Selection:" in
+        let%bind () = Async_interactive.print_endline "Selection:" in
         let%bind () =
           Deferred.List.iter files ~f:(fun file ->
-          Interactive.printf "   [ ] %s\n"
+          Async_interactive.printf "   [ ] %s\n"
             (Path_in_repo.to_string (M.path_in_repo file.file));
         )
         in
         let module Choice = Review_util.Choice in
         let%bind action =
-          Interactive.ask_dispatch_with_help
+          Async_interactive.ask_dispatch_with_help
             (sprintf "Mark the %d files selected as reviewed?" (List.length files))
-            [ Interactive.Choice.default (Choice.show_again "selection")
+            [ Async_interactive.Choice.default (Choice.show_again "selection")
             ; Choice.reviewed     "selection"
             ; Choice.not_reviewed "selection"
             ; Choice.Mode.file_by_file
@@ -424,8 +424,8 @@ let files (type t) (module M : M with type t = t) files =
   in
   let module Choice = Review_util.Choice in
   match%bind
-    Interactive.ask_dispatch_with_help "How do you want to do this review?"
-      ([ Interactive.Choice.default Choice.Mode.file_by_file
+    Async_interactive.ask_dispatch_with_help "How do you want to do this review?"
+      ([ Async_interactive.Choice.default Choice.Mode.file_by_file
        ; Choice.Mode.global_diff
        ; Choice.Mode.selected_files
        ]

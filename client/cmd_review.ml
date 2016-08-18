@@ -233,7 +233,7 @@ let pull_and_update_for_catch_up_on_archived_feature
   in
   let%bind () =
     match%bind Hg.status_cleanliness repo_root with
-    | Error _ -> Interactive.printf "Repo is not clean.  Not updating.\n"
+    | Error _ -> Async_interactive.printf "Repo is not clean.  Not updating.\n"
     | Ok repo_is_clean ->
       Hg.update repo_root (`Rev review_session_tip)
         ~clean_after_update:(Yes repo_is_clean)
@@ -575,7 +575,7 @@ let confirm_review_session_id_exn repo_root
   (match which_session with
    | This_session _ -> ()
    | Current_session ->
-     if not !Interactive.interactive
+     if not !Async_interactive.interactive
      then failwith "review_session_id is mandatory when non-interactive");
   let%bind rev_zero =
     match repo_root with
@@ -621,7 +621,7 @@ let confirm_review_session_id_exn repo_root
       |> Array.to_list
     in
     let confirmed =
-      if not !Interactive.interactive
+      if not !Async_interactive.interactive
       then return true
       else (
         print_introduction_summary_for_review
@@ -634,7 +634,7 @@ let confirm_review_session_id_exn repo_root
           ~diff4s_to_review
           ~display_ascii
           ~max_output_columns;
-        Interactive.ask_yn ~default:false
+        Async_interactive.ask_yn ~default:false
           (sprintf !"Really %s this %{Feature_path} session%s?"
              action
              feature_path
@@ -1053,7 +1053,7 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
                   ~show_next_steps:false);
   printf "\n";
   let only_print_session =
-    raw || (display_ascii && not !Interactive.interactive)
+    raw || (display_ascii && not !Async_interactive.interactive)
   in
   Deferred.repeat_until_finished true (fun first_session ->
     match%bind

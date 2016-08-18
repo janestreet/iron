@@ -125,7 +125,7 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
       Cmd_workspace.If_enabled.delete_workspace feature_path
   in
   let%bind () =
-    Interactive.printf "%s\n"
+    Async_interactive.printf "%s\n"
       (match disposition with
        | `Not_released__push_to_hydra -> "Submitted to hydra for continuous release."
        | `Released_and_cleared reasons ->
@@ -151,7 +151,7 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
           then Deferred.unit
           else (
             let parent_repo_root = Workspace.center_repo_root parent_workspace in
-            Interactive.Job.run "Updating parent workspace to new released tip"
+            Async_interactive.Job.run "Updating parent workspace to new released tip"
               ~f:(fun () ->
                 Cmd_review.pull_and_update
                   ~repo_root:parent_repo_root

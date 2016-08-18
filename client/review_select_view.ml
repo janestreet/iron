@@ -193,16 +193,16 @@ q|quit         : Quit
 ");
     Option.iter message ~f:(printf "<!> %s\n");
     match%bind
-      Interactive.ask_dispatch_gen ~f "Toggle item selection ?/all/none/[0-9]+"
+      Async_interactive.ask_dispatch_gen ~f "Toggle item selection ?/all/none/[0-9]+"
     with
     | `Help -> loop ~help:true ()
     | `Quit -> return `Quit
     | `Empty ->
       let module Choice = Review_util.Choice in
       (match%bind
-         Interactive.ask_dispatch_with_help
+         Async_interactive.ask_dispatch_with_help
            "No item selected. "
-           [ Interactive.Choice.default Choice.Mode.selected_files
+           [ Async_interactive.Choice.default Choice.Mode.selected_files
            ; Choice.Mode.file_by_file
            ; Choice.Mode.global_diff
            ; Choice.quit

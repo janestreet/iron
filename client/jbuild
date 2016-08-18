@@ -4,6 +4,7 @@
   (libraries (
     async
     async_extended
+    async_interactive
     command_rpc
     core
     core_extended

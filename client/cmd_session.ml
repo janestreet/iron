@@ -30,7 +30,7 @@ let commit =
            ~display_ascii ~max_output_columns
        with
        | `Committed -> return ()
-       | `Cancelled -> Interactive.print_endline "Quit"
+       | `Cancelled -> Async_interactive.print_endline "Quit"
     )
 ;;
 
@@ -166,7 +166,7 @@ let forget =
            ~display_ascii ~max_output_columns
        with
        | `Cancelled ->
-         Interactive.print_endline "Quit"
+         Async_interactive.print_endline "Quit"
        | `Id review_session_id ->
          let%bind () =
            Session.Forget.rpc_to_server_exn
@@ -176,7 +176,7 @@ let forget =
              ; what_to_forget
              }
          in
-         Interactive.printf "%s session: Done\n%!" action;
+         Async_interactive.printf "%s session: Done\n%!" action;
     )
 ;;
 

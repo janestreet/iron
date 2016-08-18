@@ -3,6 +3,7 @@
   (public_name iron.hg)
   (libraries (
     async
+    async_interactive
     core
     iron_common
     iron_obligations

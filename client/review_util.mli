@@ -8,7 +8,7 @@ val show_lines
   -> unit Deferred.t
 
 module Choice : sig
-  type 'a t = 'a Interactive.Choice.t
+  type 'a t = 'a Async_interactive.Choice.t
   val show_again     : string -> [> `Show_again   ] t
   val reviewed       : string -> [> `Reviewed     ] t
   val not_reviewed   : string -> [> `Not_reviewed ] t

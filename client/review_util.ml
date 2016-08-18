@@ -14,7 +14,7 @@ let show_lines ?msg lines =
     )
   in
   let%bind () =
-    Interactive.show_file
+    Async_interactive.show_file
       ?pager:Client_config.(get () |> pager_for_review)
       ?msg ~file ()
   in
@@ -22,7 +22,7 @@ let show_lines ?msg lines =
 ;;
 
 module Choice = struct
-  module Choice = Interactive.Choice
+  module Choice = Async_interactive.Choice
   type 'a t = 'a Choice.t
 
   let show_again label =

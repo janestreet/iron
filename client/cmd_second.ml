@@ -9,25 +9,25 @@ let dialog ~feature_path ~display_ascii ~max_output_columns
       (Abspath.to_string
          (Abspath.extend Iron_config.prod_etc (File_name.of_string "seconding.txt")))
   in
-  let%bind () = Interactive.printf "%s\n" s in
+  let%bind () = Async_interactive.printf "%s\n" s in
   let%bind () =
     match Cr_comment.Summary.to_ascii_table cr_summary with
     | None -> return ()
     | Some table ->
-      Interactive.printf "\nOutstanding CRs:\n%s\n"
+      Async_interactive.printf "\nOutstanding CRs:\n%s\n"
         (Ascii_table.to_string table ~display_ascii ~max_output_columns)
   in
   let%bind () =
     if List.is_empty whole_feature_review_remaining
     then return ()
-    else Interactive.printf "\nWhole-feature review remaining:\n%s\n"
+    else Async_interactive.printf "\nWhole-feature review remaining:\n%s\n"
            (Ascii_table.to_string
               (Line_count_table.create ~show_completed_review:true
                  whole_feature_review_remaining)
               ~display_ascii ~max_output_columns)
   in
   let%bind b =
-    Interactive.ask_yn ~default:false
+    Async_interactive.ask_yn ~default:false
       (sprintf "Do you want to second %s ?"
          (Feature_path.to_string feature_path))
   in
@@ -64,7 +64,7 @@ features, one can second it once and for all using:
        let open! Deferred.Let_syntax in
        let feature_path = ok_exn feature_path in
        let%bind () =
-         if not !Interactive.interactive
+         if not !Async_interactive.interactive
          then return ()
          else (
            let%bind reaction =

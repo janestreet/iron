@@ -49,8 +49,8 @@ be updated during that process, by adding the following in one's ferc file:
        && not (Client_config.Workspaces.auto_update_clean_workspaces_is_enabled
                  client_config)
        then
-         Interactive.printf "Auto update of clean workspaces is not enabled, and \
-                             the switch %s was supplied.\nExiting with code 0\n"
+         Async_interactive.printf "Auto update of clean workspaces is not enabled, and \
+                                   the switch %s was supplied.\nExiting with code 0\n"
            Switch.do_nothing_if_not_enabled
        else (
          Client_config.Workspaces.are_enabled_exn client_config;

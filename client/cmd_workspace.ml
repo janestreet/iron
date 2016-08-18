@@ -512,14 +512,14 @@ let check_workspaces_invariant_command =
 let confirm_or_dry_run shares ~dry_run ~action ~process_share =
   let no_shares = List.is_empty shares in
   let%bind () =
-    if not (dry_run || !Interactive.interactive)
+    if not (dry_run || !Async_interactive.interactive)
     then return ()
     else (
       let printf f =
         ksprintf (fun s ->
           if dry_run
           then (print_string s; return ())
-          else Interactive.printf "%s" s)
+          else Async_interactive.printf "%s" s)
           f
       in
       if no_shares
@@ -540,13 +540,13 @@ let confirm_or_dry_run shares ~dry_run ~action ~process_share =
     if no_shares
     then return false (* do not bother asking yn for an empty selection *)
     else
-    if dry_run || not !Interactive.interactive
+    if dry_run || not !Async_interactive.interactive
     then return (not dry_run)
     else (
-      let%bind should_proceed = Interactive.ask_yn "Proceed? " ~default:false in
+      let%bind should_proceed = Async_interactive.ask_yn "Proceed? " ~default:false in
       let%map () =
         if not should_proceed
-        then Interactive.print_endline "Aborted.\n"
+        then Async_interactive.print_endline "Aborted.\n"
         else Deferred.unit
       in
       should_proceed)

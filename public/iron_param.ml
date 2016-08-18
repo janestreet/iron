@@ -651,9 +651,9 @@ let include_active_cr_soons =
 ;;
 
 let interactive =
-  map (bool_with "-interactive" ~default:!Interactive.interactive
+  map (bool_with "-interactive" ~default:!Async_interactive.interactive
          ~doc:"be interactive via the terminal")
-    ~f:(fun bool -> Interactive.interactive := bool)
+    ~f:(fun bool -> Async_interactive.interactive := bool)
 ;;
 
 let base =

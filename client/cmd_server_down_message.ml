@@ -38,9 +38,9 @@ let rec edit_message old_message ~f =
   print_endline (Patdiff_lib.Patdiff_core.patdiff ~rules ()
                    ~from_:{ name = "old"; text = old_message }
                    ~to_:  { name = "new"; text = new_message });
-  let module Choice = Interactive.Choice in
+  let module Choice = Async_interactive.Choice in
   match%bind
-    Interactive.ask_dispatch_with_help "Accept the changes?"
+    Async_interactive.ask_dispatch_with_help "Accept the changes?"
       [ Choice.create 'y' `Yes  "Accept the changes."
       ; Choice.create 'n' `No   "Decline the changes."
       ; Choice.create 'e' `Edit "Edit the changes"
@@ -124,9 +124,9 @@ let roll_end_command =
          print_endline "------------------------------------";
          print_endline temporary_message;
          print_endline "------------------------------------";
-         let module Choice = Interactive.Choice in
+         let module Choice = Async_interactive.Choice in
          match%bind
-           Interactive.ask_dispatch_with_help "Clear this temporary roll message ?"
+           Async_interactive.ask_dispatch_with_help "Clear this temporary roll message ?"
              [ Choice.create 'y' `Yes  "Clears the message."
              ; Choice.create 'n' `No   "Abort, keep it."
              ]

@@ -198,7 +198,7 @@ let main { Fe.Create.Action.
   match description_used with
   | `Provided_by_user -> Deferred.unit
   | `Default ->
-    if not !Interactive.interactive
+    if not !Async_interactive.interactive
     then Deferred.unit
     else (
       let%bind description = Editor.invoke_editor description in

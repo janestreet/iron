@@ -3,6 +3,7 @@ open! Core.Std
 (* Stop : do not include Iron_common, Iron_hg, Iron_protocol.  We use [Export] to
    introduce the aliases that we need to deal with Iron modules *)
 include Export
+include Int.Replace_polymorphic_compare
 
 module type Unit = sig
   type t = unit

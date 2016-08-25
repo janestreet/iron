@@ -1,6 +1,7 @@
 open! Core.Std
+open! Import
 
-(** This is a single file's hunk. For the full 4-way hunk, use [Full_diff.t]. *)
+(** This is a single file's hunk. For the full 4-way hunk, see [Segment.t]. *)
 type t =
   { range : Range.t
   ; lines : string list

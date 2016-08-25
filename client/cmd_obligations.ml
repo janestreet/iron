@@ -45,10 +45,10 @@ let list_projections =
        let open! Deferred.Let_syntax in
        let repo_root = ok_exn Repo_root.program_started_in in
        let%map obligations =
-         Obligations_loader.load (module Hg) repo_root
+         Obligations_repo.load (module Hg) repo_root
            ~aliases:User_name_by_alternate_name.not_available
        in
-       let { Obligations_repo. build_projections; _ } = ok_exn obligations in
+       let { Obligations_repo. build_projections; _ }, _ = ok_exn obligations in
        List.iter (Map.keys build_projections) ~f:(fun build_projection_name ->
          print_endline (Build_projection_name.to_string build_projection_name));
     )
@@ -67,8 +67,11 @@ let load_obligations { Fe.Obligations.Which_obligations.
       Get_alternate_names.rpc_to_server_exn `Aliases
   in
   let load repo_root =
-    let%map obligations = Obligations_loader.load (module Hg) repo_root ~aliases in
-    ok_exn obligations
+    let%map obligations, _ =
+      Obligations_repo.load (module Hg) repo_root ~aliases
+      >>| ok_exn
+    in
+    obligations
   in
   match file_tree_of with
   | `Working_copy -> load repo_root
@@ -107,7 +110,7 @@ let which_obligations_param =
 module List_users = struct
   let main which_obligations =
     let%map obligations = load_obligations which_obligations in
-    Obligations_repo.union_of_users_defined obligations
+    obligations.users
   ;;
 end
 
@@ -127,7 +130,7 @@ let list_users =
 module List_groups = struct
   let main which_obligations =
     let%map obligations = load_obligations which_obligations in
-    Obligations_repo.union_of_groups_defined obligations
+    obligations.groups
   ;;
 end
 

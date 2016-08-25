@@ -1,10 +1,11 @@
-open Core.Std
+open! Core.Std
+open! Import
 
 type t =
   { range : Range.t
   ; lines : string list
   }
-[@@deriving sexp_of, fields, compare]
+[@@deriving compare, fields, sexp_of]
 
 let create ~source line contents =
   { range =
@@ -18,13 +19,13 @@ let create ~source line contents =
 ;;
 
 let prepend lines t =
-  { range = t.range
+  { range = Range.prepend (List.length lines) t.range
   ; lines = lines @ t.lines
   }
 ;;
 
 let append t lines =
-  { range = t.range
+  { range = Range.append t.range (List.length lines)
   ; lines = t.lines @ lines
   }
 ;;

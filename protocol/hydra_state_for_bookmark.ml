@@ -1,5 +1,3 @@
-open! Core.Std.No_polymorphic_compare
-
 module Stable = struct
 
   open! Import_stable

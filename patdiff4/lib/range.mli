@@ -1,12 +1,14 @@
 open! Core.Std
+open! Import
 
-type t = {
-  source     : string; (* Represents the file where a range came from. *)
-  line_start : int;    (* inclusive *)
-  line_end   : int;    (* exclusive *)
-} [@@deriving sexp_of, compare, fields]
+type t =
+  { source     : string (* Represents the file where a range came from. *)
+  ; line_start : int    (* inclusive *)
+  ; line_end   : int    (* exclusive *)
+  }
+[@@deriving compare, fields, sexp_of]
 
-val merge : t -> t -> t
+val merge     : t -> t -> t
 val to_header : other_names:string list -> t -> Header.Source.t
 
 val prepend : int -> t -> t

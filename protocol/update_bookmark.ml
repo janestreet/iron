@@ -21,18 +21,19 @@ module Stable = struct
   end
 
   module Action = struct
-    module V9 = struct
+    module V10 = struct
       type t =
         { feature_path         : Feature_path.V1.t
         ; feature_id           : Feature_id.V1.t
         ; info                 : Info.V5.t Or_error.V2.t
-        ; augment_worker_cache : Worker_cache.From_worker_back_to_server.V4.t
+        ; augment_worker_cache : Worker_cache.From_worker_back_to_server.V5.t
         }
       [@@deriving bin_io, fields, sexp]
 
-      let of_model m = m
-      let to_model (t : t) = t
+      let to_model m = m
     end
+
+    module Model = V10
 
     module V5 = struct
       type t =
@@ -46,29 +47,26 @@ module Stable = struct
                    ; feature_id
                    ; info
                    } =
-        V9.to_model
-          { feature_path
-          ; feature_id
-          ; info
-          ; augment_worker_cache = Worker_cache.From_worker_back_to_server.V4.empty
-          }
+        { Model.
+          feature_path
+        ; feature_id
+        ; info
+        ; augment_worker_cache = Worker_cache.From_worker_back_to_server.V5.empty
+        }
       ;;
 
-      let of_model m =
-        let { V9.
-              feature_path
-            ; feature_id
-            ; info
-            ; augment_worker_cache = _
-            } = V9.of_model m in
+      let of_model { Model.
+                     feature_path
+                   ; feature_id
+                   ; info
+                   ; augment_worker_cache = _
+                   } =
         { feature_path
         ; feature_id
         ; info
         }
       ;;
     end
-
-    module Model = V9
   end
 
   module Reaction = struct
@@ -82,8 +80,8 @@ open Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "update-bookmark" end)
-    (struct let version = 9 end)
-    (Stable.Action.V9)
+    (struct let version = 10 end)
+    (Stable.Action.V10)
     (Stable.Reaction.V1)
 
 (* Intent is to keep [5] always, and only the latest version including the worker_cache *)

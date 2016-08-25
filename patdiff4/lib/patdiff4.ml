@@ -12,7 +12,6 @@ let process_segment
       ?(view_ids_computed=View_ids_computed.Compute_every_view_available)
       ~include_hunk_breaks
       ~context (segment:Segment.t) shown_class =
-  let full_diff = segment.slice in
   let algos =
     let algos = Diff_algo.select_algos_for_review shown_class in
     match view_ids_computed with
@@ -36,7 +35,7 @@ let process_segment
       ~include_hunk_breaks
       ~diff4_class:segment.diff4_class
       ~context
-      full_diff
+      segment.slice
   )
 ;;
 

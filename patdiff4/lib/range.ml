@@ -1,28 +1,28 @@
-open Core.Std
+open! Core.Std
+open! Import
 
-type t = {
-  source     : string;
-  line_start : int; (* inclusive *)
-  line_end   : int; (* exclusive *)
-} [@@deriving sexp_of, fields, compare]
+type t =
+  { source     : string
+  ; line_start : int
+  ; line_end   : int
+  }
+[@@deriving compare, fields, sexp_of]
 
-let merge t0 t1 =
-  assert(t0.source = t1.source);
-  { source     = t0.source
-  ; line_start = Int.min t0.line_start t1.line_start
-  ; line_end   = Int.max t0.line_end   t1.line_end
+let merge t1 t2 =
+  assert (String.equal t1.source t2.source);
+  { source     = t1.source
+  ; line_start = Int.min t1.line_start t2.line_start
+  ; line_end   = Int.max t1.line_end   t2.line_end
   }
 ;;
 
 let to_header ~other_names t =
-  let name = t.source in
-  let range = Some (t.line_start, t.line_end) in
   { Header.Source.
-    name
+    name        = t.source
   ; other_names
-  ; range
+  ; range       = Some (t.line_start, t.line_end)
   }
 ;;
 
-let prepend lines t = { t with line_start = t.line_start - lines }
+let prepend lines t = { t with line_start = Int.max 0 (t.line_start - lines) }
 let append t lines  = { t with line_end = t.line_end + lines }

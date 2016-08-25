@@ -42,19 +42,20 @@ module Stable = struct
   end
 
   module Reaction = struct
-    module V6 = struct
+    module V7 = struct
       type t =
         { base                       : Rev.V1.t
         ; feature_id                 : Feature_id.V1.t
         ; need_diff4s_starting_from  : (Review_edge.V1.t * User_name.V1.Set.t) list
         ; aliases                    : User_name_by_alternate_name.V1.t
-        ; worker_cache               : Worker_cache.From_server_to_worker.V5.t
+        ; worker_cache               : Worker_cache.From_server_to_worker.V6.t
         }
       [@@deriving bin_io, sexp]
 
-      let to_model (m : t) = m
-      let of_model t = t
+      let of_model m = m
     end
+
+    module Model = V7
 
     (* Note about version scheme: we expect to keep V1 always as a way to preserve a
        common version for roll transitions.  We do not implement projection between
@@ -68,14 +69,13 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
-      let of_model m =
-        let { V6.
-              base
-            ; feature_id
-            ; need_diff4s_starting_from
-            ; aliases
-            ; _
-            } = V6.of_model m in
+      let of_model { Model.
+                     base
+                   ; feature_id
+                   ; need_diff4s_starting_from
+                   ; aliases
+                   ; _
+                   } =
         { base
         ; feature_id
         ; need_diff4s_starting_from
@@ -88,17 +88,15 @@ module Stable = struct
                    ; need_diff4s_starting_from
                    ; aliases
                    } =
-        V6.to_model
-          { base
-          ; feature_id
-          ; need_diff4s_starting_from
-          ; aliases
-          ; worker_cache = Worker_cache.From_server_to_worker.V5.empty
-          }
+        { Model.
+          base
+        ; feature_id
+        ; need_diff4s_starting_from
+        ; aliases
+        ; worker_cache = Worker_cache.From_server_to_worker.V6.empty
+        }
       ;;
     end
-
-    module Model = V6
   end
 end
 
@@ -107,9 +105,9 @@ open! Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "hydra-worker" end)
-    (struct let version = 6 end)
+    (struct let version = 7 end)
     (Stable.Action.V2)
-    (Stable.Reaction.V6)
+    (Stable.Reaction.V7)
 
 (* Intent is to keep [1] always, and only the latest version including the worker cache *)
 include Register_old_rpc_converting_both_ways

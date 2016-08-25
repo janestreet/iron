@@ -115,13 +115,13 @@ val send_to_worker  : t -> Feature_revs.t -> From_server_to_worker.t
 
 module Stable : sig
   module From_server_to_worker : sig
-    module V5 : sig
+    module V6 : sig
       include Stable_without_comparator with type t = From_server_to_worker.t
       val empty : t
     end
   end
   module From_worker_back_to_server : sig
-    module V4 : sig
+    module V5 : sig
       include Stable_without_comparator with type t = From_worker_back_to_server.t
       val empty : t
     end

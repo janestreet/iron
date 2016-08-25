@@ -24,11 +24,7 @@ function cdc {
 complete -C cdc cdc
 
 function private_cdf {
-    # If [fe workspace dir] fails, it outputs to stderr and exits nonzero, but
-    # then bash makes $dir empty and ignores the exit status.  So we check $dir and
-    # exit nonzero if it is empty, relying on the message that [fe workspace dir]
-    # output to stderr.
-    dir=$(builtin cd / && fe workspace dir "$1")
+    dir=$(builtin cd / && fe workspace dir "$1" || true)
     if [ -n "$dir" ] && builtin cd "$dir"; then
         if [ -n "${2:-}" ]; then
             export OLD_CDF_FEATURE=$2
@@ -42,7 +38,7 @@ function cdf {
     OLD_CDF_FEATURE=${OLD_CDF_FEATURE:-}
     local dir FEATURE rep WDIR
     local starting_feature
-    starting_feature=$(fe workspace pwd 2> /dev/null)
+    starting_feature=$(fe workspace pwd 2> /dev/null || true)
     if should_complete; then
         COMP_CWORD=2 fe show $2
     elif [ -z "${1:-}" ]; then

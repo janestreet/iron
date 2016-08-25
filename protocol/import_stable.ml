@@ -6,6 +6,7 @@ include (Core.Stable : module type of Core.Stable
 include Iron_common.Stable
 include Iron_obligations.Stable
 include Iron_hg.Stable
+include Core.Std.Int.Replace_polymorphic_compare
 
 module Fn = Core.Std.Fn
 module List = Core.Std.List
@@ -17,4 +18,3 @@ module Unit = struct
   let of_model t = t
   let to_model t = t
 end
-

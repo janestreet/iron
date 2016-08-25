@@ -5,15 +5,15 @@ module Stable_format = struct
   module Obligations_repo = Obligations_repo.Stable
   module Review_attributes = Review_attributes.Stable
 
-  module V4 = struct
+  module V5 = struct
     type t =
-      { obligations_repo : Obligations_repo.V4.t
+      { obligations_repo : Obligations_repo.V5.t
       ; by_path          : (Path_in_repo.V1.t * Review_attributes.V2.t) list
       }
     [@@deriving bin_io, compare, fields, sexp]
   end
 
-  module Model = V4
+  module Model = V5
 end
 
 open! Core.Std
@@ -92,9 +92,10 @@ let report_unused_projections t =
     Review_attributes.build_projections
 ;;
 
-let report_unused_tags t =
+let report_unused_tags
+      t ~(defined_in_local_repo : Obligations_repo.Defined_in_local_repo.t) =
   report_unused_definitions t "tags" (module Tag)
-    (fun t -> t.tags |> Set.to_list)
+    (const (Set.to_list defined_in_local_repo.tags))
     Review_attributes.tags
 ;;
 
@@ -193,15 +194,15 @@ let report_errors (type x)
 
 let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
   let%bind obligations_repo_or_error =
-    Obligations_loader.load hg repo_root ~aliases
+    Obligations_repo.load hg repo_root ~aliases
   in
   let obligations_version_or_error =
     Or_error.map obligations_repo_or_error
-      ~f:(fun repo -> repo.obligations_global.obligations_version)
+      ~f:(fun (repo, _) -> repo.obligations_version)
   in
   let t_or_error_def =
     Deferred.Or_error.try_with ~extract_exn:true (fun () ->
-      let obligations_repo = ok_exn obligations_repo_or_error in
+      let obligations_repo, defined_in_local_repo = ok_exn obligations_repo_or_error in
       let%bind cwd = Sys.getcwd () in
       let cwd = Abspath.of_string cwd in
       let manifest = manifest |> Path_in_repo.Hash_set.of_list in
@@ -378,9 +379,7 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
           Hashtbl.change by_path dot_fe ~f:(Option.map ~f:(fun dot_fe_attributes ->
             let obligations_read_by =
               List.map (Hash_set.to_list scrutiny_names) ~f:(fun scrutiny_name ->
-                match
-                  Map.find obligations_repo.obligations_global.scrutinies scrutiny_name
-                with
+                match Map.find obligations_repo.scrutinies scrutiny_name with
                 | Some scrutiny -> scrutiny.obligations_read_by
                 | None ->
                   raise_s
@@ -416,8 +415,8 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
         then return ()
         else (
           report_unused_projections t;
-          report_unused_tags t;
-          if obligations_repo.obligations_global.disallow_useless_dot_fe
+          report_unused_tags t ~defined_in_local_repo;
+          if obligations_repo.disallow_useless_dot_fe
           && not (Hash_set.is_empty useless_dot_fes)
           then report_errors "useless .fe.sexp file" (useless_dot_fes |> Hash_set.to_list)
                  (module Path_in_repo);
@@ -431,9 +430,9 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
 ;;
 
 module Stable = struct
-  module V4 = struct
+  module V5 = struct
 
-    module Stable_format = Stable_format.V4
+    module Stable_format = Stable_format.V5
 
     let of_model { obligations_repo
                  ; by_path

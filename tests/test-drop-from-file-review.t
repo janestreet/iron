@@ -115,8 +115,8 @@ does not review the ddiff on the attributes.
   old base * | old tip * | new base * | new tip * (glob)
   @@@@@@@@ View : feature-ddiff @@@@@@@@
   @@@@@@@@ A base change was dropped in favor of a feature change @@@@@@@@
-  @@@@@@@@ -- old base 4,9 new tip, old tip 4,9 @@@@@@@@
-  @@@@@@@@ ++ new base 4,9 old tip, new tip 4,9 @@@@@@@@
+  @@@@@@@@ -- old base 1,6 new tip, old tip 1,6 @@@@@@@@
+  @@@@@@@@ ++ new base 1,6 old tip, new tip 1,6 @@@@@@@@
       file        = file
       scrutiny    = level10
       owner       = file-owner

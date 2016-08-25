@@ -85,12 +85,12 @@ let load repo_root : t Deferred.t =
 ;;
 
 let known_tags_exn repo_root =
-  let%map obligations = Obligations_loader.load (module Hg) repo_root
-    ~aliases:User_name_by_alternate_name.not_available
+  let%map obligations, _ =
+    Obligations_repo.load (module Hg) repo_root
+      ~aliases:User_name_by_alternate_name.not_available
+    >>| ok_exn
   in
-  obligations
-  |> ok_exn
-  |> Obligations_repo.union_of_tags_defined
+  obligations.tags
 ;;
 
 let tag_blang_arg = Command.Param.blang_arg_type_with_completion (module Tag) (fun () ->
@@ -134,7 +134,7 @@ List projects.  Restrict to projects satisfying a given tag blang expression.")
          | None, _
          | Some _, `Fake -> []
          | Some tags, `Actual obligations_repo ->
-           let known_tags = Obligations_repo.union_of_tags_defined obligations_repo in
+           let known_tags = obligations_repo.tags in
            List.filter (Blang.to_list tags) ~f:(fun tag -> not (Set.mem known_tags tag))
        in
        let undefined_tags = Tag.Set.of_list undefined_tags in

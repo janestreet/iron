@@ -1,5 +1,5 @@
-open Core.Std
-open Import
+open! Core.Std
+open! Import
 
 let one_or_more name count = sprintf "%s%s" name (if count = 1 then "" else "s")
 let num name count = sprintf "%d %s" count (one_or_more name count)
@@ -164,8 +164,7 @@ module Partial_attributes = struct
       ~scrutiny_name:            (merge_eq "scrutinies" (module Scrutiny_name))
   ;;
 
-  let to_attributes t ~obligations_repo file_name =
-    let { Obligations_repo. obligations_global; _ } = obligations_repo in
+  let to_attributes t ~(obligations_repo : Obligations_repo.t) file_name =
     let build_projections =
       Option.value t.build_projections ~default:Build_projection_name.Set.empty
     in
@@ -197,73 +196,77 @@ module Partial_attributes = struct
       match scrutiny_name with
       | Error _ as x -> x
       | Ok scrutiny_name ->
-        let { Scrutiny.
-              min_file_reviewers
-            ; max_file_reviewers
-            ; level
-            ; read_by_whole_feature_reviewers
-            ; _
-            } = Map.find_exn obligations_global.scrutinies scrutiny_name
-        in
-        let num_reviewers_lower_bound =
-          Review_obligation.num_reviewers_lower_bound review_obligation
-        in
-        let fewer_than_min_reviewers = num_reviewers_lower_bound < min_file_reviewers in
-        let more_than_max_reviewers  = num_reviewers_lower_bound > max_file_reviewers in
-        let fewer_than_min_reviewers_expected =
-          Option.value t.fewer_than_min_reviewers ~default:false
-        in
-        let more_than_max_reviewers_expected =
-          Option.value t.more_than_max_reviewers ~default:false
-        in
-        if more_than_max_reviewers && not more_than_max_reviewers_expected
-        then error (sprintf "allowed up to %s, but there are %d"
-                      (num "reviewer" max_file_reviewers)
-                      num_reviewers_lower_bound)
-               review_obligation [%sexp_of: Review_obligation.t]
-        else if not more_than_max_reviewers && more_than_max_reviewers_expected
-        then error (sprintf "\
+        match Map.find obligations_repo.scrutinies scrutiny_name with
+        | None ->
+          error_s [%sexp "undefined scrutiny", (scrutiny_name : Scrutiny_name.t)]
+        | Some { Scrutiny.
+                 min_file_reviewers
+               ; max_file_reviewers
+               ; level
+               ; read_by_whole_feature_reviewers
+               ; _
+               } ->
+          let num_reviewers_lower_bound =
+            Review_obligation.num_reviewers_lower_bound review_obligation
+          in
+          let fewer_than_min_reviewers = num_reviewers_lower_bound < min_file_reviewers in
+          let more_than_max_reviewers  = num_reviewers_lower_bound > max_file_reviewers in
+          let fewer_than_min_reviewers_expected =
+            Option.value t.fewer_than_min_reviewers ~default:false
+          in
+          let more_than_max_reviewers_expected =
+            Option.value t.more_than_max_reviewers ~default:false
+          in
+          if more_than_max_reviewers && not more_than_max_reviewers_expected
+          then error (sprintf "allowed up to %s, but there are %d"
+                        (num "reviewer" max_file_reviewers)
+                        num_reviewers_lower_bound)
+                 review_obligation [%sexp_of: Review_obligation.t]
+          else if not more_than_max_reviewers && more_than_max_reviewers_expected
+          then error (sprintf "\
 there are %s, with %d allowed, so must have (More_than_max_reviewers false)"
-                      (num "reviewer" num_reviewers_lower_bound)
-                      max_file_reviewers)
-               review_obligation [%sexp_of: Review_obligation.t]
-        else if fewer_than_min_reviewers && not fewer_than_min_reviewers_expected
-        then error (sprintf "need %s but there are only %d"
-                      (num "reviewer" min_file_reviewers)
-                      num_reviewers_lower_bound)
-               review_obligation [%sexp_of: Review_obligation.t]
-        else if not fewer_than_min_reviewers && fewer_than_min_reviewers_expected
-        then error (sprintf "\
+                        (num "reviewer" num_reviewers_lower_bound)
+                        max_file_reviewers)
+                 review_obligation [%sexp_of: Review_obligation.t]
+          else if fewer_than_min_reviewers && not fewer_than_min_reviewers_expected
+          then error (sprintf "need %s but there are only %d"
+                        (num "reviewer" min_file_reviewers)
+                        num_reviewers_lower_bound)
+                 review_obligation [%sexp_of: Review_obligation.t]
+          else if not fewer_than_min_reviewers && fewer_than_min_reviewers_expected
+          then error (sprintf "\
 there are %s and only %d required, so must have (Fewer_than_min_reviewers false)"
-                      (num "reviewer" num_reviewers_lower_bound)
-                      min_file_reviewers)
-               review_obligation [%sexp_of: Review_obligation.t]
-        else
-          Ok (Review_attributes.create
-                ~build_projections
-                ~tags
-                ~fewer_than_min_reviewers
-                ~followers
-                ~more_than_max_reviewers
-                ~is_read_by_whole_feature_reviewers:read_by_whole_feature_reviewers
-                ~owner
-                ~review_obligation
-                ~scrutiny_level:level
-                ~scrutiny_name)
+                        (num "reviewer" num_reviewers_lower_bound)
+                        min_file_reviewers)
+                 review_obligation [%sexp_of: Review_obligation.t]
+          else
+            Ok (Review_attributes.create
+                  ~build_projections
+                  ~tags
+                  ~fewer_than_min_reviewers
+                  ~followers
+                  ~more_than_max_reviewers
+                  ~is_read_by_whole_feature_reviewers:read_by_whole_feature_reviewers
+                  ~owner
+                  ~review_obligation
+                  ~scrutiny_level:level
+                  ~scrutiny_name)
   ;;
 end
 
 let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_allowed
       ~files_in_directory ~obligations_repo ~aliases =
   let { Obligations_repo.
-        build_projections
-      ; obligations_global = { scrutinies; obligations_version; _ }
-      ; _
+        users                   = allowed_users
+      ; groups                  = known_groups
+      ; tags                    = known_tags
+      ; scrutinies
+      ; build_projections
+      ; disallow_useless_dot_fe = _
+      ; allow_review_for        = _
+      ; obligations_version
       } = obligations_repo
   in
-  let known_tags = Obligations_repo.union_of_tags_defined obligations_repo in
-  let allowed_users = Obligations_repo.union_of_users_defined obligations_repo in
-  let known_groups = Obligations_repo.union_of_groups_defined obligations_repo in
   let partial_attributes_by_file_name =
     File_name.Table.of_alist_exn
       (List.map (Set.to_list files_in_directory) ~f:(fun file_name ->
@@ -393,8 +396,10 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
     let alist =
       List.filter_map (Hashtbl.to_alist partial_attributes_by_file_name)
         ~f:(fun (file_name, partial_attributes) ->
-          match Partial_attributes.to_attributes partial_attributes ~obligations_repo
-                  file_name
+          match
+            Or_error.try_with_join (fun () ->
+              Partial_attributes.to_attributes partial_attributes
+                ~obligations_repo file_name)
           with
           | Ok attributes -> Some (file_name, attributes)
           | Error error -> problems := (file_name, error) :: !problems; None)

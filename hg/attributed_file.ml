@@ -1,9 +1,8 @@
-open! Core.Std.No_polymorphic_compare
-
 module Stable = struct
 
-  open Core.Stable
-  open Iron_common.Stable
+  open! Core.Stable
+  open! Iron_common.Stable
+
   module Rev = Rev.Stable
 
   module Attributes = struct

@@ -7,6 +7,7 @@ include (Iron_common.Std : module type of struct include Iron_common.Std end
 include Iron_obligations.Std
 include Iron_hg.Std
 include Iron_protocol
+include Int.Replace_polymorphic_compare
 
 module Iron_command_rpc = Iron.Iron_command_rpc
 
@@ -73,6 +74,4 @@ module Implement_command_rpc (M : sig
 end
 
 let (>>>) = `Deprecated_in_iron__Use_let_syntax_instead
-let (>>=) = `Deprecated_in_iron__Use_let_syntax_instead
-let (>>|) = `Deprecated_in_iron__Use_let_syntax_instead
 let exit  = `Deprecated_in_iron__Use_shutdown_dot_exit_instead

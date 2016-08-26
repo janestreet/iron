@@ -137,5 +137,6 @@ If no [-file] switches are provided, the diff for all files is shown.
                ~repo_root
                ~diff4s
                ~reviewer
-               ~context)))
+               ~context
+               ~lines_required_to_separate_ddiff_hunks:(2*context))))
 ;;

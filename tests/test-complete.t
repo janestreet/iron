@@ -146,6 +146,7 @@ We complete all the way, above, because only root/foo1 is archived, not root/foo
   -set-inheritable-whole-feature-reviewers
   -set-inheritable-xcrs-shown-in-todo-only-for-users-reviewing
   -set-is-permanent
+  -set-lines-required-to-separate-ddiff-hunks
   -set-owners
   -set-property
   -set-release-process

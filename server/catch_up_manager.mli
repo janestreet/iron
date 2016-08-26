@@ -43,6 +43,7 @@ val to_protocol
   :  t
   -> Catch_up_session.t
   -> is_archived:bool
+  -> lines_required_to_separate_ddiff_hunks:int
   -> Iron_protocol.Get_catch_up_session.Catch_up_session.t
 
 val get_next_session

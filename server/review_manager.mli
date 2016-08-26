@@ -175,7 +175,8 @@ val get_session_exn
   :  t
   -> Goal_subset.t
   -> may_be_reviewed_by : Allow_review_for.Users.t
-  -> which_session      : Which_session.t
+  -> lines_required_to_separate_ddiff_hunks: int
+  -> which_session : Which_session.t
   -> [ `Review_session of Iron_protocol.Get_review_session.Review_session.t
      | `Up_to_date
      ]

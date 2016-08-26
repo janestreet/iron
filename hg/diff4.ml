@@ -153,7 +153,7 @@ let normalize_paths ({ b1; f1; b2; f2 } : 'a Diamond.t) : 'a Diamond.t =
       { b1 = with_b2 b1; f1 = with_b2 f1; b2; f2 }
 ;;
 
-let create ~file_by_path_by_rev ~cache ~errors diamond =
+let create ~file_by_path_by_rev ~cache ~errors ~lines_required_to_separate_ddiff_hunks diamond =
   let diamond = normalize_paths diamond in
   (* [hg status] is an overapproximation of the files that did change, so we filter out
      the files that didn't change.  However we must be careful to not remove diff4s that
@@ -206,7 +206,10 @@ let create ~file_by_path_by_rev ~cache ~errors diamond =
           let files = Diamond.map diamond ~f:file_file_exn in
           let def =
             let%map { num_lines_in_diff4 } =
-              Process_num_lines_in_diff4.compute { files }
+              Process_num_lines_in_diff4.compute
+                { files
+                ; lines_required_to_separate_ddiff_hunks
+                }
             in
             num_lines_in_diff4
           in

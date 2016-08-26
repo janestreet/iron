@@ -26,6 +26,7 @@ val feature_id                : t -> Feature_id.t
 val feature_path              : t -> Feature_path.t
 val line_count_by_user_cached : t -> Line_count.Cached_in_feature.By_user.t Cached.t
 val line_count_by_user        : t -> Line_count.Cached_in_feature.By_user.t Or_error.t
+val lines_required_to_separate_ddiff_hunks : t -> int option
 val locks                     : t -> Feature_locks.t
 val next_bookmark_update      : t -> Next_bookmark_update.t
 val next_steps_cached         : t -> Next_step.t list Cached.t

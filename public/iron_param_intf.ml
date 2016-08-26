@@ -121,6 +121,8 @@ module type T = sig
   val catch_up_feature_path_or_current_bookmark : Feature_path.t Or_error.t t
   val active_or_catch_up_feature_path_or_current_bookmark : Feature_path.t Or_error.t t
   val context                          : ?default:int -> unit -> int      t
+  val lines_required_to_separate_ddiff_hunks_override : int option t
+  val lines_required_to_separate_ddiff_hunks_with_default : int t
   val dash_dash_rest                   : doc:string -> string list  t
   val description                      : string option              t
 

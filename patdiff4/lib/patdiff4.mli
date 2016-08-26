@@ -1,6 +1,3 @@
-(* Patdiff4 intelligently displays rebase resolutions. Cleanly merged hunks will be
-   ignored, and most differences will be simplified from what a simple ddiff will tell
-   you. *)
 open! Core.Std
 open! Import
 
@@ -38,6 +35,7 @@ val hunks
   -> file_names:string Diamond.t
   -> header_file_name:string
   -> context:int
+  -> lines_required_to_separate_ddiff_hunks:int
   -> scrutiny:File_scrutiny.t option
   -> contents:string Diamond.t
   -> unit
@@ -52,10 +50,12 @@ val diff
   -> file_names:string Diamond.t
   -> header_file_name:string
   -> context:int
+  -> lines_required_to_separate_ddiff_hunks:int
   -> contents:string Diamond.t
   -> unit
   -> string list
 
 val num_lines_to_review
-  : contents:string Diamond.t
+  :  lines_required_to_separate_ddiff_hunks:int
+  -> contents:string Diamond.t
   -> int

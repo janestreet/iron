@@ -38,6 +38,8 @@ let feature_id = "-id"
 
 let include_active_cr_soons = "-include-active-cr-soons"
 
+let lines_required_to_separate_ddiff_hunks = "-lines-required-to-separate-ddiff-hunks"
+
 let reason = "-reason"
 
 let remote_repo_path = "-remote-repo-path"

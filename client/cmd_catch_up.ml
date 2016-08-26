@@ -74,6 +74,8 @@ let diff =
      let%map_open () = return ()
      and feature_path          = catch_up_feature_path_or_current_bookmark
      and context               = context ()
+     and lines_required_to_separate_ddiff_hunks_override =
+       lines_required_to_separate_ddiff_hunks_override
      and for_                  = for_
      and may_modify_local_repo = may_modify_local_repo
      and session_id            = which_session
@@ -92,6 +94,7 @@ let diff =
                 ; catch_up_session_tip
                 ; remote_repo_path
                 ; reviewer_in_session
+                ; lines_required_to_separate_ddiff_hunks
                 ; _
                 } =
          get_catch_up_session_exn feature_path for_
@@ -119,12 +122,16 @@ let diff =
            ~path_in_repo:Diff4.path_in_repo_at_f2
            ~from:"catch-up session"
        in
+       let lines_required_to_separate_ddiff_hunks =
+         Option.value lines_required_to_separate_ddiff_hunks_override
+           ~default:lines_required_to_separate_ddiff_hunks
+       in
        Cmd_review.print_diff4s
          ~repo_root
          ~diff4s
          ~reviewer:(`Reviewer reviewer_in_session)
          ~context
-    )
+         ~lines_required_to_separate_ddiff_hunks)
 ;;
 
 let is_needed =

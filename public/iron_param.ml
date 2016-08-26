@@ -1008,6 +1008,17 @@ let context ?(default=12) () =
         Option.value (Client_config.Cmd.context client_config) ~default)
 ;;
 
+let lines_required_to_separate_ddiff_hunks_override =
+  flag Switch.lines_required_to_separate_ddiff_hunks (optional int)
+    ~doc:"INT override the required spacing to separate two ddiff hunks"
+;;
+
+let lines_required_to_separate_ddiff_hunks_with_default =
+  let default = Constants.lines_required_to_separate_ddiff_hunks_default in
+  flag Switch.lines_required_to_separate_ddiff_hunks (optional_with_default default int)
+    ~doc:(sprintf "INT required spacing to separate two ddiff hunks (default %d)" default)
+;;
+
 let email_address_list_arg_type =
   Arg_type.comma_separated (Arg_type.create Email_address.of_string)
     ~strip_whitespace:true

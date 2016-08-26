@@ -18,6 +18,31 @@ module Stable = struct
   end
 
   module Catch_up_session = struct
+    module V5 = struct
+      type t =
+        { catch_up_session_id              : Session_id.V1.t
+        ; catch_up_session_tip             : Rev.V1.t
+        ; creation_time                    : Time.V1_round_trippable.t
+        ; reviewer_in_session              : Reviewer.V2.t
+        ; diff4s_to_catch_up               : Diff4_to_catch_up.V3.t list
+        ; line_count_remaining_to_catch_up : Line_count.Catch_up.V1.t
+        ; remote_rev_zero                  : Rev.V1.t
+        ; remote_repo_path                 : Remote_repo_path.V1.t
+        ; feature_path                     : Feature_path.V1.t
+        ; feature_id                       : Feature_id.V1.t
+        ; whole_feature_reviewers          : User_name.V1.Set.t
+        ; owners                           : User_name.V1.t list
+        ; base                             : Rev.V1.t
+        ; tip                              : Rev.V1.t
+        ; description                      : string
+        ; is_permanent                     : bool
+        ; is_archived                      : bool
+        ; seconder                         : User_name.V1.t option
+        ; lines_required_to_separate_ddiff_hunks : int
+        }
+      [@@deriving bin_io, sexp]
+    end
+
     module V4 = struct
       type t =
         { catch_up_session_id              : Session_id.V1.t
@@ -39,7 +64,53 @@ module Stable = struct
         ; is_archived                      : bool
         ; seconder                         : User_name.V1.t option
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io]
+
+      open! Core.Std
+      open! Import
+
+      let of_v5
+            { V5.
+              catch_up_session_id
+            ; catch_up_session_tip
+            ; creation_time
+            ; reviewer_in_session
+            ; diff4s_to_catch_up
+            ; line_count_remaining_to_catch_up
+            ; remote_rev_zero
+            ; remote_repo_path
+            ; feature_path
+            ; feature_id
+            ; whole_feature_reviewers
+            ; owners
+            ; base
+            ; tip
+            ; description
+            ; is_permanent
+            ; is_archived
+            ; seconder
+            ; _
+            } =
+        { catch_up_session_id
+        ; catch_up_session_tip
+        ; creation_time
+        ; reviewer_in_session
+        ; diff4s_to_catch_up
+        ; line_count_remaining_to_catch_up
+        ; remote_rev_zero
+        ; remote_repo_path
+        ; feature_path
+        ; feature_id
+        ; whole_feature_reviewers
+        ; owners
+        ; base
+        ; tip
+        ; description
+        ; is_permanent
+        ; is_archived
+        ; seconder
+        }
+      ;;
     end
 
     module V3 = struct
@@ -180,18 +251,32 @@ module Stable = struct
       ;;
     end
 
-    module Model = V4
+    module Model = V5
   end
 
   module Reaction = struct
+    module V5 = struct
+      type t =
+        [ `Up_to_date
+        | `Catch_up_session of Catch_up_session.V5.t
+        ]
+      [@@deriving bin_io, sexp]
+
+      let of_model m = m
+    end
+
     module V4 = struct
       type t =
         [ `Up_to_date
         | `Catch_up_session of Catch_up_session.V4.t
         ]
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io]
 
-      let of_model m = m
+      let of_model m =
+        match V5.of_model m with
+        | `Up_to_date as t -> t
+        | `Catch_up_session v5 -> `Catch_up_session (Catch_up_session.V4.of_v5 v5)
+      ;;
     end
 
     module V3 = struct
@@ -229,12 +314,17 @@ module Stable = struct
       ;;
     end
 
-    module Model = V4
+    module Model = V5
   end
 end
 
 include Iron_versioned_rpc.Make
     (struct let name = "get-catch-up-session" end)
+    (struct let version = 5 end)
+    (Stable.Action.V1)
+    (Stable.Reaction.V5)
+
+include Register_old_rpc
     (struct let version = 4 end)
     (Stable.Action.V1)
     (Stable.Reaction.V4)

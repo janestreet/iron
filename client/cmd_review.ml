@@ -51,7 +51,8 @@ let forget_hunks_of_diff4 ~context ~rev_names ~file_names ~header_file_name
     return (Some hunk)
 ;;
 
-let code_change_hunks_of_diff4 ~reviewer ~context ~rev_names ~file_names ~header_file_name
+let code_change_hunks_of_diff4 ~reviewer ~context ~lines_required_to_separate_ddiff_hunks
+      ~rev_names ~file_names ~header_file_name
       fast_hg_cat_table diff4 =
   let scrutiny =
     match (Diamond.f2 diff4.Diff4.diamond).Attributed_file.attributes with
@@ -95,6 +96,7 @@ let code_change_hunks_of_diff4 ~reviewer ~context ~rev_names ~file_names ~header
         ~view_ids_computed:Compute_every_view_available
         (* So that the user may navigate among them *)
         ~context
+        ~lines_required_to_separate_ddiff_hunks
         ~rev_names ~file_names ~header_file_name
         ~scrutiny ~contents ()
       |> return)
@@ -166,6 +168,7 @@ let attributes_change_hunks_of_diff4
   in
   Pdiff4.Std.Patdiff4.hunks ~verbose:false
     ~context:Pdiff4.Std.Diff_algo.infinite_context
+    ~lines_required_to_separate_ddiff_hunks:Pdiff4.Std.Diff_algo.infinite_context
     ~rev_names ~file_names ~header_file_name
     ~scrutiny:None ~contents ()
 ;;
@@ -185,7 +188,7 @@ let errors_hunks_of_diff4 ~rev_names ~file_names ~header_file_name diff4 =
     })
 ;;
 
-let hunks_of_diff4 ~reviewer ~context fast_hg_cat_table diff4 =
+let hunks_of_diff4 ~reviewer ~context ~lines_required_to_separate_ddiff_hunks fast_hg_cat_table diff4 =
   let files = Diff4.diamond diff4 in
   let rev_names =
     Diamond.map files ~f:(fun file ->
@@ -210,7 +213,8 @@ let hunks_of_diff4 ~reviewer ~context fast_hg_cat_table diff4 =
     | None -> []
   in
   let code =
-    code_change_hunks_of_diff4 ~reviewer ~context ~rev_names ~file_names ~header_file_name
+    code_change_hunks_of_diff4 ~reviewer ~context ~lines_required_to_separate_ddiff_hunks
+      ~rev_names ~file_names ~header_file_name
       fast_hg_cat_table diff4
   in
   let%map code = code in
@@ -527,6 +531,7 @@ let create_files_for_review
       ~diff4s
       ~reviewer
       ~context
+      ~lines_required_to_separate_ddiff_hunks
   =
   let paths_in_repo_by_rev = paths_in_repo_by_rev diff4s in
   let%map paths_in_repo_by_rev =
@@ -553,13 +558,15 @@ let create_files_for_review
   in
   List.map diff4s ~f:(fun diff4 ->
     try_with_and_ignore_subsequent_errors (fun () ->
-      hunks_of_diff4 ~reviewer ~context paths_in_repo_by_rev diff4))
+      hunks_of_diff4 ~reviewer ~context ~lines_required_to_separate_ddiff_hunks
+        paths_in_repo_by_rev diff4))
 ;;
 
-let print_diff4s ~repo_root ~diff4s ~reviewer ~context =
+let print_diff4s ~repo_root ~diff4s ~reviewer ~context ~lines_required_to_separate_ddiff_hunks =
   Path.with_temp_dir (File_name.of_string "fe_cat_") ~f:(fun temp_dir ->
     let%bind files =
-      create_files_for_review ~temp_dir ~repo_root ~diff4s ~reviewer ~context
+      create_files_for_review ~temp_dir ~repo_root ~diff4s ~reviewer
+        ~context ~lines_required_to_separate_ddiff_hunks
     in
     let%map hunks = Deferred.List.all files in
     hunks
@@ -614,6 +621,7 @@ let confirm_review_session_id_exn repo_root
       ; line_count_to_finish_session
       ; line_count_to_goal
       ; is_locked = _
+      ; lines_required_to_separate_ddiff_hunks = _
       } ->
     let diff4s_to_review =
       diff4s_in_session
@@ -737,6 +745,7 @@ let review_or_catch_up
       ~may_commit_session
       ~maybe_sort_review_files
       ~context
+      ~lines_required_to_separate_ddiff_hunks
       ~emacs
       ~display_ascii
       ~max_output_columns
@@ -808,6 +817,7 @@ let review_or_catch_up
           ~diff4s:(List.map diff4s_to_review ~f:Diff4_to_review.diff4)
           ~reviewer:(`Reviewer reviewer_in_session)
           ~context
+          ~lines_required_to_separate_ddiff_hunks
       in
       let files = List.zip_exn diff4s_to_review files in
       Review_main.files (module M) files
@@ -856,14 +866,15 @@ let may_modify_others_catch_up_exn ~for_ =
 module Review_params = struct
 
   type t =
-    { emacs                   : bool
-    ; for_                    : User_name.t
-    ; display_ascii           : bool
-    ; max_output_columns      : int
-    ; raw                     : bool
-    ; context                 : int
-    ; may_modify_local_repo   : bool
-    ; maybe_sort_review_files : Command.Param.Review_sort.t option
+    { emacs                                     : bool
+    ; for_                                      : User_name.t
+    ; display_ascii                             : bool
+    ; max_output_columns                        : int
+    ; raw                                       : bool
+    ; context                                   : int
+    ; lines_required_to_separate_ddiff_hunks_override : int option
+    ; may_modify_local_repo                     : bool
+    ; maybe_sort_review_files                   : Command.Param.Review_sort.t option
     }
 
   let review_params =
@@ -878,6 +889,8 @@ module Review_params = struct
     and max_output_columns = max_output_columns
     and raw = no_arg_flag "-raw" ~doc:"show Iron's internal representation of the review"
     and context = context ()
+    and lines_required_to_separate_ddiff_hunks_override =
+      lines_required_to_separate_ddiff_hunks_override
     and may_modify_local_repo = may_modify_local_repo
     and maybe_sort_review_files = maybe_sort_review_files
     and () = interactive
@@ -900,6 +913,7 @@ module Review_params = struct
       ; max_output_columns
       ; raw
       ; context
+      ; lines_required_to_separate_ddiff_hunks_override
       ; may_modify_local_repo
       ; maybe_sort_review_files
       }
@@ -949,6 +963,7 @@ let catch_up_review_loop ~warn_if_no_session ~repo_root ~feature_path
       ; max_output_columns
       ; raw
       ; context
+      ; lines_required_to_separate_ddiff_hunks_override
       ; may_modify_local_repo
       ; maybe_sort_review_files
       }
@@ -980,8 +995,13 @@ let catch_up_review_loop ~warn_if_no_session ~repo_root ~feature_path
            ; feature_path
            ; tip
            ; is_archived
+           ; lines_required_to_separate_ddiff_hunks
            ; _
            } as catch_up_session) ->
+        let lines_required_to_separate_ddiff_hunks =
+          Option.value lines_required_to_separate_ddiff_hunks_override
+            ~default:lines_required_to_separate_ddiff_hunks
+        in
         let diff4s_to_review =
           diff4s_to_catch_up
           |> Array.of_list
@@ -1016,6 +1036,7 @@ let catch_up_review_loop ~warn_if_no_session ~repo_root ~feature_path
             ~may_commit_session:false
             ~maybe_sort_review_files
             ~context
+            ~lines_required_to_separate_ddiff_hunks
             ~emacs
             ~display_ascii
             ~max_output_columns
@@ -1036,6 +1057,7 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
       ; max_output_columns
       ; raw
       ; context
+      ; lines_required_to_separate_ddiff_hunks_override
       ; may_modify_local_repo
       ; maybe_sort_review_files
       }
@@ -1105,6 +1127,7 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
             ; line_count_to_finish_session
             ; line_count_to_goal
             ; is_locked = _
+            ; lines_required_to_separate_ddiff_hunks
             } ->
           let diff4s_to_review =
             diff4s_in_session
@@ -1147,6 +1170,10 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
                     List.map diff4s_to_review ~f:Diff4_to_review.id
                 }
             in
+            let lines_required_to_separate_ddiff_hunks =
+              Option.value lines_required_to_separate_ddiff_hunks_override
+                ~default:lines_required_to_separate_ddiff_hunks
+            in
             let%bind result =
               review_or_catch_up
                 ~is_catch_up_on_archived_feature:false
@@ -1167,6 +1194,7 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
                 ~may_commit_session:true
                 ~maybe_sort_review_files
                 ~context
+                ~lines_required_to_separate_ddiff_hunks
                 ~emacs
                 ~display_ascii
                 ~max_output_columns

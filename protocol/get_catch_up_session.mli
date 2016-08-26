@@ -31,6 +31,7 @@ module Catch_up_session : sig
     ; is_permanent                     : bool
     ; is_archived                      : bool
     ; seconder                         : User_name.t option
+    ; lines_required_to_separate_ddiff_hunks : int
     }
   [@@deriving sexp_of]
 end

@@ -289,7 +289,7 @@ let attributed_files_diamonds cache revs attributed_files_by_paths
   result
 ;;
 
-let create cache revs =
+let create cache revs ~lines_required_to_separate_ddiff_hunks =
   let files_by_paths = Diamond.map revs ~f:(Cache.cat cache) in
   let attributed_files rev (map : Abspath.t Path_in_repo.Map.t) =
     let%map files =
@@ -319,14 +319,15 @@ let create cache revs =
       (attributed_files_diamonds cache revs attributed_files_by_paths)
       ~f:(fun (attr_files, errors) ->
         Diff4.create ~cache:cache.diff4_cache ~file_by_path_by_rev
-          ~errors attr_files)
+          ~errors ~lines_required_to_separate_ddiff_hunks attr_files)
   in
   List.filter_map diff4s ~f:(function
     | `Equal -> None
     | `Unequal diff4 -> Some diff4)
 ;;
 
-let create_using_fake_obligations repo_root rev_diamond =
+let create_using_fake_obligations repo_root rev_diamond
+      ~lines_required_to_separate_ddiff_hunks =
   let%bind rev_diamond =
     Diamond.Deferred.map rev_diamond ~f:(fun raw_rev ->
       Raw_rev.resolve_exn raw_rev ~in_:(Ok repo_root))
@@ -347,7 +348,7 @@ let create_using_fake_obligations repo_root rev_diamond =
   let obligations_by_rev = Rev.Compare_by_hash.Map.of_alist_exn obligations_by_rev in
   Monitor.try_with_or_error ~extract_exn:true (fun () ->
     Cache.with_ repo_root obligations_by_rev [rev_diamond] ~f:(fun cache ->
-      create cache rev_diamond))
+      create cache rev_diamond ~lines_required_to_separate_ddiff_hunks))
 ;;
 
 let command =
@@ -355,12 +356,19 @@ let command =
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and diamond = Diamond.anon (fun node -> Diamond.Node.to_string_short node %: string)
+     and lines_required_to_separate_ddiff_hunks =
+       let default = Constants.lines_required_to_separate_ddiff_hunks_default in
+       flag Switch.lines_required_to_separate_ddiff_hunks
+         (optional_with_default default int)
+         ~doc:(sprintf "INT required spacing to separate two ddiff hunks (default %d)"
+                 default)
      in
      fun () ->
        let open! Deferred.Let_syntax in
        let repo_root = ok_exn Repo_root.program_started_in in
        let%map result =
-         create_using_fake_obligations repo_root (Diamond.map diamond ~f:Raw_rev.string)
+         create_using_fake_obligations ~lines_required_to_separate_ddiff_hunks
+           repo_root (Diamond.map diamond ~f:Raw_rev.string)
        in
        print_endline
          (result |> ok_exn |> [%sexp_of: Diff4.t list] |> Sexp.to_string_hum)

@@ -999,14 +999,19 @@
 : 
 : === flags ===
 : 
-:   [-context N]                 number of lines of context to show (default 12)
-:   [-do-not-modify-local-repo]  don't run hg commands that modify the local repo
-:   [-file FILE]                 show only specified file(s)
-:   [-for USER]                  for user (default is unix login)
-:   [-session-id SESSION_ID]     fail if the current session id is not the one
-:                                supplied
-:   [-help]                      print this help text and exit
-:                                (alias: -?)
+:   [-context N]                                   number of lines of context to
+:                                                  show (default 12)
+:   [-do-not-modify-local-repo]                    don't run hg commands that
+:                                                  modify the local repo
+:   [-file FILE]                                   show only specified file(s)
+:   [-for USER]                                    for user (default is unix
+:                                                  login)
+:   [-lines-required-to-separate-ddiff-hunks INT]  override the required spacing
+:                                                  to separate two ddiff hunks
+:   [-session-id SESSION_ID]                       fail if the current session id
+:                                                  is not the one supplied
+:   [-help]                                        print this help text and exit
+:                                                  (alias: -?)
 
 *** is-needed
 
@@ -1047,24 +1052,34 @@
 : 
 : === flags ===
 : 
-:   [-context N]                 number of lines of context to show (default 12)
-:   [-do-not-modify-local-repo]  don't run hg commands that modify the local repo
-:   [-emacs]                     visit files in emacs
-:   [-for USER]                  for user (default is unix login)
-:   [-interactive BOOL]          be interactive via the terminal (default is
-:                                false)
-:   [-max-output-columns INT]    maximum column width for table output
-:   [-raw]                       show Iron's internal representation of the review
-:   [-sort FILE]                 order the files to be reviewed using the list in
-:                                this file.
-:   [-sort-build-order]          attempt to sort files in build order, computed
-:                                via build artifacts
-:   [-sort-by-decreasing-lines]  order the files to be reviewed by increasing
-:                                number of lines to review.
-:   [-sort-by-increasing-lines]  order the files to be reviewed by increasing
-:                                number of lines to review.
-:   [-help]                      print this help text and exit
-:                                (alias: -?)
+:   [-context N]                                   number of lines of context to
+:                                                  show (default 12)
+:   [-do-not-modify-local-repo]                    don't run hg commands that
+:                                                  modify the local repo
+:   [-emacs]                                       visit files in emacs
+:   [-for USER]                                    for user (default is unix
+:                                                  login)
+:   [-interactive BOOL]                            be interactive via the terminal
+:                                                  (default is false)
+:   [-lines-required-to-separate-ddiff-hunks INT]  override the required spacing
+:                                                  to separate two ddiff hunks
+:   [-max-output-columns INT]                      maximum column width for table
+:                                                  output
+:   [-raw]                                         show Iron's internal
+:                                                  representation of the review
+:   [-sort FILE]                                   order the files to be reviewed
+:                                                  using the list in this file.
+:   [-sort-build-order]                            attempt to sort files in build
+:                                                  order, computed via build
+:                                                  artifacts
+:   [-sort-by-decreasing-lines]                    order the files to be reviewed
+:                                                  by increasing number of lines
+:                                                  to review.
+:   [-sort-by-increasing-lines]                    order the files to be reviewed
+:                                                  by increasing number of lines
+:                                                  to review.
+:   [-help]                                        print this help text and exit
+:                                                  (alias: -?)
 
 *** show
 
@@ -1153,6 +1168,7 @@
 :   [-set-inheritable-whole-feature-reviewers USER[,USER...]]
 :   [-set-inheritable-xcrs-shown-in-todo-only-for-users-reviewing BOOL]
 :   [-set-is-permanent BOOL]
+:   [-set-lines-required-to-separate-ddiff-hunks]
 :   [-set-owners USER[,USER...]]
 :   [-set-property ATTR=SEXP]                                            set
 :                                                                        user-defined
@@ -1564,62 +1580,75 @@
 : 
 : === subcommands ===
 : 
-:   archived-features-cache          deal with the archived features cached on the
-:                                    server
-:   cached-attributes                deal with cached attributes in features
-:   catch-up                         various catch-up commands for Iron developers
-:                                    and tests
-:   clear-bookmarks-without-feature  clear some bookmarks without feature in the
-:                                    server
-:   command-rpc                      RPC access for fe client
-:   de-alias                         de-alias a feature
-:   diffs                            compute the diffs between four revs
-:   dump                             output part of server internal state as a
-:                                    sexp
-:   event-subscriptions              deal with long standing connections to Iron
-:                                    which consume asynchronous events
-:   fully-reviewed-edge              deal with the set of fully-reviewed edges
-:   fully-reviewed-revision          change the set of fully-reviewed revisions
-:   hg-path                          print out the file path for the hg executable
-:                                    used by fe
-:   hydra-worker                     the part of Iron that works each time
-:                                    something changes in a repository
-:   infer-base                       guess the base of a revision (assuming it is
-:                                    the tip of a feature)
-:   invariant                        check invariant
-:   mark-fully-reviewed              mark a feature as fully reviewed
-:   need-diff4s-starting-from        show review edges for all users
-:   notify-on-descendant-updates     watch for updates to a feature and its
-:                                    descendants, reflect each update on stdout as
-:                                    they happen
-:   notify-on-feature-updates        watch for updates and dump a feature each
-:                                    time it is changed on the server
-:   process-num-lines-in-diff4       compute num lines of a diff4
-:   push-events                      push events stored on the server
-:   remove-color                     Filter color escape chars from stdin and
-:                                    output to stdout
-:   render-release-email             output the body of the release email for a
-:                                    feature
-:   rpc-to-server                    dealing with RPCs
-:   scaffold                         miscellaneous scaffold internal commands
+:   archived-features-cache                      deal with the archived features
+:                                                cached on the server
+:   cached-attributes                            deal with cached attributes in
+:                                                features
+:   catch-up                                     various catch-up commands for
+:                                                Iron developers and tests
+:   clear-bookmarks-without-feature              clear some bookmarks without
+:                                                feature in the server
+:   command-rpc                                  RPC access for fe client
+:   de-alias                                     de-alias a feature
+:   diffs                                        compute the diffs between four
+:                                                revs
+:   dump                                         output part of server internal
+:                                                state as a sexp
+:   event-subscriptions                          deal with long standing
+:                                                connections to Iron which consume
+:                                                asynchronous events
+:   fully-reviewed-edge                          deal with the set of
+:                                                fully-reviewed edges
+:   fully-reviewed-revision                      change the set of fully-reviewed
+:                                                revisions
+:   hg-path                                      print out the file path for the
+:                                                hg executable used by fe
+:   hydra-worker                                 the part of Iron that works each
+:                                                time something changes in a
+:                                                repository
+:   infer-base                                   guess the base of a revision
+:                                                (assuming it is the tip of a
+:                                                feature)
+:   invariant                                    check invariant
+:   mark-fully-reviewed                          mark a feature as fully reviewed
+:   need-diff4s-starting-from                    show review edges for all users
+:   notify-on-descendant-updates                 watch for updates to a feature
+:                                                and its descendants, reflect each
+:                                                update on stdout as they happen
+:   notify-on-feature-updates                    watch for updates and dump a
+:                                                feature each time it is changed
+:                                                on the server
+:   process-num-lines-in-diff4                   compute num lines of a diff4
+:   push-events                                  push events stored on the server
+:   remove-color                                 Filter color escape chars from
+:                                                stdin and output to stdout
+:   render-release-email                         output the body of the release
+:                                                email for a feature
+:   rpc-to-server                                dealing with RPCs
+:   scaffold                                     miscellaneous scaffold internal
+:                                                commands
 :   serverless-hydra-worker
-:   session                          various review commands for Iron developers
-:                                    and tests
-:   set-brains-to-goal-if-edge       set reviewer brains to the goal if there is
-:                                    already a fully-reviewed edge
-:   show-repo-for-hg-operations      output the workspace that will be used by fe
-:                                    commands
-:   show-supported-iron-rpcs         output a table of RPCs supported by Iron
-:                                    public lib
-:   terminal-width                   print the width in columns of the terminal of
-:                                    stderr
-:   timed-events                     deal with asynchronous events fired at some
-:                                    specific times
-:   unclean-workspaces               deal with unclean workspaces on the server
-:   worker-cache                     deal with the attributes cached by the hydra
-:                                    worker
-:   help                             explain a given subcommand (perhaps
-:                                    recursively)
+:   session                                      various review commands for Iron
+:                                                developers and tests
+:   set-brains-to-goal-if-edge                   set reviewer brains to the goal
+:                                                if there is already a
+:                                                fully-reviewed edge
+:   show-lines-required-to-separate-ddiff-hunks  show settings of lines required
+:                                                to separate ddiff hunks
+:   show-repo-for-hg-operations                  output the workspace that will be
+:                                                used by fe commands
+:   show-supported-iron-rpcs                     output a table of RPCs supported
+:                                                by Iron public lib
+:   terminal-width                               print the width in columns of the
+:                                                terminal of stderr
+:   timed-events                                 deal with asynchronous events
+:                                                fired at some specific times
+:   unclean-workspaces                           deal with unclean workspaces on
+:                                                the server
+:   worker-cache                                 deal with the attributes cached
+:                                                by the hydra worker
+:   help                                         explain a given subcommand
+:                                                (perhaps recursively)
 
 *** archived-features-cache
 
@@ -1927,8 +1956,10 @@
 : 
 : === flags ===
 : 
-:   [-help]  print this help text and exit
-:            (alias: -?)
+:   [-lines-required-to-separate-ddiff-hunks INT]  required spacing to separate
+:                                                  two ddiff hunks (default 0)
+:   [-help]                                        print this help text and exit
+:                                                  (alias: -?)
 
 *** dump
 
@@ -2554,11 +2585,14 @@
 : 
 : === flags ===
 : 
-:   [-base REV]        the assumed base of the feature
-:   [-profile]         print information about where the time is spent
-:   [-review-manager]  base,tip
-:   [-help]            print this help text and exit
-:                      (alias: -?)
+:   [-base REV]                                    the assumed base of the feature
+:   [-lines-required-to-separate-ddiff-hunks INT]  required spacing to separate
+:                                                  two ddiff hunks (default 0)
+:   [-profile]                                     print information about where
+:                                                  the time is spent
+:   [-review-manager]                              base,tip
+:   [-help]                                        print this help text and exit
+:                                                  (alias: -?)
 
 *** session
 
@@ -2648,6 +2682,20 @@
 : 
 :   [-help]  print this help text and exit
 :            (alias: -?)
+
+*** show-lines-required-to-separate-ddiff-hunks
+
+: show settings of lines required to separate ddiff hunks
+: 
+:   fe.exe internal show-lines-required-to-separate-ddiff-hunks 
+: 
+: === flags ===
+: 
+:   [-display-ascii]           display ASCII characters, with no ANSI color
+:                              escapes or unicode characters
+:   [-max-output-columns INT]  maximum column width for table output
+:   [-help]                    print this help text and exit
+:                              (alias: -?)
 
 *** show-repo-for-hg-operations
 
@@ -3329,31 +3377,43 @@
 : 
 : === flags ===
 : 
-:   [-context N]                 number of lines of context to show (default 12)
-:   [-create-catch-up-for-me]    create catch-up review even when reviewing for
-:                                oneself
-:   [-do-not-modify-local-repo]  don't run hg commands that modify the local repo
-:   [-emacs]                     visit files in emacs
-:   [-file FILE]                 show only specified file(s)
-:   [-for USER]                  for user (default is unix login)
-:   [-interactive BOOL]          be interactive via the terminal (default is
-:                                false)
-:   [-max-output-columns INT]    maximum column width for table output
-:   [-only-catch-up-review]      only attend the catch-up review
-:   [-raw]                       show Iron's internal representation of the review
-:   [-reason REASON]             why you are reviewing this for someone else
-:   [-skip-catch-up-review]      skip the catch-up part when there are both
-:                                catch-up and review to do
-:   [-sort FILE]                 order the files to be reviewed using the list in
-:                                this file.
-:   [-sort-build-order]          attempt to sort files in build order, computed
-:                                via build artifacts
-:   [-sort-by-decreasing-lines]  order the files to be reviewed by increasing
-:                                number of lines to review.
-:   [-sort-by-increasing-lines]  order the files to be reviewed by increasing
-:                                number of lines to review.
-:   [-help]                      print this help text and exit
-:                                (alias: -?)
+:   [-context N]                                   number of lines of context to
+:                                                  show (default 12)
+:   [-create-catch-up-for-me]                      create catch-up review even
+:                                                  when reviewing for oneself
+:   [-do-not-modify-local-repo]                    don't run hg commands that
+:                                                  modify the local repo
+:   [-emacs]                                       visit files in emacs
+:   [-file FILE]                                   show only specified file(s)
+:   [-for USER]                                    for user (default is unix
+:                                                  login)
+:   [-interactive BOOL]                            be interactive via the terminal
+:                                                  (default is false)
+:   [-lines-required-to-separate-ddiff-hunks INT]  override the required spacing
+:                                                  to separate two ddiff hunks
+:   [-max-output-columns INT]                      maximum column width for table
+:                                                  output
+:   [-only-catch-up-review]                        only attend the catch-up review
+:   [-raw]                                         show Iron's internal
+:                                                  representation of the review
+:   [-reason REASON]                               why you are reviewing this for
+:                                                  someone else
+:   [-skip-catch-up-review]                        skip the catch-up part when
+:                                                  there are both catch-up and
+:                                                  review to do
+:   [-sort FILE]                                   order the files to be reviewed
+:                                                  using the list in this file.
+:   [-sort-build-order]                            attempt to sort files in build
+:                                                  order, computed via build
+:                                                  artifacts
+:   [-sort-by-decreasing-lines]                    order the files to be reviewed
+:                                                  by increasing number of lines
+:                                                  to review.
+:   [-sort-by-increasing-lines]                    order the files to be reviewed
+:                                                  by increasing number of lines
+:                                                  to review.
+:   [-help]                                        print this help text and exit
+:                                                  (alias: -?)
 
 ** second
 
@@ -3426,17 +3486,23 @@
 : 
 : === flags ===
 : 
-:   [-context N]                 number of lines of context to show (default 12)
-:   [-do-not-lock-session]       do not lock the session
-:   [-do-not-modify-local-repo]  don't run hg commands that modify the local repo
-:   [-file FILE]                 show only specified files
-:   [-for USER]                  for user (default is unix login)
-:   [-reviewed]                  show only already reviewed diffs
-:   [-session-id SESSION_ID]     fail if the current session id is not the one
-:                                supplied
-:   [-unreviewed]                show only unreviewed diffs
-:   [-help]                      print this help text and exit
-:                                (alias: -?)
+:   [-context N]                                   number of lines of context to
+:                                                  show (default 12)
+:   [-do-not-lock-session]                         do not lock the session
+:   [-do-not-modify-local-repo]                    don't run hg commands that
+:                                                  modify the local repo
+:   [-file FILE]                                   show only specified files
+:   [-for USER]                                    for user (default is unix
+:                                                  login)
+:   [-lines-required-to-separate-ddiff-hunks INT]  override the required spacing
+:                                                  to separate two ddiff hunks
+:   [-reviewed]                                    show only already reviewed
+:                                                  diffs
+:   [-session-id SESSION_ID]                       fail if the current session id
+:                                                  is not the one supplied
+:   [-unreviewed]                                  show only unreviewed diffs
+:   [-help]                                        print this help text and exit
+:                                                  (alias: -?)
 
 *** forget
 
@@ -3542,6 +3608,8 @@
 :                                                              line-count-from-session-end-to-goal
 :   [-line-count-to-finish-session]                            show
 :                                                              line-count-to-finish-session
+:   [-lines-required-to-separate-hunks]                        show
+:                                                              lines-required-to-separate-hunks
 :   [-max-output-columns INT]                                  maximum column
 :                                                              width for table
 :                                                              output
@@ -3993,8 +4061,11 @@
 : 
 :   [-base rev]                                         the hg revision for the
 :                                                       base
-:   [-context <lines>]                                  Show this many lines of
-:                                                       context in the diffs
+:   [-context N]                                        number of lines of context
+:                                                       to show (default 12)
+:   [-lines-required-to-separate-ddiff-hunks INT]       required spacing to
+:                                                       separate two ddiff hunks
+:                                                       (default 0)
 :   [-new-base rev]                                     the hg revision for the
 :                                                       new-base
 :                                                       (alias: -b2)

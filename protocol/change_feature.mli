@@ -42,6 +42,7 @@ module Update : sig
     | `Set_inheritable_send_email_upon            of Send_email_upon.Set.t
     | `Set_inheritable_whole_feature_followers    of User_name.Set.t
     | `Set_inheritable_whole_feature_reviewers    of User_name.Set.t
+    | `Set_lines_required_to_separate_ddiff_hunks of int
     | `Set_owners                                 of User_name.t list
     | `Set_properties                             of Properties.t
     | `Set_release_process                        of Release_process.t

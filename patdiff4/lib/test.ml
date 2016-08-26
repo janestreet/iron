@@ -6,23 +6,23 @@ let%test_module _ = (module struct
   let test_double_pdiff ?verbose
         ~old_base:b1 ~new_base:b2 ~old_tip:f1 ~new_tip:f2 ~expect () =
     let context = 0 in
+    let lines_required_to_separate_ddiff_hunks = 0 in
     let rev_names = Diamond.pretty_short_rev_names_const in
     let contents = { Diamond.b1 ; b2 ; f1 ; f2 } in
     [%test_result: Slice.t Diamond.t list]
-      (Segments.of_files ?verbose ~force_should_split_files_in_hunks:true
-         ~context ~contents ~rev_names ()
-       |> List.map ~f:(fun segment ->
-         let full_diff = segment.Segment.slice in
+      (Segments.of_files ?verbose ~force_should_split_files_in_hunks_for_tests:true
+         ~context ~lines_required_to_separate_ddiff_hunks ~contents ~rev_names ()
+       |> List.map ~f:(fun (segment : Segment.t) ->
          (* Check for thrown exceptions when doing a normal diff with every
             combination of diff algorithm. *)
          List.iter Diff4_class.Shown_class.all ~f:(fun diff4_class ->
-           List.iter (Diff_algo.select_algos_for_review diff4_class)  ~f:(fun diff_algo ->
+           List.iter (Diff_algo.select_algos_for_review diff4_class) ~f:(fun diff_algo ->
              Diff_algo.apply diff_algo
                ~include_hunk_breaks:true
-               ~diff4_class:segment.Segment.diff4_class
-               ~context full_diff
+               ~diff4_class:segment.diff4_class
+               ~context segment.slice
              |> (ignore : Diff_algo.View.t -> unit)));
-         full_diff
+         segment.slice
        ))
       ~expect;
   ;;

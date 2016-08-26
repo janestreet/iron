@@ -5,6 +5,7 @@ open! Import
 module Action : sig
   type t =
     { files : string Diamond.t
+    ; lines_required_to_separate_ddiff_hunks : int
     }
   [@@deriving sexp]
 end

@@ -39,6 +39,7 @@ val print_diff4s
   -> diff4s:Diff4.t list
   -> reviewer:[ `Reviewer of Reviewer.t | `Whole_diff_plus_ignored ]
   -> context:int
+  -> lines_required_to_separate_ddiff_hunks:int
   -> unit Deferred.t
 
 (** If [pull_and_update] runs without raising, it is supposed to guarantee that:
@@ -96,4 +97,5 @@ val create_files_for_review
               | `Whole_diff_plus_ignored
               ]
   -> context:int
+  -> lines_required_to_separate_ddiff_hunks:int
   -> Pdiff4.Hunk.t list Or_error.t Deferred.t list Deferred.t

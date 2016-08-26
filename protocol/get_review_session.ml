@@ -88,6 +88,25 @@ module Stable = struct
   end
 
   module Review_session = struct
+    module V9 = struct
+      type t =
+        { review_session_id              : Session_id.V1.t
+        ; review_session_tip             : Rev.V1.t
+        ; reviewer_in_session            : Reviewer.V2.t
+        ; reviewer_in_feature            : Reviewer.V2.t
+        ; diff4s_in_session
+          : Review_session.Diff4_in_session.And_review_kind.V2.t array
+        ; may_be_reviewed_by             : Allow_review_for.Users.V1.t
+        ; line_count_to_finish_session   : Line_count.Review.V1.t
+        ; line_count_to_goal
+          : Line_count.Review.V1.t Or_error.V2.t Or_pending.V1.t
+              Line_count_to_goal.V1.t
+        ; is_locked : bool
+        ; lines_required_to_separate_ddiff_hunks : int
+        }
+      [@@deriving bin_io, sexp]
+    end
+
     module V8 = struct
       type t =
         { review_session_id              : Session_id.V1.t
@@ -103,7 +122,34 @@ module Stable = struct
               Line_count_to_goal.V1.t
         ; is_locked : bool
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io]
+
+      open! Core.Std
+      open! Import
+
+      let of_v9 { V9.
+                  review_session_id
+                ; review_session_tip
+                ; reviewer_in_session
+                ; reviewer_in_feature
+                ; diff4s_in_session
+                ; may_be_reviewed_by
+                ; line_count_to_finish_session
+                ; line_count_to_goal
+                ; is_locked
+                ; _
+                } =
+        { review_session_id
+        ; review_session_tip
+        ; reviewer_in_session
+        ; reviewer_in_feature
+        ; diff4s_in_session
+        ; may_be_reviewed_by
+        ; line_count_to_finish_session
+        ; line_count_to_goal
+        ; is_locked
+        }
+      ;;
     end
 
     module V7 = struct
@@ -151,7 +197,6 @@ module Stable = struct
         ; user_is_using_locked_sessions = true
         }
       ;;
-
     end
 
     module V6 = struct
@@ -255,7 +300,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V8
+    module Model = V9
   end
 
   module Status = struct
@@ -277,9 +322,9 @@ module Stable = struct
   end
 
   module Reaction = struct
-    module V8 = struct
+    module V9 = struct
       type t =
-        { status            : Review_session.V8.t Status.V1.t
+        { status            : Review_session.V9.t Status.V1.t
         ; feature_tip       : Rev.V1.t
         ; remote_rev_zero   : Rev.V1.t
         ; remote_repo_path  : Remote_repo_path.V1.t
@@ -288,6 +333,29 @@ module Stable = struct
       [@@deriving bin_io, sexp]
 
       let of_model m = m
+    end
+
+    module V8 = struct
+      type t =
+        { status            : Review_session.V8.t Status.V1.t
+        ; feature_tip       : Rev.V1.t
+        ; remote_rev_zero   : Rev.V1.t
+        ; remote_repo_path  : Remote_repo_path.V1.t
+        ; may_second        : bool
+        }
+      [@@deriving bin_io]
+
+      let of_model model =
+        let { V9. status; feature_tip; remote_rev_zero; remote_repo_path; may_second }
+          = V9.of_model model
+        in
+        { status           = Status.V1.map status ~f:Review_session.V8.of_v9
+        ; feature_tip
+        ; remote_rev_zero
+        ; remote_repo_path
+        ; may_second
+        }
+      ;;
     end
 
     module V7 = struct
@@ -382,7 +450,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V8
+    module Model = V9
   end
 end
 
@@ -391,6 +459,11 @@ open! Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "get-review-session" end)
+    (struct let version = 11 end)
+    (Stable.Action.V4)
+    (Stable.Reaction.V9)
+
+include Register_old_rpc
     (struct let version = 10 end)
     (Stable.Action.V4)
     (Stable.Reaction.V8)

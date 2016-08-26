@@ -3,7 +3,6 @@ open! Async.Std
 open! Import
 
 let diff =
-
   Command.async' ~summary:"show the diff a reviewer knows for a feature"
     (let open Command.Let_syntax in
      let%map_open () = return ()
@@ -49,7 +48,7 @@ let diff =
          ~diff4s:(List.map brain ~f:Diff4.create_from_scratch_to_diff2)
          ~reviewer:(`Reviewer reviewer)
          ~context
-    )
+         ~lines_required_to_separate_ddiff_hunks:(2*context))
 ;;
 
 let show_brain feature_path ~for_ ~what_to_show ~display_ascii

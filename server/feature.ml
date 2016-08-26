@@ -130,6 +130,7 @@ module Stable = struct
         | `Set_inheritable_whole_feature_followers of User_name.V1.Set.t
         | `Set_inheritable_whole_feature_reviewers of User_name.V1.Set.t
         | `Set_is_permanent                        of bool
+        | `Set_lines_required_to_separate_ddiff_hunks of int
         | `Set_owners                              of User_name.V1.t list
         | `Set_properties                          of Properties.V1.t
         | `Set_release_process                     of Release_process.V1.t
@@ -335,6 +336,7 @@ type t =
   ; properties                        : Sexp.t Property.Table.t
   ; mutable latest_release            : Latest_release.t option
   ; mutable inheritable_attributes    : Feature_inheritable_attributes.t
+  ; mutable lines_required_to_separate_ddiff_hunks : int option
   }
 [@@deriving fields, sexp_of]
 
@@ -568,7 +570,7 @@ let invariant t =
       ~feature_path:(check (fun feature_path ->
         Feature_path.invariant feature_path;
         [%test_result: bool] (is_some (remote_repo_path t))
-          ~expect:(Feature_path.num_parts feature_path = 1)))
+          ~expect:(Feature_path.is_root feature_path)))
       ~locks:(check Feature_locks.invariant)
       ~cache_invalidator:(check Cached.Invalidator.invariant)
       ~line_count_by_user_cached:
@@ -643,7 +645,11 @@ let invariant t =
       ~send_email_upon:ignore
       ~latest_release:(check (Option.iter ~f:Latest_release.invariant))
       ~inheritable_attributes:(check Feature_inheritable_attributes.invariant)
-  )
+      ~lines_required_to_separate_ddiff_hunks:(check (function
+        | None -> ()
+        | Some num_lines ->
+          assert (Feature_path.is_root t.feature_path);
+          assert (num_lines >= 0))))
 ;;
 
 let serializer_exn t =
@@ -811,6 +817,7 @@ let create_internal creation ~serializer =
   ; send_email_upon = Send_email_upon.default
   ; latest_release = None
   ; inheritable_attributes = Feature_inheritable_attributes.create ()
+  ; lines_required_to_separate_ddiff_hunks = None
   }
 ;;
 
@@ -819,9 +826,9 @@ let create_exn query
       ~remote_repo_path ~serializer =
   if List.is_empty owners
   then failwith "feature must have an owner"
-  else if is_some remote_repo_path && Feature_path.num_parts feature_path > 1
+  else if is_some remote_repo_path && not (Feature_path.is_root feature_path)
   then failwith "only root features can specify a remote repo path"
-  else if is_none remote_repo_path && Feature_path.num_parts feature_path = 1
+  else if is_none remote_repo_path && Feature_path.is_root feature_path
   then failwith "a root feature must specify a remote repo path"
   else (
     let creation =
@@ -870,6 +877,7 @@ let review_goal t =
 let record t query action =
   let recording_query_will_allow_to_rollback =
     match (action : Action.t) with
+    | `Set_lines_required_to_separate_ddiff_hunks _ -> false
     (* Note to devs: please keep at least this line so that it is easy to add/remove
        lines there *)
     | #Action.t -> true
@@ -982,6 +990,39 @@ let set_has_bookmark t query has_bookmark =
   then (
     record t query (`Set_has_bookmark has_bookmark);
     t.has_bookmark <- has_bookmark)
+;;
+
+let set_lines_required_to_separate_ddiff_hunks t query
+      lines_required_to_separate_ddiff_hunks =
+  if not (Feature_path.is_root t.feature_path)
+  then
+    Or_error.error_s
+      [%sexp
+        "[lines-required-to-separate-ddiff-hunks] can be set for root features only"
+      , (t.feature_path : Feature_path.t)
+      ]
+  else
+    if lines_required_to_separate_ddiff_hunks < 0
+    then
+      Or_error.error_s
+        [%sexp
+          "[lines-required-to-separate-ddiff-hunks] shall be set to a non negative value"
+        , (lines_required_to_separate_ddiff_hunks : int)
+        ]
+    else (
+      let should_set =
+        match t.lines_required_to_separate_ddiff_hunks with
+        | None -> true
+        | Some x -> x <> lines_required_to_separate_ddiff_hunks
+      in
+      (if should_set
+       then (
+         record t query
+           (`Set_lines_required_to_separate_ddiff_hunks
+              lines_required_to_separate_ddiff_hunks);
+         t.lines_required_to_separate_ddiff_hunks <-
+           Some lines_required_to_separate_ddiff_hunks));
+      Ok ())
 ;;
 
 let set_seconder t query user =
@@ -1390,6 +1431,9 @@ let apply_change_internal t query (action : Action.t) =
     Ok ()
   | `Set_inheritable_send_email_upon upon -> set_inheritable_send_email_upon t query upon;
     Ok ()
+  | `Set_lines_required_to_separate_ddiff_hunks lines_required_to_separate_ddiff_hunks ->
+    set_lines_required_to_separate_ddiff_hunks t query
+      lines_required_to_separate_ddiff_hunks
   | `Set_release_process how -> set_release_process t query how; Ok ()
   | `Set_who_can_release_into_me who -> set_who_can_release_into_me t query who; Ok ()
   | `Set_send_release_email_to whom -> set_send_release_email_to t query whom; Ok ()
@@ -1623,6 +1667,7 @@ let change t query (updates : Change_feature.Update.t list) =
       | `Set_inheritable_send_email_to _
       | `Set_inheritable_whole_feature_followers _
       | `Set_inheritable_whole_feature_reviewers _
+      | `Set_lines_required_to_separate_ddiff_hunks _
       | `Set_owners _
       | `Set_properties _
       | `Set_release_process _

@@ -400,6 +400,7 @@ let run_without_server
       ~tip
       ~fake_attribute
       ~need_diff4s_starting_from
+      ~lines_required_to_separate_ddiff_hunks
       ~worker_cache_session
   =
   let review_edge_from_base_to_base = { Review_edge. base; tip = base } in
@@ -496,20 +497,20 @@ let run_without_server
         (List.map need_diff4s_starting_from ~f:(fun { base = b1; tip = f1 } ->
            { Diamond. b1; b2; f1; f2 }))
       in
-      let%map x =
-        Event.nest "all file_diffs" (fun () ->
-          Diff4s_for_diamond.Cache.with_ ~time:event repo_root obligations_by_rev diamonds
-            ~f:(fun cache ->
-              event "file_diffs cache";
-              Deferred.List.map diamonds ~f:(fun diamond ->
-                Event.nest "file_diffs" (fun () ->
-                  let%map diffs = Diff4s_for_diamond.create cache diamond in
-                  let { Diamond.b1 ; f1 ; _ } = diamond in
-                  { Review_edge.base = b1; tip = f1 }, diffs
-                )))
-        )
-      in
-      Ok x
+      Event.nest "all file_diffs" (fun () ->
+        Diff4s_for_diamond.Cache.with_ ~time:event repo_root obligations_by_rev diamonds
+          ~f:(fun cache ->
+            event "file_diffs cache";
+            Deferred.List.map diamonds ~f:(fun diamond ->
+              Event.nest "file_diffs" (fun () ->
+                let%map diffs =
+                  Diff4s_for_diamond.create cache diamond
+                    ~lines_required_to_separate_ddiff_hunks
+                in
+                let { Diamond.b1 ; f1 ; _ } = diamond in
+                { Review_edge.base = b1; tip = f1 }, diffs
+              ))))
+      >>| Or_error.return
   in
   let cr_soons =
     match cr_soons_at_base, cr_soons_at_tip with
@@ -611,8 +612,11 @@ let run repo_root fake_attribute ~run_between_rpcs =
           Hydra_worker.rpc_to_server { feature_path; rev_zero; tip = Some tip }
         with
         | Error e -> stop e
-        | Ok { base; feature_id
-             ; need_diff4s_starting_from; aliases
+        | Ok { base
+             ; feature_id
+             ; need_diff4s_starting_from
+             ; aliases
+             ; lines_required_to_separate_ddiff_hunks
              ; worker_cache
              } ->
           let%bind () = run_between_rpcs () in
@@ -629,6 +633,7 @@ let run repo_root fake_attribute ~run_between_rpcs =
                 ~tip
                 ~fake_attribute
                 ~need_diff4s_starting_from
+                ~lines_required_to_separate_ddiff_hunks
                 ~worker_cache_session)
           in
           let info =
@@ -705,6 +710,8 @@ let serverless_command =
        flag "base" (optional rev_arg_type) ~doc:"REV the assumed base of the feature"
      and unparsed_review_managers =
        flag "review-manager" (listed string) ~doc:"base,tip"
+     and lines_required_to_separate_ddiff_hunks =
+       lines_required_to_separate_ddiff_hunks_with_default
      in
      fun () ->
        let open! Deferred.Let_syntax in
@@ -749,6 +756,7 @@ let serverless_command =
            ~tip
            ~fake_attribute:`Do_not_fake
            ~need_diff4s_starting_from:review_managers
+           ~lines_required_to_separate_ddiff_hunks
            ~worker_cache_session
        in
        let%bind (_ : unit Or_error.t) =

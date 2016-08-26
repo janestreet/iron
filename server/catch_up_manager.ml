@@ -99,7 +99,7 @@ let line_count_remaining_to_catch_up t =
     Line_count.Catch_up.(acc + Catch_up_session.line_count_remaining_to_catch_up session))
 ;;
 
-let to_protocol t session ~is_archived =
+let to_protocol t session ~is_archived ~lines_required_to_separate_ddiff_hunks =
   let module Creation = Catch_up_session.Creation in
   let creation = Catch_up_session.creation session in
   { Iron_protocol.Get_catch_up_session.Catch_up_session.
@@ -121,6 +121,7 @@ let to_protocol t session ~is_archived =
   ; is_permanent                     = Creation.is_permanent               creation
   ; is_archived
   ; seconder                         = Creation.seconder                   creation
+  ; lines_required_to_separate_ddiff_hunks
   }
 ;;
 

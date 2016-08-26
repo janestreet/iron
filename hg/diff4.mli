@@ -25,6 +25,7 @@ val create
   :  file_by_path_by_rev : Abspath.t Path_in_repo.Map.t Rev.Compare_by_hash.Map.t
   -> cache               : Cache.t
   -> errors              : Error.t list
+  -> lines_required_to_separate_ddiff_hunks : int
   -> Attributed_file.t Diamond.t
   -> [ `Equal
      | `Unequal of t

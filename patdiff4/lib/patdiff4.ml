@@ -43,9 +43,10 @@ let hunks
       ?verbose
       ?view_ids_computed
       ~include_hunk_breaks
-      ~rev_names ~file_names ~header_file_name ~context
+      ~rev_names ~file_names ~header_file_name ~context ~lines_required_to_separate_ddiff_hunks
       ~scrutiny ~contents () =
-  Segments.of_files ?verbose ~rev_names ~context ~contents ()
+  Segments.of_files ?verbose ~rev_names ~context ~lines_required_to_separate_ddiff_hunks
+    ~contents ()
   |> List.filter_map ~f:(fun (segment : Segment.t) ->
     match Diff4_class.Shown_class.of_class segment.diff4_class with
     | None -> None
@@ -75,9 +76,10 @@ let compute_only_default_views_when_counting_lines =
     (Map.map User_config.default_view_configuration ~f:Diff_algo_id.Set.of_list)
 ;;
 
-let num_lines_to_review ~contents =
+let num_lines_to_review ~lines_required_to_separate_ddiff_hunks ~contents =
   hunks
     ~verbose:false
+    ~lines_required_to_separate_ddiff_hunks
     ~context:0 ~contents
     ~view_ids_computed:compute_only_default_views_when_counting_lines
     ~rev_names:Diamond.pretty_short_rev_names_const
@@ -92,7 +94,9 @@ let num_lines_to_review ~contents =
 let diff
       ?verbose
       ~view_ids_shown
-      ~rev_names ~file_names ~header_file_name ~context ~contents () =
+      ~rev_names ~file_names ~header_file_name
+      ~context ~lines_required_to_separate_ddiff_hunks
+      ~contents () =
   let view_ids_computed : View_ids_computed.t =
     match (view_ids_shown : Hunk.View_ids_shown.t) with
     | All -> Compute_every_view_available
@@ -102,19 +106,21 @@ let diff
     ~view_ids_computed
     ~include_hunk_breaks:true
     ~rev_names ~file_names ~header_file_name
-    ~context ~scrutiny:None ~contents ()
+    ~context ~lines_required_to_separate_ddiff_hunks ~scrutiny:None ~contents ()
   |> Hunk.list_to_lines
 ;;
 
 let hunks
       ?verbose
       ?view_ids_computed
-      ~rev_names ~file_names ~header_file_name ~context
+      ~rev_names ~file_names ~header_file_name
+      ~context ~lines_required_to_separate_ddiff_hunks
       ~scrutiny ~contents () =
   hunks
     ?verbose
     ~include_hunk_breaks:true
     ?view_ids_computed
-    ~rev_names ~file_names ~header_file_name ~context
+    ~rev_names ~file_names ~header_file_name
+    ~context ~lines_required_to_separate_ddiff_hunks
     ~scrutiny ~contents ()
 ;;

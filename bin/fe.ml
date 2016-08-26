@@ -52,6 +52,8 @@ let internal =
     ; "serverless-hydra-worker"      , Iron_client.Hydra_worker.serverless_command
     ; "session"                      , Iron_client.Cmd_session_internal.command
     ; "set-brains-to-goal-if-edge"   , Iron_client.Cmd_set_brains_to_goal_if_edge.command
+    ; "show-lines-required-to-separate-ddiff-hunks"
+    , Iron_client.Cmd_show.show_lines_required_to_separate_ddiff_hunks
     ; "show-repo-for-hg-operations"  , Iron_client.Cmd_workspace.repo_for_hg_operations_command
     ; "terminal-width"               , Iron.Param.terminal_width_command
     ; "timed-events"                 , Iron_client.Cmd_timed_events_internal.command

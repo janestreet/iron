@@ -43,6 +43,8 @@ let diff =
      and for_                  = for_
      and may_modify_local_repo = may_modify_local_repo
      and context               = context ()
+     and lines_required_to_separate_ddiff_hunks_override =
+       lines_required_to_separate_ddiff_hunks_override
      and which_session         = which_session
      and which_diffs           = which_diffs
      and do_not_lock_session =
@@ -80,8 +82,13 @@ let diff =
              review_session_tip
            ; reviewer_in_session
            ; diff4s_in_session
+           ; lines_required_to_separate_ddiff_hunks
            ; _
            } ->
+         let lines_required_to_separate_ddiff_hunks =
+           Option.value lines_required_to_separate_ddiff_hunks_override
+             ~default:lines_required_to_separate_ddiff_hunks
+         in
          let%bind () =
            if not may_modify_local_repo
            then return ()
@@ -112,7 +119,7 @@ let diff =
            ~diff4s:(List.map diff4s_in_session ~f:Diff4_in_session.diff4)
            ~reviewer:(`Reviewer reviewer_in_session)
            ~context
-    )
+           ~lines_required_to_separate_ddiff_hunks)
 ;;
 
 let forget =
@@ -341,6 +348,7 @@ module Attribute = struct
       | Line_count_from_brain_if_session_was_committed_to_goal
       | Line_count_from_session_end_to_goal
       | Line_count_to_finish_session
+      | Lines_required_to_separate_hunks
       | May_be_reviewed_by
       | Num_lines_remaining_to_review_in_session
       | Reviewer
@@ -403,6 +411,7 @@ let show =
              ; line_count_to_finish_session
              ; line_count_to_goal
              ; is_locked
+             ; lines_required_to_separate_ddiff_hunks
              } ->
            let diff4s_to_review =
              diff4s_in_session
@@ -428,6 +437,8 @@ let show =
              | Line_count_from_session_end_to_goal ->
                line_count_to_goal.from_session_end
                |> [%sexp_of: Line_count.Review.t Or_error.t Or_pending.t]
+             | Lines_required_to_separate_hunks ->
+               [%sexp (lines_required_to_separate_ddiff_hunks : int)]
              | Num_lines_remaining_to_review_in_session ->
                Line_count.Review.total line_count_to_finish_session
                |> [%sexp_of: int]

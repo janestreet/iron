@@ -4,6 +4,7 @@ module Alternate_name                = Alternate_name.                 Stable
 module Bool                          = Iron_bool.                      Stable
 module Build_projection_name         = Build_projection_name.          Stable
 module Catch_up_kind                 = Catch_up_kind.                  Stable
+module Constants                     = Constants
 module Diamond                       = Diamond.                        Stable
 module Digest                        = Iron_digest.                    Stable
 module Email_address                 = Email_address.                  Stable

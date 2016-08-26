@@ -795,7 +795,9 @@ let compute_review_kind t session goal_subset =
   )
 ;;
 
-let review_session_to_protocol t session goal_subset ~may_be_reviewed_by
+let review_session_to_protocol t session goal_subset
+      ~may_be_reviewed_by
+      ~lines_required_to_separate_ddiff_hunks
   : Iron_protocol.Get_review_session.Review_session.t =
   let reviewer_in_session = Review_session.reviewer session in
   let diff4s_in_session =
@@ -815,6 +817,7 @@ let review_session_to_protocol t session goal_subset ~may_be_reviewed_by
   ; line_count_to_finish_session = review_lines_to_goal_via_session.to_finish_session
   ; line_count_to_goal           = review_lines_to_goal_via_session.line_count_to_goal
   ; is_locked                    = Review_session.is_locked session
+  ; lines_required_to_separate_ddiff_hunks
   }
 ;;
 
@@ -827,12 +830,15 @@ let get_session_internal_exn t ~which_session =
     create_session_from_brain_to_goal_exn t
 ;;
 
-let get_session_exn t goal_subset ~may_be_reviewed_by ~which_session =
+let get_session_exn t goal_subset
+      ~may_be_reviewed_by ~lines_required_to_separate_ddiff_hunks
+      ~which_session =
   match get_session_internal_exn t ~which_session with
   | `Up_to_date as result -> result
   | `Review_session session ->
     `Review_session
-      (review_session_to_protocol t session goal_subset ~may_be_reviewed_by)
+      (review_session_to_protocol t session goal_subset
+         ~may_be_reviewed_by ~lines_required_to_separate_ddiff_hunks)
 ;;
 
 let maybe_advance_brain t =

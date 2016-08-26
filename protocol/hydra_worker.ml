@@ -12,8 +12,9 @@ module Stable = struct
       [@@deriving bin_io, fields, sexp]
 
       let to_model t = t
-      let of_model m = m
     end
+
+    module Model = V2
 
     module V1 = struct
       type t =
@@ -23,39 +24,37 @@ module Stable = struct
       [@@deriving bin_io, fields, sexp]
 
       let to_model { feature_path; rev_zero } =
-        V2.to_model { V2.feature_path; rev_zero; tip = None }
+        { Model.feature_path; rev_zero; tip = None }
       ;;
 
-      let of_model m =
-        let { V2.
-              feature_path
-            ; rev_zero
-            ; tip = _
-            } = V2.of_model m in
+      let of_model { Model.
+                     feature_path
+                   ; rev_zero
+                   ; tip = _
+                   } =
         { feature_path
         ; rev_zero
         }
       ;;
     end
-
-    module Model = V2
   end
 
   module Reaction = struct
-    module V7 = struct
+    module V8 = struct
       type t =
-        { base                       : Rev.V1.t
-        ; feature_id                 : Feature_id.V1.t
-        ; need_diff4s_starting_from  : (Review_edge.V1.t * User_name.V1.Set.t) list
-        ; aliases                    : User_name_by_alternate_name.V1.t
-        ; worker_cache               : Worker_cache.From_server_to_worker.V6.t
+        { base                             : Rev.V1.t
+        ; feature_id                       : Feature_id.V1.t
+        ; need_diff4s_starting_from        : (Review_edge.V1.t * User_name.V1.Set.t) list
+        ; aliases                          : User_name_by_alternate_name.V1.t
+        ; lines_required_to_separate_ddiff_hunks : int
+        ; worker_cache                     : Worker_cache.From_server_to_worker.V6.t
         }
       [@@deriving bin_io, sexp]
 
       let of_model m = m
     end
 
-    module Model = V7
+    module Model = V8
 
     (* Note about version scheme: we expect to keep V1 always as a way to preserve a
        common version for roll transitions.  We do not implement projection between
@@ -93,6 +92,8 @@ module Stable = struct
         ; feature_id
         ; need_diff4s_starting_from
         ; aliases
+        ; lines_required_to_separate_ddiff_hunks
+          = Constants.lines_required_to_separate_ddiff_hunks_default
         ; worker_cache = Worker_cache.From_server_to_worker.V6.empty
         }
       ;;
@@ -105,9 +106,9 @@ open! Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "hydra-worker" end)
-    (struct let version = 7 end)
+    (struct let version = 8 end)
     (Stable.Action.V2)
-    (Stable.Reaction.V7)
+    (Stable.Reaction.V8)
 
 (* Intent is to keep [1] always, and only the latest version including the worker cache *)
 include Register_old_rpc_converting_both_ways
@@ -122,11 +123,12 @@ module Reaction = struct
 
   module Concise = struct
     type nonrec t = t =
-      { base                       : Rev.t
-      ; feature_id                 : Feature_id.t
-      ; need_diff4s_starting_from  : (Review_edge.t * User_name.Set.t) list
-      ; aliases                    : User_name_by_alternate_name.t
-      ; worker_cache               : Worker_cache.From_server_to_worker.Concise.t
+      { base                             : Rev.t
+      ; feature_id                       : Feature_id.t
+      ; need_diff4s_starting_from        : (Review_edge.t * User_name.Set.t) list
+      ; aliases                          : User_name_by_alternate_name.t
+      ; lines_required_to_separate_ddiff_hunks : int
+      ; worker_cache                     : Worker_cache.From_server_to_worker.Concise.t
       }
     [@@deriving sexp_of]
   end

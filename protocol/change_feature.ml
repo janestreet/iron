@@ -13,6 +13,68 @@ module Stable = struct
 
   module Update = struct
 
+    module V9 = struct
+      type t =
+        [ `Add_inheritable_owners        of User_name.V1.t list
+        | `Add_inheritable_send_email_to of Email_address.V1.Set.t
+        | `Add_inheritable_send_email_upon of Send_email_upon.V1.Set.t
+        | `Add_inheritable_whole_feature_followers of User_name.V1.Set.t
+        | `Add_inheritable_whole_feature_reviewers of User_name.V1.Set.t
+        | `Add_owners                     of User_name.V1.t list
+        | `Add_reviewing                  of User_name.V1.Set.t
+        | `Add_send_email_to              of Email_address.V1.Set.t
+        | `Add_send_email_upon            of Send_email_upon.V1.Set.t
+        | `Add_whole_feature_followers    of User_name.V1.Set.t
+        | `Add_whole_feature_reviewers    of User_name.V1.Set.t
+        | `Remove_inheritable_owners      of User_name.V1.Set.t
+        | `Remove_inheritable_properties    of Property.V1.Set.t
+        | `Remove_inheritable_send_email_to of Email_address.V1.Set.t
+        | `Remove_inheritable_send_email_upon of Send_email_upon.V1.Set.t
+        | `Remove_inheritable_whole_feature_followers of User_name.V1.Set.t
+        | `Remove_inheritable_whole_feature_reviewers of User_name.V1.Set.t
+        | `Remove_owners                  of User_name.V1.Set.t
+        | `Remove_properties              of Property.V1.Set.t
+        | `Remove_reviewing               of User_name.V1.Set.t
+        | `Remove_send_email_to           of Email_address.V1.Set.t
+        | `Remove_send_email_upon         of Send_email_upon.V1.Set.t
+        | `Remove_whole_feature_followers of User_name.V1.Set.t
+        | `Remove_whole_feature_reviewers of User_name.V1.Set.t
+        | `Set_base                       of Rev.V1.t
+        | `Set_crs_are_enabled            of bool
+        | `Set_crs_shown_in_todo_only_for_users_reviewing of bool
+        | `Set_description                of string
+        | `Set_inheritable_crs_shown_in_todo_only_for_users_reviewing of bool option
+        | `Set_inheritable_xcrs_shown_in_todo_only_for_users_reviewing of bool option
+        | `Set_inheritable_owners         of User_name.V1.t list
+        | `Set_inheritable_properties     of Properties.V1.t
+        | `Set_inheritable_release_process of Release_process.V1.t option
+        | `Set_inheritable_who_can_release_into_me of Who_can_release_into_me.V1.t option
+        | `Set_inheritable_send_email_to of Email_address.V1.Set.t
+        | `Set_inheritable_send_email_upon of Send_email_upon.V1.Set.t
+        | `Set_inheritable_whole_feature_followers of User_name.V1.Set.t
+        | `Set_inheritable_whole_feature_reviewers of User_name.V1.Set.t
+        | `Set_is_permanent               of bool
+        | `Set_lines_required_to_separate_ddiff_hunks of int
+        | `Set_owners                     of User_name.V1.t list
+        | `Set_properties                 of Properties.V1.t
+        | `Set_release_process            of Release_process.V1.t
+        | `Set_review_is_enabled          of bool
+        | `Set_reviewing                  of Reviewing.V1.t
+        | `Set_send_email_to              of Email_address.V1.Set.t
+        | `Set_send_email_upon            of Send_email_upon.V1.Set.t
+        | `Set_who_can_release_into_me    of Who_can_release_into_me.V1.t
+        | `Set_whole_feature_followers    of User_name.V1.Set.t
+        | `Set_whole_feature_reviewers    of User_name.V1.Set.t
+        | `Set_xcrs_shown_in_todo_only_for_users_reviewing of bool
+        ]
+      [@@deriving bin_io, sexp]
+
+      let of_model m = m
+      let to_model t = t
+    end
+
+    module Model = V9
+
     module V8 = struct
       type t =
         [ `Add_inheritable_owners        of User_name.V1.t list
@@ -66,13 +128,23 @@ module Stable = struct
         | `Set_whole_feature_reviewers    of User_name.V1.Set.t
         | `Set_xcrs_shown_in_todo_only_for_users_reviewing of bool
         ]
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io]
 
-      let of_model m = m
-      let to_model t = t
+      open! Core.Std
+      open! Import
+
+      let to_v9 (t: t) : V9.t = (t :> V9.t)
+      let to_model t = V9.to_model (to_v9 t)
+
+      let of_v9 (v9: V9.t) : t =
+        match v9 with
+        | `Set_lines_required_to_separate_ddiff_hunks _ ->
+          assert_false__invariant_in_reaction [%here]
+        | #t as x -> x
+      ;;
+
+      let of_model m = of_v9 (V9.of_model m)
     end
-
-    module Model = V8
 
     module V7 = struct
       type same_as_v8 =
@@ -310,17 +382,32 @@ module Stable = struct
   end
 
   module Action = struct
-    module V8 = struct
+    module V9 = struct
       type t =
         { feature_path : Feature_path.V1.t
-        ; updates      : Update.V8.t list
+        ; updates      : Update.V9.t list
         }
       [@@deriving bin_io, fields, sexp]
 
       let to_model t = t
     end
 
-    module Model = V8
+    module Model = V9
+
+    module V8 = struct
+      type t =
+        { feature_path : Feature_path.V1.t
+        ; updates      : Update.V8.t list
+        }
+      [@@deriving bin_io]
+
+      let to_model { feature_path; updates } =
+        { Model.
+          feature_path
+        ; updates = List.map updates ~f:Update.V8.to_model
+        }
+      ;;
+    end
 
     module V7 = struct
       type t =
@@ -384,14 +471,23 @@ module Stable = struct
   end
 
   module Reaction = struct
-    module V8 = struct
-      type t = (Update.V8.t * unit Or_error.V1.t) list
+    module V9 = struct
+      type t = (Update.V9.t * unit Or_error.V2.t) list
       [@@deriving bin_io, sexp]
 
       let of_model t = t
     end
 
-    module Model = V8
+    module Model = V9
+
+    module V8 = struct
+      type t = (Update.V8.t * unit Or_error.V1.t) list
+      [@@deriving bin_io]
+
+      let of_model m =
+        List.map m ~f:(fun (update, result) -> Update.V8.of_model update, result)
+      ;;
+    end
 
     module V7 = struct
       type t = (Update.V7.t * unit Or_error.V1.t) list
@@ -433,6 +529,11 @@ end
 
 include Iron_versioned_rpc.Make
     (struct let name = "change-feature" end)
+    (struct let version = 9 end)
+    (Stable.Action.V9)
+    (Stable.Reaction.V9)
+
+include Register_old_rpc
     (struct let version = 8 end)
     (Stable.Action.V8)
     (Stable.Reaction.V8)

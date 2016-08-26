@@ -160,6 +160,9 @@ let command =
        users_option ~switch:"-add-inheritable-whole-feature-reviewers"
      and remove_inheritable_whole_feature_reviewers =
        users_option ~switch:"-remove-inheritable-whole-feature-reviewers"
+     and set_lines_required_to_separate_ddiff_hunks =
+       flag "-set-lines-required-to-separate-ddiff-hunks" (optional int)
+         ~doc:""
      and verbose = verbose
      in
      fun () ->
@@ -319,6 +322,8 @@ let command =
            ; Option.map remove_inheritable_whole_feature_reviewers
                ~f:(fun whole_feature_reviewers ->
                  `Remove_inheritable_whole_feature_reviewers whole_feature_reviewers)
+           ; Option.map set_lines_required_to_separate_ddiff_hunks
+               ~f:(fun lines -> `Set_lines_required_to_separate_ddiff_hunks lines)
            ]
        in
        change_feature ~verbose ~feature_path ~updates ()

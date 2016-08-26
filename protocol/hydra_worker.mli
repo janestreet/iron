@@ -16,11 +16,12 @@ module Reaction : sig
   (** The user names in [need_diff4s_starting_from] aren't necessary, but are useful
       for debugging. *)
   type t =
-    { base                        : Rev.t
-    ; feature_id                  : Feature_id.t
-    ; need_diff4s_starting_from   : (Review_edge.t * User_name.Set.t) list
-    ; aliases                     : User_name_by_alternate_name.t
-    ; worker_cache                : Worker_cache.From_server_to_worker.t
+    { base                             : Rev.t
+    ; feature_id                       : Feature_id.t
+    ; need_diff4s_starting_from        : (Review_edge.t * User_name.Set.t) list
+    ; aliases                          : User_name_by_alternate_name.t
+    ; lines_required_to_separate_ddiff_hunks : int
+    ; worker_cache                     : Worker_cache.From_server_to_worker.t
     }
   [@@deriving sexp_of]
 

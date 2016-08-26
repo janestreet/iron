@@ -18,6 +18,7 @@ module Cached                      = Cached
 module Catch_up_kind               = Catch_up_kind
 module Cleanup                     = Cleanup
 module Command                     = Iron_command
+module Constants                   = Constants
 module Cr_comment_format           = Cr_comment_format
 module Deserializer                = Deserializer
 module Diamond                     = Diamond

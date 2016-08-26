@@ -38,6 +38,7 @@ module Review_session : sig
     ; line_count_to_goal
       : Line_count.Review.t Or_error.t Or_pending.t Line_count_to_goal.t
     ; is_locked                                : bool
+    ; lines_required_to_separate_ddiff_hunks   : int
     }
   [@@deriving sexp_of]
 end

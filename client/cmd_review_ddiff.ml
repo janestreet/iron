@@ -33,9 +33,9 @@ Or, staging the computation of ddiffs:
 "])
     (let open Command.Let_syntax in
      let%map_open () = return ()
-     and context =
-       flag "-context" (optional_with_default 8 int)
-         ~doc:"<lines> Show this many lines of context in the diffs"
+     and context = context ()
+     and lines_required_to_separate_ddiff_hunks =
+       lines_required_to_separate_ddiff_hunks_with_default
      and read_diff4s_from_sexp_file =
        flag read_diff4s_from_sexp_file_switch (optional file)
          ~doc:"/path/to/diff4s.sexp Read diff4s from a sexp file \
@@ -88,12 +88,11 @@ Or, staging the computation of ddiffs:
              [%of_sexp: Diff4.Stable.V2.t list]
 
          | `Rev_diamond rev_diamond ->
-           let%map diff4s =
-             Diff4s_for_diamond.create_using_fake_obligations
-               repo_root
-               (Diamond.map rev_diamond ~f:Raw_rev.string)
-           in
-           ok_exn diff4s
+           Diff4s_for_diamond.create_using_fake_obligations
+             repo_root
+             (Diamond.map rev_diamond ~f:Raw_rev.string)
+             ~lines_required_to_separate_ddiff_hunks
+           >>| ok_exn
        in
        let%map () =
          Path.with_temp_dir (File_name.of_string "fe_cat_") ~f:(fun temp_dir ->
@@ -105,6 +104,7 @@ Or, staging the computation of ddiffs:
                  ~diff4s
                  ~reviewer:`Whole_diff_plus_ignored
                  ~context
+                 ~lines_required_to_separate_ddiff_hunks
              in
              List.zip_exn diff4s files
            in

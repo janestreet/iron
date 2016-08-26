@@ -60,7 +60,7 @@ module Stable = struct
       open! Import
 
       type t =
-        { user_name : User_name.t
+        { user_name                        : User_name.t
         }
       [@@deriving sexp_of]
     end

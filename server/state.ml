@@ -77,6 +77,17 @@ let find_root_by_remote_repo_path t remote_repo_path =
     error "unknown remote repo path" remote_repo_path [%sexp_of: Remote_repo_path.t])
 ;;
 
+let lines_required_to_separate_ddiff_hunks t feature_path ~fail_if_root_does_not_exist =
+  let default = Constants.lines_required_to_separate_ddiff_hunks_default in
+  let root_path = Feature_path.root_path feature_path in
+  match find_feature t root_path with
+  | Ok root -> Option.value (Feature.lines_required_to_separate_ddiff_hunks root) ~default
+  | Error _ ->
+    if fail_if_root_does_not_exist
+    then raise_s [%sexp "No such root feature", (root_path : Feature_path.t)]
+    else default
+;;
+
 let invariant t : unit =
   (* Because the sexp of the state can be so big, we don't do the usual [invariant] idiom:
 
@@ -2449,6 +2460,7 @@ let change_feature t feature query
          | `Set_inheritable_send_email_to _
          | `Set_inheritable_send_email_upon _
          | `Set_is_permanent _
+         | `Set_lines_required_to_separate_ddiff_hunks _
          | `Set_properties _
          | `Set_release_process _
          | `Set_review_is_enabled _
@@ -2519,6 +2531,13 @@ let () =
     (fun t query ->
        let { Change_feature.Action. feature_path; updates } = Query.action query in
        let feature = find_feature_exn t feature_path in
+       let requires_admin_privileges =
+         List.exists updates ~f:(function
+           | `Set_lines_required_to_separate_ddiff_hunks _ -> true
+           | _ -> false)
+       in
+       (if requires_admin_privileges
+        then only_user_with_admin_privileges_is_authorized_exn t query);
        change_feature t feature query updates)
 ;;
 
@@ -3317,6 +3336,19 @@ let () =
 ;;
 
 let () =
+  let module Get_lines_required_to_separate_ddiff_hunks =
+    Iron_protocol.Get_lines_required_to_separate_ddiff_hunks in
+  implement_rpc ~log:false Post_check_in_features.none
+    (module Get_lines_required_to_separate_ddiff_hunks)
+    (fun t query ->
+       let () = Query.action query in
+       List.Assoc.map (Feature_forest.roots t.features) ~f:(fun feature ->
+         Option.value ~default:Constants.lines_required_to_separate_ddiff_hunks_default
+           (Feature.lines_required_to_separate_ddiff_hunks feature))
+       |> Feature_name.Map.of_alist_exn)
+;;
+
+let () =
   let module Get_review_session = Iron_protocol.Get_review_session in
   implement_rpc ~log:true Post_check_in_features.none
     (module Get_review_session)
@@ -3343,6 +3375,9 @@ let () =
          Review_manager.get_session_exn review_manager
            (what_goal_subset_needs_to_be_reviewed feature)
            ~may_be_reviewed_by
+           ~lines_required_to_separate_ddiff_hunks:
+             (lines_required_to_separate_ddiff_hunks t feature_path
+                ~fail_if_root_does_not_exist:true)
            ~which_session
        in
        let status =
@@ -3473,8 +3508,15 @@ let () =
             let is_archived =
               not (Hashtbl.mem t.features_by_id (Catch_up_session.feature_id session))
             in
+            let lines_required_to_separate_ddiff_hunks =
+              lines_required_to_separate_ddiff_hunks t feature_path
+                (* Don't fail to allow to catch-up on a feature whose root has been
+                   archived. *)
+                ~fail_if_root_does_not_exist:false
+            in
             `Catch_up_session
-              (Catch_up_manager.to_protocol catch_up_manager session ~is_archived))
+              (Catch_up_manager.to_protocol catch_up_manager session ~is_archived
+                 ~lines_required_to_separate_ddiff_hunks))
        | None ->
          if is_ok (Feature_forest.find t.features feature_path)
          || Archived_features.mem_feature_path t.archived_features feature_path
@@ -3926,6 +3968,10 @@ let () =
        let (_ : Remote_repo_path.t) = remote_repo_path t feature ~rev_zero in
        let need_diff4s_starting_from = need_diff4s_starting_from t feature in
        let aliases = User_info.alternate_names t.user_info ~which:`Aliases in
+       let lines_required_to_separate_ddiff_hunks =
+         lines_required_to_separate_ddiff_hunks t feature_path
+           ~fail_if_root_does_not_exist:true
+       in
        let worker_cache =
          let feature_revs =
            let feature_revs =
@@ -3941,6 +3987,7 @@ let () =
        ; feature_id = Feature.feature_id feature
        ; need_diff4s_starting_from
        ; aliases
+       ; lines_required_to_separate_ddiff_hunks
        ; worker_cache
        })
 ;;

@@ -5,11 +5,14 @@ open! Import
 module Action = Process_num_lines_in_diff4.Action
 module Reaction = Process_num_lines_in_diff4.Reaction
 
-let compute { Action.files } =
+let compute { Action.files; lines_required_to_separate_ddiff_hunks } =
   let%map contents =
     Diamond.Deferred.all (Diamond.map files ~f:Reader.file_contents)
   in
-  let num_lines_in_diff4 = Pdiff4.Std.Patdiff4.num_lines_to_review ~contents in
+  let num_lines_in_diff4 =
+    Pdiff4.Std.Patdiff4.num_lines_to_review
+      ~lines_required_to_separate_ddiff_hunks ~contents
+  in
   { Reaction.num_lines_in_diff4 }
 ;;
 

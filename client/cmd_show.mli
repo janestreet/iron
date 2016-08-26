@@ -73,3 +73,5 @@ val render_email_body
   -> string
 
 val render_release_email_command : Command.t
+
+val show_lines_required_to_separate_ddiff_hunks : Command.t

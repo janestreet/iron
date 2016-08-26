@@ -1021,3 +1021,27 @@ let render_release_email_command =
        return ()
     )
 ;;
+
+let show_lines_required_to_separate_ddiff_hunks =
+  Command.async'
+    ~summary:"show settings of lines required to separate ddiff hunks"
+    (let open Command.Let_syntax in
+     let%map_open () = return ()
+     and display_ascii = display_ascii
+     and max_output_columns = max_output_columns
+     in
+     fun () ->
+       let open! Deferred.Let_syntax in
+       let%map rows =
+         Get_lines_required_to_separate_ddiff_hunks.rpc_to_server_exn ()
+         >>| Map.to_alist
+       in
+       let columns =
+         Ascii_table.Column.(
+           [ string ~header:"feature"
+               (cell (fun (feature, _) -> Feature_name.to_string feature))
+           ; int ~header:"value" ~show_zero:true (cell snd)
+           ])
+       in
+       print_table (Ascii_table.create ~columns ~rows) ~display_ascii ~max_output_columns)
+;;

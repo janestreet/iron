@@ -41,9 +41,9 @@ Successful creation of a feature.
   |---------+---------+----------------|
   | root    | pending | wait for hydra |
   |------------------------------------|
-  $ fe show  | grep prop
-  | prop1                   | value1                  |
-  | prop2                   | value2                  |
+  $ fe show  | grep prop | single_space
+  | prop1 | value1 |
+  | prop2 | value2 |
 
 Can't create a dupe feature.
 
@@ -65,9 +65,9 @@ Persistence.
   |---------+---------+----------------|
   | root    | pending | wait for hydra |
   |------------------------------------|
-  $ fe show  | grep prop
-  | prop1                   | value1                  |
-  | prop2                   | value2                  |
+  $ fe show  | grep prop | single_space
+  | prop1 | value1 |
+  | prop2 | value2 |
 
 Add files and run hydra:
 

@@ -34,13 +34,27 @@ val workspaces_are_enabled : unit -> bool
     If a feature does not exist (for example when catching up on an archived feature),
     [`Share] and [`Share_or_clone_if_share_does_not_exist] behaves as if [`Clone] had been
     passed. *)
+type use =
+  [ `Clone
+  | `Share
+  | `Share_or_clone_if_share_does_not_exist
+  ]
+module Repo_root_kind : sig
+  type t =
+    | Clone
+    | Program_started_in
+    | Satellite
+    | Workspace
+  [@@deriving sexp_of]
+end
 val repo_for_hg_operations_exn
   :  Feature_path.t
-  -> use : [ `Clone
-           | `Share
-           | `Share_or_clone_if_share_does_not_exist
-           ]
+  -> use : use
   -> Repo_root.t Deferred.t
+val repo_for_hg_operations_and_kind_exn
+  :  Feature_path.t
+  -> use : use
+  -> (Repo_root.t * Repo_root_kind.t) Deferred.t
 
 (** If workspaces are enabled, returns the clone of the common root of the features in the
     given list.  Returns [Repo_root.program_started_in] if workspaces are not enabled, or

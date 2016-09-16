@@ -95,10 +95,27 @@ let dir_command =
     )
 ;;
 
-let repo_for_hg_operations_exn feature_path ~use =
+type use =
+  [ `Clone
+  | `Share
+  | `Share_or_clone_if_share_does_not_exist
+  ]
+
+module Repo_root_kind = struct
+  type t =
+    | Clone
+    | Program_started_in
+    | Satellite
+    | Workspace
+  [@@deriving sexp_of]
+end
+
+let repo_for_hg_operations_and_kind_exn feature_path ~use =
   if not (workspaces_are_enabled ())
   then (
-    let repo_root = ok_exn Repo_root.program_started_in in
+    let (repo_root, _) as repo_root_and_kind =
+      ok_exn Repo_root.program_started_in, Repo_root_kind.Program_started_in
+    in
     let check_repo_family_exn =
       let%bind repo_root_feature =
         Workspace_hgrc.extract_root_feature_from_hgrc repo_root
@@ -137,13 +154,13 @@ but is inside a clone of the [%{Feature_name}] family"
             feature_root repo_root_feature ()
     in
     let%map () = check_repo_family_exn in
-    repo_root)
+    repo_root_and_kind)
   else (
     let use_clone () =
       let%map repo_clone =
         Repo_clone.force ~root_feature:(Feature_path.root feature_path)
       in
-      Repo_clone.repo_root repo_clone
+      Repo_clone.repo_root repo_clone, Repo_root_kind.Clone
     in
     let default_workspace_logic () =
       match use with
@@ -155,12 +172,12 @@ but is inside a clone of the [%{Feature_name}] family"
           match use with
           | `Share ->
             let%map share = Workspace.force { feature_id; feature_path } in
-            Workspace.center_repo_root share
+            Workspace.center_repo_root share, Repo_root_kind.Workspace
           | `Share_or_clone_if_share_does_not_exist ->
             match%bind Workspace.find ~feature_id feature_path with
             | None -> use_clone ()
             | Some workspace ->
-              return (Workspace.center_repo_root workspace)
+              return (Workspace.center_repo_root workspace, Repo_root_kind.Workspace)
     in
     match Repo_root.program_started_in with
     | Error _ -> default_workspace_logic ()
@@ -174,7 +191,7 @@ but is inside a clone of the [%{Feature_name}] family"
       match Workspace.extract_feature_from_workspace_share_path repo_root with
       | None ->
         if repo_root_is_of_correct_family
-        then return repo_root
+        then return (repo_root, Repo_root_kind.Program_started_in)
         else default_workspace_logic ()
       | Some current_workspace ->
         if repo_root_is_of_correct_family
@@ -184,7 +201,7 @@ but is inside a clone of the [%{Feature_name}] family"
         then
           (* We are in a satellite and the user wants to use the satellite to work on
              some satellite feature.  Let it be. *)
-          return repo_root
+          return (repo_root, Repo_root_kind.Satellite)
         else if Feature_path.(=) current_workspace feature_path
              || (match use with
                  | `Share -> false
@@ -198,6 +215,11 @@ but is inside a clone of the [%{Feature_name}] family"
               ; supplied_feature  = (feature_path : Feature_path.t)
               }
             ])
+;;
+
+let repo_for_hg_operations_exn feature_path ~use =
+  let%map repo_root, _ = repo_for_hg_operations_and_kind_exn feature_path ~use in
+  repo_root
 ;;
 
 let repo_for_hg_operations_command =

@@ -143,6 +143,14 @@ function internal_end_test {
 
 export -f internal_end_test
 
+function single_space {
+    while read line ; do
+        echo ${line} | xargs echo
+    done
+}
+
+export -f single_space
+
 function matches {
     stdin="$(cat /dev/stdin)"
     if echo "$stdin" | tr '\n' ' ' | grep -q "$@"; then

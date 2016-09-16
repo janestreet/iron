@@ -91,14 +91,15 @@ Check that show-inheritable-attributes flag works.
   $ fe change root -set-inheritable-release-process continuous
   $ fe show root -show-inheritable-attributes \
   >  | grep -B 100 -- '-----' \
-  >  | grep -A 100 'inheritable attributes'
-  | inheritable attributes  |                         |
-  |   CRs shown in todo for | all                     |
-  |   owner                 | user3                   |
-  |   not-a-property        | yet                     |
-  |   ticket                | FE-290                  |
-  |   release process       | continuous              |
-  |---------------------------------------------------|
+  >  | grep -A 100 'inheritable attributes' \
+  >  | grep -v -- '-----' \
+  >  | single_space
+  | inheritable attributes | |
+  | CRs shown in todo for | all |
+  | owner | user3 |
+  | not-a-property | yet |
+  | ticket | FE-290 |
+  | release process | continuous |
   $ fe change root -remove-inheritable-crs-shown-in-todo-only-for-users-reviewing
 
   $ fe show child -inheritable-attributes

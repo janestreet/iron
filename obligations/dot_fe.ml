@@ -102,6 +102,7 @@ module Partial_attributes = struct
     ; followers                : User_name.Set.t             option
     ; review_obligation        : Review_obligation.t         option
     ; scrutiny_name            : Scrutiny_name.t             option
+    ; unapplied_attributes     : Error_context.t sexp_opaque list
     }
   [@@deriving fields, sexp_of]
 
@@ -114,6 +115,7 @@ module Partial_attributes = struct
     ; followers                = None
     ; review_obligation        = None
     ; scrutiny_name            = None
+    ; unapplied_attributes     = []
     }
   ;;
 
@@ -121,6 +123,16 @@ module Partial_attributes = struct
     if file_name_can_have_tags file_name
     then Option.value t.tags ~default:Tag.Set.empty
     else Tag.Set.empty
+  ;;
+
+  let assert_has_been_applied t version =
+    if Obligations_version.is_at_least_version version ~version:V4
+    then (
+      match t.unapplied_attributes with
+      | []     -> ()
+      | e :: _ ->
+        Error_context.raise_s e
+          [%sexp "some attribute changes have not been applied to any files"])
   ;;
 
   let merge t1 t2 ~file ~error_context =
@@ -162,6 +174,7 @@ module Partial_attributes = struct
       ~followers:                (merge_ok Set.union)
       ~review_obligation:        (merge_ok (fun r1 r2 -> Review_obligation.and_ [ r1; r2 ]))
       ~scrutiny_name:            (merge_eq "scrutinies" (module Scrutiny_name))
+      ~unapplied_attributes:     (fun f -> Field.get f t1 @ Field.get f t2)
   ;;
 
   let to_attributes t ~(obligations_repo : Obligations_repo.t) file_name =
@@ -277,12 +290,16 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
     match u.syntax with
     | Apply_to file_set ->
       let files = File_set.eval file_set ~universe:files_in_directory e in
+      (if Set.is_empty files
+       && Obligations_version.is_at_least_version obligations_version ~version:V4
+       then Error_context.raise_s e
+              [%sexp "attributes are applied to an empty list of files"]);
       Set.iter files ~f:(fun file ->
         Hashtbl.update partial_attributes_by_file_name file ~f:(function
           | None -> assert false
           | Some prev ->
             Partial_attributes.merge prev partial_attributes ~file ~error_context:e));
-      partial_attributes
+      { partial_attributes with unapplied_attributes = [] }
     | Build_projections build_projection_names ->
       (match
          List.map build_projection_names ~f:(fun b -> b, ())
@@ -307,16 +324,19 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
       { partial_attributes with
         build_projections =
           Some (Build_projection_name.Set.of_list build_projection_names)
+      ; unapplied_attributes = e :: partial_attributes.unapplied_attributes
       }
     | Local ts ->
-      ignore
-        (List.fold ts ~init:partial_attributes ~f:(fun partial_attributes t ->
-           eval_one t e ~partial_attributes ~depth:(succ depth))
-         : Partial_attributes.t);
-      partial_attributes
+      let local_attributes =
+        List.fold ts ~init:partial_attributes ~f:(fun partial_attributes t ->
+          eval_one t e ~partial_attributes ~depth:(succ depth))
+      in
+      Partial_attributes.assert_has_been_applied local_attributes obligations_version;
+      { partial_attributes with unapplied_attributes = [] }
     | Owner owner ->
       { partial_attributes with
         owner = Some (Users.eval_user owner e ~aliases ~allowed_users)
+      ; unapplied_attributes = e :: partial_attributes.unapplied_attributes
       }
     | Followers followers ->
       let followers =
@@ -327,18 +347,23 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
       in
       { partial_attributes with
         followers = Option.some_if (not (Set.is_empty followers)) followers
+      ; unapplied_attributes = e :: partial_attributes.unapplied_attributes
       }
     | Reviewed_by reviewed_by ->
       { partial_attributes with
         review_obligation
         = Some (Reviewed_by.eval reviewed_by e ~aliases ~allowed_users ~known_groups)
+      ; unapplied_attributes = e :: partial_attributes.unapplied_attributes
       }
     | Scrutiny scrutiny_name ->
       if not (Map.mem scrutinies scrutiny_name)
       then
         Error_context.raise_s e
           [%sexp "undefined scrutiny", (scrutiny_name : Scrutiny_name.t)];
-      { partial_attributes with scrutiny_name = Some scrutiny_name }
+      { partial_attributes with
+        scrutiny_name = Some scrutiny_name
+      ; unapplied_attributes = e :: partial_attributes.unapplied_attributes
+      }
     | Tags tags ->
       (match
          List.map tags ~f:(fun t -> t, ())
@@ -364,11 +389,18 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
            ]);
       { partial_attributes with
         tags = Some (Tag.Set.of_list tags)
+      ; unapplied_attributes = e :: partial_attributes.unapplied_attributes
       }
     | Fewer_than_min_reviewers fewer_than_min_reviewers ->
-      { partial_attributes with fewer_than_min_reviewers = Some fewer_than_min_reviewers }
+      { partial_attributes with
+        fewer_than_min_reviewers = Some fewer_than_min_reviewers
+      ; unapplied_attributes = e :: partial_attributes.unapplied_attributes
+      }
     | More_than_max_reviewers more_than_max_reviewers ->
-      { partial_attributes with more_than_max_reviewers = Some more_than_max_reviewers }
+      { partial_attributes with
+        more_than_max_reviewers = Some more_than_max_reviewers
+      ; unapplied_attributes = e :: partial_attributes.unapplied_attributes
+      }
     | Used_in_subdirectory ->
       (if not used_in_subdirectory_declaration_is_allowed
        then Error_context.raise_f e "unnecessary Used_in_subdirectory declaration" ());
@@ -386,12 +418,13 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
              ~info:(Info.create "used in subdirectory" used_in_subdirectory
                       [%sexp_of: Relpath.t])
     in
-    let (_ : Partial_attributes.t) =
+    let partial_attributes =
       List.fold ts ~init:Partial_attributes.empty
         ~f:(fun partial_attributes (t : Declaration.t) ->
           eval_one t.syntax ~partial_attributes ~depth:0
             (Error_context.augment e ?annotated_sexp:t.sexp))
     in
+    Partial_attributes.assert_has_been_applied partial_attributes obligations_version;
     let problems = ref [] in
     let alist =
       List.filter_map (Hashtbl.to_alist partial_attributes_by_file_name)

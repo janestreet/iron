@@ -877,7 +877,6 @@ let review_goal t =
 let record t query action =
   let recording_query_will_allow_to_rollback =
     match (action : Action.t) with
-    | `Set_lines_required_to_separate_ddiff_hunks _ -> false
     (* Note to devs: please keep at least this line so that it is easy to add/remove
        lines there *)
     | #Action.t -> true

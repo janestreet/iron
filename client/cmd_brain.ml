@@ -52,7 +52,7 @@ let diff =
 ;;
 
 let show_brain feature_path ~for_ ~what_to_show ~display_ascii
-      ~max_output_columns ~sort_build_order =
+      ~max_output_columns ~repo_root_and_kind_or_error ~sort_build_order =
   let%bind { brain; _ } =
     Get_brain.rpc_to_server_exn { feature_path ; for_  }
   in
@@ -69,8 +69,7 @@ let show_brain feature_path ~for_ ~what_to_show ~display_ascii
     if not sort_build_order
     then return brain
     else (
-      let repo_root = ok_exn Repo_root.program_started_in in
-      Build_order.sort repo_root brain Diff2.path_in_repo_at_tip)
+      Build_order.sort repo_root_and_kind_or_error brain Diff2.path_in_repo_at_tip)
   in
   let brain = List.map brain ~f:Diff4.create_from_scratch_to_diff2 in
   print_string
@@ -80,11 +79,12 @@ let show_brain feature_path ~for_ ~what_to_show ~display_ascii
 ;;
 
 let show_brain_for_all_or_user feature_path ~for_ ~what_to_show ~display_ascii
-      ~max_output_columns ~sort_build_order =
+      ~max_output_columns ~repo_root_and_kind_or_error ~sort_build_order =
   let show_brain ~for_ =
     let%map (_ : Diff4.t list) =
-      show_brain feature_path ~for_ ~what_to_show ~display_ascii ~max_output_columns
-      ~sort_build_order
+      show_brain feature_path
+        ~for_ ~what_to_show ~display_ascii ~max_output_columns
+        ~repo_root_and_kind_or_error ~sort_build_order
     in
     ()
   in
@@ -135,9 +135,15 @@ let forget =
          if not !Async_interactive.interactive
          then forget ()
          else (
+           let%bind repo_root_and_kind_or_error =
+             Monitor.try_with_or_error (fun () ->
+               Cmd_workspace.repo_for_hg_operations_and_kind_exn feature_path
+                 ~use:`Share_or_clone_if_share_does_not_exist)
+           in
            let%bind brain =
              show_brain feature_path ~for_ ~what_to_show:what_to_forget
-               ~display_ascii ~max_output_columns ~sort_build_order:false
+               ~display_ascii ~max_output_columns ~repo_root_and_kind_or_error
+               ~sort_build_order:false
            in
            if List.is_empty brain
            then
@@ -168,9 +174,14 @@ let show =
      fun () ->
        let open! Deferred.Let_syntax in
        let feature_path = ok_exn feature_path in
+       let%bind repo_root_and_kind_or_error =
+         Monitor.try_with_or_error (fun () ->
+           Cmd_workspace.repo_for_hg_operations_and_kind_exn feature_path
+             ~use:`Share_or_clone_if_share_does_not_exist)
+       in
        show_brain_for_all_or_user
          feature_path ~for_ ~what_to_show ~display_ascii ~max_output_columns
-         ~sort_build_order
+         ~repo_root_and_kind_or_error ~sort_build_order
     )
 ;;
 

@@ -716,7 +716,7 @@ let sort_review_files_by_lines diff4s_to_review ~reviewer direction =
   diff4s_to_review
 ;;
 
-let sort_review_files repo_root diff4s_to_review ~reviewer review_sort =
+let sort_review_files repo_root_and_kind_or_error diff4s_to_review ~reviewer review_sort =
   match review_sort with
   | `Using_file path -> sort_review_files_using_file diff4s_to_review path
   | (`By_increasing_review_lines | `By_decreasing_review_lines) as review_sort ->
@@ -724,7 +724,7 @@ let sort_review_files repo_root diff4s_to_review ~reviewer review_sort =
     |> return
   | `Build_order ->
     let%map files =
-      Build_order.sort repo_root (Array.to_list diff4s_to_review)
+      Build_order.sort repo_root_and_kind_or_error (Array.to_list diff4s_to_review)
         Diff4_to_review.path_in_repo_at_f2
     in
     Array.of_list files
@@ -734,6 +734,7 @@ let review_or_catch_up
       ~is_catch_up_on_archived_feature
       ~mark_as_reviewed
       ~repo_root
+      ~repo_root_kind
       ~remote_repo_path
       ~feature_path
       ~feature_tip
@@ -791,7 +792,7 @@ let review_or_catch_up
     match maybe_sort_review_files with
     | None             -> return diff4s_to_review
     | Some review_sort ->
-      sort_review_files repo_root diff4s_to_review
+      sort_review_files (Ok (repo_root, repo_root_kind)) diff4s_to_review
         ~reviewer:reviewer_in_session review_sort
   in
   let diff4s_to_review = Array.to_list diff4s_to_review in
@@ -955,7 +956,7 @@ let print_catch_up_attribute_table
   printf "\n";
 ;;
 
-let catch_up_review_loop ~warn_if_no_session ~repo_root ~feature_path
+let catch_up_review_loop ~warn_if_no_session ~repo_root ~repo_root_kind ~feature_path
       { Review_params.
         emacs
       ; for_
@@ -1025,6 +1026,7 @@ let catch_up_review_loop ~warn_if_no_session ~repo_root ~feature_path
             ~is_catch_up_on_archived_feature:is_archived
             ~mark_as_reviewed
             ~repo_root
+            ~repo_root_kind
             ~remote_repo_path
             ~feature_path
             ~feature_tip:tip
@@ -1049,7 +1051,8 @@ let catch_up_review_loop ~warn_if_no_session ~repo_root ~feature_path
     ))
 ;;
 
-let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~reason
+let review_loop ~repo_root ~repo_root_kind ~feature_path ~create_catch_up_for_me
+      ~which_files ~reason
       { Review_params.
         emacs
       ; for_
@@ -1179,6 +1182,7 @@ let review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~r
                 ~is_catch_up_on_archived_feature:false
                 ~mark_as_reviewed
                 ~repo_root
+                ~repo_root_kind
                 ~remote_repo_path
                 ~feature_path
                 ~feature_tip
@@ -1234,12 +1238,12 @@ This command is deprecated and has been subsumed by [fe review].
                       Tests should be updated to use [fe review] instead";
        let feature_path = ok_exn feature_path in
        let review_params = review_params () in
-       let%bind repo_root =
-         Cmd_workspace.repo_for_hg_operations_exn feature_path
+       let%bind repo_root, repo_root_kind =
+         Cmd_workspace.repo_for_hg_operations_and_kind_exn feature_path
            ~use:`Share (* If the feature is archived, this defaults to the clone *)
        in
-       catch_up_review_loop ~warn_if_no_session:true ~repo_root ~feature_path
-         review_params
+       catch_up_review_loop ~warn_if_no_session:true ~repo_root ~repo_root_kind
+         ~feature_path review_params
     )
 ;;
 
@@ -1309,22 +1313,22 @@ else's catch-up requires admin privileges, and may be done with:
          skip_catch_up_review || (not only_catch_up_review && is_acting_for_another_user)
        in
        let feature_path = ok_exn feature_path in
-       let%bind repo_root =
-         Cmd_workspace.repo_for_hg_operations_exn feature_path ~use:`Share
+       let%bind repo_root, repo_root_kind =
+         Cmd_workspace.repo_for_hg_operations_and_kind_exn feature_path ~use:`Share
        in
        let%bind () =
          if skip_catch_up_review
          then return ()
          else
            catch_up_review_loop ~warn_if_no_session:only_catch_up_review
-             ~repo_root ~feature_path
+             ~repo_root ~repo_root_kind ~feature_path
              review_params
        in
        if only_catch_up_review
        then return ()
        else
-         review_loop ~repo_root ~feature_path ~create_catch_up_for_me ~which_files ~reason
-           review_params
+         review_loop ~repo_root ~repo_root_kind ~feature_path ~create_catch_up_for_me
+           ~which_files ~reason review_params
     )
 ;;
 

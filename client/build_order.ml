@@ -483,7 +483,7 @@ Warning: files are in alphabetical order rather than build order due to an excep
             ])
 ;;
 
-let staged_sort repo_root list path_in_repo =
+let staged_sort repo_root_and_kind_or_error list path_in_repo =
   if List.length list <= 1
   then
     (* There's no sorting to do, and we'd like to avoid spurious errors in case the sort
@@ -494,41 +494,65 @@ let staged_sort repo_root list path_in_repo =
       List.sort list ~cmp:(fun a1 a2 ->
         Path_in_repo.default_review_compare (path_in_repo a1) (path_in_repo a2))
     in
-    match%map
-      try_with ~extract_exn:true (fun () -> staged_sort repo_root list path_in_repo)
-    with
-    | Error exn ->
-      (fun list ->
-         sort_raised exn;
-         default_sort list)
-    | Ok (No_build_order error) ->
-      fun list ->
-      eprintf "\
+    let repo_root_option =
+      match repo_root_and_kind_or_error with
+      | Error _ -> None
+      | Ok (repo_root, repo_root_kind) ->
+        let repo_may_have_applicable_build_artifacts =
+          match (repo_root_kind : Cmd_workspace.Repo_root_kind.t) with
+          | Clone -> false
+          | Program_started_in -> not (Cmd_workspace.workspaces_are_enabled ())
+          | Satellite -> true
+          | Workspace -> true
+        in
+        if repo_may_have_applicable_build_artifacts
+        then Some repo_root
+        else None
+    in
+    match repo_root_option with
+    | None ->
+      return (fun list ->
+        eprintf "\
+Warning: files are in alphabetical order because don't have a repo with build artifacts.
+
+";
+        default_sort list)
+    | Some repo_root ->
+      match%map
+        try_with ~extract_exn:true (fun () -> staged_sort repo_root list path_in_repo)
+      with
+      | Error exn ->
+        (fun list ->
+           sort_raised exn;
+           default_sort list)
+      | Ok (No_build_order error) ->
+        fun list ->
+          eprintf "\
 Warning: files are in alphabetical order because there are no build artifacts.
 
 ";
-      if verbose then Debug.ams [%here] "error" error [%sexp_of: Error.t];
-      default_sort list
-    | Ok (Build_order sort) ->
-      fun list ->
-        match sort list with
-        | exception exn ->
-          sort_raised exn;
-          default_sort list;
-        | (list, missing_dependencies) ->
-          if not (List.is_empty missing_dependencies)
-          then (
-            eprintf "\
+          if verbose then Debug.ams [%here] "error" error [%sexp_of: Error.t];
+          default_sort list
+      | Ok (Build_order sort) ->
+        fun list ->
+          match sort list with
+          | exception exn ->
+            sort_raised exn;
+            default_sort list;
+          | (list, missing_dependencies) ->
+            if not (List.is_empty missing_dependencies)
+            then (
+              eprintf "\
 Warning: files may not be in build order because of missing build artifacts.
 
 ";
-            if verbose
-            then Debug.ams [%here] "missing_dependencies" missing_dependencies
-                   [%sexp_of: Path_in_repo.t list]);
-          list)
+              if verbose
+              then Debug.ams [%here] "missing_dependencies" missing_dependencies
+                     [%sexp_of: Path_in_repo.t list]);
+            list)
 ;;
 
-let sort repo_root list path_in_repo =
-  let%map sort = staged_sort repo_root list path_in_repo in
+let sort repo_root_and_kind_or_error list path_in_repo =
+  let%map sort = staged_sort repo_root_and_kind_or_error list path_in_repo in
   sort list
 ;;

@@ -222,8 +222,8 @@ reviewing
   $ fe show -send-email-upon
   (archive release)
   $ fe change -remove-send-email-upon release
-  $ fe show | grep -F 'send email upon'
-  | send email upon         | archive               |
+  $ fe show | grep -F 'send email upon' | single_space
+  | send email upon | archive |
   $ fe show -send-email-upon
   (archive)
   $ fe change -add-send-email-upon release

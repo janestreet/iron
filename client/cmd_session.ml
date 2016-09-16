@@ -379,6 +379,11 @@ let show =
        let open! Deferred.Let_syntax in
        let feature_path = ok_exn feature_path in
        let for_all = match for_ with `All_users -> true | `User _ -> false in
+       let%bind repo_root_and_kind_or_error =
+         Monitor.try_with_or_error (fun () ->
+           Cmd_workspace.repo_for_hg_operations_and_kind_exn feature_path
+             ~use:`Share_or_clone_if_share_does_not_exist)
+       in
        let show_session ~for_ =
          let%bind { Get_review_session.Reaction. status; _ } =
            Get_review_session.rpc_to_server_exn
@@ -451,11 +456,9 @@ let show =
               let%map diff4s_to_review =
                 if not sort_build_order
                 then return diff4s_to_review
-                else
-                  Build_order.sort
-                    (ok_exn Repo_root.program_started_in)
-                    diff4s_to_review
-                    Diff4_to_review.path_in_repo_at_f2
+                else (
+                  Build_order.sort repo_root_and_kind_or_error diff4s_to_review
+                    Diff4_to_review.path_in_repo_at_f2)
               in
               Cmd_review.print_introduction_summary_for_review
                 ~feature_path

@@ -45,8 +45,7 @@ cp -r "$testdir/repo" "$scratch"
     hg -q add .
     export DONT_LOAD_ANY_HGRC=1
     hg -q commit -m "initialising test repo"
-    # output the obligations and compare them with the expected-report
-    fe obligations report # | tee "/tmp/$(basename $testdir).report"
+    fe obligations report 2>&1 || true
 ) |& diff -u "$testdir/expected-report" -
 
 # Use this to regenerate the tests.

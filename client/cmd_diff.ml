@@ -68,10 +68,10 @@ If no [-file] switches are provided, the diff for all files is shown.
                  } as feature) =
          Get_feature.Maybe_archived.rpc_to_server_exn { what_feature; what_diff }
        in
-       let%bind repo_root =
+       let%bind repo_root, repo_root_kind =
          (* When looking at a diff, you often don't need to do any further operations in
             the repo, so just use the root clone instead of a share. *)
-         Cmd_workspace.repo_for_hg_operations_exn feature_path
+         Cmd_workspace.repo_for_hg_operations_and_kind_exn feature_path
            ~use:(if is_archived then `Clone else `Share_or_clone_if_share_does_not_exist)
        in
        let reviewer =
@@ -110,7 +110,8 @@ If no [-file] switches are provided, the diff for all files is shown.
          | Known (Ok diff4s) ->
            let%bind diff4s =
              if sort_build_order
-             then Build_order.sort repo_root diff4s Diff4.path_in_repo_at_f2
+             then Build_order.sort (Ok (repo_root, repo_root_kind)) diff4s
+                    Diff4.path_in_repo_at_f2
              else return
                     (List.sort diff4s ~cmp:(fun d1 d2 ->
                        Path_in_repo.default_review_compare

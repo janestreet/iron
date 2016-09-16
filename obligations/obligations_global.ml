@@ -39,6 +39,7 @@ let eval declarations ~obligations_global ~aliases =
     let disallow_useless_dot_fe = ref false in
     let scrutinies = Scrutiny_name.Table.create () in
     let tags = Tag.Hash_set.create () in
+    let duplicated_users = Unresolved_name.Hash_set.create () in
     let users = Unresolved_name.Hash_set.create () in
     let groups = Group_name.Table.create () in
     let obligations_version = ref None in
@@ -69,7 +70,11 @@ let eval declarations ~obligations_global ~aliases =
            Error_context.raise_s e
              [%sexp "multiply defined group", (group_name : Group_name.t)])
       | Disallow_useless_dot_fe -> disallow_useless_dot_fe := true
-      | Users people -> List.iter people ~f:(fun user -> Hash_set.add users user)
+      | Users usernames ->
+        List.iter usernames ~f:(fun user ->
+          match Hash_set.strict_add users user with
+          | Ok ()   -> ()
+          | Error _ -> Hash_set.add duplicated_users user)
       | Obligations_version format ->
         (match !obligations_version with
          | None -> obligations_version := Some format
@@ -94,6 +99,12 @@ let eval declarations ~obligations_global ~aliases =
     let obligations_version =
       Option.value !obligations_version ~default:Obligations_version.default
     in
+    let duplicated_users = Unresolved_name.Set.of_hash_set duplicated_users in
+    (if not (Set.is_empty duplicated_users)
+     && Obligations_version.is_at_least_version obligations_version ~version:V4
+     then
+       Error_context.raise_s e
+         [%sexp "multiply defined users", (duplicated_users : Unresolved_name.Set.t)]);
     (match Groups.check_users groups ~known_users:users with
      | Ok () -> ()
      | Error err -> Error_context.raise e err);

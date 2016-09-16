@@ -131,7 +131,7 @@ let eval
       ; tags                    = global_tags
       ; users                   = global_users
       ; groups                  = global_groups
-      ; obligations_version     = global_obligations_version
+      ; obligations_version
       }
     = obligations_global
   in
@@ -165,10 +165,20 @@ let eval
           ]
       | Users x -> add users (e, x));
     let users =
+      let duplicated_users = Unresolved_name.Hash_set.create () in
       let local_users = Unresolved_name.Hash_set.create () in
       Queue.iter users ~f:(fun (_e, users) ->
-        List.iter users ~f:(Hash_set.add local_users));
+        List.iter users ~f:(fun user ->
+          match Hash_set.strict_add local_users user with
+          | Ok ()   -> ()
+          | Error _ -> Hash_set.add duplicated_users user));
+      let duplicated_users = Unresolved_name.Set.of_hash_set duplicated_users in
       let local_users = Unresolved_name.Set.of_hash_set local_users in
+      (if not (Set.is_empty duplicated_users)
+       && Obligations_version.is_at_least_version obligations_version ~version:V4
+       then
+         Error_context.raise_s e
+           [%sexp "multiply defined users", (duplicated_users : Unresolved_name.Set.t)]);
       check_duplicate_global e "users" [%sexp_of: Unresolved_name.Set.t]
         (Set.inter local_users global_users);
       Set.union local_users global_users
@@ -268,7 +278,6 @@ let eval
                ~reviewed_for:(eval_allow_review_for_users reviewed_for)));
       Option.value !allow_review_for_ref ~default:Allow_review_for.all
     in
-    let obligations_version = global_obligations_version in
     shared_t
       { users
       ; groups

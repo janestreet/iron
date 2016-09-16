@@ -10,7 +10,7 @@ let sort repo_root ~below =
       | Ok relpath -> Some (path_in_repo, relpath)
       | Error _ -> None)
   in
-  Build_order.sort repo_root files fst
+  Build_order.sort (Ok (repo_root, Program_started_in)) files fst
 ;;
 
 let command =

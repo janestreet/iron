@@ -77,16 +77,16 @@ let code_change_hunks_of_diff4 ~reviewer ~context ~lines_required_to_separate_dd
     in
     if not (Diff4_class.is_shown files_diff4_class)
     || (match reviewer with
-        | `Whole_diff_plus_ignored -> false
-        | `Reviewer reviewer ->
-          match Diff4.may_review diff4 reviewer with
-          | `Dropped_from_follow
-          | `Dropped_from_review
-          | `Review_ownership_change ->
-            true
-          | `Nothing_to_review_or_follow
-          | `Follow_lines
-          | `Review_lines -> false)
+      | `Whole_diff_plus_ignored -> false
+      | `Reviewer reviewer ->
+        match Diff4.may_review diff4 reviewer with
+        | `Dropped_from_follow
+        | `Dropped_from_review
+        | `Review_ownership_change ->
+          true
+        | `Nothing_to_review_or_follow
+        | `Follow_lines
+        | `Review_lines -> false)
     then return []
     else (
       let contents = fast_cat_or_empty fast_hg_cat_table in
@@ -520,8 +520,9 @@ let try_with_and_ignore_subsequent_errors f =
   Deferred.create (fun ivar ->
     don't_wait_for
       (Monitor.handle_errors
-         (fun () -> let%map res = f () in
-                    Ivar.fill_if_empty ivar (Ok res))
+         (fun () ->
+            let%map res = f () in
+            Ivar.fill_if_empty ivar (Ok res))
          (fun exn -> Ivar.fill_if_empty ivar (Error (Error.of_exn exn)))))
 ;;
 
@@ -536,12 +537,12 @@ let create_files_for_review
   let paths_in_repo_by_rev = paths_in_repo_by_rev diff4s in
   let%map paths_in_repo_by_rev =
     Deferred.List.map ~how:`Parallel (Hashtbl.to_alist paths_in_repo_by_rev)
-    ~f:(fun (rev, paths) ->
-      let%map map =
-        Hg.cat repo_root rev (Hash_set.to_list paths)
-        ~dir:(Abspath.extend temp_dir (Node_hash.to_file_name (Rev.node_hash rev)))
-      in
-      rev, map)
+      ~f:(fun (rev, paths) ->
+        let%map map =
+          Hg.cat repo_root rev (Hash_set.to_list paths)
+            ~dir:(Abspath.extend temp_dir (Node_hash.to_file_name (Rev.node_hash rev)))
+        in
+        rev, map)
   in
   let avoid_too_many_open_files =
     Throttle.create ~continue_on_error:false ~max_concurrent_jobs:200
@@ -851,8 +852,8 @@ let may_modify_others_review_exn feature_path ~reason ~for_or_all =
     | `All_users -> false
   in
   if can_short_circuit
-     || is_some (Sys.getenv
-                   "IRON_FUNCTIONAL_TESTING_CLIENT_DOES_NOT_CHECK_REVIEW_PERMISSIONS")
+  || is_some (Sys.getenv
+                "IRON_FUNCTIONAL_TESTING_CLIENT_DOES_NOT_CHECK_REVIEW_PERMISSIONS")
   then return ()
   else May_modify_others_review.rpc_to_server_exn { feature_path; for_or_all; reason }
 ;;

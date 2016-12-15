@@ -67,6 +67,7 @@ module Rev : sig
 
   val with_human_readable    : t -> human_readable:string -> t
   val without_human_readable : t -> t
+  val human_readable         : t -> string option
 
   module Stable : sig
     module V1 : Stable_without_comparator with type t = t
@@ -79,6 +80,10 @@ module Tag : sig
   include Stringable with type t := t
 
   val is_nice_name : t -> for_tree_rooted_at:Feature_name.t -> bool
+
+  module Stable : sig
+    module V1 : Stable_without_comparator with type t = t
+  end
 end
 
 module Bookmark : sig
@@ -89,7 +94,7 @@ module Bookmark : sig
 end
 
 module Revset : sig
-  type t
+  type t [@@deriving sexp_of]
 
   val of_string : string -> t
   val to_string : t -> string

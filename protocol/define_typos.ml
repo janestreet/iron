@@ -9,6 +9,11 @@ module Stable = struct
         ; means : User_name.V1.t
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ba7d93e3bec43f60cda90d2b6c53ce80 |}]
+      ;;
     end
   end
 
@@ -19,6 +24,11 @@ module Stable = struct
         ; may_repartition_crs : bool
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 222ff1e9a6c0578822c9f9d88ded97b7 |}]
+      ;;
 
       let to_model t = t
     end

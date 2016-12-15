@@ -13,6 +13,11 @@ module Stable = struct
       ; cr_soons    : Cr_soon.V1.t    list Or_error.V1.t
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 45d77a3a5c234746241671a6b6498f22 |}]
+    ;;
   end
   module Model = V1
 end

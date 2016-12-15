@@ -70,9 +70,9 @@ end = struct
   let load project_root =
     let%map list =
       Reader.load_sexp_exn
-      (Abspath.to_string
-         (Abspath.extend (Project_root.to_abspath project_root) libmap_file))
-      [%of_sexp: (Libname.t * Path_in_project.t) list]
+        (Abspath.to_string
+           (Abspath.extend (Project_root.to_abspath project_root) libmap_file))
+        [%of_sexp: (Libname.t * Path_in_project.t) list]
     in
     Libname.Table.of_alist_exn list
   ;;
@@ -185,7 +185,7 @@ let dirs_in_build_order project_root ~dirs ~additional_dependencies libmap =
     in
     if verbose
     then Debug.ams [%here] "edges" edges [%sexp_of: Path_in_project.t Edge.t list];
-    Topological_sort.sort (module Path_in_project) nodes edges)
+    Topological_sort.sort (module Path_in_project) nodes edges ~verbose)
 ;;
 
 module File_dependencies : sig
@@ -263,10 +263,10 @@ end
 let files_in_build_order ~dir files =
   (* 1. Create dependencies among all files, using *.d files.
      2. Coarsen into dependencies among representatives of equivalence classes, where
-        foo.ml and foo.mli are equivalent.
+     foo.ml and foo.mli are equivalent.
      3. Topsort the coarse dependencies.
      4. Output files in order of the topsorted representatives, with .mli before .mli,
-        putting foo_intf files just in front foo files. *)
+     putting foo_intf files just in front foo files. *)
   let%map file_dependencies = File_dependencies.create ~dir in
   let dependencies =
     Hashtbl.to_alist file_dependencies
@@ -296,7 +296,7 @@ let files_in_build_order ~dir files =
           }))
   in
   let sorted_representatives =
-    ok_exn (Topological_sort.sort (module Representative) nodes edges)
+    ok_exn (Topological_sort.sort (module Representative) nodes edges ~verbose)
   in
   let files_by_representative =
     files
@@ -332,8 +332,9 @@ let files_in_build_order ~dir files =
     @ List.filter files ~f:(fun file ->
       not (List.mem files_to_put_first file ~equal:File_name.equal))
   in
-  if verbose then Debug.ams [%here] "files_in_build_order" (dir, files)
-                  [%sexp_of: Abspath.t * File_name.t list];
+  (if verbose
+   then Debug.ams [%here] "files_in_build_order" (dir, files)
+          [%sexp_of: Abspath.t * File_name.t list]);
   files, file_dependencies
 ;;
 

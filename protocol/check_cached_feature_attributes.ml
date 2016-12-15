@@ -2,8 +2,6 @@ module Stable = struct
 
   open Import_stable
 
-  module Which_features = Which_features.Stable
-
   module Action = struct
     module V1 = struct
       type t =
@@ -11,6 +9,11 @@ module Stable = struct
         ; ignore_diffs_in_errors : bool
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7e077de6ad12dff92775eceb58807626 |}]
+      ;;
 
       let to_model t = t
     end

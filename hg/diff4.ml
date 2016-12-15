@@ -10,6 +10,11 @@ module Stable = struct
       }
     [@@deriving bin_io, compare, fields, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 3170dba6397eda7bb2b6635775a9c099 |}]
+    ;;
+
     let hash t =
       Attributed_file.Ignoring_rev.hash t.diamond.b1
       lxor Attributed_file.Ignoring_rev.hash t.diamond.b2
@@ -25,6 +30,11 @@ module Stable = struct
         ; output_num_lines : int
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 30a4bf245013206f8aea714c5f2b65c7 |}]
+      ;;
     end
   end
 end
@@ -104,7 +114,7 @@ let is_forget { diamond; _ } =
 let as_from_scratch_to_diff2 { diamond; errors = _; num_lines_in_diff } =
   let { Diamond.b1 ; b2 ; f1 ; f2 = _ } = Diamond.map diamond ~f:Attributed_file.rev in
   if Rev.equal_node_hash b1 f1
-     && Rev.equal_node_hash b1 b2
+  && Rev.equal_node_hash b1 b2
   then Some (Diff2.create ~base:diamond.b2 ~tip:diamond.f2 ~num_lines_in_diff)
   else None
 ;;
@@ -166,11 +176,11 @@ let create ~file_by_path_by_rev ~cache ~errors ~lines_required_to_separate_ddiff
   (* In this case, the server can realize the diff2 in the goal is already in the
      knowledge, so it doesn't need the diff4. *)
   | `b1_b2__f1_f2
+    when List.is_empty errors -> return `Equal
   (* In that case though, if we don't return a diamond, the server will understand it as
      meaning that the change in b1->f1 was dropped. This is not completely wrong, but it
      better to produce a diff4, because the diff4 doesn't have to be shown by [fe review].
-     | `b2_f1_f2
-  *) when List.is_empty errors -> return `Equal
+     | `b2_f1_f2 *)
   | _ ->
     let%bind num_lines_in_diff =
       (* This optimization cannot be done by patdiff4 because we have the digests and it
@@ -229,10 +239,8 @@ let invariant t =
                             ([%test_pred: int]
                                (fun num_lines_in_diff -> num_lines_in_diff >= 0)));
     if Diamond.for_all t.diamond ~f:(fun file -> not (Attributed_file.is_present file))
-       && not (is_forget t)
-    then
-      failwith "at least one node of the diamond has to be present"
-  )
+    && not (is_forget t)
+    then failwith "at least one node of the diamond has to be present")
 ;;
 
 module And_output_num_lines = struct
@@ -279,7 +287,7 @@ let may_follow t (reviewer : Reviewer.t) =
   match t.diamond.f2.attributes with
   | `Absent ->
     if reviewer.is_whole_feature_follower
-       || should_review_file_followers_change t reviewer.user_name
+    || should_review_file_followers_change t reviewer.user_name
     then `Follow_lines
     else `Nothing_to_follow
   | `Present attributes ->

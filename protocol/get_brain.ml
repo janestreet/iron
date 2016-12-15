@@ -10,6 +10,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| caa8c6bc0b63d59c3c306d8e2483b33e |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -25,6 +30,11 @@ module Stable = struct
         ; remote_repo_path : Remote_repo_path.V1.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a273209afc783673cb8f1be748af8134 |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -42,6 +52,11 @@ module Stable = struct
         ; remote_repo_path : Remote_repo_path.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 55da2913122cc8ec37f3f639de598366 |}]
+      ;;
 
       open! Core.Std
       open! Import

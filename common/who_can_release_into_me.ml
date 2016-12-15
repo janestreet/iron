@@ -4,6 +4,11 @@ module Stable = struct
       | My_owners
       | My_owners_and_child_owners
     [@@deriving bin_io, compare, enumerate, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| b93a990892da9ff14600844ad655b8c4 |}]
+    ;;
   end
 end
 

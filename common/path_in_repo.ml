@@ -10,6 +10,11 @@ module Stable = struct
       let hash (t : t) = Path.Relpath.hash t
     end
     include Hash_consing.Stable.Make_stable_private (Unshared) ()
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 296be80010ace497614f92952e5510c4 |}]
+    ;;
     let to_string t   = Unshared.to_string (unshared_t t)
     let of_string str = shared_t (Unshared.of_string str)
   end

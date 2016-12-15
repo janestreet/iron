@@ -5,7 +5,9 @@
     async
     async_interactive
     core
-    incremental_lib
+    incremental
     re2
     textutils
   ))))
+
+(enforce_style ())

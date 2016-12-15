@@ -4,6 +4,11 @@ module Stable = struct
   module V1 = struct
     type t = int [@@deriving bin_io, compare, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 698cfa4093fe5e51523842d37b92aeac |}]
+    ;;
+
     open Core.Std
 
     let invariant t =

@@ -12,6 +12,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b2b386963682bcb97c2bb87f82e9e4e4 |}]
+      ;;
+
       let to_model t = t
     end
   end
@@ -24,6 +29,11 @@ module Stable = struct
         ; remote_repo_path : Remote_repo_path.V1.t
         }
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3feb870f58bd262522c68297d4a85237 |}]
+      ;;
 
       let of_model t = t
     end
@@ -38,4 +48,3 @@ include Iron_versioned_rpc.Make
 
 module Action   = Stable.Action.V1
 module Reaction = Stable.Reaction.V1
-

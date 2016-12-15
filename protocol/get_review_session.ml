@@ -2,8 +2,6 @@ module Stable = struct
 
   open! Import_stable
 
-  module Which_session = Which_session.Stable
-
   module Action = struct
     module V4 = struct
       type t =
@@ -15,6 +13,11 @@ module Stable = struct
         ; lock_session     : [ `If_applicable | `No ]
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 76694ee9077beeb5832c9deb6e663de9 |}]
+      ;;
 
       let to_model (t : t) = t
     end
@@ -28,6 +31,11 @@ module Stable = struct
         ; which_session    : Which_session.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ac28676b009899a5e4a3bcb68c79f617 |}]
+      ;;
 
       let to_model { feature_path; rev_zero; for_; ensure_reviewing; which_session } =
         V4.to_model { feature_path
@@ -49,6 +57,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f4f0758c944b8718427fbda4f1a0e85d |}]
+      ;;
+
       let to_model { feature_path; rev_zero; for_; ensure_reviewing } =
         V3.to_model { feature_path
                     ; rev_zero
@@ -67,6 +80,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 95654cca7533089b6d772a1108aa3c17 |}]
+      ;;
+
       let to_model { feature_path; rev_zero; for_ } =
         V2.to_model { feature_path; rev_zero; for_; ensure_reviewing = true }
       ;;
@@ -82,6 +100,11 @@ module Stable = struct
         ; from_brain_if_session_was_committed : 'a
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: Bin_digest_type_variable.tick_a t];
+        [%expect {| e90a33d153d1b3b41d86c069e9e2b1c9 |}]
+      ;;
     end
 
     module Model = V1
@@ -105,6 +128,11 @@ module Stable = struct
         ; lines_required_to_separate_ddiff_hunks : int
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ddd8f00f9535f58a566122ceb5adedd6 |}]
+      ;;
     end
 
     module V8 = struct
@@ -123,6 +151,11 @@ module Stable = struct
         ; is_locked : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8022f82fa771ad92056ca2420f6c20f1 |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -169,6 +202,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9e24061dbccd6821372183e4740ff15f |}]
+      ;;
+
       open! Core.Std
       open! Import
 
@@ -212,6 +250,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 60299e8beab60fd3f22ab6ee4b1fc594 |}]
+      ;;
+
       open! Core.Std
       open! Import
 
@@ -248,6 +291,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5f10ab212b2c048c697290d0e15b5bef |}]
+      ;;
+
       open! Core.Std
       open! Import
 
@@ -283,6 +331,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b810c472c609f0df6f32a0eea3921f79 |}]
+      ;;
+
       let of_v5 { V5.
                   review_session_id
                 ; review_session_tip
@@ -312,6 +365,11 @@ module Stable = struct
         ]
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: Bin_digest_type_variable.tick_a t];
+        [%expect {| ab08c8ed9b62771b0a3c129ec29bfdc8 |}]
+      ;;
+
       let map t ~f =
         match t with
         | `Up_to_date
@@ -332,6 +390,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7b33649e1aacaa7b24c634cc0ef724e8 |}]
+      ;;
+
       let of_model m = m
     end
 
@@ -344,6 +407,11 @@ module Stable = struct
         ; may_second        : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 27240a9af46e697d08394d10d5695243 |}]
+      ;;
 
       let of_model model =
         let { V9. status; feature_tip; remote_rev_zero; remote_repo_path; may_second }
@@ -368,6 +436,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 0283f2194cb7b2691ca8cdfbd8a9c4f4 |}]
+      ;;
+
       let of_model model =
         let { V8. status; feature_tip; remote_rev_zero; remote_repo_path; may_second }
           = V8.of_model model
@@ -390,6 +463,11 @@ module Stable = struct
         ; may_second        : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| bd439e1aaa5a52c80c31a63428cc2059 |}]
+      ;;
 
       let of_model model =
         let { V7. status; feature_tip; remote_rev_zero; remote_repo_path; may_second }
@@ -414,6 +492,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7f1b01463998861a45970250da23f215 |}]
+      ;;
+
       let of_model model =
         let { V6. status; feature_tip; remote_rev_zero; remote_repo_path; may_second }
           = V6.of_model model
@@ -436,6 +519,11 @@ module Stable = struct
         ; may_second        : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 773ca234c455a5a5a82165c27f89a9b5 |}]
+      ;;
 
       let of_model model =
         let { V5. status; feature_tip; remote_rev_zero; remote_repo_path; may_second }

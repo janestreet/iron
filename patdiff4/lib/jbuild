@@ -6,9 +6,11 @@
     core
     iron_common
     iron_hg
-    patdiff_lib
-    patience_diff_lib
+    patdiff.lib
+    patience_diff
     re2
     textutils
     ))
   ))
+
+(enforce_style ())

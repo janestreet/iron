@@ -70,14 +70,15 @@ let load repo_root : t Deferred.t =
         ~data:(Throttle.enqueue read_throttle (fun () ->
           let%map lines =
             Reader.file_lines
-            (Repo_root.append repo_root path_in_repo |> Abspath.to_string)
+              (Repo_root.append repo_root path_in_repo |> Abspath.to_string)
           in
           Tagged_file.create ~file_name ~tags ~lines
         ))));
   let%map alist =
-    Deferred.List.map (Hashtbl.to_alist read_table) ~f:(fun (enclosing_dir, tagged_files) ->
-    let%map tagged_files = Deferred.List.map tagged_files ~f:Fn.id in
-    enclosing_dir, Project.create ~enclosing_dir ~tagged_files)
+    Hashtbl.to_alist read_table
+    |> Deferred.List.map ~f:(fun (enclosing_dir, tagged_files) ->
+      let%map tagged_files = Deferred.List.map tagged_files ~f:Fn.id in
+      enclosing_dir, Project.create ~enclosing_dir ~tagged_files)
   in
   { projects_by_dir = Path_in_repo.Table.of_alist_exn alist
   ; obligations

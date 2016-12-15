@@ -9,6 +9,11 @@ module Stable = struct
         | User
         | Internal__fully_reviewed
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1255753ecd11060f9d0f070921d74d8f |}]
+      ;;
     end
 
     module Model = V1
@@ -21,6 +26,11 @@ module Stable = struct
         ; mark_kind : Mark_kind.V1.t
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 355e7ada3f767df34ae033645416e885 |}]
+      ;;
     end
 
     module Model = V1
@@ -29,6 +39,11 @@ module Stable = struct
   module V3 = struct
     type t = Marked_diff2.V1.t list
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 6bfb1860a65a9a4e7c400f76dbd751b5 |}]
+    ;;
 
     let of_model m = m
     let to_model m = m
@@ -39,6 +54,11 @@ module Stable = struct
   module V2 = struct
     type t = Diff2.V2.t list
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 6adaad1ab18aad7d705bef2041b3b5c5 |}]
+    ;;
 
     open! Core.Std
 
@@ -133,7 +153,7 @@ let diff4s_needed_to_extend_brain (brain : t)
         | None -> false
         | Some ({ diff2 = brain_diff2; mark_kind = _ }, used) ->
           if Rev.Compare_by_hash.equal brain_diff2.base.rev goal_diff2.base.rev
-             && Rev.Compare_by_hash.equal brain_diff2.tip.rev  goal_diff2.tip.rev
+          && Rev.Compare_by_hash.equal brain_diff2.tip.rev  goal_diff2.tip.rev
           then
             (* This is the case where what we want to know is already what we know (the
                only potential difference between [brain_diff2] and [goal_diff2] is

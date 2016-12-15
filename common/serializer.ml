@@ -324,16 +324,24 @@ module Compress_or_uncompress = struct
     | Compress ->
       (* here is some timing about the three biggest archived features with default
          compression level:
+
+         {v
              compression    uncompression
          1.     1min            1.3s
          2.      47s            0.7s
          3.      27s            0.45s
 
+         v}
+
          So uncompression is reasonably fast, but blocking the serializer for 1min seems
          undesirable.  So we use XZ_OPT=-1 instead so the times (at least for the worst
          feature) become:
+
+         {v
              compression    uncompression
          1.      5s             1.6s
+
+         v}
 
          The size of the compressed feature goes from about 9M to 13M. *)
       Process.run

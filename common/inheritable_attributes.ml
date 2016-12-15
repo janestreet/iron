@@ -22,6 +22,11 @@ module Stable = struct
       ; whole_feature_reviewers                     : User_name.V1.Set.t
       }
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| c3a1f0a519ec04bc0275f1d373755c5e |}]
+    ;;
   end
 
   module Model = V1

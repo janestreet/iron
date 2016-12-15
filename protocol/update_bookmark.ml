@@ -15,6 +15,11 @@ module Stable = struct
         ; cr_soons                : Cr_soons.In_feature.V1.t Or_error.V1.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5c678964cbecb64df8cd951ef183e9f6 |}]
+      ;;
     end
 
     module Model = V5
@@ -30,6 +35,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| e79d77f64e46cb24e3a4c020a8a912e6 |}]
+      ;;
+
       let to_model m = m
     end
 
@@ -42,6 +52,11 @@ module Stable = struct
         ; info                 : Info.V5.t Or_error.V1.t
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ffe85f11c8ed5e5d59a0703c0a114c16 |}]
+      ;;
 
       let to_model { feature_path
                    ; feature_id

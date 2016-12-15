@@ -100,36 +100,37 @@ end = struct
 
   let to_strings_ascii = to_strings ~pipe:"| " ~open_:"_" ~close:"|_"
 
-  let%test_module _ = (module struct
-    let to_strings = to_strings_ascii
-    let%test_unit _ =
-      let block notice lines = Group [ Lines notice ; Lines lines ] in
-      let with_header ~header group = Group (Lines header :: group) in
-      let view = with_header in
-      let hunk = with_header in
-      [%test_result: string]
-        (to_strings
-           (hunk ~header:["hello hunk"]
-              [ view ~header:["story"]
-                  [ block ["this feature change was dropped:"]
-                      [ "old-base to old-tip"
-                      ]
-                  ; block [ "... and replaced by this base change:" ]
-                      [ "old-base to { new-base, new-tip }"
-                      ]
-                  ]
-              ; view ~header:["feature-ddiff"]
-                  [ block []
-                      [ "some lines"
-                      ]
-                  ]
-              ; view ~header:["conflict"]
-                  [ block []
-                      [ "some lines"
-                      ]
-                  ]
-              ]) |> String.concat ~sep:"\n")
-        ~expect:"\
+  let%test_module _ =
+    (module struct
+      let to_strings = to_strings_ascii
+      let%test_unit _ =
+        let block notice lines = Group [ Lines notice ; Lines lines ] in
+        let with_header ~header group = Group (Lines header :: group) in
+        let view = with_header in
+        let hunk = with_header in
+        [%test_result: string]
+          (to_strings
+             (hunk ~header:["hello hunk"]
+                [ view ~header:["story"]
+                    [ block ["this feature change was dropped:"]
+                        [ "old-base to old-tip"
+                        ]
+                    ; block [ "... and replaced by this base change:" ]
+                        [ "old-base to { new-base, new-tip }"
+                        ]
+                    ]
+                ; view ~header:["feature-ddiff"]
+                    [ block []
+                        [ "some lines"
+                        ]
+                    ]
+                ; view ~header:["conflict"]
+                    [ block []
+                        [ "some lines"
+                        ]
+                    ]
+                ]) |> String.concat ~sep:"\n")
+          ~expect:"\
 hello hunk
 _
 | story
@@ -154,7 +155,7 @@ _
 | | some lines
 | |_
 |_"
-  end)
+    end)
 
   let to_strings_utf8 =
     let module Table_char = Textutils.Ascii_table.Table_char in

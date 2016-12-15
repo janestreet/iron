@@ -10,6 +10,11 @@ module Pre_stable = struct
         ; cr_soon      : Cr_soon.V1.t
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a54865d3b4ab69b23c53348182415c5c |}]
+      ;;
     end
   end
 end

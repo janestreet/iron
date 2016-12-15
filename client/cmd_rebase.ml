@@ -82,7 +82,7 @@ let main { Fe.Rebase.Action.
   in
   let%bind gca =
     Hg.greatest_common_ancestor repo_root
-    (List.map [ old_tip; new_base ] ~f:Revset.of_rev)
+      (List.map [ old_tip; new_base ] ~f:Revset.of_rev)
   in
   if not (Rev.equal_node_hash old_base gca)
   then
@@ -142,7 +142,7 @@ let main { Fe.Rebase.Action.
      [expect_next_base_update] to avoid both races. *)
   let%bind () =
     Expect_next_base_update.rpc_to_server_exn
-    { feature_path; for_; expected_base = new_base }
+      { feature_path; for_; expected_base = new_base }
   in
   let%bind () =
     let%map result =

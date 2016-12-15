@@ -10,6 +10,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| caa8c6bc0b63d59c3c306d8e2483b33e |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -20,6 +25,11 @@ module Stable = struct
         ; even_if_locked : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 99a14253de3cc4fcea99f8e47047bf85 |}]
+      ;;
 
       let to_model { feature_path
                    ; for_
@@ -40,6 +50,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| caa8c6bc0b63d59c3c306d8e2483b33e |}]
+      ;;
+
       let to_model { feature_path; for_ } =
         V3.to_model
           { V3.
@@ -56,6 +71,11 @@ module Stable = struct
     module V1 = struct
       type t = unit
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 86ba5df747eec837f0b391dd49f33f9e |}]
+      ;;
 
       let of_model t = t
     end

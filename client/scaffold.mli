@@ -38,6 +38,7 @@ val center_relative_to_enclosing_repo : t -> Relpath.t
 val satellites : t -> Satellite.t list
 
 val load_scaffold_file_exn : Abspath.t -> t Deferred.t
+val parse_scaffold_contents_exn : string -> t
 
 (** [load] returns [None] if there is no scaffold.  [load] raises if the scaffold is
     erroneous. *)

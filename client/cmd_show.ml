@@ -293,9 +293,9 @@ let maybe_empty_list list ~f =
 let set_to_row name ~f:to_string ?(attrs=[]) set =
   [ name
   , (attrs, (set
-          |> Set.to_list
-          |> List.map ~f:to_string
-          |> String.concat ~sep:", "))
+             |> Set.to_list
+             |> List.map ~f:to_string
+             |> String.concat ~sep:", "))
   ]
 ;;
 
@@ -398,24 +398,24 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
       ; maybe owners (user_list "owner")
       ; maybe whole_feature_reviewers (user_set "whole-feature reviewer")
       ; maybe seconder (fun seconder ->
-        [ "seconder",
-          ([],
-           match seconder with
-           | None -> "not seconded"
-           | Some seconder ->
-             sprintf "%s%s" (User_name.to_string seconder)
-               (match owners with
-                | None -> ""
-                | Some owners ->
-                  if List.mem owners seconder ~equal:User_name.equal
-                  then " (even though owner)"
-                  else ""))
-        ])
+          [ "seconder",
+            ([],
+             match seconder with
+             | None -> "not seconded"
+             | Some seconder ->
+               sprintf "%s%s" (User_name.to_string seconder)
+                 (match owners with
+                  | None -> ""
+                  | Some owners ->
+                    if List.mem owners seconder ~equal:User_name.equal
+                    then " (even though owner)"
+                    else ""))
+          ])
       ; maybe review_is_enabled (fun review_is_enabled ->
           [ "review is enabled", ([], Bool.to_string review_is_enabled) ])
       ; maybe crs_are_enabled (fun crs_are_enabled ->
           if not (Option.value review_is_enabled ~default:false)
-             || not crs_are_enabled
+          || not crs_are_enabled
           then [ "CRs are enabled", ([], Bool.to_string crs_are_enabled) ]
           else [])
       ; maybe crs_shown_in_todo_only_for_users_reviewing
@@ -531,30 +531,30 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
                   ; whole_feature_followers
                   ; whole_feature_reviewers
                   } ->
-              if not show_inheritable_attributes
-              then []
-              else
-                List.concat
-                  [ maybe crs_shown_in_todo_only_for_users_reviewing
-                      (fun crs_shown_in_todo_only_for_users_reviewing ->
-                         in_todo_for
-                           "CRs" crs_shown_in_todo_only_for_users_reviewing)
-                  ; maybe xcrs_shown_in_todo_only_for_users_reviewing
-                      (fun xcrs_shown_in_todo_only_for_users_reviewing ->
-                         in_todo_for
-                           "XCRs" xcrs_shown_in_todo_only_for_users_reviewing)
-                  ; maybe_empty_list ~f:(user_list "owner") owners
-                  ; property_rows properties
-                  ; maybe release_process release_process_row
-                  ; maybe who_can_release_into_me who_can_release_into_me_row
-                  ; maybe_empty_set send_email_upon ~f:send_email_upon_row
-                  ; maybe_empty_set send_email_to ~f:(send_email_to_row ~attrs:[])
-                  ; maybe_empty_set
-                      ~f:(user_set "whole feature follower") whole_feature_followers
-                  ; maybe_empty_set
-                      ~f:(user_set "whole feature reviewer") whole_feature_reviewers
-                  ]
-             ))
+                if not show_inheritable_attributes
+                then []
+                else
+                  List.concat
+                    [ maybe crs_shown_in_todo_only_for_users_reviewing
+                        (fun crs_shown_in_todo_only_for_users_reviewing ->
+                           in_todo_for
+                             "CRs" crs_shown_in_todo_only_for_users_reviewing)
+                    ; maybe xcrs_shown_in_todo_only_for_users_reviewing
+                        (fun xcrs_shown_in_todo_only_for_users_reviewing ->
+                           in_todo_for
+                             "XCRs" xcrs_shown_in_todo_only_for_users_reviewing)
+                    ; maybe_empty_list ~f:(user_list "owner") owners
+                    ; property_rows properties
+                    ; maybe release_process release_process_row
+                    ; maybe who_can_release_into_me who_can_release_into_me_row
+                    ; maybe_empty_set send_email_upon ~f:send_email_upon_row
+                    ; maybe_empty_set send_email_to ~f:(send_email_to_row ~attrs:[])
+                    ; maybe_empty_set
+                        ~f:(user_set "whole feature follower") whole_feature_followers
+                    ; maybe_empty_set
+                        ~f:(user_set "whole feature reviewer") whole_feature_reviewers
+                    ]
+            ))
       ]
   in
   let columns =

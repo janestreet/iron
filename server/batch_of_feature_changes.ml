@@ -110,12 +110,12 @@ let to_feature_updates feature
     add_inheritable_attributes;
   Option.iter set_crs_shown_in_todo_only_for_users_reviewing
     ~f:(fun crs_shown_in_todo_only_for_users_reviewing ->
-    add (`Set_crs_shown_in_todo_only_for_users_reviewing
-           crs_shown_in_todo_only_for_users_reviewing));
+      add (`Set_crs_shown_in_todo_only_for_users_reviewing
+             crs_shown_in_todo_only_for_users_reviewing));
   Option.iter set_xcrs_shown_in_todo_only_for_users_reviewing
     ~f:(fun xcrs_shown_in_todo_only_for_users_reviewing ->
-    add (`Set_xcrs_shown_in_todo_only_for_users_reviewing
-           xcrs_shown_in_todo_only_for_users_reviewing));
+      add (`Set_xcrs_shown_in_todo_only_for_users_reviewing
+             xcrs_shown_in_todo_only_for_users_reviewing));
   let owners = filter_owners add_owners ~remove_members_of:(Feature.owners feature) in
   if not (List.is_empty owners) then add (`Add_owners owners);
   if not (Map.is_empty add_properties)
@@ -235,27 +235,26 @@ let add_inheritable_attributes t
   let attrs = t.add_inheritable_attributes in
   { t with
     add_inheritable_attributes =
-      {
-        crs_shown_in_todo_only_for_users_reviewing =
+      { crs_shown_in_todo_only_for_users_reviewing =
           Option.first_some crs_shown_in_todo_only_for_users_reviewing
             attrs.crs_shown_in_todo_only_for_users_reviewing
-        ; xcrs_shown_in_todo_only_for_users_reviewing =
+      ; xcrs_shown_in_todo_only_for_users_reviewing =
           Option.first_some xcrs_shown_in_todo_only_for_users_reviewing
             attrs.xcrs_shown_in_todo_only_for_users_reviewing
-        ; owners = attrs.owners @ filter_owners owners ~remove_members_of:attrs.owners
-        ; properties =
-            Map.merge attrs.properties properties ~f:(fun ~key:_ -> function
-              | `Left v | `Right v -> Some v
-              | `Both (_old, new_) -> Some new_)
-        ; release_process =
+      ; owners = attrs.owners @ filter_owners owners ~remove_members_of:attrs.owners
+      ; properties =
+          Map.merge attrs.properties properties ~f:(fun ~key:_ -> function
+            | `Left v | `Right v -> Some v
+            | `Both (_old, new_) -> Some new_)
+      ; release_process =
           Option.first_some release_process attrs.release_process
-        ; send_email_to = Set.union send_email_to attrs.send_email_to
-        ; send_email_upon = Set.union send_email_upon attrs.send_email_upon
-        ; who_can_release_into_me =
+      ; send_email_to = Set.union send_email_to attrs.send_email_to
+      ; send_email_upon = Set.union send_email_upon attrs.send_email_upon
+      ; who_can_release_into_me =
           Option.first_some who_can_release_into_me attrs.who_can_release_into_me
-        ; whole_feature_followers =
+      ; whole_feature_followers =
           Set.union whole_feature_followers attrs.whole_feature_followers
-        ; whole_feature_reviewers =
+      ; whole_feature_reviewers =
           Set.union whole_feature_reviewers attrs.whole_feature_reviewers
       }
   }

@@ -1,3 +1,5 @@
 (alias
  ((name feature-subtree-build)
   (deps ((alias tests/fe-runtest)))))
+
+(enforce_style ())

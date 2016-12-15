@@ -2,6 +2,11 @@ module Stable_format = struct
   open! Core.Stable
   module V1 = struct
     type t = int [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 698cfa4093fe5e51523842d37b92aeac |}]
+    ;;
   end
 end
 
@@ -66,5 +71,10 @@ module Stable = struct
           let to_stable = to_int
           let of_stable = of_int
         end)
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 698cfa4093fe5e51523842d37b92aeac |}]
+    ;;
   end
 end

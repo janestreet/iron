@@ -9,6 +9,11 @@ module Scope = struct
     open Core.Stable
     module V1 = struct
       type t = string Key.Stable.V1.Map.t [@@deriving sexp, bin_io, compare]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| aa41ee0fc9442ac7cd1b3ce2e5196e91 |}]
+      ;;
     end
   end
 
@@ -40,6 +45,11 @@ module Spec = struct
           { asserters : User_name.Stable.V1.Set.t
           ; scope_restrictions : Iron_string.Stable.V1.Set.t Scope.Key.Stable.V1.Map.t sexp_option
           } [@@deriving sexp, bin_io, compare]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 00119ddb042afa066378835067beb165 |}]
+        ;;
       end
     end
 
@@ -50,6 +60,11 @@ module Spec = struct
         ; authorization_rules : Authorization_rule.V1.t list
         ; description : string
         } [@@deriving sexp, bin_io, compare]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a33f47db1e91310e63c3171aab6d5a2a |}]
+      ;;
 
       open Core.Std
       let t_of_sexp sexp =
@@ -138,6 +153,11 @@ module Action = struct
           | `remove_fact of Scope.Stable.V1.t
           ]
       [@@deriving sexp, bin_io, compare]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 26463e805cec97a9c8a6ba8337f9dcaf |}]
+      ;;
     end
     module V1 = struct
       type t =
@@ -150,6 +170,11 @@ module Action = struct
           | `remove_fact of Scope.Stable.V1.t
           ]
       [@@deriving sexp, bin_io, compare]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9132cc0a8b5e2e0024141d1a48840f1d |}]
+      ;;
 
       let to_model (spec_id, action) =
         match action with

@@ -10,6 +10,11 @@ module Stable = struct
         ; value : float
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b045a92511846c42231c91245f9fedab |}]
+      ;;
     end
     module Model = V1
   end

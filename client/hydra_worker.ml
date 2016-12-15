@@ -284,7 +284,7 @@ let compute_worker_rev_facts repo_root ~repo_is_clean ~rev ~fake_attribute
      because we are already at the right revision. *)
   let%map { Worker_obligations. obligations; _ } =
     compute_obligations repo_root ~repo_is_clean rev
-    ~fake_attribute ~aliases ~worker_cache_session
+      ~fake_attribute ~aliases ~worker_cache_session
   in
   result, obligations
 ;;

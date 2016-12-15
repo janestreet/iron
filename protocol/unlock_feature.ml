@@ -12,6 +12,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 55f8e60cd5f73564afa848d4afc75e68 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -23,6 +28,11 @@ module Stable = struct
         ; even_if_permanent : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 846f97cc2a68788b923ffba9546cb57b |}]
+      ;;
 
       let to_model { feature_path
                    ; for_
@@ -47,6 +57,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f8f9ca14b4c067d234e72e68f778b5a4 |}]
+      ;;
+
       let to_model { feature_path
                    ; for_
                    ; lock_names
@@ -69,12 +84,22 @@ module Stable = struct
       type t = (Lock_name.V2.t * unit Or_error.V1.t) list
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1b81894aede6396f94500462b05ac68b |}]
+      ;;
+
       let of_model t = t
     end
 
     module V1 = struct
       type t = (Lock_name.V1.t * unit Or_error.V1.t) list
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 20da5a7a85af7de038884d3287cd3bc1 |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -112,4 +137,3 @@ include Register_old_rpc
 
 module Action   = Stable.Action.   Model
 module Reaction = Stable.Reaction. Model
-

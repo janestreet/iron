@@ -2,8 +2,6 @@ module Stable = struct
 
   open Import_stable
 
-  module Which_features = Which_features.Stable
-
   module Action = struct
     module V1 = Which_features.V1
   end

@@ -12,6 +12,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 6e409bcd8f919a807ce95f0aebfc86de |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -27,6 +32,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 18d337dcab57fa4079afac567040b737 |}]
+      ;;
+
       let to_model { feature_path; rev_zero; tagged_tip; for_; may_archive = _ } =
         V4.to_model { V4. feature_path; rev_zero; tagged_tip; for_; }
       ;;
@@ -41,6 +51,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4534aa2e3351c2e5d44159195b1d7626 |}]
+      ;;
+
       let to_model { feature_path; rev_zero; for_; may_archive } =
         V3.to_model { V3. feature_path; rev_zero; tagged_tip = None; for_; may_archive }
       ;;
@@ -50,6 +65,11 @@ module Stable = struct
   module Reasons_for_not_archiving = struct
     module V1 = struct
       type t = string [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+      ;;
     end
   end
 
@@ -61,6 +81,11 @@ module Stable = struct
         | `Not_released__push_to_hydra
         ]
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9063ede6b2492a56e93dff0b195a68eb |}]
+      ;;
 
       let of_model m = m
     end
@@ -74,6 +99,11 @@ module Stable = struct
         | `Not_released__push_to_hydra
         ]
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b82e1a0c4ae992b89597a36e68416cad |}]
+      ;;
 
       let of_v3 : V3.t -> t = function
         | `Released_and_archived | `Not_released__push_to_hydra as x -> x
@@ -92,6 +122,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 899b59db9e47823d9feb711c3798d5bd |}]
+      ;;
+
       let of_model m = m
     end
 
@@ -103,6 +138,11 @@ module Stable = struct
         ; send_release_email_to : Email_address.V1.Set.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 355abbe3e4656101b304891d73400350 |}]
+      ;;
 
       let of_model m =
         let { V4. disposition; send_release_email_to } = V4.of_model m in

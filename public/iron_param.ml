@@ -738,7 +738,7 @@ let feature_id_list =
 
 let which_session =
   map ~f:(function
-    | None    -> Iron_protocol.Which_session.Current_session
+    | None    -> Which_session.Current_session
     | Some id -> This_session id)
     (flag "-session-id"
        ~doc:"SESSION_ID fail if the current session id is not the one supplied"
@@ -852,8 +852,8 @@ module Which_features = struct
   end
 
   let features_list features ~rec_ =
-    Iron_protocol.Which_features.Features (List.map features ~f:(fun feature_path ->
-      { Iron_protocol.Which_features.Feature.
+    Which_features.Features (List.map features ~f:(fun feature_path ->
+      { Which_features.Feature.
         feature_path
       ; include_descendants = rec_
       }))
@@ -880,7 +880,6 @@ module Which_features = struct
     in
     Lazy.from_fun (fun () ->
       let open Async.Std in
-      let module Which_features = Iron_protocol.Which_features in
       let features = ok_exn features in
       if all
       then

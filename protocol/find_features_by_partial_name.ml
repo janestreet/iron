@@ -15,6 +15,11 @@ module Stable = struct
         ]
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 32aa3dcc5c94e189dbf61fc73ba0549c |}]
+      ;;
+
       let to_v3 (t : t) = (t :> V3.t)
     end
 
@@ -25,6 +30,11 @@ module Stable = struct
         | `Catch_up
         ]
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b829b19a4d39ff1a51de6bde550277d0 |}]
+      ;;
 
       let to_v2 = function
         | `Catch_up -> `All
@@ -43,6 +53,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 967b450695a238495183fb7025341fb2 |}]
+      ;;
+
       let to_model (t : t) = t
     end
 
@@ -52,6 +67,11 @@ module Stable = struct
         ; namespace           : Namespace.V3.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 84360c6892abf1d32f34e7c1ca75a526 |}]
+      ;;
 
       let to_model { partial_name_prefix
                    ; namespace
@@ -71,6 +91,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9032670f5f067327c1d36d67cff0aad1 |}]
+      ;;
+
       let to_model { partial_name_prefix
                    ; namespace
                    } =
@@ -88,6 +113,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5db3782bfb5111f671361f9b6ccc710b |}]
+      ;;
+
       let to_model { partial_name_prefix; namespace } =
         V3.to_model
           { V3.partial_name_prefix
@@ -104,6 +134,11 @@ module Stable = struct
     module V4 = struct
       type t = Feature_path.V1.t list [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| e16050fbbb13a3a25cae42a413f70535 |}]
+      ;;
+
       let of_model (m : t) = m
     end
 
@@ -113,6 +148,11 @@ module Stable = struct
         ; rev_zero_roots    : (Feature_name.V1.t * Rev.V1.t) list
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 38eba5a18accbbda834cf16dffd8b08a |}]
+      ;;
 
       let of_model m =
         let matching_features = V4.of_model m in
@@ -125,6 +165,11 @@ module Stable = struct
     module V2 = struct
       type t = Feature_path.V1.t list
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| e16050fbbb13a3a25cae42a413f70535 |}]
+      ;;
 
       let of_model m =
         let { V3. matching_features; _ } = V3.of_model m in

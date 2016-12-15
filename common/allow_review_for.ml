@@ -9,6 +9,11 @@ module Stable = struct
         | Users of User_name.V1.Set.t
       [@@deriving bin_io, compare, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 6b1f0a0ded957a6f8ddf90e5276d34da |}]
+      ;;
+
       let hash = function
         | All_users -> Core.Std.Int.hash 1
         | Users users -> Hash_consing.fold_hash 2 (User_name.V1.Set.hash users)
@@ -23,8 +28,18 @@ module Stable = struct
       }
     [@@deriving bin_io, compare, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: one];
+      [%expect {| 212e584615015f7a824c361545d3f6cd |}]
+    ;;
+
     type t = one list
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 08102ebed15d708874f044bf72f4f8ec |}]
+    ;;
 
     let hash_one { reviewed_for; reviewed_by } =
       Hash_consing.fold_hash
@@ -92,7 +107,7 @@ let may_be_reviewed_by t ~reviewed_for =
 let check t ~reviewed_for ~reviewed_by =
   let may_be_reviewed_by = may_be_reviewed_by t ~reviewed_for in
   if User_name.equal reviewed_by reviewed_for
-     || Users.mem may_be_reviewed_by reviewed_by
+  || Users.mem may_be_reviewed_by reviewed_by
   then Ok ()
   else
     error_s

@@ -9,6 +9,11 @@ module Stable = struct
         | Existing_user
         | Typo
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| bdb826fc98c4b919e09992038bdc02ad |}]
+      ;;
     end
 
     module Model = V1
@@ -28,6 +33,11 @@ module Stable = struct
         | User_info of Which_user_info.V1.t
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 0a7e93070a1f2af865657e703ff5d5c7 |}]
+      ;;
+
     end
 
     module V6 = struct
@@ -40,6 +50,11 @@ module Stable = struct
         | Root_feature_path
         | User_info of Which_user_info.V1.t
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| dfa33772bab598fec41bf056e7bf8887 |}]
+      ;;
 
       let to_v7 = function
         | Absolute_feature_path      -> V7.Absolute_feature_path
@@ -62,6 +77,11 @@ module Stable = struct
         | User_info of Which_user_info.V1.t
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4ceeb065ada4a71dba2c76bf80f0e130 |}]
+      ;;
+
       let to_v6 = function
         | Absolute_feature_path -> V6.Absolute_feature_path
         | Archived_feature_path -> V6.Archived_feature_path
@@ -80,6 +100,11 @@ module Stable = struct
         | Remote_repo_path
         | User_info of Which_user_info.V1.t
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| aa8a7d63883c8edfca9fb7b6c29f1683 |}]
+      ;;
 
       let to_v5 = function
         | Absolute_feature_path -> V5.Absolute_feature_path
@@ -101,6 +126,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ddaa97a4d78215a21cb7763f97d16d76 |}]
+      ;;
+
       let to_model (t : t) = t
     end
 
@@ -110,6 +140,11 @@ module Stable = struct
         ; prefix : string
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| aafdbfc0c414dc9d08bdc7c276407358 |}]
+      ;;
 
       let to_model { types; prefix } =
         V7.to_model
@@ -126,6 +161,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8e2c2e2a5ec1138f5af43532e6a6b80d |}]
+      ;;
+
       let to_model { types; prefix } =
         V6.to_model
           { types  = List.map types ~f:Type.V5.to_v6
@@ -141,6 +181,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 36da190aa0400c34f818fdb275137670 |}]
+      ;;
+
       let to_model { type_; prefix } =
         V5.to_model
           { types = [ Type.V4.to_v5 type_ ]
@@ -155,6 +200,11 @@ module Stable = struct
   module Reaction = struct
     module V1 = struct
       type t = string list [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 296be80010ace497614f92952e5510c4 |}]
+      ;;
 
       let of_model t = t
     end

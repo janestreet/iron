@@ -25,6 +25,7 @@ type t =
    standalone parser customized for Iron's needs *)
 module Standalone_scaffold_reader : sig
   val load_exn : Abspath.t -> t Deferred.t
+  val parse_exn : string -> t
 end = struct
   (* Historical type for scaffold file on disk *)
   module On_disk = struct
@@ -107,10 +108,7 @@ end = struct
     aux Relpath.empty t []
   ;;
 
-  let load_exn abspath =
-    let%map on_disk =
-      Reader.load_sexp_exn (Abspath.to_string abspath) [%of_sexp: On_disk.t]
-    in
+  let of_on_disk on_disk =
     let repos = to_list (of_disk_repr on_disk) in
     let center_relative_to_enclosing_repo, satellites =
       List.partition_map repos ~f:(fun (repo_root, repo) ->
@@ -145,9 +143,22 @@ end = struct
     ; satellites
     }
   ;;
+
+  let load_exn abspath =
+    let%map on_disk =
+      Reader.load_sexp_exn (Abspath.to_string abspath) [%of_sexp: On_disk.t]
+    in
+    of_on_disk on_disk
+  ;;
+
+  let parse_exn s =
+    of_on_disk ([%of_sexp: On_disk.t] (Sexp.of_string (String.strip s)))
+  ;;
+
 end
 
 let load_scaffold_file_exn = Standalone_scaffold_reader.load_exn
+let parse_scaffold_contents_exn = Standalone_scaffold_reader.parse_exn
 
 let load ~center_repo_root:center =
   let scaffold_file_dir = Repo_root.to_abspath center in

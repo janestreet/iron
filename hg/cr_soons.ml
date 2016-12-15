@@ -11,6 +11,11 @@ module Stable = struct
         { tip_cr_soons : Cr_soon_multiset.V1.t
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 6c52cf608251d702b8a5523217477514 |}]
+      ;;
     end
   end
 
@@ -21,6 +26,11 @@ module Stable = struct
         { active : Cr_soon_multiset.V1.t
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9956ecb3727cf1ec95b9967b1c0801c0 |}]
+      ;;
     end
   end
 
@@ -33,6 +43,11 @@ module Stable = struct
           | Root     of Root.V1.t
           | Non_root of Non_root.V1.t
         [@@deriving bin_io, compare, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 323ad25e263162c713ed99907f854f5b |}]
+        ;;
       end
 
       type t =
@@ -40,6 +55,11 @@ module Stable = struct
         ; info         : Info.t
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 63ba2df9755430bd4d4842abf1bf20af |}]
+      ;;
     end
   end
 

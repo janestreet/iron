@@ -13,6 +13,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 2c6d0604c1b6f76ca46f0193d884c0b6 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -29,6 +34,11 @@ module Stable = struct
         type t = Unresolved_name.V1.Set.t
         [@@deriving bin_io, sexp]
 
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 050cfc58de0961a044c2d045ebb6936c |}]
+        ;;
+
         let of_model t = t
       end
       module Model = V1
@@ -44,6 +54,11 @@ module Stable = struct
       module V1 = struct
         type t = Unresolved_name.V1.Set.t Group_name.V1.Map.t
         [@@deriving bin_io, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 784896b81c01cfe4fee3ea9dfd807fdf |}]
+        ;;
 
         let of_model t = t
       end

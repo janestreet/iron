@@ -11,6 +11,11 @@ module Stable = struct
       ; obligations_version   : Obligations_version.V1.t Or_error.V2.t
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 2ad71b49ce7257bfa0a800348c7d4456 |}]
+    ;;
   end
   module Model = V5
 end

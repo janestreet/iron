@@ -8,6 +8,11 @@ module Stable = struct
         | Release of Feature_path.V1.t * Rev.V1.t
         | Review
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b1e3e0e9ed87120a630994cffec81cf4 |}]
+      ;;
     end
   end
 
@@ -19,6 +24,11 @@ module Stable = struct
       ; reason   : Reason.V1.t
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| ff247abd650baef22ed35d3e82c38aae |}]
+    ;;
   end
 end
 

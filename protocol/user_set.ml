@@ -9,6 +9,11 @@ module Stable = struct
       | `Using_locked_sessions
       ]
     [@@deriving bin_io, enumerate, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| cbbe24dd639dfbc4041cd0e3f2e31868 |}]
+    ;;
   end
 
   module V1 = struct
@@ -16,6 +21,11 @@ module Stable = struct
       | Admins
       | Using_locked_sessions
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 3855fe778210913e7506eee0a8eabab4 |}]
+    ;;
 
     let to_v2 = function
       | Admins                -> `Admins
@@ -31,12 +41,22 @@ module Stable = struct
         type t = V2.t
         [@@deriving bin_io, sexp]
 
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| cbbe24dd639dfbc4041cd0e3f2e31868 |}]
+        ;;
+
         let to_model m = m
       end
 
       module V1 = struct
         type t = V1.t
         [@@deriving bin_io]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 3855fe778210913e7506eee0a8eabab4 |}]
+        ;;
 
         let to_model t = V2.to_model (V1.to_v2 t)
       end
@@ -48,6 +68,11 @@ module Stable = struct
       module V1 = struct
         type t = User_name.V1.Set.t
         [@@deriving bin_io, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 050cfc58de0961a044c2d045ebb6936c |}]
+        ;;
 
         let of_model m = m
       end
@@ -67,6 +92,11 @@ module Stable = struct
           }
         [@@deriving bin_io, fields, sexp]
 
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 0d64973c3dfbfcebc808340679ee4025 |}]
+        ;;
+
         let to_model m = m
       end
 
@@ -78,6 +108,11 @@ module Stable = struct
           ; idempotent : bool
           }
         [@@deriving bin_io]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| f1db79dc964eb0cdf6e70c9aa69de3ba |}]
+        ;;
 
         let to_model { user_set
                      ; user_names

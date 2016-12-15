@@ -9,8 +9,19 @@ module Stable = struct
       | Error of Error.V1.t
     [@@deriving bin_io, compare, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: one_reason];
+      [%expect {| 176bfd8262a2573b6c2a6f5c1845a1f4 |}]
+    ;;
+
     type t = one_reason list
     [@@deriving bin_io, compare, sexp]
+
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| d2a7c7ab6c6b36e6946b39bb54fb3f14 |}]
+    ;;
 
     let of_model m = m
   end

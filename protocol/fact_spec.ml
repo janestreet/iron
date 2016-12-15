@@ -5,6 +5,11 @@ module Stable = struct
   module Action = struct
     module V1 = struct
       type t = Fact.Spec.Id.V1.t [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+      ;;
       let to_model t = t
     end
   end
@@ -12,6 +17,11 @@ module Stable = struct
   module Reaction = struct
     module V1 = struct
       type t = Fact.Spec.V1.t [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a33f47db1e91310e63c3171aab6d5a2a |}]
+      ;;
       let of_model t = t
     end
   end

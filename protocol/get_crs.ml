@@ -10,6 +10,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3f45aa2499503cc3e3e54794a4eff3f0 |}]
+      ;;
+
       let to_model t = t
     end
   end
@@ -18,6 +23,11 @@ module Stable = struct
     module V1 = struct
       type t = Cr_comment.V1.t list Or_error.V1.t
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 6d1e805dca6779d2378758942a3058f0 |}]
+      ;;
 
       let of_model t = t
     end

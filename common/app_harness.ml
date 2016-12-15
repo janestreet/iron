@@ -117,17 +117,17 @@ let start ~init_stds ~log_format ~main ~basedir ~mode ~fg () =
     ]
   in
   upon Deferred.unit (fun () ->
-   release_io ();
-   if keep_stdout_and_stderr && init_stds
-   then (
-     (* Multiple runs usually append to the same "keep" files, so these separator
-        lines are helpful for distinguishing the output of one run from another. *)
-     let now = Core.Std.Time.now () in
-     List.iter [ Pervasives.stdout ; Pervasives.stderr ] ~f:(fun oc ->
-       Core.Std.Printf.fprintf oc !"%s Daemonized with tags=%{Sexp}\n%!"
-         (Core.Std.Time.to_string_abs now ~zone:Core.Std.Time.Zone.local)
-         ([%sexp_of: (string * string) list] tags)
-     ))
+    release_io ();
+    if keep_stdout_and_stderr && init_stds
+    then (
+      (* Multiple runs usually append to the same "keep" files, so these separator
+         lines are helpful for distinguishing the output of one run from another. *)
+      let now = Core.Std.Time.now () in
+      List.iter [ Pervasives.stdout ; Pervasives.stderr ] ~f:(fun oc ->
+        Core.Std.Printf.fprintf oc !"%s Daemonized with tags=%{Sexp}\n%!"
+          (Core.Std.Time.to_string_abs now ~zone:Core.Std.Time.Zone.local)
+          ([%sexp_of: (string * string) list] tags)
+      ))
   );
   let main =
     Monitor.try_with ~extract_exn:true (fun () ->

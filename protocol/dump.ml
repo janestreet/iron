@@ -10,6 +10,11 @@ module Stable = struct
         | Typos
         | Valid_users
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8631f7d931bd587a341aa557d5337682 |}]
+      ;;
     end
 
     module Model = V1
@@ -54,6 +59,11 @@ module Stable = struct
                                        ]
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| de5703f0d3c0eefefef678016f1b65b8 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -63,6 +73,11 @@ module Stable = struct
   module Reaction = struct
     module V1 = struct
       type t = Sexp.t [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 832b40ae394f2851da8ba67b3339b429 |}]
+      ;;
 
       let of_model t = t
     end

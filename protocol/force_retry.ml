@@ -7,6 +7,11 @@ module Stable = struct
       type t = Feature_path.V1.t
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 296be80010ace497614f92952e5510c4 |}]
+      ;;
+
       let to_model t = t
     end
   end

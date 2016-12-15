@@ -10,6 +10,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 892bd070c2f18c850c6a081659437d3e |}]
+      ;;
+
       let of_model (t : t) = t
       let to_model (t : t) = t
     end
@@ -20,6 +25,11 @@ module Stable = struct
         ; bookmarks        : Hydra_state_for_bookmark.Stable.V1.t list
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4d15f34ac3361b8d8e21e214bee07c1c |}]
+      ;;
 
       let of_model m =
         let { V2.remote_repo_path; bookmarks } = V2.of_model m in
@@ -47,6 +57,11 @@ module Stable = struct
         { bookmarks_to_rerun : string list
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4ec4f656953b5b54955c7127893a47e3 |}]
+      ;;
 
       let of_model t = t
       let to_model t = t

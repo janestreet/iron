@@ -1,8 +1,6 @@
 module Stable = struct
   open! Import_stable
 
-  module Which_features = Which_features.Stable
-
   module Add = struct
     module Action = struct
       module V1 = struct
@@ -11,6 +9,11 @@ module Stable = struct
           ; tip        : Rev.V1.t
           }
         [@@deriving bin_io, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 2ac410907e9893149d0fd4a7f5d76e43 |}]
+        ;;
 
         let to_model m = m
       end
@@ -35,6 +38,11 @@ module Stable = struct
           | Clear_users              of User_name.V1.t list
           | Set_max_size_per_feature of int
         [@@deriving bin_io, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 1cb3cdefa407a6238f83ac1fc8f98944 |}]
+        ;;
 
         let to_model m = m
       end
@@ -93,4 +101,3 @@ module Change = struct
   module Action   = Stable.Action  .Model
   module Reaction = Stable.Reaction.Model
 end
-

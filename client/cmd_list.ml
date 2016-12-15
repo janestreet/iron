@@ -85,13 +85,13 @@ let table { Fe.List.Table.Action.
   in
   let columns =
     Ascii_table.Column.(
-        [ string ~header:"feature"     (attr_cell Line.feature)
-        ; string ~header:"feature id"  (attr_cell Line.feature_id)
-                              ~min_width:Feature_id.length_of_string_repr
-        ; string ~header:"archived at" (attr_cell Line.archived_at)
-        ; string ~header:"lines"       (attr_cell Line.lines) ~align:Right
-        ; string ~header:"next step"   (attr_cell Line.next_steps)
-        ])
+      [ string ~header:"feature"     (attr_cell Line.feature)
+      ; string ~header:"feature id"  (attr_cell Line.feature_id)
+          ~min_width:Feature_id.length_of_string_repr
+      ; string ~header:"archived at" (attr_cell Line.archived_at)
+      ; string ~header:"lines"       (attr_cell Line.lines) ~align:Right
+      ; string ~header:"next step"   (attr_cell Line.next_steps)
+      ])
   in
   Ascii_table.to_string
     (Ascii_table.create ~columns ~rows)

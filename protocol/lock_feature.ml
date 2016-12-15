@@ -13,6 +13,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7493838d427f39cedd2026b98a693f96 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -25,6 +30,11 @@ module Stable = struct
         ; is_permanent : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f89840d2616659599e4b6c9cb83086f7 |}]
+      ;;
 
       let to_model { feature_path
                    ; for_
@@ -52,6 +62,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1d57d16005424054a5a5f2d9baf0e849 |}]
+      ;;
+
       let to_model { feature_path
                    ; for_
                    ; lock_names
@@ -76,12 +91,22 @@ module Stable = struct
       type t = (Lock_name.V2.t * unit Or_error.V1.t) list
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1b81894aede6396f94500462b05ac68b |}]
+      ;;
+
       let of_model t = t
     end
 
     module V1 = struct
       type t = (Lock_name.V1.t * unit Or_error.V1.t) list
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 20da5a7a85af7de038884d3287cd3bc1 |}]
+      ;;
 
       open! Core.Std
       open! Import

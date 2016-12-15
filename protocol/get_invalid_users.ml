@@ -27,6 +27,11 @@ module Stable = struct
     module V3 = struct
       type t = User_name_occurrence.V3.t list User_name.V1.Map.t
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| bccf3856c44c8b822aa85a623cc6e915 |}]
+      ;;
       let of_model m = m
     end
 
@@ -34,12 +39,22 @@ module Stable = struct
       type t = User_name_occurrence.V2.t list User_name.V1.Map.t
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a2893d8882a661b37d876752d979c7a8 |}]
+      ;;
+
       let of_model = map ~f:User_name_occurrence.V2.of_model
     end
 
     module V1 = struct
       type t = User_name_occurrence.V1.t list User_name.V1.Map.t
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 123a14f6b66c823f3c06b4952109cd89 |}]
+      ;;
 
       let of_model = map ~f:User_name_occurrence.V1.of_model
     end

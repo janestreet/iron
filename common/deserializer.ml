@@ -157,13 +157,12 @@ module T = struct
       let map = `Custom map
     end)
 
-  include ( Monad.Make (struct
-      type nonrec 'a t = 'a t
-      let return a = Const a
-      let bind = bind
-      let map = `Custom map
-    end) : Monad.S_without_syntax with type 'a t := 'a t)
-
+  include (Monad.Make (struct
+             type nonrec 'a t = 'a t
+             let return a = Const a
+             let bind = bind
+             let map = `Custom map
+           end) : Monad.S_without_syntax with type 'a t := 'a t)
 end
 include T
 

@@ -10,6 +10,11 @@ module Stable = struct
       | Known of 'a
     [@@deriving bin_io, compare, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: Bin_digest_type_variable.tick_a t];
+      [%expect {| a16ee75d08e382077df34a36895f0718 |}]
+    ;;
+
     let map t ~f =
       match t with
       | Pending_since _ as t -> t
@@ -21,6 +26,11 @@ module Stable = struct
     module V1 = struct
       type 'a t = 'a Or_error.V1.t V1.t
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: Bin_digest_type_variable.tick_a t];
+        [%expect {| 7f36a8d4a889af075ce3c9f6a3e43a35 |}]
+      ;;
 
       let map t ~f = V1.map t ~f:(fun t -> Or_error.V1.map t ~f)
     end

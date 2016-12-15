@@ -128,15 +128,15 @@ let forget =
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and feature_path = feature_path_or_current_bookmark
-      and for_ = for_
-      and which_session = which_session
-      and files =
-        flag "-file" (listed path_in_repo_arg_type)
-          ~doc:"FILE forget only specified files"
-      and all =
-        no_arg_flag "-all" ~doc:"mark all files in the current session as unreviewed"
-      and display_ascii = display_ascii
-      and max_output_columns = max_output_columns
+     and for_ = for_
+     and which_session = which_session
+     and files =
+       flag "-file" (listed path_in_repo_arg_type)
+         ~doc:"FILE forget only specified files"
+     and all =
+       no_arg_flag "-all" ~doc:"mark all files in the current session as unreviewed"
+     and display_ascii = display_ascii
+     and max_output_columns = max_output_columns
      in
      fun () ->
        let open! Deferred.Let_syntax in
@@ -183,8 +183,7 @@ let forget =
              ; what_to_forget
              }
          in
-         Async_interactive.printf "%s session: Done\n%!" action;
-    )
+         Async_interactive.printf "%s session: Done\n%!" action)
 ;;
 
 let set_lock ~set_is_locked_to ~summary ~readme =

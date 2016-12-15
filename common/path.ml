@@ -6,6 +6,11 @@ module Stable = struct
 
       type t = File_name.Stable.V1.t list [@@deriving bin_io, compare, sexp_of]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 296be80010ace497614f92952e5510c4 |}]
+      ;;
+
       open Core.Std
 
       let join t =
@@ -35,6 +40,11 @@ module Stable = struct
       | Abspath of Parts.V1.t
       | Relpath of Parts.V1.t
     [@@deriving bin_io, compare]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| f37b8e55abbd6d0520508f62ff92e006 |}]
+    ;;
 
     let to_string = function
       | Abspath a -> Parts.V1.to_string_absolute a
@@ -71,6 +81,11 @@ module Stable = struct
     module V1 = struct
       include Parts.V1
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 296be80010ace497614f92952e5510c4 |}]
+      ;;
+
       let to_string = to_string_absolute
 
       let of_string string =
@@ -92,6 +107,11 @@ module Stable = struct
   module Relpath = struct
     module V1 = struct
       include Parts.V1
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 296be80010ace497614f92952e5510c4 |}]
+      ;;
 
       let to_string = to_string_relative
 
@@ -185,7 +205,7 @@ module Parts = struct
         else if leading > 0
         then (leading-1,filenames)
         else (0, f::filenames))
-        (* Now convert back to a regular path. *)
+      (* Now convert back to a regular path. *)
     in
     List.append
       (List.init leading ~f:(Fn.const File_name.dotdot))
@@ -450,46 +470,48 @@ module Relpath = struct
       | c -> c
   ;;
 
-  let%test_module _ = (module struct
-    let%test_unit _ =
-      List.iter ~f:(fun (a, b, ordering) ->
-        [%test_result: Ordering.t] ~expect:ordering
-          (Ordering.of_int (default_review_compare (of_string a) (of_string b))))
-        [ "a/a.mli"      , "a/a.ml"   , Less
-        ; "a/a_intf.ml"  , "a/a.mli"  , Less
-        ; "a/a_intf.ml"  , "a/a.ml"   , Less
-        ]
-    ;;
+  let%test_module _ =
+    (module struct
+      let%test_unit _ =
+        List.iter ~f:(fun (a, b, ordering) ->
+          [%test_result: Ordering.t] ~expect:ordering
+            (Ordering.of_int (default_review_compare (of_string a) (of_string b))))
+          [ "a/a.mli"      , "a/a.ml"   , Less
+          ; "a/a_intf.ml"  , "a/a.mli"  , Less
+          ; "a/a_intf.ml"  , "a/a.ml"   , Less
+          ]
+      ;;
 
-    let%test_unit _ =
-      let check a ~expect =
-        [%test_result: string list] ~expect
-          (a
-           |> List.map ~f:of_string
-           |> List.sort ~cmp:default_review_compare
-           |> List.map ~f:to_string)
-      in
-      check [ "a.ml" ; "b.mli" ; "a.mli" ; "a_intf.ml" ]
-        ~expect:[ "a_intf.ml" ; "a.mli" ; "a.ml" ; "b.mli" ];
+      let%test_unit _ =
+        let check a ~expect =
+          [%test_result: string list] ~expect
+            (a
+             |> List.map ~f:of_string
+             |> List.sort ~cmp:default_review_compare
+             |> List.map ~f:to_string)
+        in
+        check [ "a.ml" ; "b.mli" ; "a.mli" ; "a_intf.ml" ]
+          ~expect:[ "a_intf.ml" ; "a.mli" ; "a.ml" ; "b.mli" ];
 
-      check
-        [ "base/core/.fe.sexp"
-        ; "base/core/.hgignore.in"
-        ; "base/core/COPYRIGHT.txt"
-        ; "base/core/kernel/lib/.fe.sexp"
-        ; "base/core/lib/weak_hashtbl.ml"
-        ; "base/core/mlton-license.txt"
-        ]
-        ~expect:
+        check
           [ "base/core/.fe.sexp"
           ; "base/core/.hgignore.in"
           ; "base/core/COPYRIGHT.txt"
-          ; "base/core/mlton-license.txt"
           ; "base/core/kernel/lib/.fe.sexp"
           ; "base/core/lib/weak_hashtbl.ml"
+          ; "base/core/mlton-license.txt"
           ]
-    ;;
-  end)
+          ~expect:
+            [ "base/core/.fe.sexp"
+            ; "base/core/.hgignore.in"
+            ; "base/core/COPYRIGHT.txt"
+            ; "base/core/mlton-license.txt"
+            ; "base/core/kernel/lib/.fe.sexp"
+            ; "base/core/lib/weak_hashtbl.ml"
+            ]
+      ;;
+    end)
+  ;;
 
   let chop_prefix = Abspath.chop_prefix
 end
@@ -570,10 +592,9 @@ let chop_prefix ~prefix path =
       ~f:(fun path -> Relpath path)
 ;;
 
-let%test_unit _ = [%test_result: t Or_error.t]
-              (chop_prefix ~prefix:(of_string "/a")
-                 (of_string "/a/b/c"))
-              ~expect: (Ok (of_string "b/c"))
+let%test_unit _ =
+  [%test_result: t Or_error.t] ~expect:(Ok (of_string "b/c"))
+    (chop_prefix ~prefix:(of_string "/a") (of_string "/a/b/c"))
 ;;
 
 let compare p1 p2 =

@@ -12,6 +12,11 @@ module Stable = struct
         | `Existing_or_with_catch_up
         ]
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 36d03ee253445ec0aacab830e43e0d44 |}]
+      ;;
     end
     module V2 = struct
       type t =
@@ -22,6 +27,11 @@ module Stable = struct
         ]
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f24447e5f46ea9ce5b46eced3ef6a31c |}]
+      ;;
+
       let to_v4 (t : t) : V4.t = (t :> V4.t)
     end
     module V1 = struct
@@ -31,6 +41,11 @@ module Stable = struct
         | `All
         ]
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 32aa3dcc5c94e189dbf61fc73ba0549c |}]
+      ;;
 
       let to_v2 (t : t) : V2.t = (t :> V2.t)
     end
@@ -44,6 +59,11 @@ module Stable = struct
         | `Feature_path of Feature_path.V1.t
         ]
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 19f73b218581759912f73390d7e1d813 |}]
+      ;;
     end
     module Model = V1
   end
@@ -54,6 +74,11 @@ module Stable = struct
       ; namespace    : Namespace.V4.t
       }
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 4164209ba45744542ce9faf3844df40e |}]
+    ;;
   end
 
   module V2 = struct
@@ -62,6 +87,11 @@ module Stable = struct
       ; namespace    : Namespace.V2.t
       }
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| bad769765b762926f3053429c38bf52b |}]
+    ;;
 
     let to_v3 { feature_spec; namespace } =
       { V3.
@@ -77,6 +107,11 @@ module Stable = struct
       ; namespace    : Namespace.V1.t
       }
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| cf83d33ba9da1caac7ec0a230194119c |}]
+    ;;
 
     let existing_feature_path feature_path =
       { feature_spec = `Feature_path feature_path

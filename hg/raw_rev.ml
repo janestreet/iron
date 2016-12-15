@@ -9,6 +9,11 @@ module Stable = struct
       | Rev    of Rev.V1.t
       | String of string
     [@@deriving bin_io, compare, sexp, variants]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 9ecef85b2fd1735810b045f268d2f1a8 |}]
+    ;;
   end
 
   module Model = V1

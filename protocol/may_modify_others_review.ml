@@ -11,6 +11,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 67d373a15f191ebdc49b112de8d38b7c |}]
+      ;;
+
       let to_model t = t
     end
   end

@@ -1,6 +1,5 @@
 (executables
  ((names (fe))
-  (public_release ((build_and_install ((fe fe)))))
   (review_help true)
   (libraries (async
               core
@@ -10,6 +9,12 @@
               iron_obligations
               iron_protocol
               iron_server))))
+
+(install
+ ((section bin)
+  (files ((fe.exe as fe)))))
+
+(enforce_style ())
 
 (rule
  ((targets (supported-internal-rpcs-for-review))

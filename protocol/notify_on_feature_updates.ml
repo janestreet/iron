@@ -10,12 +10,22 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 89dd9516c800dd8a7ab71368a54ba6a5 |}]
+      ;;
+
       let to_model (t : t) = t
     end
 
     module V1 = struct
       type t = Feature_id.V1.t
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+      ;;
 
       let to_model feature_id =
         V2.to_model
@@ -35,6 +45,11 @@ module Stable = struct
                ]
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| fc21f7faca14799d286aca9d4127b0f7 |}]
+      ;;
+
       let of_model t = t
     end
 
@@ -43,6 +58,11 @@ module Stable = struct
                | `Archived
                ]
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 064bd1a5d0ef4ce57177a26dc4cca7c3 |}]
+      ;;
 
       let of_model = function
         | `Updated feature -> `Updated (Feature.Stable.V19.of_model feature)
@@ -56,6 +76,11 @@ module Stable = struct
                ]
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 58c7ad919e5d605c487243369eaa279a |}]
+      ;;
+
       let of_model = function
         | `Updated feature -> `Updated (Feature.Stable.V18.of_model feature)
         | `Archived as t -> t
@@ -67,6 +92,11 @@ module Stable = struct
                | `Archived
                ]
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 339a61c52f6cfa2a9a477f2abcde52db |}]
+      ;;
 
       let of_model = function
         | `Updated feature -> `Updated (Feature.Stable.V17.of_model feature)

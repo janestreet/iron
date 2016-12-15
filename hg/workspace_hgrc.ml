@@ -81,17 +81,18 @@ end = struct
     |> Sexp.of_string
   ;;
 
-  let%test_module "comments" = (module struct
-    type t =
-      { a : int
-      ; b : string
-      ; c : float
-      }
-    [@@deriving compare, sexp]
+  let%test_module "comments" =
+    (module struct
+      type t =
+        { a : int
+        ; b : string
+        ; c : float
+        }
+      [@@deriving compare, sexp]
 
-    let example_value = { a = 42; b = "hello-string"; c = 42. }
+      let example_value = { a = 42; b = "hello-string"; c = 42. }
 
-    let example_string = "\
+      let example_string = "\
 Some ignored line
 # ((a 42)
 #  (b hello-string)
@@ -99,30 +100,30 @@ Some ignored line
 Some other ignored line
 # other commented block to be ignored
 "
-    ;;
+      ;;
 
-    let%test_unit "read" =
-      [%test_result: t]
-        (of_commented_string_hum example_string |> [%of_sexp: t])
-        ~expect:example_value
-    ;;
+      let%test_unit "read" =
+        [%test_result: t]
+          (of_commented_string_hum example_string |> [%of_sexp: t])
+          ~expect:example_value
+      ;;
 
-    let assert_all_lines_are_commented s =
-      List.iter (String.split_lines s) ~f:(fun line ->
-        assert (Option.is_some (String.chop_prefix line ~prefix)));
-    ;;
+      let assert_all_lines_are_commented s =
+        List.iter (String.split_lines s) ~f:(fun line ->
+          assert (Option.is_some (String.chop_prefix line ~prefix)));
+      ;;
 
-    let%test_unit "write" =
-      [%test_result: t]
-        (example_value
-         |> [%sexp_of: t]
-         |> to_commented_string_hum
-         |> (fun s -> assert_all_lines_are_commented s; s)
-         |> of_commented_string_hum
-         |> [%of_sexp: t])
-        ~expect:example_value
-    ;;
-  end)
+      let%test_unit "write" =
+        [%test_result: t]
+          (example_value
+           |> [%sexp_of: t]
+           |> to_commented_string_hum
+           |> (fun s -> assert_all_lines_are_commented s; s)
+           |> of_commented_string_hum
+           |> [%of_sexp: t])
+          ~expect:example_value
+      ;;
+    end)
 end
 
 module Feature = Stable.Feature.Model

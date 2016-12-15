@@ -9,6 +9,11 @@ module Stable = struct
       ; to_        : Feature_path.V1.t
       }
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| d745589d5f8eedd0376f4118657340f9 |}]
+    ;;
   end
 
   module V1 = struct
@@ -17,6 +22,11 @@ module Stable = struct
       ; to_  : Feature_path.V1.t
       }
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| ef36ab97563f6e9376fed8899f0d88b3 |}]
+    ;;
 
     let of_v2 { V2.feature_id = _; from; to_ } = { from; to_ }
   end

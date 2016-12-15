@@ -37,6 +37,11 @@ module Stable = struct
         }
       [@@deriving bin_io, compare, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 22403e51c42e09e66dab7e49bac34b06 |}]
+      ;;
+
       open Core.Std
       open Import
 
@@ -68,9 +73,11 @@ module Stable = struct
 
       let t_of_sexp sexp =
         try of_v1 (V1.t_of_sexp sexp)
-        with exn_v1 ->
+        with
+        | exn_v1 ->
           try t_of_sexp sexp
-          with exn_v2 ->
+          with
+          | exn_v2 ->
             raise_s
               [%sexp
                 "Attributes.V2.t_of_sexp",
@@ -89,6 +96,11 @@ module Stable = struct
       ; attributes     : [ `Absent | `Present of Attributes.V2.t ]
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 9a11f8d3c900873f41f982658d7339cb |}]
+    ;;
   end
 end
 

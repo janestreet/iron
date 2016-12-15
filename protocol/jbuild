@@ -10,3 +10,5 @@
     iron_common
     iron_hg
     ))))
+
+(enforce_style ())

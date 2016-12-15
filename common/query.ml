@@ -18,6 +18,11 @@ module Stable = struct
       }
     [@@deriving bin_io, compare, fields, sexp]
 
+    let%expect_test _ =
+      print_endline ([%bin_digest: Bin_digest_type_variable.tick_a t]);
+      [%expect {| 9508c0333c154eb22fe310b182cb93a6 |}]
+    ;;
+
     let map t ~f = { t with action = f t.action }
 
   end

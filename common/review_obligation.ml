@@ -18,6 +18,11 @@ module Stable_format = struct
       | Or_wide         of t list
       | Or_narrow       of t list
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 3cb07fe6ca3e08b4a5c839d953f7a289 |}]
+    ;;
   end
 end
 
@@ -74,7 +79,9 @@ let equal t1 t2 = compare t1 t2 = 0
    [users] isn't particularly interesting on its own, but returning it allows us to be
    more precise in [num_reviewers_lower_bound]. E.g. if:
 
+   {v
      t = And (At_least 1 [X; Y; Z]) (At_least 1 [A; B; C])
+   v}
 
    then you want to be able to say: because [X;Y;Z] and [A;B;C] don't intersect, the
    num_reviewers_lower_bound is actually 2, not 1.
@@ -202,7 +209,7 @@ let may_review t user =
 
 let is_satisfied t ~by =
   let rec loop = function
-    | All_of users -> Set.subset users by
+    | All_of users -> Set.is_subset users ~of_:by
     | At_least_wide (k, users) -> Set.length (Set.inter users by) >= k
     | Or_wide ts -> List.exists  ts ~f:loop
     | And ts     -> List.for_all ts ~f:loop
@@ -225,166 +232,168 @@ let de_alias t user_name_by_alias =
   loop t
 ;;
 
-let%test_module _ = (module struct
+let%test_module _ =
+  (module struct
 
-  module Generator = Quickcheck.Generator
+    module Generator = Quickcheck.Generator
 
-  let users_generator ?(at_least = 0) () =
-    let open Generator in
-    let open Monad_infix in
-    Int.gen_between ~lower_bound:(Incl at_least) ~upper_bound:(Incl 8)
-    >>= fun num_users ->
-    List.gen' ~length:(`Between_inclusive (1, 5)) Char.gen_lowercase
-    >>| fun name ->
-    let name = String.of_char_list name in
-    List.init num_users ~f:(fun i -> User_name.of_string (sprintf "%s%d" name i))
-    |> User_name.Set.of_list
-  ;;
+    let users_generator ?(at_least = 0) () =
+      let open Generator in
+      let open Monad_infix in
+      Int.gen_between ~lower_bound:(Incl at_least) ~upper_bound:(Incl 8)
+      >>= fun num_users ->
+      List.gen' ~length:(`Between_inclusive (1, 5)) Char.gen_lowercase
+      >>| fun name ->
+      let name = String.of_char_list name in
+      List.init num_users ~f:(fun i -> User_name.of_string (sprintf "%s%d" name i))
+      |> User_name.Set.of_list
+    ;;
 
-  let t_generator =
-    let open Generator in
-    recursive (fun f ~size ->
-      let smaller_t = if size = 0 then None else Some (f ~size:(size - 1)) in
-      let all_of = map (users_generator ()) ~f:(fun users -> All_of users) in
-      let at_least_wide =
-        let open Monad_infix in
-        users_generator () ~at_least:1
-        >>= fun users ->
-        Int.gen_between
-          ~lower_bound:(Excl 0) ~upper_bound:(Incl (Set.length users))
-        >>| fun k ->
-        At_least_wide (k, users)
-      in
-      let or_wide =
-        Option.map smaller_t ~f:(fun t ->
-          map ~f:(fun ts -> Or_wide ts) (List.gen' ~length:(`At_least 1) t))
-      in
-      let and_ =
-        Option.map smaller_t ~f:(fun t ->
-          map ~f:(fun ts -> And ts) (List.gen t))
-      in
-      filter_map
-        (union (List.filter_opt [Some all_of; Some at_least_wide; or_wide; and_]))
-        ~f:(fun t -> Option.try_with (fun () -> invariant t; t)))
-  ;;
-
-  let t_with_may_reviewers_generator =
-    let open Generator in
-    t_generator
-    >>= fun t ->
-    List.gen_permutations (Set.to_list (may_reviewers t))
-    >>| fun may_reviewers ->
-    t, may_reviewers
-  ;;
-
-  let%test_unit _ =
-    let debug = false in
-    Quickcheck.test
-      t_with_may_reviewers_generator
-      ~sexp_of:[%sexp_of: t * User_name.t list]
-      ~f:(fun (t, may_reviewers) ->
-        let num_reviewers_lower_bound = num_reviewers_lower_bound t in
-        (* O(n) subsets is sufficient testing and a good compromise as opposed to
-           exhaustively testing the [2^n] subsets of [may_reviewers]. *)
-        let (_all_users, subsets) =
-          List.fold may_reviewers
-            ~init:(User_name.Set.empty, [User_name.Set.empty])
-            ~f:(fun (users, subsets) user ->
-              let users = Set.add users user in
-              users, users :: subsets)
+    let t_generator =
+      let open Generator in
+      recursive (fun f ~size ->
+        let smaller_t = if size = 0 then None else Some (f ~size:(size - 1)) in
+        let all_of = map (users_generator ()) ~f:(fun users -> All_of users) in
+        let at_least_wide =
+          let open Monad_infix in
+          users_generator () ~at_least:1
+          >>= fun users ->
+          Int.gen_between
+            ~lower_bound:(Excl 0) ~upper_bound:(Incl (Set.length users))
+          >>| fun k ->
+          At_least_wide (k, users)
         in
-        let increasing_subsets = List.rev subsets in
-        if debug then
-          Debug.eprints "subsets" increasing_subsets [%sexp_of: User_name.Set.t list];
-        with_return (fun return ->
-          List.iter increasing_subsets ~f:(fun users ->
-            if is_satisfied t ~by:users
-            then (
-              if debug
+        let or_wide =
+          Option.map smaller_t ~f:(fun t ->
+            map ~f:(fun ts -> Or_wide ts) (List.gen' ~length:(`At_least 1) t))
+        in
+        let and_ =
+          Option.map smaller_t ~f:(fun t ->
+            map ~f:(fun ts -> And ts) (List.gen t))
+        in
+        filter_map
+          (union (List.filter_opt [Some all_of; Some at_least_wide; or_wide; and_]))
+          ~f:(fun t -> Option.try_with (fun () -> invariant t; t)))
+    ;;
+
+    let t_with_may_reviewers_generator =
+      let open Generator in
+      t_generator
+      >>= fun t ->
+      List.gen_permutations (Set.to_list (may_reviewers t))
+      >>| fun may_reviewers ->
+      t, may_reviewers
+    ;;
+
+    let%test_unit _ =
+      let debug = false in
+      Quickcheck.test
+        t_with_may_reviewers_generator
+        ~sexp_of:[%sexp_of: t * User_name.t list]
+        ~f:(fun (t, may_reviewers) ->
+          let num_reviewers_lower_bound = num_reviewers_lower_bound t in
+          (* O(n) subsets is sufficient testing and a good compromise as opposed to
+             exhaustively testing the [2^n] subsets of [may_reviewers]. *)
+          let (_all_users, subsets) =
+            List.fold may_reviewers
+              ~init:(User_name.Set.empty, [User_name.Set.empty])
+              ~f:(fun (users, subsets) user ->
+                let users = Set.add users user in
+                users, users :: subsets)
+          in
+          let increasing_subsets = List.rev subsets in
+          if debug then
+            Debug.eprints "subsets" increasing_subsets [%sexp_of: User_name.Set.t list];
+          with_return (fun return ->
+            List.iter increasing_subsets ~f:(fun users ->
+              if is_satisfied t ~by:users
               then (
-                let rec is_satisfied_tautology = function
-                  | All_of users when Set.is_empty users -> true
-                  | And ts -> List.for_all ts ~f:is_satisfied_tautology
-                  | Or_wide ts -> List.exists ts
-                                    ~f:is_satisfied_tautology
-                  | _ -> false
-                in
-                if not (is_satisfied_tautology t)
-                then
-                  Debug.eprints "is_satisfied" (t, users) [%sexp_of: t * User_name.Set.t]);
-              [%test_pred: int] (fun num -> num <= Set.length users)
-                num_reviewers_lower_bound;
-              (* All remaining subsets include that subset so they also satisfy [t] and
-                 their length is strictly bigger, so the predicate checked by the test is
-                 implied.  Just skip them then. *)
-              return.return ()))))
-  ;;
+                if debug
+                then (
+                  let rec is_satisfied_tautology = function
+                    | All_of users when Set.is_empty users -> true
+                    | And ts -> List.for_all ts ~f:is_satisfied_tautology
+                    | Or_wide ts -> List.exists ts
+                                      ~f:is_satisfied_tautology
+                    | _ -> false
+                  in
+                  if not (is_satisfied_tautology t)
+                  then
+                    Debug.eprints "is_satisfied" (t, users) [%sexp_of: t * User_name.Set.t]);
+                [%test_pred: int] (fun num -> num <= Set.length users)
+                  num_reviewers_lower_bound;
+                (* All remaining subsets include that subset so they also satisfy [t] and
+                   their length is strictly bigger, so the predicate checked by the test is
+                   implied.  Just skip them then. *)
+                return.return ()))))
+    ;;
 
-  let users strings =
-    User_name.Set.of_list (List.map strings ~f:User_name.of_string)
-  ;;
+    let users strings =
+      User_name.Set.of_list (List.map strings ~f:User_name.of_string)
+    ;;
 
-  let%test_unit _ =
-    let t = At_least_wide (1, users ["foo"; "bar"; "baz"]) in
-    [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
-  ;;
+    let%test_unit _ =
+      let t = At_least_wide (1, users ["foo"; "bar"; "baz"]) in
+      [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
+    ;;
 
-  let%test_unit _ =
-    let t = All_of (users ["foo"; "bar"; "baz"]) in
-    [%test_result: int] (num_reviewers_lower_bound t) ~expect:3
-  ;;
+    let%test_unit _ =
+      let t = All_of (users ["foo"; "bar"; "baz"]) in
+      [%test_result: int] (num_reviewers_lower_bound t) ~expect:3
+    ;;
 
-  let%test_unit _ =
-    let t =
-      And [ At_least_wide (1, users [ "foo"; "bar"])
-          ; At_least_wide (1, users [ "baz"; "quux"])
-          ]
-    in
-    [%test_result: int] (num_reviewers_lower_bound t) ~expect:2
-  ;;
+    let%test_unit _ =
+      let t =
+        And [ At_least_wide (1, users [ "foo"; "bar"])
+            ; At_least_wide (1, users [ "baz"; "quux"])
+            ]
+      in
+      [%test_result: int] (num_reviewers_lower_bound t) ~expect:2
+    ;;
 
-  let%test_unit _ =
-    let t =
-      Or_wide [ All_of (users ["foo"; "bar"; "baz"])
-              ; At_least_wide (1, users ["foo"; "bar"; "baz"])
-              ]
-    in
-    [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
-  ;;
+    let%test_unit _ =
+      let t =
+        Or_wide [ All_of (users ["foo"; "bar"; "baz"])
+                ; At_least_wide (1, users ["foo"; "bar"; "baz"])
+                ]
+      in
+      [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
+    ;;
 
-  let%test_unit _ =
-    let t =
-      And [ At_least_wide (1, users ["foo"; "bar"; "baz"])
-          ; At_least_wide (1, users ["foo"; "bar"; "baz"])
-          ]
-    in
-    [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
-  ;;
+    let%test_unit _ =
+      let t =
+        And [ At_least_wide (1, users ["foo"; "bar"; "baz"])
+            ; At_least_wide (1, users ["foo"; "bar"; "baz"])
+            ]
+      in
+      [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
+    ;;
 
-  let%test_unit _ =
-    let t =
-      And [ At_least_wide (1, users ["a"; "b"])
-          ; At_least_wide (1, users ["b"; "c"])
-          ; At_least_wide (1, users ["c"; "d"])
-          ]
-    in
-    (* This is a case where it would be nice to return 2, but we cannot, because we only
-       process the sets one-by-one, rather than doing the full inclusion-exclusion. *)
-    [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
-  ;;
+    let%test_unit _ =
+      let t =
+        And [ At_least_wide (1, users ["a"; "b"])
+            ; At_least_wide (1, users ["b"; "c"])
+            ; At_least_wide (1, users ["c"; "d"])
+            ]
+      in
+      (* This is a case where it would be nice to return 2, but we cannot, because we only
+         process the sets one-by-one, rather than doing the full inclusion-exclusion. *)
+      [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
+    ;;
 
-  let%test_unit _ =
-    let t =
-      And [ Or_wide [ At_least_wide (1, users ["a"])
-                    ; At_least_wide (1, users ["b"; "c"])
-                    ]
-          ; At_least_wide (1, users ["b"; "c"])
-          ]
-    in
-    [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
-  ;;
+    let%test_unit _ =
+      let t =
+        And [ Or_wide [ At_least_wide (1, users ["a"])
+                      ; At_least_wide (1, users ["b"; "c"])
+                      ]
+            ; At_least_wide (1, users ["b"; "c"])
+            ]
+      in
+      [%test_result: int] (num_reviewers_lower_bound t) ~expect:1
+    ;;
 
-end)
+  end)
+;;
 
 module Stable = struct
   module V1 = struct
@@ -412,6 +421,11 @@ module Stable = struct
             | v1 -> failwiths "Review_obligation.of_stable" v1 [%sexp_of: V1.t]
           ;;
         end)
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 3cb07fe6ca3e08b4a5c839d953f7a289 |}]
+    ;;
   end
 end
 
@@ -422,7 +436,9 @@ end
    at_least', int)], where [int = Set.(length (inter from from'))]. This leads to the
    equivalent formula:
 
+   {v
      at_least + at_least' - min(at_least, at_least', int)
+   v}
 
    Proof of equivalence: let's call the formula in use in [min_reviewers] "formula A", and
    the one above this sentence "formula B". Assume wlog that at_least <= at_least'. If int
@@ -431,14 +447,15 @@ end
    evaluates to [at_least + at_least' - int], good.
 
    If int > at_least then formula B yields [at_least']. And [at_least - int < 0], so that
-   [at_least + at_least' - int < at_least], and the max picks out [at_least']. Good.  _
-                                                                                     |_|
+   [at_least + at_least' - int < at_least], and the max picks out [at_least']. Good. #
 
    Let's introduce some new notation. Let's use [at_least_i] and [from_i] to mean the two
    elements of the pair [List.nth_exn ts i]. Define two functions on a set of indexes:
 
+   {v
      int(is) = Set.length(intersection of all the from_i for i in s)
      f(is) = min(int(is) :: [at_least_i for i in is])
+   v}
 
    f(is) is the maximum number of people that can read and contribute towards the
    obligations for each branch i for i in is. Note in particular that overlap([i]) =
@@ -448,12 +465,18 @@ end
    that as many people common to both from_1 and from_2 read, and then some more people
    in the symmetric difference read in order to satisfy both branches. That is:
 
+   {v
+
      f(1,2)             -- i.e. the common people
      + (f(1) - f(1,2))  -- "topping up" branch 1
      + (f(2) - f(1,2))  -- "topping up" branch 2
    = f(1) + f(2) - f(1,2)
 
+   v}
+
    This then readily extends to three sets:
+
+   {v
 
      f(1,2,3)                 -- i.e. the people common to all three sets
    + (f(1,2) - f(1,2,3))      -- i.e. the people common to 1,2 but not 3
@@ -473,6 +496,8 @@ end
         - f(1,2,3))            -- "topping up" branch 3
 
    = f(1) + f(2) + f(2) - f(1,2) - f(2,3) - f(3,1) + f(1,2,3)
+
+   v}
 
    And taking this further leads to the regular inclusion-exclusion formulae:
    http://en.wikipedia.org/wiki/Inclusion%E2%80%93exclusion_principle

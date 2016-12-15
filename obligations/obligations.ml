@@ -11,6 +11,11 @@ module Stable_format = struct
       ; by_path          : (Path_in_repo.V1.t * Review_attributes.V2.t) list
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 6a390a0210853740209cfa70538866e7 |}]
+    ;;
   end
 
   module Model = V5
@@ -104,9 +109,9 @@ let low_review t ~in_:(build_projection : Build_projection.t) =
     (list_of_iter (fun ~f ->
        Hashtbl.iteri t.by_path ~f:(fun ~key:path_in_repo ~data:attributes ->
          if Set.mem attributes.build_projections build_projection.name
-            && (attributes.fewer_than_min_reviewers
-                || not (Scrutiny_name.equal attributes.scrutiny_name
-                          build_projection.default_scrutiny.name))
+         && (attributes.fewer_than_min_reviewers
+             || not (Scrutiny_name.equal attributes.scrutiny_name
+                       build_projection.default_scrutiny.name))
          then f path_in_repo)));
 ;;
 
@@ -159,7 +164,7 @@ let check_low_review_files t repo_root ~manifest ~cwd =
           | true, true ->
             let%map stated_exceptions =
               Reader.load_sexps_exn (Path.to_string low_review_file)
-              [%of_sexp: Path_in_repo.t]
+                [%of_sexp: Path_in_repo.t]
             in
             Error_context.within ~file:low_review_file (fun e ->
               let actual = low_review t ~in_:build_projection in
@@ -250,12 +255,12 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
       let untracked_dot_fes = ref [] in
       let%bind () =
         Deferred.List.iter ~how:(`Max_concurrent_jobs 30)
-        (Hash_set.to_list maybe_untracked_dot_fes)
-        ~f:(fun dot_fe ->
-          let dot_fe = maybe_relativize repo_root dot_fe ~cwd in
-          let%map dot_fe_exists = Sys.file_exists_exn (Path.to_string dot_fe) in
-          if dot_fe_exists
-          then untracked_dot_fes := dot_fe :: !untracked_dot_fes)
+          (Hash_set.to_list maybe_untracked_dot_fes)
+          ~f:(fun dot_fe ->
+            let dot_fe = maybe_relativize repo_root dot_fe ~cwd in
+            let%map dot_fe_exists = Sys.file_exists_exn (Path.to_string dot_fe) in
+            if dot_fe_exists
+            then untracked_dot_fes := dot_fe :: !untracked_dot_fes)
       in
       (* We first report if there are any untracked .fe.sexp files, and only if there
          aren't do we report missing ones. *)
@@ -289,7 +294,7 @@ let create hg ?skip_full_repo_checks ~repo_root ~dirs ~manifest ~aliases () =
       in
       let%bind declarations_by_dot_fe =
         Deferred.List.map ~how:(`Max_concurrent_jobs 30)
-        (Hash_set.to_list dot_fes_to_load) ~f:load_dot_fe
+          (Hash_set.to_list dot_fes_to_load) ~f:load_dot_fe
       in
       let declarations_by_dot_fe =
         declarations_by_dot_fe |> Path_in_repo.Table.of_alist_exn

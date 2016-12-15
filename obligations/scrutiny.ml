@@ -21,6 +21,11 @@ module Stable = struct
     end
     include Unshared
     include Hash_consing.Make_stable_public (Unshared) ()
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| fef28cd19d3e492e935f0730f77c6ed4 |}]
+    ;;
   end
   module Model = V2
 end

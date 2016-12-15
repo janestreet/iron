@@ -13,6 +13,11 @@ module Stable = struct
       | Whole_feature_reviewer
     [@@deriving bin_io, compare, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 443ef8e6ccc6d956b37c048b0a54ad6f |}]
+    ;;
+
     let of_model m = m
     let to_model m = m
   end
@@ -29,6 +34,11 @@ module Stable = struct
       | Whole_feature_follower
       | Whole_feature_reviewer
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 010ade786a77fb1b0091783568e6ee51 |}]
+    ;;
 
     open! Core.Std
     open! Import
@@ -74,6 +84,11 @@ module Stable = struct
       | Seconder
       | Whole_feature_reviewer
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| aa2f526a78388dbd62a8216df4567380 |}]
+    ;;
 
     open! Core.Std
     open! Import

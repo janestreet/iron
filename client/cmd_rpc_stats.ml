@@ -130,7 +130,6 @@ let command =
            ]
        in
        Ascii_table.create ~rows ~columns
-       |> fun t -> Ascii_table.to_string t ~display_ascii ~max_output_columns
-       |> print_endline
-    )
+       |> Ascii_table.to_string ~display_ascii ~max_output_columns
+       |> print_endline)
 ;;

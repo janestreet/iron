@@ -111,15 +111,15 @@ module Proxy = struct
               ~may_connect_to_proxy:false ()
         in
         let where_to_listen =
-           Option.value where_to_listen
-             ~default:(Host_and_port.port real_server)
-         in
-         let%bind server =
-           Rpc_proxy_server.simple_server
-             ~where_to_listen:(Tcp.on_port where_to_listen)
-             ~real_server
-         in
-         Tcp.Server.close_finished server)
+          Option.value where_to_listen
+            ~default:(Host_and_port.port real_server)
+        in
+        let%bind server =
+          Rpc_proxy_server.simple_server
+            ~where_to_listen:(Tcp.on_port where_to_listen)
+            ~real_server
+        in
+        Tcp.Server.close_finished server)
   ;;
 
   let command =

@@ -11,6 +11,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 854beac2488a28587f05f39b0c29e82b |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -22,6 +27,11 @@ module Stable = struct
         ; rev_zero     : Rev.V1.t
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 25e91f85b75ca8aeb1afa63bb9ba7795 |}]
+      ;;
 
       let to_model { feature_path; rev_zero } =
         { Model.feature_path; rev_zero; tip = None }
@@ -51,6 +61,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a7de797edde444ef4b7f47d163c5da6d |}]
+      ;;
+
       let of_model m = m
     end
 
@@ -67,6 +82,11 @@ module Stable = struct
         ; aliases                    : User_name_by_alternate_name.V1.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| cca82b512f83b713d1f9f20dadeae847 |}]
+      ;;
 
       let of_model { Model.
                      base

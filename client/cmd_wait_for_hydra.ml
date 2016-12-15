@@ -18,12 +18,12 @@ module Reason_for_waiting = struct
 end
 
 let check_remote { Feature.
-                  feature_path
-                ; next_bookmark_update
-                ; tip
-                ; remote_repo_path
-                ; _
-                } =
+                   feature_path
+                 ; next_bookmark_update
+                 ; tip
+                 ; remote_repo_path
+                 ; _
+                 } =
   (* If a user just pushed and before hydra notifies the bookmark change, Iron is
      not expecting a bookmark update.  We cover this race here by comparing what
      Iron thinks the tip of the feature is with its revision on the remote

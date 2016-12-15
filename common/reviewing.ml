@@ -8,6 +8,11 @@ module Stable = struct
       | `All_but of User_name.V1.Set.t
       ]
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 777b2a5cb8865307bd89b9a62be7012b |}]
+    ;;
   end
 end
 
@@ -48,7 +53,7 @@ let mem t user ~whole_feature_reviewers ~whole_feature_followers =
   | `Only permitted          ->
     Set.mem permitted user
     || (User_name.Set.mem whole_feature_followers user
-        && Set.subset whole_feature_reviewers permitted)
+        && Set.is_subset whole_feature_reviewers ~of_:permitted)
   | `All_but forbidden       -> not (Set.mem forbidden user)
 ;;
 

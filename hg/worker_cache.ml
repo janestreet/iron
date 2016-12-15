@@ -13,6 +13,11 @@ module Stable = struct
         | Write_only
         | Read_write
       [@@deriving bin_io, compare, enumerate, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4baaff045fc76e6ef3816dd67fc460d0 |}]
+      ;;
     end
     module Model = V1
   end
@@ -27,15 +32,26 @@ module Stable = struct
         }
       [@@deriving bin_io, compare, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3508e4a8dcbe7553653c0affb8cb26ef |}]
+      ;;
+
       let to_model t = t
       let of_model m = m
     end
+
     module V1 = struct
       type t =
         { max_size : int
         ; status   : Status.V1.t
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5104789f20ba557c010d89676ccff238 |}]
+      ;;
 
       let to_model { max_size; status } =
         V2.to_model
@@ -53,6 +69,11 @@ module Stable = struct
     module V1 = struct
       type 'a t = (Rev.V1.t * 'a) list
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: Bin_digest_type_variable.tick_a t];
+        [%expect {| 4d213adf0473e27cdfd7fd94f0b4c0f9 |}]
+      ;;
     end
 
     module Model = V1
@@ -66,6 +87,11 @@ module Stable = struct
         ; properties         : Properties.V2.t
         }
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4175db6fe1edfc467d818763e089da74 |}]
+      ;;
 
       let empty =
         { worker_obligations = []
@@ -88,6 +114,11 @@ module Stable = struct
         ; worker_rev_facts   : Worker_rev_facts.V1.t   By_rev.V1.t
         }
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b814da09f0b95060f433772feccf8129 |}]
+      ;;
 
       let empty =
         { worker_obligations = []
@@ -358,9 +389,9 @@ let stats_with_revs t =
 let values_at_rev t ~rev =
   [%sexp
     { worker_obligations
-        = (By_rev.find t.worker_obligations rev : Worker_obligations.On_server.t option)
+      = (By_rev.find t.worker_obligations rev : Worker_obligations.On_server.t option)
     ; worker_rev_facts
-        = (By_rev.find t.worker_rev_facts rev : Worker_rev_facts.On_server.t option)
+      = (By_rev.find t.worker_rev_facts rev : Worker_rev_facts.On_server.t option)
     }
   ]
 ;;

@@ -6,6 +6,11 @@ module Stable = struct
         | Release
         | Release_into
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 87cdeca4e3128fc2c80f2225d290c51b |}]
+      ;;
     end
 
     module Model = V1
@@ -30,6 +35,11 @@ module Stable = struct
       | Widen_reviewing
     [@@deriving bin_io, compare, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| ca9bc57a0d113d2d47f9c3246ff1fcfe |}]
+    ;;
+
     let of_model m = m
   end
 
@@ -50,6 +60,11 @@ module Stable = struct
       | Wait_for_hydra
       | Widen_reviewing
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| e8702181bb86ae1a93c239949568ac9d |}]
+    ;;
 
     let rec of_v5 (v5 : V5.t) : t =
       match v5 with
@@ -89,6 +104,11 @@ module Stable = struct
       | Wait_for_hydra
       | Widen_reviewing
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| a609dc93b67521da20ae0e4bc3f2249d |}]
+    ;;
 
     let rec of_v4 : V4.t -> t = function
       | Add_code         -> Add_code

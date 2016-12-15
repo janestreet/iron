@@ -8,6 +8,11 @@ module Stable = struct
       ; num_lines_in_diff : int
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| c081b09564f5c889887b1620dcf3addd |}]
+    ;;
   end
 end
 

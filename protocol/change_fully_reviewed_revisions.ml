@@ -8,6 +8,11 @@ module Stable = struct
         | Add    of Rev.V1.t
         | Remove of Rev.V1.t
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| fff0a40a95d2c005fb462a2d8b45688e |}]
+      ;;
     end
   end
 
@@ -17,6 +22,11 @@ module Stable = struct
         { what_to_do : What_to_do.V1.t
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f638ee4b729bee1dab6d2fea511bf1db |}]
+      ;;
 
       let to_model t = t
     end

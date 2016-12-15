@@ -479,10 +479,10 @@ let establish ({ Review_attributes.
   @ if_changed Fields.tags Tag.Set.equal
       (Tags (Set.to_list tags))
   @ if_changed Fields.followers User_name.Set.equal
-       (Followers
-          (Set.to_list followers
-           |> List.map ~f:(fun user ->
-             Followers.Users [ User_name.to_unresolved_name user ])))
+      (Followers
+         (Set.to_list followers
+          |> List.map ~f:(fun user ->
+            Followers.Users [ User_name.to_unresolved_name user ])))
   @ if_changed Fields.scrutiny_name Scrutiny_name.equal
       (Scrutiny scrutiny_name)
   @ if_changed Fields.owner User_name.equal

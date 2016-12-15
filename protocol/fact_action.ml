@@ -5,6 +5,12 @@ module Stable = struct
   module Action = struct
     module V2 = struct
       type t = Fact.Action.V2.t [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 26463e805cec97a9c8a6ba8337f9dcaf |}]
+      ;;
+
       let to_model t = t
     end
   end

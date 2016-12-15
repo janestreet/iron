@@ -15,8 +15,18 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: one];
+        [%expect {| 74b7928a0efc8eaa1107c0d1c4f7a948 |}]
+      ;;
+
       type t = one list
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7d85e258aaa9975b40c6c0f3258274c0 |}]
+      ;;
 
       let of_model t = t
     end

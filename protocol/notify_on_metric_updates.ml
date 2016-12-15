@@ -8,6 +8,11 @@ module Stable = struct
         | Metric_name  of Metric_name.V1.t
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5a23fb3a2b5abe083f9372427dc46e8f |}]
+      ;;
+
       let to_model m = m
     end
 
@@ -23,6 +28,11 @@ module Stable = struct
         ; added_at     : Time.V1_round_trippable.t
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 12c23082d186da8ecab7858c5fc2d5e9 |}]
+      ;;
 
       let of_model m = m
     end

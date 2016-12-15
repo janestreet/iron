@@ -1,5 +1,4 @@
 include (Core.Stable : module type of Core.Stable
-         with module Span   := Core.Stable.Span
          with module String := Core.Stable.String
          with module Time   := Core.Stable.Time
          with module Uuid   := Core.Stable.Uuid)

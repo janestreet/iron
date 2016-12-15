@@ -11,3 +11,6 @@
     iron_hg
     iron_protocol
   ))))
+
+(enforce_style
+ ((exceptions (iron_param.ml))))

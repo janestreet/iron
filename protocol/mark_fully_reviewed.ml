@@ -14,6 +14,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 21b046251d98de455cef9f931fbc79d0 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -28,6 +33,11 @@ module Stable = struct
         ; tip             : Rev.V1.t option
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5d0f9db3897c614ed0d12b2a97c42f1a |}]
+      ;;
 
       let to_model
             { feature_path
@@ -55,6 +65,11 @@ module Stable = struct
         ; reason       : string
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 6e44c961df0fc0cdc26adec8a5706275 |}]
+      ;;
 
       let to_model { feature_path; for_or_all; reason } =
         V5.to_model

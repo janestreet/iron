@@ -2,8 +2,6 @@ module Stable = struct
 
   open Import_stable
 
-  module Which_features = Which_features.Stable
-
   module Action = struct
     module V3 = struct
       type t =
@@ -13,6 +11,11 @@ module Stable = struct
         | Set_status            of Worker_cache.Status.V1.t
         | Set_max_items_per_rpc of int
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8ca1f9d8630f8e3587b539b571f2f810 |}]
+      ;;
 
       let to_model t = t
     end

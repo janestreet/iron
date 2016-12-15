@@ -11,6 +11,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3e689ec54ac419feb5c9c6e3f71caafb |}]
+      ;;
+
       let to_model t = t
     end
   end
@@ -22,6 +27,11 @@ module Stable = struct
         ; remote_repo_path : Remote_repo_path.V1.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| c359b46a8bd66582af7cb45225d349c2 |}]
+      ;;
 
       let of_model t = t
     end

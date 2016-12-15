@@ -15,6 +15,11 @@ module Stable = struct
       }
     [@@deriving bin_io, compare, fields, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: Bin_digest_type_variable.tick_a t];
+      [%expect {| 4088bfc5cd94e1124570ce03001114ae |}]
+    ;;
+
     let map t ~f = { t with reaction = f t.reaction }
 
   end

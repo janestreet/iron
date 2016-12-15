@@ -12,6 +12,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1c8ba0d8af3093cc237cbcfec322525e |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -27,6 +32,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b8fb00961ce76152e48184be82e52d5a |}]
+      ;;
+
       let of_model (t : t) = t
     end
 
@@ -36,6 +46,11 @@ module Stable = struct
         ; tip              : Rev.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 459d2910cafe370222840499543ac843 |}]
+      ;;
 
       let of_model m =
         let { V2.

@@ -6,6 +6,11 @@ module Stable = struct
     type t = Unresolved_name.V1.Set.t Group_name.V1.Map.t
     [@@deriving bin_io, compare, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 784896b81c01cfe4fee3ea9dfd807fdf |}]
+    ;;
+
     let hash = Group_name.V1.Map.hash Unresolved_name.V1.Set.hash
   end
 end

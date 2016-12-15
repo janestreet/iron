@@ -8,6 +8,11 @@ module Stable = struct
         ; other_columns : string array
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: Bin_digest_type_variable.tick_a t];
+        [%expect {| 4d0276253ee912d2880704aa70e3ce93 |}]
+      ;;
     end
 
     module Model = V1
@@ -24,6 +29,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8f5e5acb0ffb376da2d11a28cc68da79 |}]
+      ;;
+
       let to_model m = m
     end
 
@@ -34,6 +44,11 @@ module Stable = struct
     module V1 = struct
       type t = string [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+      ;;
+
       let of_model m = m
     end
 
@@ -42,10 +57,10 @@ module Stable = struct
 end
 
 include Iron_command_rpc.Make
-          (struct let name = "feature-table-of-csv" end)
-          (struct let version = 1 end)
-          (Stable.Action.V1)
-          (Stable.Reaction.V1)
+    (struct let name = "feature-table-of-csv" end)
+    (struct let version = 1 end)
+    (Stable.Action.V1)
+    (Stable.Reaction.V1)
 
 module Action   = Stable.Action.   Model
 module Reaction = Stable.Reaction. Model

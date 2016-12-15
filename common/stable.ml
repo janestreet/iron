@@ -1,6 +1,7 @@
 module Abspath                       = Abspath.                        Stable
 module Allow_review_for              = Allow_review_for.               Stable
 module Alternate_name                = Alternate_name.                 Stable
+module Bin_digest_type_variable      = Bin_digest_type_variable.       Stable
 module Bool                          = Iron_bool.                      Stable
 module Build_projection_name         = Build_projection_name.          Stable
 module Catch_up_kind                 = Catch_up_kind.                  Stable
@@ -60,4 +61,6 @@ module Uuid                          = Iron_uuid.                      Stable
 module What_diff                     = What_diff.                      Stable
 module When_to_first_notify          = When_to_first_notify.           Stable
 module Which_ancestor                = Which_ancestor.                 Stable
+module Which_features                = Which_features.                 Stable
+module Which_session                 = Which_session.                  Stable
 module Who_can_release_into_me       = Who_can_release_into_me.        Stable

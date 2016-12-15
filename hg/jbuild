@@ -9,3 +9,5 @@
     iron_obligations
     re2
     ))))
+
+(enforce_style ())

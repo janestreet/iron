@@ -5,6 +5,11 @@ module Stable = struct
   module V2 = struct
     type t = Diff2.V2.t list
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 6adaad1ab18aad7d705bef2041b3b5c5 |}]
+    ;;
   end
 end
 

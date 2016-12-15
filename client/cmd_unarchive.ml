@@ -39,7 +39,7 @@ let main  { Fe.Unarchive.Action. feature_path; feature_id } =
   in
   let%bind () =
     Hg.set_bookmark repo_root (Feature feature_path) ~to_:(`Rev feature_tip)
-    (`Push_to_and_overwrite remote_repo_path)
+      (`Push_to_and_overwrite remote_repo_path)
   in
   let%bind () =
     Hg.update repo_root (`Feature feature_path) ~clean_after_update:(Yes repo_is_clean)

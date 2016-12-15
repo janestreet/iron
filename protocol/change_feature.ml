@@ -69,6 +69,11 @@ module Stable = struct
         ]
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| dfd087aeda4ee8fb19f8d8018c525aea |}]
+      ;;
+
       let of_model m = m
       let to_model t = t
     end
@@ -130,6 +135,11 @@ module Stable = struct
         ]
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4b92dfa291675eae0afdb7e0c543bc85 |}]
+      ;;
+
       open! Core.Std
       open! Import
 
@@ -185,6 +195,11 @@ module Stable = struct
         ]
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a26cf217411c9e99163d0c090a225dcf |}]
+      ;;
+
       open! Core.Std
       open! Import
 
@@ -239,6 +254,11 @@ module Stable = struct
         ]
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 116c17197d022d295bcf781cfb312c6f |}]
+      ;;
+
       open! Core.Std
       open! Import
 
@@ -292,6 +312,11 @@ module Stable = struct
         ]
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 19aea7c181b2b614f3b27aacffc4fff8 |}]
+      ;;
+
       open! Core.Std
       open! Import
 
@@ -344,6 +369,11 @@ module Stable = struct
         ]
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ca2e9fa9a1d1bc5c657c03d7ba0d08e0 |}]
+      ;;
+
       let to_v5 (t : t) = (t :> V5.t)
 
       let to_model t = V5.to_model (to_v5 t)
@@ -389,6 +419,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5aae484f655442fa1fceee3f1118a5d4 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -400,6 +435,11 @@ module Stable = struct
         ; updates      : Update.V8.t list
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a3b71c6e7695036b2a2dbb4548f9cd6e |}]
+      ;;
 
       let to_model { feature_path; updates } =
         { Model.
@@ -416,6 +456,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 6a80a6f0e53447b748fa69c1bddd5d8f |}]
+      ;;
+
       let to_model { feature_path; updates } =
         { Model.
           feature_path
@@ -430,6 +475,11 @@ module Stable = struct
         ; updates      : Update.V6.t list
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9e5c6c83177b8c5e66d1f7049520f750 |}]
+      ;;
 
       let to_model { feature_path; updates } =
         { Model.
@@ -446,6 +496,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 53c9c17e2dff39843ac680648e013cd4 |}]
+      ;;
+
       let to_model { feature_path; updates } =
         { Model.
           feature_path
@@ -461,6 +516,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d6c824cc46e69c5434f75ccffb6b6675 |}]
+      ;;
+
       let to_model { feature_path; updates } =
         { Model.
           feature_path
@@ -475,6 +535,11 @@ module Stable = struct
       type t = (Update.V9.t * unit Or_error.V2.t) list
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| bcbe701298c3feab2e636e4c35ec5688 |}]
+      ;;
+
       let of_model t = t
     end
 
@@ -483,6 +548,11 @@ module Stable = struct
     module V8 = struct
       type t = (Update.V8.t * unit Or_error.V1.t) list
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 314feff5980b9d9d545057496442d283 |}]
+      ;;
 
       let of_model m =
         List.map m ~f:(fun (update, result) -> Update.V8.of_model update, result)
@@ -493,6 +563,11 @@ module Stable = struct
       type t = (Update.V7.t * unit Or_error.V1.t) list
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 03006f59b742e4eb78a176b0a8b3d038 |}]
+      ;;
+
       let of_model m =
         List.map m ~f:(fun (update, result) -> Update.V7.of_model update, result)
       ;;
@@ -501,6 +576,11 @@ module Stable = struct
     module V6 = struct
       type t = (Update.V6.t * unit Or_error.V1.t) list
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ee55e94531368fa9ad6216e33bce9304 |}]
+      ;;
 
       let of_model m =
         List.map m ~f:(fun (update, result) -> Update.V6.of_model update, result)
@@ -511,6 +591,11 @@ module Stable = struct
       type t = (Update.V5.t * unit Or_error.V1.t) list
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 540ec31aefd9e16a8f2693c9fa7f37d4 |}]
+      ;;
+
       let of_model m =
         List.map m ~f:(fun (update, result) -> Update.V5.of_model update, result)
       ;;
@@ -519,6 +604,11 @@ module Stable = struct
     module V4 = struct
       type t = (Update.V4.t * unit Or_error.V1.t) list
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 32ed3ec908aa6e3cd87a074c3a21c5d2 |}]
+      ;;
 
       let of_model t =
         List.map t ~f:(fun (update, result) -> Update.V4.of_model update, result)

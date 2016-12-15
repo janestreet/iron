@@ -11,6 +11,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 82e9dd83ba682394b6a7532a1bdf9e67 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -22,12 +27,22 @@ module Stable = struct
       type t = (Lock_name.V2.t * Locked.V2.t list) list
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| dab5bace62ecebe12a03fee8540ac78e |}]
+      ;;
+
       let of_model m = m
     end
 
     module V3 = struct
       type t = (Lock_name.V1.t * Locked.V2.t list) list
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| cc1252937498d7815d0fbd1eca2f9e0d |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -41,6 +56,11 @@ module Stable = struct
     module V2 = struct
       type t = (Lock_name.V1.t * Locked.V1.t list) list
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| bc9fe92038843321a05ef0e7877df030 |}]
+      ;;
 
       let of_model m =
         List.map (V3.of_model m) ~f:(fun (lock_name, locks) ->

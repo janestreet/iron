@@ -26,6 +26,11 @@ module Stable = struct
           let hash = Core.Std.String.hash
         end
         include Hash_consing.Make_stable_private (Unshared) ()
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+        ;;
       end
     end
 
@@ -36,6 +41,11 @@ module Stable = struct
         let hash = Core.Std.String.hash
       end
       include Hash_consing.Make_stable_private (Unshared) ()
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+      ;;
     end
   end
 
@@ -52,6 +62,11 @@ module Stable = struct
             | Some str -> Core.Std.String.hash str
         end
         include Hash_consing.Make_stable_private (Unshared) ()
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| b5b7561677d422cca0151f57e49d1c9b |}]
+        ;;
       end
     end
 
@@ -72,8 +87,27 @@ module Stable = struct
       include Hash_consing.Make_stable_private (Unshared) ()
       let human_readable (t : t) = (t :> Unshared.t).human_readable
       let node_hash (t : t) : Node_hash.V1.t = (t :> Unshared.t).node_hash
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f8f4454776dedcc18922e2c2cdc5cf4d |}]
+      ;;
     end
   end
+
+  module Tag = struct
+    module V1 = struct
+      type t = string [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+      ;;
+    end
+
+    module Model = V1
+  end
+
 end
 
 open Core.Std
@@ -139,7 +173,9 @@ module Node_hash = struct
 end
 
 module Tag = struct
-  type t = string [@@deriving sexp_of]
+  module Stable = Stable.Tag
+
+  include Stable.Model
 
   let to_string = Fn.id
   let of_string = Fn.id
@@ -281,22 +317,22 @@ let hg_with_optional_repo_root :
     | Create_process ->
       Process.create ?working_dir ~prog:hg_executable ~args ~env ()
     | Share_io ->
-       let cwd =
-         match working_dir with
-         | None -> []
-         | Some working_dir -> [ "--cwd"; working_dir ]
-       in
-       let%bind pid =
-         Unix.fork_exec ~env ~prog:hg_executable ~args:(hg_executable :: (args @ cwd)) ()
-       in
-       let%map wait_result = Unix.waitpid pid in
-       match wait_result with
-       | Error (`Exit_non_zero n) when List.mem accept_nonzero_exit n -> Ok ()
-       | _ ->
-         match Unix.Exit_or_signal.or_error wait_result with
-         | Ok () -> Ok ()
-         | Error e -> error "hg call failed" (e, hg_executable, args)
-                        [%sexp_of: Error.t * string * string list]
+      let cwd =
+        match working_dir with
+        | None -> []
+        | Some working_dir -> [ "--cwd"; working_dir ]
+      in
+      let%bind pid =
+        Unix.fork_exec ~env ~prog:hg_executable ~args:(hg_executable :: (args @ cwd)) ()
+      in
+      let%map wait_result = Unix.waitpid pid in
+      match wait_result with
+      | Error (`Exit_non_zero n) when List.mem accept_nonzero_exit n -> Ok ()
+      | _ ->
+        match Unix.Exit_or_signal.or_error wait_result with
+        | Ok () -> Ok ()
+        | Error e -> error "hg call failed" (e, hg_executable, args)
+                       [%sexp_of: Error.t * string * string list]
 ;;
 
 let hg ~how ?accept_nonzero_exit ~repo_root subcommand ~args =
@@ -372,8 +408,8 @@ module Rev = struct
     | Some human_readable ->
       let f12 = to_string_12 t in
       if String.is_prefix ~prefix:f12 human_readable
-         || String.equal human_readable "."
-         || String.equal human_readable "(.)"
+      || String.equal human_readable "."
+      || String.equal human_readable "(.)"
       then f12
       else
       if lossy
@@ -399,6 +435,8 @@ module Rev = struct
   let equal_node_hash = Compare_by_hash.equal
 
   module Stable = Stable.Rev
+
+  let human_readable t = Human_readable.unshared_t (human_readable t)
 end
 
 module Bookmark = struct
@@ -858,7 +896,7 @@ let grep_conflicts_exn ?(below = Path_in_repo.root) repo_root ~grep_display_opti
   (* According to its man page, [xargs] returns status 123 if any of the
      [grep] processes returns an error (including "no match found"). *)
   let%map stdout =
-     Process.collect_stdout_and_wait grep_process ~accept_nonzero_exit:[ 123 ]
+    Process.collect_stdout_and_wait grep_process ~accept_nonzero_exit:[ 123 ]
   in
   ok_exn stdout
 ;;
@@ -1218,7 +1256,7 @@ let push repo_root bookmarks ~to_ ~overwrite_bookmark =
     | Error (`Exit_non_zero 1) ->
       if is_some (String.Search_pattern.index (force push_no_changes_pattern)
                     ~in_:output.stdout)
-         && not (Regex.matches updating_bookmark_failed output.stderr)
+      && not (Regex.matches updating_bookmark_failed output.stderr)
       then check_bookmarks_were_pushed ()
       else error ()
     | Error _ -> error ())
@@ -1280,22 +1318,22 @@ let phase repo_root revision =
 
 (* The code for the [`Push_to_*] cases used to be:
 
-   {[
+   {v
      create local bookmark;
      push it to remote;
-   ]}
+   v}
 
    In the [Push_to_and_overwrite] case, we experienced an issue where a concurrent cron
    job pulls between the two steps, causing the local bookmark to be deleted and the
    subsequent push to fail.  We solved this here by using a temporary share:
 
-   {[
+   {v
      create a temporary share;
      create local bookmark in it;
      push from share to remote;
      delete share;
      create local bookmark;
-   ]}
+   v}
 
    This is less likely to be needed in the case [`Push_to_and_advance] because the
    bookmark is expected to exist on the remote repo, thus the concurrent pull would not

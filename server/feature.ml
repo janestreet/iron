@@ -509,9 +509,9 @@ let needs_bookmark_update t =
   || is_pending t.cr_soons
   || is_pending t.diff_from_base_to_tip
   || (match t.hydra_master_state with
-      | None -> false
-      | Some hydra_master_state ->
-        not (Rev.has_prefix t.tip hydra_master_state.tip))
+    | None -> false
+    | Some hydra_master_state ->
+      not (Rev.has_prefix t.tip hydra_master_state.tip))
 ;;
 
 let would_ask_for_a_bookmark_update t =
@@ -1001,27 +1001,27 @@ let set_lines_required_to_separate_ddiff_hunks t query
       , (t.feature_path : Feature_path.t)
       ]
   else
-    if lines_required_to_separate_ddiff_hunks < 0
-    then
-      Or_error.error_s
-        [%sexp
-          "[lines-required-to-separate-ddiff-hunks] shall be set to a non negative value"
-        , (lines_required_to_separate_ddiff_hunks : int)
-        ]
-    else (
-      let should_set =
-        match t.lines_required_to_separate_ddiff_hunks with
-        | None -> true
-        | Some x -> x <> lines_required_to_separate_ddiff_hunks
-      in
-      (if should_set
-       then (
-         record t query
-           (`Set_lines_required_to_separate_ddiff_hunks
-              lines_required_to_separate_ddiff_hunks);
-         t.lines_required_to_separate_ddiff_hunks <-
-           Some lines_required_to_separate_ddiff_hunks));
-      Ok ())
+  if lines_required_to_separate_ddiff_hunks < 0
+  then
+    Or_error.error_s
+      [%sexp
+        "[lines-required-to-separate-ddiff-hunks] shall be set to a non negative value"
+      , (lines_required_to_separate_ddiff_hunks : int)
+      ]
+  else (
+    let should_set =
+      match t.lines_required_to_separate_ddiff_hunks with
+      | None -> true
+      | Some x -> x <> lines_required_to_separate_ddiff_hunks
+    in
+    (if should_set
+     then (
+       record t query
+         (`Set_lines_required_to_separate_ddiff_hunks
+            lines_required_to_separate_ddiff_hunks);
+       t.lines_required_to_separate_ddiff_hunks <-
+         Some lines_required_to_separate_ddiff_hunks));
+    Ok ())
 ;;
 
 let set_seconder t query user =

@@ -5,6 +5,11 @@ module Stable = struct
 
   module V1 = struct
     type t = Sexp.t Property.V1.Map.t [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| e487ad4cb165823e620d0b83bbc238ee |}]
+    ;;
   end
 end
 

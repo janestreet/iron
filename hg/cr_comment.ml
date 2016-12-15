@@ -17,6 +17,11 @@ module Stable = struct
         ; start_col                  : int
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b24c1aae61acf7c3bd5b62eca34653c7 |}]
+      ;;
     end
   end
 
@@ -27,6 +32,11 @@ module Stable = struct
         | Soon
         | Someday
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| aa93e89d589eeb6e77ac61283a8745af |}]
+      ;;
     end
   end
 
@@ -37,6 +47,11 @@ module Stable = struct
         | Feature_owner
         | Missing_file_owner
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a1426261ff07fcf6a68da510a963f6cb |}]
+      ;;
     end
   end
 
@@ -55,6 +70,11 @@ module Stable = struct
         ; assignee    : Assignee.V1.t
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 10ba8f1052a7d3b0cd60d709e6b8ebdd |}]
+      ;;
     end
   end
 
@@ -72,6 +92,11 @@ module Stable = struct
         let hash t = t.hash_of_path_and_condensed_content
       end
       include Hash_consing.Make_stable_private (Unshared) ()
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| bf3185f7d51eee300dceb9d50f0f8503 |}]
+      ;;
     end
   end
 
@@ -84,9 +109,19 @@ module Stable = struct
           ; xcrs     : int
           }
         [@@deriving bin_io, compare, fields, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 1b65857d2828b3f9c600c9e4bf41f909 |}]
+        ;;
       end
       (* invariant: Rows are in order of descending crs+xcrs and the total row is absent. *)
       type t = Row.t list [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 458ab83486389ac20003b8e1a8f72610 |}]
+      ;;
     end
   end
 
@@ -101,6 +136,11 @@ module Stable = struct
       let hash (t:t) = Hashtbl.hash t
     end
     include Hash_consing.Make_stable_private (Unshared) ()
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| a1b782a92f95f253f46c764f1673ac7e |}]
+    ;;
   end
 
 end
@@ -932,28 +972,28 @@ let grep_files repo_root format ~files_to_grep ~file_owner =
   let all_due_someday = ref [] in
   let%map () =
     Deferred.List.iter files_to_grep ~how:`Parallel ~f:(fun path_in_repo ->
-    let%map file_contents =
-      Throttle.enqueue throttle (fun () ->
-        Reader.file_contents (absolute_path path_in_repo))
-    in
-    let file_owner =
-      match file_owner path_in_repo with
-      | Error _  -> None
-      | Ok user -> Some user
-    in
-    List.iter
-      (extract format ~path:(ok_exn (Relpath.chop_prefix
-                                       ~prefix:(Path_in_repo.to_relpath below)
-                                       (Path_in_repo.to_relpath path_in_repo)))
-         ~file_contents ~file_owner)
-      ~f:(fun t ->
-        match work_on t with
-        | Someday -> all_due_someday := t :: !all_due_someday
-        | Now     -> all_due_now := t :: !all_due_now
-        | Soon    ->
-          match Cr_soon.create ~cr_comment:t with
-          | Error _ -> all_due_now := t :: !all_due_now
-          | Ok cr_soon -> all_due_soon := cr_soon :: !all_due_soon))
+      let%map file_contents =
+        Throttle.enqueue throttle (fun () ->
+          Reader.file_contents (absolute_path path_in_repo))
+      in
+      let file_owner =
+        match file_owner path_in_repo with
+        | Error _  -> None
+        | Ok user -> Some user
+      in
+      List.iter
+        (extract format ~path:(ok_exn (Relpath.chop_prefix
+                                         ~prefix:(Path_in_repo.to_relpath below)
+                                         (Path_in_repo.to_relpath path_in_repo)))
+           ~file_contents ~file_owner)
+        ~f:(fun t ->
+          match work_on t with
+          | Someday -> all_due_someday := t :: !all_due_someday
+          | Now     -> all_due_now := t :: !all_due_now
+          | Soon    ->
+            match Cr_soon.create ~cr_comment:t with
+            | Error _ -> all_due_now := t :: !all_due_now
+            | Ok cr_soon -> all_due_soon := cr_soon :: !all_due_soon))
   in
   { Crs.
     due_now     = !all_due_now

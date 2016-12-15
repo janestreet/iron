@@ -13,6 +13,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| e50cf86879dc587b2dc282e364f302db |}]
+      ;;
+
       let to_model t = t
     end
   end
@@ -27,6 +32,11 @@ module Stable = struct
         ; feature_id       : Feature_id.V1.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3c0c4625ae4f4c9e3e4cb5f545e694c2 |}]
+      ;;
 
       let of_model t = t
     end

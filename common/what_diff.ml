@@ -9,6 +9,11 @@ module Stable = struct
       | None
     [@@deriving bin_io, compare, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 4f0e2d8c3f3baca57cfefc5b0965ea43 |}]
+    ;;
+
     let to_model t = t
   end
 
@@ -18,6 +23,11 @@ module Stable = struct
       | Whole_diff_plus_ignored
       | For of User_name.V1.t
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 6cb12238e519c9575f95ec051ed4a116 |}]
+    ;;
 
     let to_v2 = function
       | Whole_diff              -> V2.Whole_diff

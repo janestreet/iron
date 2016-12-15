@@ -23,6 +23,10 @@ module Worker_cache                 = Worker_cache.                 Stable
 module Worker_obligations           = Worker_obligations.           Stable
 module Worker_rev_facts             = Worker_rev_facts.             Stable
 
+module Hg = struct
+  module Tag = Hg.Tag.Stable
+end
+
 module Node_hash = struct
   module First_12 = Node_hash.First_12. Stable
   include Node_hash.                    Stable

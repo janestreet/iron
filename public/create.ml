@@ -20,13 +20,18 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ea6032921af2f1817d8b7b14ebc5f6d7 |}]
+      ;;
+
       let to_model m = m
     end
 
     module Model = V1
   end
 
-    module Reaction = struct
+  module Reaction = struct
     module V1 = Unit
 
     module Model = V1

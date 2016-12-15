@@ -1,8 +1,6 @@
 module Stable = struct
   open! Import_stable
 
-  module Which_features = Which_features.Stable
-
   module Clear = struct
     module Action = struct
       module V1 = struct
@@ -11,6 +9,11 @@ module Stable = struct
           ; which_features : Which_features.V1.t
           }
         [@@deriving bin_io, fields, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 1ae7dd7979fd084ccc47f380f89c3c3b |}]
+        ;;
 
         let to_model m = m
       end
@@ -29,6 +32,11 @@ module Stable = struct
         type t = { descendants_of : Which_ancestor.V1.t }
         [@@deriving bin_io, sexp]
 
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 8d5fd68329245acaeecf05871af92405 |}]
+        ;;
+
         let to_model m = m
       end
 
@@ -39,6 +47,11 @@ module Stable = struct
       module V2 = struct
         type t = Metric.Data_point.V1.t list Metric_name.V1.Map.t Feature_path.V1.Map.t
         [@@deriving bin_io, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 1343bc0d4bc5b16aac96b0791d4d82c5 |}]
+        ;;
 
         let of_model m = m
       end
@@ -56,6 +69,11 @@ module Stable = struct
           ; values       : float list
           }
         [@@deriving bin_io, fields, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 5d76fbbf0c26a48aa357862930d99eee |}]
+        ;;
 
         let to_model m = m
       end

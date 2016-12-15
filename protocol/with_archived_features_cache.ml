@@ -9,6 +9,11 @@ module Stable = struct
         | Set_max_size of int
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 07cef1cea0490374c1f200c3eb577e13 |}]
+      ;;
+
       let to_model t = t
     end
     module Model = V1

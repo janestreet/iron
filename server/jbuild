@@ -10,3 +10,5 @@
     iron_hg
     iron_protocol
     ))))
+
+(enforce_style ())

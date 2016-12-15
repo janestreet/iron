@@ -2,8 +2,6 @@ module Stable = struct
 
   open! Import_stable
 
-  module Which_session = Which_session.Stable
-
   module Commit = struct
     module Action = struct
       module V1 = struct
@@ -13,6 +11,11 @@ module Stable = struct
           ; review_session_id : Session_id.V1.t
           }
         [@@deriving bin_io, fields, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| bf7dd9b78cb08c3f8dd2c32369944dd8 |}]
+        ;;
 
         let to_model t = t
       end
@@ -39,6 +42,11 @@ module Stable = struct
           }
         [@@deriving bin_io, fields, sexp]
 
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 57a744efb86415ba24c4df79839890f6 |}]
+        ;;
+
         let to_model t = t
       end
 
@@ -61,6 +69,11 @@ module Stable = struct
           ; set_is_locked_to : bool
           }
         [@@deriving bin_io, fields, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 4e5885e58609f12b25adf343d36a1a1e |}]
+        ;;
 
         let to_model t = t
       end

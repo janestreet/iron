@@ -44,12 +44,12 @@ module Subscription_t = struct
     (* The query is at the end because it might be big and the short field are easier
        to spot when put at the beginning *)
     [%sexp
-       { rpc_name    : string
-       ; rpc_version : int
-       ; opened_at   : Time.t
-       ; ticks       : int
-       ; query       : action Query.t
-       }
+      { rpc_name    : string
+      ; rpc_version : int
+      ; opened_at   : Time.t
+      ; ticks       : int
+      ; query       : action Query.t
+      }
     ]
   ;;
 
@@ -276,12 +276,12 @@ let drop_all_by_user t query by_whom =
 ;;
 
 let dump
-  { properties = { max_subscriptions_global; max_subscriptions_per_user }
-  ; subscriptions
-  ; subscription_counts
-  ; subscription_count_global = current_count_global
-  ; serializer = _
-  } =
+      { properties = { max_subscriptions_global; max_subscriptions_per_user }
+      ; subscriptions
+      ; subscription_counts
+      ; subscription_count_global = current_count_global
+      ; serializer = _
+      } =
   let current_count_by_user = User_name.Map.of_hashtbl_exn subscription_counts in
   [%sexp
     { max_subscriptions_global   : int

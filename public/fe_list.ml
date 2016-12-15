@@ -13,6 +13,11 @@ module Table = struct
           }
         [@@deriving bin_io, sexp]
 
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| b76a51ced87216fd0de6a05d4b7717d2 |}]
+        ;;
+
         let to_model m = m
       end
 
@@ -23,6 +28,11 @@ module Table = struct
       module V1 = struct
         type t = string
         [@@deriving bin_io, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+        ;;
         let of_model t = t
       end
 

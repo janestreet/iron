@@ -12,6 +12,11 @@ module Stable = struct
         ; status     : bool
         }
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 508e7a52ccbf756a27d9b057250f8b36 |}]
+      ;;
     end
   end
 
@@ -22,6 +27,11 @@ module Stable = struct
         ; status : bool
         }
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 28833e78f1d51ae94504cc1cfd4e8511 |}]
+      ;;
     end
   end
 
@@ -32,6 +42,11 @@ module Stable = struct
         ; status : bool
         }
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 28833e78f1d51ae94504cc1cfd4e8511 |}]
+      ;;
     end
   end
 
@@ -42,6 +57,11 @@ module Stable = struct
         ; status : bool
         }
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 28833e78f1d51ae94504cc1cfd4e8511 |}]
+      ;;
     end
   end
 
@@ -52,6 +72,11 @@ module Stable = struct
       ; obligations_are_valid : Obligations_are_valid.V1.t
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| bcbda9e61ea119f9aac8830236338103 |}]
+    ;;
   end
 end
 
@@ -91,7 +116,7 @@ module Is_ancestor = struct
 
   let check t ~ancestor ~descendant =
     if Rev.equal_node_hash t.ancestor ancestor
-       && Rev.equal_node_hash t.descendant descendant
+    && Rev.equal_node_hash t.descendant descendant
     then Ok t.status
     else error "mismatched revs" (t, `ancestor ancestor, `descendant descendant)
            [%sexp_of: t * [ `ancestor of Rev.t ] * [ `descendant of Rev.t ]]

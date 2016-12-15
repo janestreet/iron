@@ -6,3 +6,5 @@
     core
     iron_common
     re2))))
+
+(enforce_style ())

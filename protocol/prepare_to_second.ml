@@ -11,6 +11,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7ff04ba3148a46af4f8d6c86ab5c1742 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -22,6 +27,11 @@ module Stable = struct
         ; even_though_owner : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5cb55e299a244f539a71ba80e59b483f |}]
+      ;;
 
       let to_model { feature_path; even_though_empty; even_though_owner; _ } =
         V4.to_model { V4. feature_path; even_though_empty; even_though_owner }
@@ -39,6 +49,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| fbce2789574a1bb8c9eb2f6213da66f4 |}]
+      ;;
+
       let of_model (t : t) = t
     end
 
@@ -48,6 +63,11 @@ module Stable = struct
         ; cr_summary                     : Cr_comment.Summary.V1.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 301ff6cc77fea9fb782240f09389519b |}]
+      ;;
 
       let of_model m =
         let { V4.
@@ -72,6 +92,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3b54b028bf5a34ef17bd0a9e3e2c0ec2 |}]
+      ;;
+
       let of_model m =
         let { V3.
               whole_feature_review_remaining
@@ -94,6 +119,11 @@ module Stable = struct
         ; cr_summary                     : Cr_comment.Summary.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| c4143193b95d3b2606f68fed69d04a41 |}]
+      ;;
 
       open! Core.Std
       open! Import

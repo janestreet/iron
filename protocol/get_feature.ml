@@ -13,6 +13,11 @@ module Stable = struct
           }
         [@@deriving bin_io, sexp, fields]
 
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| f7ab3e222aa7d24abb573b430bdc14ae |}]
+        ;;
+
         let to_model t = t
       end
 
@@ -21,6 +26,11 @@ module Stable = struct
       module V1 = struct
         type t = Feature_id.V1.t
         [@@deriving bin_io]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+        ;;
 
         let to_model feature_id =
           V2.to_model
@@ -44,6 +54,11 @@ module Stable = struct
           }
         [@@deriving bin_io, compare, fields, sexp]
 
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| fab5a2cdaf75e3324c227147f7ba2644 |}]
+        ;;
+
         let to_model (t : t) = t
       end
 
@@ -53,6 +68,11 @@ module Stable = struct
           ; what_diff    : What_diff.V2.t
           }
         [@@deriving bin_io]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| ae25b80d385e7de37d53926d609be34e |}]
+        ;;
 
         let to_model { what_feature
                      ; what_diff
@@ -71,6 +91,11 @@ module Stable = struct
           ; what_diff    : What_diff.V2.t
           }
         [@@deriving bin_io]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 91def6327f48a5796145b47efb6e5eda |}]
+        ;;
 
         let to_model { what_feature
                      ; what_diff
@@ -96,6 +121,11 @@ module Stable = struct
         ; rev_zero     : Rev.V1.t option
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b2b386963682bcb97c2bb87f82e9e4e4 |}]
+      ;;
 
       let to_model t = t
     end

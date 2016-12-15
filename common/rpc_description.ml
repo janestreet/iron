@@ -9,6 +9,11 @@ module Stable = struct
       ; version : int
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 4521f44dbc6098c0afc2770cc84552b1 |}]
+    ;;
   end
 end
 

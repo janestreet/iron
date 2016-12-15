@@ -54,11 +54,11 @@ let invariant t =
 ;;
 
 let dump_subscriptions
-   { feature_only_subscriptions
-   ; feature_and_descendants_subscriptions
-   ; invalidated_features                  = _
-   ; children_of                           = _
-   } =
+      { feature_only_subscriptions
+      ; feature_and_descendants_subscriptions
+      ; invalidated_features                  = _
+      ; children_of                           = _
+      } =
   [%sexp
     { feature_only_subscriptions
       = (Id_subscriptions.dump feature_only_subscriptions : Sexp.t)
@@ -113,15 +113,15 @@ let broadcast_updates t =
 let subscribe_feature_only t query feature_id ~when_to_first_notify =
   Id_subscriptions.add t.feature_only_subscriptions query feature_id
     ~initial:(match (when_to_first_notify : When_to_first_notify.t) with
-              | Now -> Some `Updated
-              | At_next_change -> None)
+      | Now -> Some `Updated
+      | At_next_change -> None)
 ;;
 
 let subscribe_feature_and_descendants t query feature_path ~when_to_first_notify =
   Path_subscriptions.add t.feature_and_descendants_subscriptions query feature_path
     ~initial:(match (when_to_first_notify : When_to_first_notify.t) with
-              | Now -> Some `Updates_in_subtree
-              | At_next_change -> None)
+      | Now -> Some `Updates_in_subtree
+      | At_next_change -> None)
 ;;
 
 let on_update t feature = Invalidated_features.add t.invalidated_features feature

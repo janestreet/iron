@@ -90,7 +90,7 @@ val commit_session_exn
 (** The list returned by [create_files_for_review] has the same length as [~diff4s], and
     each element gives the hunks of the corresponding [diff4] in [diff4s]. *)
 val create_files_for_review
-   : temp_dir:Abspath.t
+  :  temp_dir:Abspath.t
   -> repo_root:Repo_root.t
   -> diff4s:Diff4.t list
   -> reviewer:[ `Reviewer of Reviewer.t

@@ -10,7 +10,7 @@ module Stable_workaround = struct
       (* The feature names in the internal representation of a feature path are in order
          from leaf to root.  I.e.
 
-        {[
+         {[
            of_string "a/b/c" = [ "c"; "b"; "a"]
          ]}
       *)
@@ -61,6 +61,11 @@ module Stable = struct
     include Stable_workaround.V1
     include Stable_workaround.V1.T2
     include Stable_workaround.V1.T3
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 296be80010ace497614f92952e5510c4 |}]
+    ;;
   end
 end
 
@@ -115,16 +120,18 @@ let%test_unit _ =
 
 let of_string_or_error str = Or_error.try_with (fun () -> of_string str)
 
-let%test_module _ = (module struct
-  let a = Feature_name.of_string "a"
-  let b = Feature_name.of_string "b"
-  let%test_unit _ = [%test_eq: t] (of_string "a/b") [b; a]
-  let%test_unit _ = [%test_eq: string] "a/b" (to_string [b; a])
+let%test_module _ =
+  (module struct
+    let a = Feature_name.of_string "a"
+    let b = Feature_name.of_string "b"
+    let%test_unit _ = [%test_eq: t] (of_string "a/b") [b; a]
+    let%test_unit _ = [%test_eq: string] "a/b" (to_string [b; a])
 
-  let%test_unit _ = [%test_eq: Sexp.t]
-                ([%sexp_of: Set.t] (Set.of_list [of_string "a/b"]))
-                (Sexp.of_string "(a/b)")
-end)
+    let%test_unit _ = [%test_eq: Sexp.t]
+                        ([%sexp_of: Set.t] (Set.of_list [of_string "a/b"]))
+                        (Sexp.of_string "(a/b)")
+  end)
+;;
 
 let extend t name = name :: t
 

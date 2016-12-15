@@ -13,6 +13,11 @@ module Stable = struct
       type t = Rpc_description.V1.t list
       [@@deriving bin_io, compare, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9301ea9546114195a8bd36b8e8d4dd97 |}]
+      ;;
+
       let of_model m = m
     end
 

@@ -9,6 +9,12 @@ module Stable = struct
         ; for_         : User_name.V1.t
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| caa8c6bc0b63d59c3c306d8e2483b33e |}]
+      ;;
+
       let to_model t = t
     end
   end

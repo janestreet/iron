@@ -11,6 +11,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3e77db419a99f7a4c4337936436937dc |}]
+      ;;
+
       let to_model t = t
     end
   end
@@ -18,6 +23,11 @@ module Stable = struct
   module Reaction = struct
     module V1 = struct
       type t = Cr_soon_multiset.V1.t [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 6a97a4c3fe9fa833dcf1d598e874eea3 |}]
+      ;;
 
       let of_model t = t
     end

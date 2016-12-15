@@ -11,6 +11,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7ff04ba3148a46af4f8d6c86ab5c1742 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -24,6 +29,11 @@ module Stable = struct
         ; even_though_owner : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5cb55e299a244f539a71ba80e59b483f |}]
+      ;;
 
       let to_model { feature_path; even_though_empty; even_though_owner; _ } =
         { Model. feature_path; even_though_empty; even_though_owner }

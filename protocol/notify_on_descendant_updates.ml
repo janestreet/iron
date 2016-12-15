@@ -10,12 +10,22 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 771fa04633bd79719ec15951315b05a7 |}]
+      ;;
+
       let to_model (t : t) = t
     end
 
     module V1 = struct
       type t = Feature_path.V1.t
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 296be80010ace497614f92952e5510c4 |}]
+      ;;
 
       let to_model feature_path =
         V2.to_model
@@ -36,6 +46,11 @@ module Stable = struct
         | `Renamed
         ]
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3fa50667ae44a268a34c4c0433f959b2 |}]
+      ;;
 
       let of_model t = t
     end

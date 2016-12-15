@@ -7,6 +7,11 @@ module Stable = struct
       | May_review
       | Ownership_change
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| b34f6279a5552fa2ee671694c270a860 |}]
+    ;;
     let to_model m = m
     let of_model m = m
   end

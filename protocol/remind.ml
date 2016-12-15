@@ -11,11 +11,21 @@ module Stable = struct
         | All_active
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: active_user_set];
+        [%expect {| 56f0170da65735b3601dfe43807251ec |}]
+      ;;
+
       type t =
         { feature_path : Feature_path.V1.t
         ; users        : active_user_set
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 0b73e98c5e21a694042cac714428589b |}]
+      ;;
 
       let to_model t = t
     end
@@ -37,6 +47,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3787703f3a2baf0a7cdf69a020ff4110 |}]
+      ;;
+
       let of_model (m : t) = m
     end
 
@@ -52,6 +67,11 @@ module Stable = struct
         ; next_bookmark_update           : Next_bookmark_update.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1c4a3070c5d4e48fe9c61f2c4df1f6dd |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -95,6 +115,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4a4defdbf868b655b7b70047f47dd8a7 |}]
+      ;;
+
       let of_model m =
         let { V8.
               description
@@ -129,6 +154,11 @@ module Stable = struct
         ; users              : User_name.V1.Set.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1ec78353f91f1bbe827839233ba6ae99 |}]
+      ;;
 
       open! Core.Std
       open! Import

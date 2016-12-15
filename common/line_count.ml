@@ -12,6 +12,11 @@ module Stable = struct
         ; ownership_changes : int
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5a2239b2680d1d46190cf770bd040374 |}]
+      ;;
     end
 
     module Model = V1
@@ -26,6 +31,11 @@ module Stable = struct
         ; reviewed_by_someone_else : int
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 29727e345cc05aee57269f3649a48f44 |}]
+      ;;
     end
 
     module Model = V1
@@ -39,6 +49,11 @@ module Stable = struct
       ; have_potentially_blocking_review_session_in_progress : bool
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| eef97dbf91aa67597336a6a67a476c18 |}]
+    ;;
   end
 
   module V4 = struct
@@ -49,6 +64,11 @@ module Stable = struct
       ; have_uncommitted_and_potentially_blocking_session : bool
       }
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 9048bea09e73944b1f04912460f0e852 |}]
+    ;;
 
     open! Core.Std
     open! Import
@@ -79,6 +99,11 @@ module Stable = struct
       ; completed : int
       }
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 079195a277e05830df211eaaea8f7aa6 |}]
+    ;;
 
     open! Core.Std
     open! Import
@@ -131,6 +156,11 @@ module Stable = struct
       ; completed : int
       }
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 2e9568ada259731ec62136f50a02d6ba |}]
+    ;;
 
     open! Core.Std
     open! Import

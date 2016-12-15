@@ -583,14 +583,14 @@ let reviewed_diff4s_output_in_current_session t =
 
 let have_potentially_blocking_review_session_in_progress t =
   have_session_in_progress t
-  && let reviewer = reviewer t in
-     let is_potentially_blocking diff2 =
-       Diff2.may_review diff2 ~include_may_follow:false reviewer
-     in
-     List.exists t.brain.brain ~f:(fun { diff2; mark_kind = _ } ->
-       is_potentially_blocking diff2)
-     || List.exists (reviewed_diff4s_output_in_current_session t)
-          ~f:is_potentially_blocking
+  && (let reviewer = reviewer t in
+      let is_potentially_blocking diff2 =
+        Diff2.may_review diff2 ~include_may_follow:false reviewer
+      in
+      List.exists t.brain.brain ~f:(fun { diff2; mark_kind = _ } ->
+        is_potentially_blocking diff2)
+      || List.exists (reviewed_diff4s_output_in_current_session t)
+           ~f:is_potentially_blocking)
 ;;
 
 let would_generate_catch_up_upon_release_if_not_reviewed t brain =
@@ -675,8 +675,8 @@ let compute_review_lines_of_diff4 t brain =
   let would_generate_catch_up_upon_release =
     Staged.unstage (would_generate_catch_up_upon_release_if_not_reviewed t brain)
   in
-  Staged.stage (fun (goal_subset : Goal_subset.t)
-                 ({ diff4; output_num_lines } : Diff4.And_output_num_lines.t) ~reviewer ->
+  let f (goal_subset : Goal_subset.t)
+        ({ diff4; output_num_lines } : Diff4.And_output_num_lines.t) ~reviewer =
     let lines = Diff4.num_lines diff4 reviewer in
     let review_kind : Review_kind.t =
       match Diff4.may_review diff4 reviewer with
@@ -691,9 +691,9 @@ let compute_review_lines_of_diff4 t brain =
           | Entire_goal_but_empty_if_satisfied_by review_analysis ->
             not reviewer.is_whole_feature_reviewer
             && (Diff4.is_forget diff4
-               || Review_analysis.non_wfr_obligations_will_be_satisfied_once_expected_users_have_read
-                    review_analysis
-                    (Diff4.output diff4 ~num_lines_in_diff:output_num_lines))
+                || Review_analysis.non_wfr_obligations_will_be_satisfied_once_expected_users_have_read
+                     review_analysis
+                     (Diff4.output diff4 ~num_lines_in_diff:output_num_lines))
         then
           if Option.is_some (would_generate_catch_up_upon_release diff4)
           then Follow
@@ -702,7 +702,9 @@ let compute_review_lines_of_diff4 t brain =
           else May_review
         else Must_review
     in
-    { Review_lines_of_diff4. diff4; lines; review_kind })
+    { Review_lines_of_diff4. diff4; lines; review_kind }
+  in
+  Staged.stage f
 ;;
 
 let review_lines_to_goal_via_session t (goal_subset : Goal_subset.t) =

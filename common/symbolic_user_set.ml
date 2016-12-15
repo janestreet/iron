@@ -11,6 +11,11 @@ module Stable_format = struct
       | Intersection of t * t list (* I.e., a non-empty list *)
       | Difference of t * t
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| ae9adb3f4022f9737992287b4e566758 |}]
+    ;;
   end
 end
 
@@ -37,5 +42,10 @@ module Stable = struct
             | v1 -> failwiths "Symbolic_user_set.of_stable" v1 [%sexp_of: V1.t]
           ;;
         end)
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| ae9adb3f4022f9737992287b4e566758 |}]
+    ;;
   end
 end

@@ -10,6 +10,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 89e772993986d8e4549d57bef0a5193c |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -21,6 +26,11 @@ module Stable = struct
         ; rev_zero       : Rev.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9b648769492d25fdb32a46a0153c0450 |}]
+      ;;
 
       let to_model { from
                    ; to_
@@ -43,6 +53,11 @@ module Stable = struct
         ; rev_zero : Rev.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 89e772993986d8e4549d57bef0a5193c |}]
+      ;;
 
       let to_model { from
                    ; to_
@@ -73,6 +88,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| de36e42b122265b8b0b12128399a192b |}]
+      ;;
+
       let of_model (t : t) = t
     end
 
@@ -87,6 +107,11 @@ module Stable = struct
         ; remote_repo_path       : Remote_repo_path.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8e96d2d8097aef267342bb70d81ee969 |}]
+      ;;
 
       open! Core.Std
       open! Import

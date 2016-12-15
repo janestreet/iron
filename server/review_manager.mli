@@ -33,14 +33,14 @@ module Register_catch_up : sig
 end
 
 val deserializer
-  : (    whole_feature_followers     : User_name.Set.t
-      -> whole_feature_reviewers     : User_name.Set.t
-      -> users_using_locked_sessions : User_name.Set.t
-      -> review_goal                 : Review_goal.t Or_error.t
-      -> indexed_diff4s              : Indexed_diff4s.t Or_error.t Or_pending.t
-      -> register_catch_up           : Register_catch_up.t
-      -> feature_cache_invalidator   : Cached.Invalidator.t
-      -> t
+  : (whole_feature_followers        : User_name.Set.t
+     -> whole_feature_reviewers     : User_name.Set.t
+     -> users_using_locked_sessions : User_name.Set.t
+     -> review_goal                 : Review_goal.t Or_error.t
+     -> indexed_diff4s              : Indexed_diff4s.t Or_error.t Or_pending.t
+     -> register_catch_up           : Register_catch_up.t
+     -> feature_cache_invalidator   : Cached.Invalidator.t
+     -> t
     ) Deserializer.t
 
 val create

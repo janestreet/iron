@@ -22,7 +22,7 @@
         Option.is_some feature.seconder
       ;;
 
-    }]
+    ]}
 *)
 
 include (Export : module type of (struct include Export end)

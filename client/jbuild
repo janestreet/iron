@@ -13,7 +13,10 @@
     iron_obligations
     iron_protocol
     iron
-    patdiff_lib
+    patdiff.lib
     pdiff4
     re2
+    topological_sort
   ))))
+
+(enforce_style ())

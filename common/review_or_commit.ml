@@ -5,6 +5,12 @@ module Stable = struct
       | Num of int
       | Commit
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 1c26b45bd38bbd0513775572150ce6db |}]
+    ;;
+
     let to_model m = m
     let of_model m = m
   end

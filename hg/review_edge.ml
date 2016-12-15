@@ -10,6 +10,11 @@ module Stable = struct
       }
     [@@deriving bin_io, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 58eeef7d0a4b08bd3182385171508ce1 |}]
+    ;;
+
     module Compare_by_hash = struct
       type nonrec t = t =
         { base : Rev.Compare_by_hash.t
@@ -36,4 +41,3 @@ end
 include T
 include Comparable.Make(T)
 include Hashable.Make(T)
-

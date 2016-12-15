@@ -4918,11 +4918,11 @@ let () =
                (fun { bookmark; rev_info = { rev_author_or_error; first_12_of_rev }
                     ; status = _; continuous_release_status = _
                     ; compilation_status = _ } ->
-                  match rev_author_or_error with
-                  | Error _ -> None
-                  | Ok rev_author ->
-                    Some (rev_author,
-                          { Bookmark_without_feature. bookmark; first_12_of_rev }))
+                 match rev_author_or_error with
+                 | Error _ -> None
+                 | Ok rev_author ->
+                   Some (rev_author,
+                         { Bookmark_without_feature. bookmark; first_12_of_rev }))
           |> User_name.Map.of_alist_multi
         in
         Hashtbl2_pair.remove_all1 t.bookmarks_without_feature remote_repo_path;
@@ -5299,13 +5299,13 @@ let () =
          let race_during_update =
            Feature_id.(<>) (Feature.feature_id feature) feature_id
            || (match info with
-               | Error _ -> false
-               | Ok { base_facts; _ } ->
-                 Rev.Compare_by_hash.(<>)
-                   (Rev_facts.rev base_facts) (Feature.base feature))
+             | Error _ -> false
+             | Ok { base_facts; _ } ->
+               Rev.Compare_by_hash.(<>)
+                 (Rev_facts.rev base_facts) (Feature.base feature))
            || (match Feature.next_base_update feature with
-               | No_update_expected -> false
-               | Update_expected _  -> true)
+             | No_update_expected -> false
+             | Update_expected _  -> true)
          in
          if not race_during_update
          then (

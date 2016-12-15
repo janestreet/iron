@@ -9,6 +9,11 @@ module Stable = struct
       | No_update_expected
       | No_update_expected_due_to_iron_bug of Error.V1.t
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 557b27b5105e2c0b36dda475e0f924e8 |}]
+    ;;
   end
 end
 

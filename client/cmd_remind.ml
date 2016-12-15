@@ -37,38 +37,39 @@ let parse_subject text =
     (subject, body)
 ;;
 
-let%test_module _ = (module struct
-  let%test _ =
-    let text = "\
+let%test_module _ =
+  (module struct
+    let%test _ =
+      let text = "\
 foo
 Subject: subject
 bar"
-    in
-    let (subject, body) = parse_subject text in
-    String.equal subject "subject"
-    && String.equal body "foo\nbar"
-  ;;
+      in
+      let (subject, body) = parse_subject text in
+      String.equal subject "subject"
+      && String.equal body "foo\nbar"
+    ;;
 
-  let%test _ =
-    let text = "\
+    let%test _ =
+      let text = "\
 Subject: subject
 
 foo"
-    in
-    let (subject, body) = parse_subject text in
-    String.equal subject "subject"
-    && String.equal body "\nfoo"
-  ;;
+      in
+      let (subject, body) = parse_subject text in
+      String.equal subject "subject"
+      && String.equal body "\nfoo"
+    ;;
 
-  let%test _ =
-    let text = "foo" in
-    try
-      ignore (parse_subject text);
-      false
-    with
-    | _ -> true
-  ;;
-end)
+    let%test _ =
+      let text = "foo" in
+      try
+        ignore (parse_subject text);
+        false
+      with
+      | _ -> true
+    ;;
+  end)
 
 let command =
   Command.async'
@@ -205,6 +206,5 @@ Warning: a bookmark update is expected since %s.\n"
              ; "\n"
              ]
          in
-         loop_until_sent_or_quit draft_msg
-    ))
+         loop_until_sent_or_quit draft_msg))
 ;;

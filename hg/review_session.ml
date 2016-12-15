@@ -11,6 +11,11 @@ module Stable = struct
     module Id = struct
       module V1 = struct
         type t = int [@@deriving bin_io, compare, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 698cfa4093fe5e51523842d37b92aeac |}]
+        ;;
       end
 
       module Model = V1
@@ -35,6 +40,11 @@ module Stable = struct
         ; is_reviewed : bool
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4f7e7ef41d2ce7c682648bdbdd1168db |}]
+      ;;
     end
 
     module Model = V2
@@ -46,6 +56,11 @@ module Stable = struct
           ; review_kind      : Review_kind.V1.t
           }
         [@@deriving bin_io, compare, fields, sexp]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| de839cfcf3f9d0bcb86d11fe0ae8ed1c |}]
+        ;;
       end
 
       module Model = V2

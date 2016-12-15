@@ -11,6 +11,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| fab5a2cdaf75e3324c227147f7ba2644 |}]
+      ;;
+
       let to_model (t : t) = t
     end
 
@@ -20,6 +25,11 @@ module Stable = struct
         ; what_diff    : What_diff.V2.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ae25b80d385e7de37d53926d609be34e |}]
+      ;;
 
       let to_model { what_feature
                    ; what_diff
@@ -39,6 +49,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 91def6327f48a5796145b47efb6e5eda |}]
+      ;;
+
       let to_model { what_feature
                    ; what_diff
                    } =
@@ -56,6 +71,11 @@ module Stable = struct
         ; what_diff    : What_diff.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 355db5d905934bc366e749ff01fb05ab |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -80,6 +100,11 @@ module Stable = struct
         ; reviewer     : Reviewer.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1a1d64f12fcd44116dbf0831164f53e6 |}]
+      ;;
 
       let to_model { feature_path
                    ; reviewer
@@ -115,6 +140,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 4ed20567db8056439e20e950dd8df51d |}]
+      ;;
+
       let of_model m = m
     end
 
@@ -128,6 +158,11 @@ module Stable = struct
         ; remote_repo_path : Remote_repo_path.V1.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f854bab10db5bca77564da8e6b38c866 |}]
+      ;;
 
       let of_model m =
         let { V5.
@@ -159,6 +194,11 @@ module Stable = struct
         ; remote_repo_path : Remote_repo_path.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| cf3e8b81daf420d0b232fb2bbfce2c81 |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -194,6 +234,11 @@ module Stable = struct
         ; remote_repo_path : Remote_repo_path.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| e8d1e46536209872ea54d7201c71b786 |}]
+      ;;
 
       let of_v3 { V3. diffs; base; tip; remote_rev_zero; remote_repo_path; _ } =
         { diffs; base; tip; remote_rev_zero; remote_repo_path }

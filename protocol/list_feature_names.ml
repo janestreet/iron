@@ -11,6 +11,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 02b4e4907b5b0762795ecc5e35b9aa90 |}]
+      ;;
+
       let to_model (t : t) = t
     end
 
@@ -21,6 +26,11 @@ module Stable = struct
         ; use_archived : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 11927d8da4c4c4acd888bf95dc258516 |}]
+      ;;
 
       let to_model { feature_path
                    ; depth
@@ -46,6 +56,11 @@ module Stable = struct
     module V1 = struct
       type t = Feature_path.V1.t list
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| e16050fbbb13a3a25cae42a413f70535 |}]
+      ;;
 
       let of_model t = t
     end

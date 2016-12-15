@@ -9,6 +9,11 @@ module Stable = struct
       }
     [@@deriving bin_io, compare, fields, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: Bin_digest_type_variable.tick_a t];
+      [%expect {| 27104f0a1b68f74d209c433e0a826112 |}]
+    ;;
+
     let map t ~f =
       let f field = f (Core.Std.Field.get field t) in
       Fields.map

@@ -8,6 +8,11 @@ module Stable = struct
         ; reason      : string
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9a7576c32302177a0d91c6afc1fd9406 |}]
+      ;;
     end
     module Model = V1
   end
@@ -18,6 +23,11 @@ module Stable = struct
       | Unfinished_review
       | Reviewed_by_someone_else of Reviewed_by_someone_else.V1.t
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 13aba13d10cc785b869705d0add4f37b |}]
+    ;;
     let to_model m = m
     let of_model m = m
   end

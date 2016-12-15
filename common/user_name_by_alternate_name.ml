@@ -4,6 +4,11 @@ module Stable = struct
 
   module V1 = struct
     type t = User_name.V1.t Alternate_name.V1.Map.t [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| aa41ee0fc9442ac7cd1b3ce2e5196e91 |}]
+    ;;
   end
 end
 

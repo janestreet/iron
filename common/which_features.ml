@@ -1,6 +1,7 @@
 module Stable = struct
+  open! Core.Stable
 
-  open Import_stable
+  module Feature_path = Feature_path.Stable
 
   module Feature = struct
     module V1 = struct
@@ -9,7 +10,14 @@ module Stable = struct
         ; include_descendants : bool
         }
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 03fea758080b0eeeed1a8f5574ead42f |}]
+      ;;
     end
+
+    module Model = V1
   end
 
   module V1 = struct
@@ -18,13 +26,20 @@ module Stable = struct
       | Features of Feature.V1.t list
     [@@deriving bin_io, compare, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 708322a1129c574d2b37636504492ecb |}]
+    ;;
+
     let to_model t = t
   end
+
+  module Model = V1
 end
 
-module Feature = Stable.Feature.V1
+module Feature = Stable.Feature.Model
 
-include Stable.V1
+include Stable.Model
 
 open! Core.Std
 open! Import

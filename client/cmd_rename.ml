@@ -22,13 +22,13 @@ let main { Fe.Rename.Action.
   let repo_is_clean = ok_exn repo_is_clean in
   let%bind rev_zero = Hg.create_rev_zero repo_root in
   let%bind { from_feature_path
-          ; from_base
-          ; from_tip
-          ; to_parent_feature_path
-          ; to_parent_tip
-          ; renames
-          ; remote_repo_path
-          } =
+           ; from_base
+           ; from_tip
+           ; to_parent_feature_path
+           ; to_parent_tip
+           ; renames
+           ; remote_repo_path
+           } =
     Prepare_to_rename.rpc_to_server_exn { from; to_; rev_zero }
   in
   let%bind () =

@@ -9,6 +9,11 @@ module Stable = struct
         ; args : string list
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 34bb314d3ec6c154fc3190c05efb150c |}]
+      ;;
     end
 
     module Model = V1
@@ -26,6 +31,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9becbb69b219e80dda7bd7586c18f1c2 |}]
+      ;;
+
       let to_model m = m
     end
 
@@ -37,6 +47,11 @@ module Stable = struct
         ; new_base                    : Raw_rev.V1.t option
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 66e1c2b0ce3291c4c5b1b8e5fae4b0dc |}]
+      ;;
 
       let to_model { feature_path
                    ; allow_non_cr_clean_new_base

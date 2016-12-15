@@ -12,7 +12,5 @@ module Iron = struct
     (* non RPC modules from Iron_protocol *)
     open Iron_protocol
     module Feature        = Feature
-    module Which_features = Which_features
-    module Which_session  = Which_session
   end)
 end

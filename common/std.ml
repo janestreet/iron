@@ -82,7 +82,6 @@ module Switch                      = Switch
 module Symbolic_user_set           = Symbolic_user_set
 module Tag                         = Tag
 module To_goal_via_session         = To_goal_via_session
-module Topological_sort            = Topological_sort
 module Unclean_workspace           = Unclean_workspace
 module Unclean_workspace_reason    = Unclean_workspace_reason
 module Unix                        = Iron_unix
@@ -97,6 +96,8 @@ module Verbose                     = Verbose
 module What_diff                   = What_diff
 module When_to_first_notify        = When_to_first_notify
 module Which_ancestor              = Which_ancestor
+module Which_features              = Which_features
+module Which_session               = Which_session
 module Who_can_release_into_me     = Who_can_release_into_me
 
 module Wrap_stable = Wrap_stable.F

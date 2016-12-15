@@ -12,6 +12,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| caa8c6bc0b63d59c3c306d8e2483b33e |}]
+      ;;
+
       let to_model t = t
     end
     module Model = V1
@@ -41,6 +46,11 @@ module Stable = struct
         ; lines_required_to_separate_ddiff_hunks : int
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 28258a680554a97f026a9b004b26e495 |}]
+      ;;
     end
 
     module V4 = struct
@@ -65,6 +75,11 @@ module Stable = struct
         ; seconder                         : User_name.V1.t option
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| c0965e955ce0be7f9a5659dcc60c9e82 |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -136,6 +151,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| dc15c5fcd2c50b030a0fe01be0cbd72e |}]
+      ;;
+
       open! Core.Std
       open! Import
 
@@ -205,6 +225,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a2abaf42825f733295086add2b8da421 |}]
+      ;;
+
       open! Core.Std
       open! Import
 
@@ -262,6 +287,11 @@ module Stable = struct
         ]
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| cca2f20b1058574c30d37eebba9c5318 |}]
+      ;;
+
       let of_model m = m
     end
 
@@ -271,6 +301,11 @@ module Stable = struct
         | `Catch_up_session of Catch_up_session.V4.t
         ]
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8071ba9f703dbfd57c79677c8ab92dfb |}]
+      ;;
 
       let of_model m =
         match V5.of_model m with
@@ -286,6 +321,11 @@ module Stable = struct
                    ]
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 215725f25e966e5593e9926461b8638b |}]
+      ;;
 
       let of_model m =
         { status
@@ -303,6 +343,11 @@ module Stable = struct
                    ]
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| e2fd9d68e43ead6f37dea3189b7473de |}]
+      ;;
 
       let of_model m =
         let { V3. status } = V3.of_model m in

@@ -9,6 +9,11 @@ module Stable = struct
       type t = Feature_path.V1.t
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 296be80010ace497614f92952e5510c4 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -20,12 +25,22 @@ module Stable = struct
       type t = No | Yes of Feature_id.V1.t
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b3581aeb127c4f0c77cb2a2207501e09 |}]
+      ;;
+
       let of_model (t : t) = t
     end
 
     module V1 = struct
       type t = bool
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| a25306e4c5d30d35adbb5b0462a6b1b3 |}]
+      ;;
 
       let of_model m =
         match V2.of_model m with
@@ -51,4 +66,3 @@ include Register_old_rpc
 
 module Action   = Stable.Action.   Model
 module Reaction = Stable.Reaction. Model
-

@@ -49,33 +49,34 @@ let split_around list n =
   prev, mid, next
 ;;
 
-let%test_module "split_around" = (module struct
-  type result = char list * char * char list [@@deriving sexp, compare]
+let%test_module "split_around" =
+  (module struct
+    type result = char list * char * char list [@@deriving sexp, compare]
 
-  let%test_unit _ =
-    [%test_result: result]
-      (split_around ['a';'b';'c'] 0)
-      ~expect:([],'a',['b';'c'])
+    let%test_unit _ =
+      [%test_result: result]
+        (split_around ['a';'b';'c'] 0)
+        ~expect:([],'a',['b';'c'])
 
-  let%test_unit _ =
-    [%test_result: result]
-      (split_around ['a';'b';'c'] 1)
-      ~expect:(['a'],'b',['c'])
+    let%test_unit _ =
+      [%test_result: result]
+        (split_around ['a';'b';'c'] 1)
+        ~expect:(['a'],'b',['c'])
 
-  let%test_unit _ =
-    [%test_result: result]
-      (split_around ['a';'b';'c'] 2)
-      ~expect:(['a'; 'b'],'c',[])
+    let%test_unit _ =
+      [%test_result: result]
+        (split_around ['a';'b';'c'] 2)
+        ~expect:(['a'; 'b'],'c',[])
 
-  let%test _ = is_error (Result.try_with (fun () ->
-    split_around ['a';'b';'c'] 3
-  ))
+    let%test _ = is_error (Result.try_with (fun () ->
+      split_around ['a';'b';'c'] 3
+    ))
 
-  let%test_unit _ =
-    [%test_result: result]
-      (split_around ['a';'b';'c'] (-1))
-      ~expect:([],'a',['b';'c'])
-end)
+    let%test_unit _ =
+      [%test_result: result]
+        (split_around ['a';'b';'c'] (-1))
+        ~expect:([],'a',['b';'c'])
+  end)
 
 let of_matches ~verbose ~file_names ~context ~lines_required_to_separate_ddiff_hunks
       diamond matches =
@@ -241,17 +242,18 @@ let diff_common_sequence a b =
     List.rev !matches)
 ;;
 
-let%test_module "lcs" = (module struct
-  let%test _ = List.is_empty (diff_common_sequence [||] [||])
+let%test_module "lcs" =
+  (module struct
+    let%test _ = List.is_empty (diff_common_sequence [||] [||])
 
-  let%test_unit _ =
-    [%test_result: (int*int) list]
-      (diff_common_sequence
-         [| 0; 10; 0;     1; 42; 2;  20; 5 |]
-         [| 0; 8;  0; 15; 1; 42; 10;     5 |])
-      ~expect:[ (0,0); (2,2); (3,4); (4,5); (7,7) ]
-  ;;
-end)
+    let%test_unit _ =
+      [%test_result: (int*int) list]
+        (diff_common_sequence
+           [| 0; 10; 0;     1; 42; 2;  20; 5 |]
+           [| 0; 8;  0; 15; 1; 42; 10;     5 |])
+        ~expect:[ (0,0); (2,2); (3,4); (4,5); (7,7) ]
+    ;;
+  end)
 
 let of_files ?(verbose=false) ?(force_should_split_files_in_hunks_for_tests=false)
       ~rev_names ~context ~lines_required_to_separate_ddiff_hunks ~contents:diamond () =

@@ -9,6 +9,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 82e9dd83ba682394b6a7532a1bdf9e67 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -24,6 +29,11 @@ module Stable = struct
         }
       [@@deriving bin_io, compare, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3b77e4555fdf4bf50e45fc1d49cc5140 |}]
+      ;;
+
       let of_model (t : t) = t
     end
 
@@ -34,6 +44,11 @@ module Stable = struct
         ; nothing_to_do                             : User_name.V1.Set.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1900375ddbc456393c90b406b0379942 |}]
+      ;;
 
       let of_model m =
         let { V2.

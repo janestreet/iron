@@ -9,6 +9,11 @@ module Stable = struct
         ; rev_author_or_error : User_name.V1.t Or_error.V2.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9328f6880f732cb029b0f0eecf487008 |}]
+      ;;
     end
     module Model = V1
   end
@@ -21,6 +26,11 @@ module Stable = struct
         ; last_broken  : Rev_info.V1.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| e8f4f7d624a6d870c86276d677a99281 |}]
+      ;;
     end
     module Model = V1
   end
@@ -31,6 +41,11 @@ module Stable = struct
         | Working of Rev_info.V1.t
         | Broken  of Broken_info.V1.t
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b5002cb2d9234e107dc8ab74969d36d8 |}]
+      ;;
     end
     module Model = V1
   end
@@ -42,6 +57,11 @@ module Stable = struct
         ; pending  : Rev_info.V1.t list
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 10892c034923c936e01c33202711d0e1 |}]
+      ;;
     end
     module Model = V1
   end
@@ -55,6 +75,11 @@ module Stable = struct
       ; compilation_status        : (string * Compilation_status.V1.t) list
       }
     [@@deriving bin_io, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 930d214dd7eb41403530b00042f5f89a |}]
+    ;;
   end
 
   module V1 = struct
@@ -65,6 +90,11 @@ module Stable = struct
       ; status              : [ `Done | `Pending_or_working_on_it ]
       }
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 628d0b4b48a6047e9c10b74763eb770c |}]
+    ;;
 
     let to_v2 { bookmark
               ; first_12_of_rev

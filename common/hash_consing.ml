@@ -176,10 +176,10 @@ module Make (X : Unshared) () = struct
     let sort_by_hash =
       let f compare field x y = compare (Field.get field x) (Field.get field y) in
       List.sort ~cmp:(Comparable.lexicographic
-        [ f Int.compare Fields.hash_mod_length
-        ; f Int.compare Fields.hash
-        ; f X.compare   Fields.value
-        ])
+                        [ f Int.compare Fields.hash_mod_length
+                        ; f Int.compare Fields.hash
+                        ; f X.compare   Fields.value
+                        ])
     ;;
   end
 
@@ -212,9 +212,9 @@ module Make (X : Unshared) () = struct
   let shared_t data =
     let tag = Obj.tag (Obj.repr data) in
     if tag = Obj.lazy_tag
-       || tag = Obj.forward_tag
-       || tag = Obj.int_tag
-       || tag = Obj.out_of_heap_tag
+    || tag = Obj.forward_tag
+    || tag = Obj.int_tag
+    || tag = Obj.out_of_heap_tag
     then data
     else Weak_hashset.merge (force set) data
   ;;

@@ -11,6 +11,12 @@ module Stable = struct
       ; diff_from_base_to_tip : Diff2s.V2.t
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| acd631e6b060a4b184396a0f9001719d |}]
+    ;;
+
     let of_model m = m
     let to_model m = m
   end

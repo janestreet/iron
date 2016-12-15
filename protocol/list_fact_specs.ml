@@ -9,6 +9,12 @@ module Stable = struct
   module Reaction = struct
     module V1 = struct
       type t = (Fact.Spec.Id.V1.t * Fact.Spec.V1.t) list [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 46bd978871a35e0e3650fcdf5518215a |}]
+      ;;
+
       let of_model t = t
     end
   end

@@ -84,3 +84,19 @@ module Make_regex (M : sig
       else error "does not match regex" regex [%sexp_of: Regex.t]
     ;;
   end) ()
+
+module For_testing = struct
+
+  include Make_regex (struct
+      let module_name = "For_testing"
+      let regex = Regex.create_exn ""
+    end) ()
+
+  (* This test can't go into the Stable module above, because that's in the functor and
+     expect tests must be run in the file where they are defined. *)
+  let%expect_test _ =
+    print_endline [%bin_digest: t];
+    [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+  ;;
+
+end

@@ -6,6 +6,11 @@ module Stable = struct
     module V1 = struct
       type t = Gc_stat | Gc_quick_stat | Process_times
       [@@deriving bin_io, enumerate, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 6e6713e64d289d735bdef058106bbe12 |}]
+      ;;
     end
   end
 
@@ -16,6 +21,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b4044dc067ea9139b3175dbfe0dd8797 |}]
+      ;;
+
       let to_model t = t
     end
   end
@@ -24,6 +34,11 @@ module Stable = struct
     module V1 = struct
       type t = Sexp.t
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 832b40ae394f2851da8ba67b3339b429 |}]
+      ;;
 
       let of_model t = t
     end

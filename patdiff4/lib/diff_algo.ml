@@ -290,25 +290,25 @@ let old_tip_to_new_tip   ?hint () = build_diff_algo ?hint (`old_tip  , `new_tip)
 ;;
 
 (*
-  +-----------------------+----------------+-------------------------+
-  | equivalence classes   | show           | comment                 |
-  |-----------------------+----------------+-------------------------|
-  | { B1, B2, F1, F2 }    | nothing        | no changes              |
-  | { B1, B2, F1 }        | B2->F2         | new diff                |
-  | { B1, B2, F2 }        | F1->F2         | dropped feature change  |
-  | { B1, B2 } { F1, F2 } | nothing        | clean merge             |
-  | { B1, B2 }            | F1->F2         | diff extension          |
-  | { B1, F1, F2 }        | B2->F2         | dropped base change     |
-  | { B1, F1 } { B2, F2 } | nothing        | clean merge             |
-  | { B1, F1 }            | B2->F2         | new diff                |
-  | { B1, F2 } { B2, F1 } | B2->F2         | dropped same change     |
-  | { B1, F2 }            | F1->F2, B2->F2 | dropped both changes*   |
-  | { B2, F1, F2 }        | nothing        | same change             |
-  | { B2, F1 }            | B2->F2         | diff extension          |
-  | { B2, F2 }            | B1->F1, F1->F2 | dropped feature change* |
-  | { F1, F2 }            | B1->B2, B2->F2 | dropped base change*    |
-  | { }                   | ???            | conflict                |
-  +-----------------------+----------------+-------------------------+
+   +-----------------------+----------------+-------------------------+
+   | equivalence classes   | show           | comment                 |
+   |-----------------------+----------------+-------------------------|
+   | { B1, B2, F1, F2 }    | nothing        | no changes              |
+   | { B1, B2, F1 }        | B2->F2         | new diff                |
+   | { B1, B2, F2 }        | F1->F2         | dropped feature change  |
+   | { B1, B2 } { F1, F2 } | nothing        | clean merge             |
+   | { B1, B2 }            | F1->F2         | diff extension          |
+   | { B1, F1, F2 }        | B2->F2         | dropped base change     |
+   | { B1, F1 } { B2, F2 } | nothing        | clean merge             |
+   | { B1, F1 }            | B2->F2         | new diff                |
+   | { B1, F2 } { B2, F1 } | B2->F2         | dropped same change     |
+   | { B1, F2 }            | F1->F2, B2->F2 | dropped both changes*   |
+   | { B2, F1, F2 }        | nothing        | same change             |
+   | { B2, F1 }            | B2->F2         | diff extension          |
+   | { B2, F2 }            | B1->F1, F1->F2 | dropped feature change* |
+   | { F1, F2 }            | B1->B2, B2->F2 | dropped base change*    |
+   | { }                   | ???            | conflict                |
+   +-----------------------+----------------+-------------------------+
 *)
 
 type shown_as_diff2 =

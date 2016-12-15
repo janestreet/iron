@@ -12,6 +12,11 @@ module Stable = struct
         ; reason           : Catch_up_kind.V1.t
         }
       [@@deriving bin_io, compare, sexp, fields]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 41e1c896b88d70348038ccc7ddbff128 |}]
+      ;;
     end
     module Model = V3
     module V2 = struct
@@ -21,6 +26,11 @@ module Stable = struct
         ; reason           : string
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8f3cc47f57a124a4143720230d174839 |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -412,19 +422,19 @@ let t_of_creation creation ~serializer =
 ;;
 
 let create
-  ~review_session
-  ~remote_rev_zero
-  ~remote_repo_path
-  ~feature_path
-  ~feature_id
-  ~whole_feature_reviewers
-  ~owners
-  ~base
-  ~tip
-  ~description
-  ~is_permanent
-  ~seconder
-  serializer
+      ~review_session
+      ~remote_rev_zero
+      ~remote_repo_path
+      ~feature_path
+      ~feature_id
+      ~whole_feature_reviewers
+      ~owners
+      ~base
+      ~tip
+      ~description
+      ~is_permanent
+      ~seconder
+      serializer
   =
   let creation_time = Time.now () in
   let diff4s_in_session =

@@ -23,6 +23,12 @@ module Stable = struct
       ;;
     end
     include Hash_consing.Stable.Make_stable_private (Unshared) ()
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 29e83e23aee13880d7cc45405949d110 |}]
+    ;;
+
     (* The compare function on [t] does not distinguish names so that only name changes
        are not required to be reviewed if those are the only changes. *)
     let compare t1 t2 =

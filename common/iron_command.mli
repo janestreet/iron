@@ -4,7 +4,7 @@ open! Async.Std
 include module type of struct include Async.Std.Command end
 
 val async'
-   : summary:string
+  :  summary:string
   -> ?readme:(unit -> string)
   -> (unit -> unit Deferred.t) Spec.param
   -> t

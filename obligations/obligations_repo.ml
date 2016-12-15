@@ -37,13 +37,18 @@ module Stable = struct
           ~tags:(hash Tag.V1.Set.hash)
           ~scrutinies:(hash (Scrutiny_name.V1.Map.hash Scrutiny.V2.hash))
           ~build_projections:(hash (Build_projection_name.V1.Map.hash
-                                       Build_projection.V2.hash))
+                                      Build_projection.V2.hash))
           ~disallow_useless_dot_fe:(hash (Hashtbl.hash : bool -> int))
           ~allow_review_for:(hash Allow_review_for.V1.hash)
           ~obligations_version:(hash Obligations_version.V1.hash)
     end
     include Unshared
     include Hash_consing.Make_stable_public (Unshared) ()
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| a211d5c033385ad120133a69fa1e1948 |}]
+    ;;
   end
   module Model = V5
 end

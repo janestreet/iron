@@ -195,17 +195,17 @@ but is inside a clone of the [%{Feature_name}] family"
         else default_workspace_logic ()
       | Some current_workspace ->
         if repo_root_is_of_correct_family
-           && Feature_name.(<>)
-                (Feature_path.root current_workspace)
-                (Feature_path.root feature_path)
+        && Feature_name.(<>)
+             (Feature_path.root current_workspace)
+             (Feature_path.root feature_path)
         then
           (* We are in a satellite and the user wants to use the satellite to work on
              some satellite feature.  Let it be. *)
           return (repo_root, Repo_root_kind.Satellite)
         else if Feature_path.(=) current_workspace feature_path
              || (match use with
-                 | `Share -> false
-                 | `Clone | `Share_or_clone_if_share_does_not_exist -> true)
+               | `Share -> false
+               | `Clone | `Share_or_clone_if_share_does_not_exist -> true)
         then default_workspace_logic ()
         else
           raise_s
@@ -486,9 +486,9 @@ let check_shares shares ~f =
   let errors = ref [] in
   let%map () =
     Deferred.List.iter ~how:(`Max_concurrent_jobs 10) shares ~f:(fun share ->
-    match%map Deferred.Or_error.try_with_join (fun () -> f share) with
-    | Ok () -> ()
-    | Error err -> errors := (Workspace.feature_path share, err) :: !errors)
+      match%map Deferred.Or_error.try_with_join (fun () -> f share) with
+      | Ok () -> ()
+      | Error err -> errors := (Workspace.feature_path share, err) :: !errors)
   in
   List.sort !errors ~cmp:(fun (f1, _) (f2, _) -> Feature_path.compare f1 f2)
 ;;

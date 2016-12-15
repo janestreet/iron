@@ -216,19 +216,19 @@ module Spare_shares = struct
        share. *)
     let%bind () =
       Deferred.List.iter existing_spares ~f:(fun share ->
-      let%bind () = move share ~from:`Spare ~to_:`Staging in
-      let repo_root =
-        Repo_root.of_abspath (share_repo_root_abspath ~in_:`Staging share)
-      in
-      let%bind share_rev = Hg.parent repo_root in
-      let%bind () =
-        (* Avoid noisy no-op updates in the trace of the command; without this, it appears
-           to be doing a lot of redundant things. *)
-        if Rev.equal_node_hash update_to share_rev
-        then Deferred.unit
-        else Hg.update repo_root (`Rev update_to) ~clean_after_update:No
-      in
-      move share ~from:`Staging ~to_:`Spare)
+        let%bind () = move share ~from:`Spare ~to_:`Staging in
+        let repo_root =
+          Repo_root.of_abspath (share_repo_root_abspath ~in_:`Staging share)
+        in
+        let%bind share_rev = Hg.parent repo_root in
+        let%bind () =
+          (* Avoid noisy no-op updates in the trace of the command; without this, it
+             appears to be doing a lot of redundant things. *)
+          if Rev.equal_node_hash update_to share_rev
+          then Deferred.unit
+          else Hg.update repo_root (`Rev update_to) ~clean_after_update:No
+        in
+        move share ~from:`Staging ~to_:`Spare)
     in
     Deferred.repeat_until_finished num_existing_spares (fun num_spares_available ->
       if num_spares_available >= desired_num_spares

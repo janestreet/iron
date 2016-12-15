@@ -11,3 +11,5 @@
          ))
   (setup_script "bin/setup-script")
   ))
+
+(enforce_style ())

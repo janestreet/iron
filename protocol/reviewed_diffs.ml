@@ -15,6 +15,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f3335f86d30525788ef36c01b85fdc95 |}]
+      ;;
+
       let to_model (t : t) = t
     end
 
@@ -28,6 +33,11 @@ module Stable = struct
         ; diff4_in_session_ids   : Diff4_in_session.Id.V1.t list
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d6ffce44ac8dcc57c71daf9aa47dbd99 |}]
+      ;;
 
       let to_model { feature_path
                    ; for_
@@ -57,6 +67,11 @@ module Stable = struct
         ; diff4_in_session_ids : Diff4_in_session.Id.V1.t list
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 2d862dad9c8e60668f40f2cce4cc312f |}]
+      ;;
 
       let to_model { feature_path
                    ; for_

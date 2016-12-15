@@ -2,12 +2,11 @@ open! Core.Std
 open! Async.Std
 open! Import
 
-type t
-  = Rpc.Description.t
-  = { name    : string
-    ; version : int
-    }
-  [@@deriving fields, sexp_of]
+type t = Rpc.Description.t =
+  { name    : string
+  ; version : int
+  }
+[@@deriving fields, sexp_of]
 
 include Comparable with type t := t
 

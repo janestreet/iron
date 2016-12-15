@@ -26,7 +26,7 @@ let create () =
   ; send_email_upon                             = Send_email_upon.Set.empty
   ; whole_feature_followers                     = User_name.Set.empty
   ; whole_feature_reviewers                     = User_name.Set.empty
- }
+  }
 ;;
 
 let set_properties t properties =

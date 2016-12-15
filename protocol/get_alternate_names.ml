@@ -10,6 +10,11 @@ module Stable = struct
         ]
       [@@deriving bin_io, compare, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 97543f5a927cc53fee5121b3253e3b56 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -20,6 +25,11 @@ module Stable = struct
     module V1 = struct
       type t = User_name_by_alternate_name.V1.t
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| aa41ee0fc9442ac7cd1b3ce2e5196e91 |}]
+      ;;
 
       let of_model t = t
     end

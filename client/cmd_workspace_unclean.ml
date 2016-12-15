@@ -169,7 +169,7 @@ let compute_and_update_server_exn ~for_ which_features =
 
 let update_server_command =
   Command.async' ~summary:"compute unclean workspaces statuses on the local machine \
-                          and communicate this information to Iron"
+                           and communicate this information to Iron"
     ~readme:(fun () ->
       concat [ "\
 A workspace is considered unclean if it has uncommitted changes, outgoing changes, or if

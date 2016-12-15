@@ -21,6 +21,11 @@ module Stable = struct
       }
     [@@deriving bin_io, compare, fields, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 4b6d07e398c08e2cbe19c492227bfc08 |}]
+    ;;
+
     let of_model m = m
     let to_model m = m
   end
@@ -42,6 +47,11 @@ module Stable = struct
       ; release_cause           : unit Query.V1.t
       }
     [@@deriving sexp, bin_io, compare]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| b0509c12fa47737d25b650bd3ef64eed |}]
+    ;;
 
     open! Core.Std
     open! Import
@@ -123,6 +133,11 @@ module Stable = struct
       ; release_cause           : unit Query.V1.t
       }
     [@@deriving sexp, bin_io, compare]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 754279db9d054278ee9c8d907a491709 |}]
+    ;;
 
     open! Core.Std
     open! Import

@@ -27,6 +27,11 @@ module Stable = struct
 
     end
     include Hash_consing.Make_stable_private (Unshared) ()
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+    ;;
   end
 end
 

@@ -113,68 +113,69 @@ module Obligations = Make (struct
     let hash = Review_attributes.hash
   end) ()
 
-let%test_module _ = (module struct
+let%test_module _ =
+  (module struct
 
-  let debug = false
+    let debug = false
 
-  type t = { x : int } [@@deriving compare, sexp_of]
+    type t = { x : int } [@@deriving compare, sexp_of]
 
-  module M = Make (struct
-      type nonrec t = t [@@deriving compare, sexp_of]
-      let module_name = "File_tree_consing_test"
-      let hash { x } = Hashtbl.hash (x : int)
-    end) ()
+    module M = Make (struct
+        type nonrec t = t [@@deriving compare, sexp_of]
+        let module_name = "File_tree_consing_test"
+        let hash { x } = Hashtbl.hash (x : int)
+      end) ()
 
-  let test files =
-    let sort files =
-      List.sort files ~cmp:(fun (p1, _) (p2, _) ->
-        Path_in_repo.default_review_compare p1 p2)
-    in
-    let files = sort files in
-    let tree = M.of_alist files in
-    M.invariant tree;
-    if debug
-    then (
-      List.iter files ~f:(fun (p, v) ->
-        Printf.printf !"%{Path_in_repo} %{Sexp}\n" p ([%sexp_of: t] v));
-      Debug.eprints "files" files [%sexp_of: (Path_in_repo.t * t) list];
-      Debug.eprints "tree" tree [%sexp_of: M.t]);
-    [%test_result: (Path_in_repo.t * t) list]
-      ~expect:files
-      (tree |> M.to_alist |> sort)
-  ;;
+    let test files =
+      let sort files =
+        List.sort files ~cmp:(fun (p1, _) (p2, _) ->
+          Path_in_repo.default_review_compare p1 p2)
+      in
+      let files = sort files in
+      let tree = M.of_alist files in
+      M.invariant tree;
+      if debug
+      then (
+        List.iter files ~f:(fun (p, v) ->
+          Printf.printf !"%{Path_in_repo} %{Sexp}\n" p ([%sexp_of: t] v));
+        Debug.eprints "files" files [%sexp_of: (Path_in_repo.t * t) list];
+        Debug.eprints "tree" tree [%sexp_of: M.t]);
+      [%test_result: (Path_in_repo.t * t) list]
+        ~expect:files
+        (tree |> M.to_alist |> sort)
+    ;;
 
-  let%test_unit _ =
-    let files =
-      [ "a", { x = 0 }
-      ; "b", { x = 1 }
-      ; "c", { x = 2 }
-      ]
-    in
-    let abc = [ "a"; "b"; "c" ] in
-    let rec gen_t ~depth path =
-      if depth = 0 then []
-      else (
-        let files =
-          List.rev_map files ~f:(fun (file, v) ->
-            Path_in_repo.extend path (File_name.of_string file), v)
-        in
-        List.rev_append files
-          (List.concat_map abc ~f:(fun str ->
-             gen_t ~depth:(pred depth)
-               (Path_in_repo.extend path (File_name.of_string str)))))
-    in
-    test (gen_t ~depth:4 Path_in_repo.root)
-  ;;
-
-  let%test_unit _ =
-    let files =
-      List.map ~f:(fun (file, v) -> Path_in_repo.of_string file, v)
-        [ "a/b/a", { x = 0 }
-        ; "a/b/b", { x = 1 }
-        ; "a/b/c", { x = 2 }
+    let%test_unit _ =
+      let files =
+        [ "a", { x = 0 }
+        ; "b", { x = 1 }
+        ; "c", { x = 2 }
         ]
-    in
-    test files
-  ;;
-end)
+      in
+      let abc = [ "a"; "b"; "c" ] in
+      let rec gen_t ~depth path =
+        if depth = 0 then []
+        else (
+          let files =
+            List.rev_map files ~f:(fun (file, v) ->
+              Path_in_repo.extend path (File_name.of_string file), v)
+          in
+          List.rev_append files
+            (List.concat_map abc ~f:(fun str ->
+               gen_t ~depth:(pred depth)
+                 (Path_in_repo.extend path (File_name.of_string str)))))
+      in
+      test (gen_t ~depth:4 Path_in_repo.root)
+    ;;
+
+    let%test_unit _ =
+      let files =
+        List.map ~f:(fun (file, v) -> Path_in_repo.of_string file, v)
+          [ "a/b/a", { x = 0 }
+          ; "a/b/b", { x = 1 }
+          ; "a/b/c", { x = 2 }
+          ]
+      in
+      test files
+    ;;
+  end)

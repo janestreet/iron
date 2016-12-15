@@ -13,6 +13,11 @@ module Stable = struct
         }
       [@@deriving bin_io, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 2f4a1c28d3128057e7e2a31173868dd5 |}]
+      ;;
+
       let to_model t = t
     end
 
@@ -24,6 +29,11 @@ module Stable = struct
         ; include_active_cr_soons : bool
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| e62afa8bd8b58b95a074f480b2dddc6d |}]
+      ;;
 
       let to_model { for_; include_active_cr_soons } =
         V3.to_model { V3.
@@ -43,6 +53,11 @@ module Stable = struct
         | `Disabled
         ]
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ec5ff7fed9be1ddad772245eba990a4c |}]
+      ;;
     end
 
     module Model = V1
@@ -55,6 +70,11 @@ module Stable = struct
         ; follow : int
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 92940aeddac590117bcf32a5ad4d76ae |}]
+      ;;
     end
   end
 
@@ -73,6 +93,11 @@ module Stable = struct
         ; next_steps          : Next_step.V5.t list
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f43585b08840ff214707b2763f9826ea |}]
+      ;;
     end
 
     module V8 = struct
@@ -88,6 +113,11 @@ module Stable = struct
         ; next_steps          : Next_step.V5.t list
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 58f930b02db46cfb003db32d46befe50 |}]
+      ;;
 
       let of_v9 { V9.
                   feature_path
@@ -129,6 +159,11 @@ module Stable = struct
         ; next_steps          : Next_step.V5.t list
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 9beb77400695588c439d57ad2c6c602e |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -187,6 +222,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| acfad65e6151fb7d0d8bef864b5785d5 |}]
+      ;;
+
       let of_v7 { V7.
                   feature_path
                 ; feature_path_exists
@@ -224,6 +264,11 @@ module Stable = struct
         ; catch_up_lines      : int Or_error.V1.t
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d0195345c13bdc4093608a140cdd4295 |}]
+      ;;
 
       open! Core.Std
       open! Import
@@ -271,21 +316,26 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 584e4b4aa384b27560547cde5409912d |}]
+      ;;
+
       let num_crs_of_v5 = function
         | `Enabled crs -> crs
         | `Disabled -> Result.V1.Ok 0
       ;;
 
       let of_v5 { V5.
-                     feature_path
-                   ; feature_path_exists
-                   ; review_is_enabled
-                   ; may_second
-                   ; num_crs
-                   ; num_xcrs
-                   ; review_lines
-                   ; catch_up_lines
-                   } =
+                  feature_path
+                ; feature_path_exists
+                ; review_is_enabled
+                ; may_second
+                ; num_crs
+                ; num_xcrs
+                ; review_lines
+                ; catch_up_lines
+                } =
         { feature_path
         ; feature_path_exists
         ; review_is_enabled
@@ -309,6 +359,11 @@ module Stable = struct
         ; obligations_are_valid : (bool, unit) Result.V1.t
         }
       [@@deriving bin_io, compare, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 759dbd1b1f3318a1f28a82a3ac91d58a |}]
+      ;;
     end
 
     module Model = V1
@@ -327,6 +382,11 @@ module Stable = struct
         ; next_steps                          : Next_step.V5.t list
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 054c28ea9767a4f4f7a5347969e2178c |}]
+      ;;
     end
 
     module Model = V6
@@ -346,6 +406,11 @@ module Stable = struct
         }
       [@@deriving bin_io, fields, sexp]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 0acf850f22a50e42fa83747b841995a3 |}]
+      ;;
+
       let of_model m = m
     end
 
@@ -360,6 +425,11 @@ module Stable = struct
                                        * Bookmark_without_feature.V1.t list) list
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8e0050d632df4c510ecbe3a3a8782bd1 |}]
+      ;;
 
       let of_model m =
         let { V14.
@@ -392,6 +462,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b5e07d3d7137d28184dbdae211512d9f |}]
+      ;;
+
       let of_model m =
         let { V13.
               assigned
@@ -422,6 +497,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 414a583604f1d654432daf9f14b39b82 |}]
+      ;;
+
       let of_model m =
         let { V12.
               assigned
@@ -451,6 +531,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b4ccebcc43ca62377641735f55afb4d2 |}]
+      ;;
+
       let of_model m =
         let { V11.
               assigned
@@ -478,6 +563,11 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| bdb8e35d4ebfd6d5e507db1ca0ef9652 |}]
+      ;;
+
       let of_model m =
         let { V10.
               assigned
@@ -503,6 +593,11 @@ module Stable = struct
                                        * Bookmark_without_feature.V1.t list) list
         }
       [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7f0519b1f11f273a5a2a2f3762ea6212 |}]
+      ;;
 
       let of_model m =
         let { V9.

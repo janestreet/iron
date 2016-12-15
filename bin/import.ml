@@ -7,8 +7,8 @@ include (Iron_common.Std : module type of struct include Iron_common.Std end
 module Command = struct
   include (Iron_common.Std.Command :
              module type of struct include Iron_common.Std.Command end
-               with module Param      := Iron_common.Std.Command.Param
-                and module Let_syntax := Iron_common.Std.Command.Let_syntax)
+           with module Param      := Iron_common.Std.Command.Param
+            and module Let_syntax := Iron_common.Std.Command.Let_syntax)
   module Param      = Iron.Std.Iron.Param
   module Let_syntax = Param.Let_syntax
 end

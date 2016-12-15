@@ -318,10 +318,9 @@ and file_by_file : type a. a t -> result Deferred.t = fun t ->
        | `Selected_files -> selected_files t))
 
 and multiple_files
-  : type a. a t
-    -> after_review_goto: [ `File_by_file | `Selected_files ]
-    -> a file Review_ring.Elt.t list
-    -> result Deferred.t
+  : type a. a t -> after_review_goto: [ `File_by_file | `Selected_files ]
+  -> a file Review_ring.Elt.t list
+  -> result Deferred.t
   = fun t ~after_review_goto elements ->
     let module M = (val t.m : M with type t = a) in
     let files = List.map elements ~f:Review_ring.Elt.value in
@@ -337,9 +336,8 @@ and multiple_files
         let%bind () = Async_interactive.print_endline "Selection:" in
         let%bind () =
           Deferred.List.iter files ~f:(fun file ->
-          Async_interactive.printf "   [ ] %s\n"
-            (Path_in_repo.to_string (M.path_in_repo file.file));
-        )
+            Async_interactive.printf "   [ ] %s\n"
+              (Path_in_repo.to_string (M.path_in_repo file.file)))
         in
         let module Choice = Review_util.Choice in
         let%bind action =

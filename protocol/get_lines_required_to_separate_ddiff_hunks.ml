@@ -10,6 +10,11 @@ module Stable = struct
   module Reaction = struct
     module V1 = struct
       type t = int Feature_name.V1.Map.t [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| fcf3bde1887a9be31d901fd242a36e8b |}]
+      ;;
       let of_model m = m
     end
     module Model = V1

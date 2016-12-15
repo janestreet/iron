@@ -11,6 +11,11 @@ module Stable = struct
         ; is_permanent : bool
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f12ae5e96cb57ba814429ac704fc166d |}]
+      ;;
     end
 
     module V1 = struct
@@ -20,6 +25,11 @@ module Stable = struct
         ; at     : Time.V1_round_trippable.t
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d972db9a41d8eda0cf6af113bf845597 |}]
+      ;;
 
       let of_v2 { V2.
                   by
@@ -84,6 +94,11 @@ module Stable = struct
 
     [@@deriving bin_io, fields, sexp]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| e2f1270ad04caf2d755873e12cb31fb9 |}]
+    ;;
+
     let of_model m = m
   end
 
@@ -132,6 +147,11 @@ module Stable = struct
       }
     [@@deriving bin_io]
 
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| f446db0d717c71116bd10fff3c797e8a |}]
+    ;;
     open! Core.Std
     open! Import
 
@@ -273,6 +293,11 @@ module Stable = struct
       ; latest_release            : Latest_release.V1.t option
       }
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| e7793dae462a87da88774894eb599e89 |}]
+    ;;
 
     open! Core.Std
     open! Import
@@ -421,6 +446,11 @@ module Stable = struct
       }
     [@@deriving bin_io]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| d78b4e27e549d7f69cee3baff15bfe99 |}]
+    ;;
+
     let of_model m =
       let { V18.
             feature_id
@@ -549,6 +579,11 @@ module Stable = struct
       ; latest_release            : Latest_release.V1.t option
       }
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 0eb5b62f1188654f48ddca51ea89a3e0 |}]
+    ;;
 
     open! Core.Std
     open! Import
@@ -685,6 +720,11 @@ module Stable = struct
       }
     [@@deriving bin_io]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| bd9a497903513fdb0d067a2ce6ec6f92 |}]
+    ;;
+
     let of_model m =
       let { V16.
             feature_id
@@ -811,6 +851,11 @@ module Stable = struct
       ; users_with_uncommitted_session : User_name.V1.Set.t Or_error.V1.t
       }
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 83579b302253056b2f2a434c2d2b1a37 |}]
+    ;;
 
     let of_model m =
       let { V15.
@@ -941,6 +986,11 @@ module Stable = struct
       }
     [@@deriving bin_io]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 5f036347ab82677d08969dd2814bb0ab |}]
+    ;;
+
     open! Core.Std
     open! Import
 
@@ -1054,6 +1104,11 @@ module Stable = struct
       }
     [@@deriving bin_io]
 
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 39407c0d3e6261681a4bbd5036f004fa |}]
+    ;;
+
     let of_model m =
       let { V13.
             feature_id
@@ -1156,6 +1211,11 @@ module Stable = struct
       ; locked                    : (Lock_name.V1.t * Locked.V1.t list) list
       }
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 262d0dfecb185a16db850185641581dd |}]
+    ;;
 
     open Core.Std
     open Import
@@ -1261,6 +1321,11 @@ module Stable = struct
       ; locked                    : (Lock_name.V1.t * Locked.V1.t list) list
       }
     [@@deriving bin_io]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 27db5d5abdd26543c44bdcceacd46c2d |}]
+    ;;
 
     let of_model m =
       let { V11.

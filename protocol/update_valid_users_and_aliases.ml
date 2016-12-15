@@ -9,6 +9,11 @@ module Stable = struct
         ; aliases             : Alternate_name.V1.t list
         }
       [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 1b38bb8f45e9213845af6e2c1e5daee7 |}]
+      ;;
     end
   end
 
@@ -19,6 +24,11 @@ module Stable = struct
         ; may_repartition_crs     : bool
         }
       [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 08d793441b739e890c57e1416319d929 |}]
+      ;;
 
       let to_model t = t
     end

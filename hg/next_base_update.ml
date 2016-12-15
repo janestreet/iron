@@ -11,6 +11,11 @@ module Stable = struct
         ; expected_since : Time.V1_round_trippable.t
         }
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 3253ba947387eb40e50fa322f36b1382 |}]
+      ;;
     end
 
     module Model = V1
@@ -21,6 +26,11 @@ module Stable = struct
       | No_update_expected
       | Update_expected of Update_expected.V1.t
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 280d5b0b316b760b790abb0658184795 |}]
+    ;;
   end
 
   module Model = V1

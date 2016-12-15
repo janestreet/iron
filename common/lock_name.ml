@@ -6,6 +6,11 @@ module Stable = struct
       | Release_into
       | Rename
     [@@deriving bin_io, compare, enumerate, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| ce2471a84a580d8a799a566d5ca014f6 |}]
+    ;;
   end
 
   module V1 = struct
@@ -14,6 +19,11 @@ module Stable = struct
       | Release
       | Release_into
     [@@deriving bin_io, compare, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 87cdeca4e3128fc2c80f2225d290c51b |}]
+    ;;
 
     open! Core.Std
     open! Import

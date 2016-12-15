@@ -30,7 +30,7 @@ module User_sets = struct
         ~admins:check
         ~feeding_metrics:check
         ~using_locked_sessions:check)
-     ;;
+  ;;
 end
 
 type t =

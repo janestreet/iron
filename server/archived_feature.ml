@@ -11,6 +11,11 @@ module Stable = struct
       ; archived_at  : Time.V1_round_trippable.t
       }
     [@@deriving bin_io, compare, fields, sexp]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| c2edcb70f8cbc38682589a9ded8ed28c |}]
+    ;;
   end
 end
 

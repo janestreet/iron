@@ -218,7 +218,7 @@ module Make
 
   let command_line_rpc () =
     let%bind contents = Reader.file_contents "/dev/stdin" in
-    let action = Sexp.of_string_conv_exn (String.rstrip contents) [%of_sexp: action] in
+    let action = Sexp.of_string_conv_exn contents [%of_sexp: action] in
     match%bind rpc_to_server action with
     | Error error ->
       eprintf "%s\n" (error |> [%sexp_of: Error.t] |> Sexp.to_string_hum);
@@ -397,7 +397,7 @@ module Make_pipe_rpc
 
   let command_line_rpc () =
     let%bind contents = Reader.file_contents "/dev/stdin" in
-    let action = Sexp.of_string_conv_exn (String.rstrip contents) [%of_sexp: action] in
+    let action = Sexp.of_string_conv_exn contents [%of_sexp: action] in
     match%bind
       Monitor.try_with_or_error ~extract_exn:true (fun () ->
         let%bind pipe = rpc_to_server action in

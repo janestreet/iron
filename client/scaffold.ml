@@ -152,7 +152,7 @@ end = struct
   ;;
 
   let parse_exn s =
-    of_on_disk ([%of_sexp: On_disk.t] (Sexp.of_string (String.strip s)))
+    of_on_disk ([%of_sexp: On_disk.t] (Sexp.of_string s))
   ;;
 
 end

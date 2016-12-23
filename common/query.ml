@@ -58,7 +58,7 @@ let create ?(by = User_name.unix_login) ?(at = Time.now ()) action =
   ; by
   ; at
   ; hostname
-  ; machine_zone       = Core.Std.Time.Zone.local
+  ; machine_zone       = Core.Std.(force Time.Zone.local)
   ; executable
   ; executable_version = Version_util.version
   ; action

@@ -22,26 +22,23 @@ end
 open! Core.Std
 open! Import
 
-type t = User_name.Set.t [@@deriving sexp_of]
+type t = User_name.Set.t [@@deriving compare, sexp_of]
 
 let invariant _ = ()
 
 module Stable = struct
   module V1 = struct
-    include Wrap_stable.F
-        (Stable_format.V1)
-        (struct
-          type nonrec t = t
+    include Make_stable.Of_stable_format.V1 (Stable_format.V1) (struct
+        type nonrec t = t [@@deriving compare]
 
-          module V1 = Stable_format.V1
+        let to_stable_format t = Stable_format.V1.Users t
 
-          let to_stable t : V1.t = Users t
-
-          let of_stable : V1.t -> _ = function
-            | Users users  -> users
-            | v1 -> failwiths "Symbolic_user_set.of_stable" v1 [%sexp_of: V1.t]
-          ;;
-        end)
+        let of_stable_format = function
+          | Stable_format.V1.Users users  -> users
+          | v1 ->
+            raise_s [%sexp "Symbolic_user_set.of_stable", (v1 : Stable_format.V1.t)]
+        ;;
+      end)
 
     let%expect_test _ =
       print_endline [%bin_digest: t];

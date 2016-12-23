@@ -8,6 +8,8 @@ module Clock_ns    = struct end
 
 include Stable_module_types
 
+module Make_stable = Core.Stable.Make_stable
+
 let concat = String.concat
 
 let program_started_at = Time.now ()

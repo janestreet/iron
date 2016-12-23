@@ -29,7 +29,7 @@ let compute input =
       (input_sexp, error)
       [%sexp_of: Sexp.t * Error.t]
   | Ok stdout ->
-    try Sexp.of_string_conv_exn (String.strip stdout) Reaction.t_of_sexp
+    try Sexp.of_string_conv_exn stdout Reaction.t_of_sexp
     with exn ->
       failwiths "line count process parse sexp error"
         (input_sexp, stdout, exn)

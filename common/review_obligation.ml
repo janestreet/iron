@@ -1,10 +1,5 @@
 module Stable_format = struct
 
-  module Unstable = struct
-    module Symbolic_user_set  = Symbolic_user_set
-    module User_name          = User_name
-  end
-
   module V1 = struct
     open! Core.Stable
     module Symbolic_user_set = Symbolic_user_set.Stable
@@ -26,7 +21,8 @@ module Stable_format = struct
   end
 end
 
-open Core.Std
+open! Core.Std
+open! Import
 
 module T = struct
   type t =
@@ -398,29 +394,27 @@ let%test_module _ =
 module Stable = struct
   module V1 = struct
     let hash = hash
-    include Wrap_stable.F
-        (Stable_format.V1)
-        (struct
-          type nonrec t = t
+    include Make_stable.Of_stable_format.V1 (Stable_format.V1) (struct
+        type nonrec t = t [@@deriving compare]
 
-          module V1 = Stable_format.V1
+        module V1 = Stable_format.V1
 
-          let rec to_stable : t -> V1.t = function
-            | All_of users             -> All users
-            | At_least_wide (k, users) -> At_least_wide (k, users)
-            | And ts                   -> And     (List.map ts ~f:to_stable)
-            | Or_wide ts               -> Or_wide (List.map ts ~f:to_stable)
-          ;;
+        let rec to_stable_format : t -> V1.t = function
+          | All_of users             -> All users
+          | At_least_wide (k, users) -> At_least_wide (k, users)
+          | And ts                   -> And     (List.map ts ~f:to_stable_format)
+          | Or_wide ts               -> Or_wide (List.map ts ~f:to_stable_format)
+        ;;
 
-          let rec of_stable : V1.t -> t = fun v1 -> H.shared_t (aux v1)
-          and aux : V1.t -> t = function
-            | All users                -> All_of users
-            | At_least_wide (k, users) -> At_least_wide (k, users)
-            | And ts                   -> And     (List.map ts ~f:of_stable)
-            | Or_wide  ts              -> Or_wide (List.map ts ~f:of_stable)
-            | v1 -> failwiths "Review_obligation.of_stable" v1 [%sexp_of: V1.t]
-          ;;
-        end)
+        let rec of_stable_format : V1.t -> t = fun v1 -> H.shared_t (aux v1)
+        and aux : V1.t -> t = function
+          | All users                -> All_of users
+          | At_least_wide (k, users) -> At_least_wide (k, users)
+          | And ts                   -> And     (List.map ts ~f:of_stable_format)
+          | Or_wide  ts              -> Or_wide (List.map ts ~f:of_stable_format)
+          | v1 -> failwiths "Review_obligation.of_stable" v1 [%sexp_of: V1.t]
+        ;;
+      end)
 
     let%expect_test _ =
       print_endline [%bin_digest: t];

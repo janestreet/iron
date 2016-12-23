@@ -77,6 +77,7 @@ end
 module Tag : sig
   type t [@@deriving sexp_of]
 
+  include Comparable.S_plain with type t := t
   include Stringable with type t := t
 
   val is_nice_name : t -> for_tree_rooted_at:Feature_name.t -> bool

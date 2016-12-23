@@ -38,7 +38,7 @@ module Make(T : sig type t [@@deriving of_sexp] end) = struct
     env_var_has_been_read := true;
     match Sys.getenv env_var with
     | Some ("prod" | "PROD") -> prod ()
-    | Some s -> return (Sexp.of_string_conv_exn (String.strip s) [%of_sexp: T.t])
+    | Some s -> return (Sexp.of_string_conv_exn s [%of_sexp: T.t])
     | None ->
       if String.is_prefix Core.Std.Sys.executable_name ~prefix:"/j/office/app"
       then prod ()

@@ -125,7 +125,7 @@ let start ~init_stds ~log_format ~main ~basedir ~mode ~fg () =
       let now = Core.Std.Time.now () in
       List.iter [ Pervasives.stdout ; Pervasives.stderr ] ~f:(fun oc ->
         Core.Std.Printf.fprintf oc !"%s Daemonized with tags=%{Sexp}\n%!"
-          (Core.Std.Time.to_string_abs now ~zone:Core.Std.Time.Zone.local)
+          (Core.Std.Time.to_string_abs now ~zone:Core.Std.(force Time.Zone.local))
           ([%sexp_of: (string * string) list] tags)
       ))
   );

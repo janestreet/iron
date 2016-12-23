@@ -41,13 +41,11 @@ let length_of_string_repr =
 
 module Stable = struct
   module V1 = struct
-    include Wrap_stable.F
-        (Stable_format.V1)
-        (struct
-          type nonrec t = t
-          let to_stable = T.unshared_t
-          let of_stable = T.shared_t
-        end)
+    include Make_stable.Of_stable_format.V1 (Stable_format.V1) (struct
+        type nonrec t = t [@@deriving compare]
+        let to_stable_format = T.unshared_t
+        let of_stable_format = T.shared_t
+      end)
 
     let%expect_test _ =
       print_endline [%bin_digest: t];

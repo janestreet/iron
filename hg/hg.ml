@@ -176,6 +176,7 @@ module Tag = struct
   module Stable = Stable.Tag
 
   include Stable.Model
+  include Comparable.Make_plain(Stable.Model)
 
   let to_string = Fn.id
   let of_string = Fn.id

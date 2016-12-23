@@ -100,8 +100,6 @@ module Which_features              = Which_features
 module Which_session               = Which_session
 module Who_can_release_into_me     = Who_can_release_into_me
 
-module Wrap_stable = Wrap_stable.F
-
 module type Persistent = Persistent.S
 
 type 'a _or_pending = 'a Or_pending.t =

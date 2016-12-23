@@ -84,7 +84,7 @@ Or, staging the computation of ddiffs:
          match what_to_diff with
          | `Read_diff4s_from_sexp_file sexp_file ->
            let%map stdin = Reader.file_contents sexp_file in
-           Sexp.of_string_conv_exn (String.strip stdin)
+           Sexp.of_string_conv_exn stdin
              [%of_sexp: Diff4.Stable.V2.t list]
 
          | `Rev_diamond rev_diamond ->

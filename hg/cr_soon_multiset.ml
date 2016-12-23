@@ -1,5 +1,5 @@
 module Pre_stable = struct
-  open Import_stable
+  open! Import_stable
 
   module Cr_soon = Cr_comment.Stable.Cr_soon
 
@@ -19,8 +19,8 @@ module Pre_stable = struct
   end
 end
 
-open Core.Std
-open Import
+open! Core.Std
+open! Import
 
 module Cr_soon_in_feature = struct
 
@@ -69,8 +69,8 @@ module Cr_soon_in_feature = struct
     ;;
   end
 
-  include Comparable.Make (T)
-  include Hashable.  Make (T)
+  include Comparable.Make_plain (T)
+  include Hashable.  Make_plain (T)
 
   let rename_feature ({ cr_soon; feature_path } as t) ~from ~to_ =
     if Feature_path.equal feature_path from
@@ -81,7 +81,7 @@ end
 
 module Cr_soon_map = Cr_soon_in_feature.Map
 
-type t = int Cr_soon_map.t [@@deriving sexp_of]
+type t = int Cr_soon_map.t [@@deriving compare, sexp_of]
 
 let invariant (t : t) : unit =
   Map.iteri t ~f:(fun ~key:cr_soon ~data:count ->
@@ -178,15 +178,21 @@ module Stable = struct
 
   include Pre_stable
 
-  module V1 =
-    Wrap_stable
-      (struct
-        type t = (Cr_soon_in_feature.V1.t * int) list [@@deriving bin_io, compare, sexp]
-      end)
-      (struct
-        type nonrec t = t
-        let of_stable = of_alist_exn
-        let to_stable x = to_alist x
-      end)
+  module V1 = struct
+    include Make_stable.Of_stable_format.V1
+        (struct
+          type t = (Cr_soon_in_feature.V1.t * int) list [@@deriving bin_io, sexp]
+        end)
+        (struct
+          type nonrec t = t [@@deriving compare]
+          let of_stable_format = of_alist_exn
+          let to_stable_format x = to_alist x
+        end)
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 6a97a4c3fe9fa833dcf1d598e874eea3 |}]
+    ;;
+  end
   ;;
 end

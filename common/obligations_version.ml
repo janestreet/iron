@@ -64,13 +64,11 @@ let hash t = Int.hash (to_int t)
 module Stable = struct
   module V1 = struct
     let hash = hash
-    include Wrap_stable.F
-        (Stable_format.V1)
-        (struct
-          type nonrec t = t
-          let to_stable = to_int
-          let of_stable = of_int
-        end)
+    include Make_stable.Of_stable_format.V1 (Stable_format.V1) (struct
+        type nonrec t = t [@@deriving compare]
+        let to_stable_format = to_int
+        let of_stable_format = of_int
+      end)
 
     let%expect_test _ =
       print_endline [%bin_digest: t];

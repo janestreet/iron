@@ -57,7 +57,7 @@ Set somethings to be permanent.
 
   $ fe lock root/c -release -reason 'not meant to be released' -permanent
 
-The permanent umbrella features as weel as permantly locked features are omitted
+The permanent umbrella features as weel as permanently locked features are omitted
 from the user's todo.
 
   $ fe todo

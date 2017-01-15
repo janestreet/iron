@@ -44,7 +44,7 @@ cp -r "$testdir/repo" "$scratch"
     hg -q init
     hg -q add .
     export DONT_LOAD_ANY_HGRC=1
-    hg -q commit -m "initialising test repo"
+    hg -q commit -m "initializing test repo"
     fe obligations report 2>&1 || true
 ) |& diff -u "$testdir/expected-report" -
 

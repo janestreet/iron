@@ -62,7 +62,7 @@ from the user's todo.
 
   $ fe todo
 
-Check that this behavior is peristed.
+Check that this behavior is persisted.
 
   $ fe-server stop
   $ fe-server start

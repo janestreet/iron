@@ -930,7 +930,7 @@ let manifest repo_root source =
            -u --unknown             show only unknown (not tracked) files
          v}
 
-         This is actually very slighly wrong because a file that is both added and deleted
+         This is actually very slightly wrong because a file that is both added and deleted
          from the working copy would have status 'deleted' but hg commit would be
          perfectly happy to succeed while ignoring this file.  *)
       hg ~repo_root "status" ~args:[ "-acdmn" ] ~how:Capture_stdout

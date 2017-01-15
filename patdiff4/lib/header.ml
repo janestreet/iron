@@ -3,10 +3,10 @@ open Core.Std
 module Ansi_terminal = struct
   include Textutils.Std.Console.Ansi
 
-  let apply_string atttributes string =
+  let apply_string attributes string =
     if Iron_common.Iron_options.display_ascii_always
     then string
-    else string_with_attr atttributes string
+    else string_with_attr attributes string
   ;;
 end
 

@@ -2858,7 +2858,7 @@ let create_feature_exn t query =
   ok_exn (Feature_forest.check_add t.features feature_path);
   let tip = Option.value tip ~default:base in
   let feature_id = Feature_id.create () in
-  (* Extra attributes requested by [create] shall be set after the inheritence logic has
+  (* Extra attributes requested by [create] shall be set after the inheritance logic has
      run below, so as to chose what the right behavior is for conflicting attributes.  See
      [add_whole_feature_reviewers] for an example. *)
   let feature =

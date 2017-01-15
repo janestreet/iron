@@ -1312,7 +1312,7 @@ let phase repo_root revision =
     | "secret" -> `Secret
     | _ ->
       raise_s
-        [%sexp (sprintf "unexepected output while finding phase of %s" rev : string)
+        [%sexp (sprintf "unexpected output while finding phase of %s" rev : string)
              , (line : string)
         ]
 ;;

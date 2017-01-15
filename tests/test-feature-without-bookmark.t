@@ -1,7 +1,7 @@
   $ start_test
   $ setup_repo_and_root file
 
-Initally, treated as up-to-date with a bookmark until the first hydra
+Initially, treated as up-to-date with a bookmark until the first hydra
 synchronize state or worker query is received.
 
   $ fe show -has-bookmark

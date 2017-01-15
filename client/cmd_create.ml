@@ -85,7 +85,7 @@ let main { Fe.Create.Action.
          This code here is just to help the heuristic to apply.  The variable
          [IRON_FUNCTIONAL_TESTING_FORCE_WORKSPACES] is honored during functional
          testing only, and in addition to IRON_OPTIONS -- because some of the tests
-         set [IRON_OPTIONS], using a independant variable allow the same tests to be
+         set [IRON_OPTIONS], using a independent variable allow the same tests to be
          run with or without the workspaces forced. *)
       if Feature_path.is_root feature_path
       && Option.is_some (Sys.getenv "IRON_FUNCTIONAL_TESTING_FORCE_WORKSPACES")

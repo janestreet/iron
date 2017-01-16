@@ -138,7 +138,7 @@ let main { Fe.Rebase.Action.
      the new base.  In this order, we have a race if the pull is slow to return, hydra can
      compute the diff old base -> new tip, which may have a fully reviewed edge, and cause
      a bunch of unintended things to end up in people's brains (and even without the fully
-     reviewed edge, the potentialy flickering review is not ideal). So we use
+     reviewed edge, the potentially flickering review is not ideal). So we use
      [expect_next_base_update] to avoid both races. *)
   let%bind () =
     Expect_next_base_update.rpc_to_server_exn

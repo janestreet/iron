@@ -37,7 +37,7 @@ And the CR-soon shows up when we feed the root to hydra.
     CR-soon user: text 
 
 And when we feed the child to hydra, the CR-soon doesn't go away, because its text changed.
-The implicitely assigned CR-soon does goes away though, because the actual assignee changed.
+The implicitly assigned CR-soon does goes away though, because the actual assignee changed.
 
   $ feature_to_server root/child -fake-valid-obligations -fake-attribute-by-rev "
   > ($r1 ())

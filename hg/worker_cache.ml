@@ -146,7 +146,7 @@ module Status = struct
   New values computed by the worker are ignored."
       | Write_only -> "\
   No cached values are sent to the worker.
-  New alues computed by the worker are added to the cache on the server."
+  New values computed by the worker are added to the cache on the server."
       | Read_write -> "\
   Relevant cached values are sent to the worker.
   New values computed by the worker are added to the cache for later use."

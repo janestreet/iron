@@ -643,7 +643,7 @@ let compute_review_analysis state feature : Review_analysis.t option =
             remaining (n-k) users to review that diff.  We do not want to this to flicker
             each time one of the [k] starts a new session.  This is not a statement of
             what they have in their brain, because of the distinction ensured by the flag
-            [has_uncommited_session:true] *)
+            [has_uncommitted_session:true] *)
          List.iter
            (Review_manager.reviewed_diff4s_output_in_current_session review_manager)
            ~f:(mark_as_completed_review user ~have_review_session_in_progress:true)));
@@ -2858,7 +2858,7 @@ let create_feature_exn t query =
   ok_exn (Feature_forest.check_add t.features feature_path);
   let tip = Option.value tip ~default:base in
   let feature_id = Feature_id.create () in
-  (* Extra attributes requested by [create] shall be set after the inheritence logic has
+  (* Extra attributes requested by [create] shall be set after the inheritance logic has
      run below, so as to chose what the right behavior is for conflicting attributes.  See
      [add_whole_feature_reviewers] for an example. *)
   let feature =

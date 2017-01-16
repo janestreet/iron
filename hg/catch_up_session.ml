@@ -156,7 +156,7 @@ module Stable = struct
             ; is_whole_feature_reviewer =
                 (* When Iron was using V2 the logic was such that review client would
                    always show both the attributes and the contents for any diff, so this
-                   has the desirated effect *)
+                   has the desired effect *)
                 true
             }
         ; diff4s_in_session

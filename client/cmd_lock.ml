@@ -42,7 +42,7 @@ For example:
 
 Locks may be made permanent by supplying [" ; switch_permanent
              ; "] as a way to emphasis that
-the lock is intended for a non transiant period.  For example, certain features
+the lock is intended for a non transient period.  For example, certain features
 are not meant to be ever released.
 
 Use [fe unlock] to unlock a lock.  To see what is locked for a feature, use:

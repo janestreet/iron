@@ -1,32 +1,6 @@
 open! Core.Std
 open! Import
 
-module type Of_sexp = sig
-  type model
-  type t [@@deriving of_sexp]
-  val to_model : t -> model
-end
-
-module type To_sexp = sig
-  type model
-  type t [@@deriving sexp_of]
-  val of_model : model -> t
-end
-
-module type Of_sexp_with_context = sig
-  type context
-  type model
-  type t [@@deriving of_sexp]
-  val to_model : context -> t -> model
-end
-
-module type To_sexp_with_context = sig
-  type context
-  type model
-  type t [@@deriving sexp_of]
-  val of_model : context -> model -> t
-end
-
 module type Model = sig
   type t [@@deriving sexp]
 end
@@ -81,19 +55,21 @@ module type Persistent = sig
       (Model   : Model)
     : sig
       include S with type t = Model.t
-      module Register_read_old_persist
+      module Register_read_old_version
           (Version : Version)
-          (Of_sexp : Of_sexp with type model := Model.t)
-        : sig end
-      (** [Register_write_old_persist] should be applied at most once for a given type,
-          and after registering the corresponding read_persist for that version.  It
-          raises otherwise. *)
-      module Register_write_old_persist
-          (Version : Version)
-          (To_sexp : To_sexp with type model := Model.t)
+          (Conv    : sig
+             type t [@@deriving of_sexp]
+             val to_model : t -> Model.t
+           end)
         : sig end
     end
 
+  (** [Register_read_write_old_version] should be applied at most once for a given type or
+      this would raise.  During serialization, [should_write_this_version] is called and
+      if this returns [true], the old version is serialized instead of the model.
+
+      For any version, at most one of [Register_read_write_old_version] and
+      [Register_read_old_version] may be used. *)
   module Make_with_context
       (Context : Context)
       (Version : Version)
@@ -101,20 +77,21 @@ module type Persistent = sig
     : sig
       module Writer : S_writer with type t = Context.t * Model.t
       module Reader : S_reader with type t = Context.t -> Model.t
-      module Register_read_old_persist
+      module Register_read_old_version
           (Version : Version)
-          (Of_sexp : Of_sexp_with_context
-           with type model := Model.t
-            and type context := Context.t)
+          (Conv    : sig
+             type t [@@deriving of_sexp]
+             val to_model : Context.t -> t -> Model.t
+           end)
         : sig end
-      (** [Register_write_old_persist] should be applied at most once for a given type,
-          and after registering the corresponding read_persist for that version.  It
-          raises otherwise. *)
-      module Register_write_old_persist
-          (Version : Version)
-          (To_sexp : To_sexp_with_context
-           with type model := Model.t
-            and type context := Context.t)
+      module Register_read_write_old_version
+          (Version                : Version)
+          (Conv                   : sig
+             type t [@@deriving sexp]
+             val of_model : Context.t -> Model.t -> t
+             val to_model : Context.t -> t -> Model.t
+             val should_write_this_version : Context.t -> bool
+           end)
         : sig end
     end
 end

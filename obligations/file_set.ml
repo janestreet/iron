@@ -15,19 +15,7 @@ and syntax =
 
 let all_files = And_sexp.create All_files
 
-let complement t = And_sexp.create (Complement t)
-
 let files files = And_sexp.create (Files files)
-
-let union (ts : t list) =
-  let ts =
-    List.concat_map ts ~f:(fun t ->
-      match t.syntax with
-      | Union ts -> ts
-      | _ -> [ t ])
-  in
-  And_sexp.create (Union ts)
-;;
 
 let eval t ~universe e =
   let empty = File_name.Set.empty in
@@ -75,58 +63,4 @@ let eval t ~universe e =
       File_name.Set.of_list files
   in
   loop t e
-;;
-
-let synthesize ~desired ~universe =
-  let universe_length = Set.length universe in
-  let unexpected_desired = Set.diff desired universe in
-  if not (Set.is_empty unexpected_desired)
-  then
-    raise_s
-      [%sexp
-        "File_set.synthesize got desired files not in the universe",
-        { universe           : File_name.Set.t
-        ; desired            : File_name.Set.t
-        ; unexpected_desired : File_name.Set.t
-        }
-      ];
-  let add_remaining sexp_string =
-    lazy (
-      let t = sexp_string |> Sexp.of_string |> [%of_sexp: t] in
-      match Error_context.within ~file:Path.root (fun e -> eval t ~universe e) with
-      | Error _ -> None
-      | Ok set ->
-        if Set.length set <= 2
-        then None
-        else (
-          let excess = Set.diff set desired in
-          if not (Set.is_empty excess)
-          then None
-          else (
-            let remaining_desired = Set.diff desired set in
-            Some (if Set.is_empty remaining_desired
-                  then t
-                  else union [ t
-                             ; files (Set.to_list remaining_desired)
-                             ]))))
-  in
-  let heuristics         =
-    [ lazy (if Set.length desired = universe_length
-            then Some all_files
-            else None)
-    ; add_remaining "(Globs *.ml *.mli)"
-    ; add_remaining "(Globs *.ml)"
-    ; add_remaining "(Globs *.mli)"
-    ; if true
-      then lazy None
-      else
-        lazy (let complement_desired = Set.diff universe desired in
-              if Set.length desired > 2 * Set.length complement_desired
-              then Some (complement (files (Set.to_list complement_desired)))
-              else None)
-    ]
-  in
-  match List.find_map heuristics~f:force with
-  | Some value -> value
-  | None -> files (Set.to_list desired)
 ;;

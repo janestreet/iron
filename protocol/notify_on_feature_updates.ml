@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V2 = struct
@@ -43,7 +43,7 @@ module Stable = struct
       type t = [ `Updated of Feature.Stable.V20.t
                | `Archived
                ]
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -129,5 +129,5 @@ include Register_old_rpc
     (Stable.Action.V1)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action.Model
-module Reaction = Stable.Reaction.Model
+module Action   = Stable.Action.   Model
+module Reaction = Stable.Reaction. Model

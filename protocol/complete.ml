@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Which_user_info = struct
     module V1 = struct
@@ -199,7 +199,7 @@ module Stable = struct
 
   module Reaction = struct
     module V1 = struct
-      type t = string list [@@deriving bin_io, sexp]
+      type t = string list [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -211,7 +211,6 @@ module Stable = struct
 
     module Model = V1
   end
-
 end
 
 include Iron_versioned_rpc.Make

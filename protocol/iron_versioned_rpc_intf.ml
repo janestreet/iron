@@ -14,9 +14,9 @@ end
 
 module type S = sig
   type action   [@@deriving sexp]
-  type reaction [@@deriving sexp]
+  type reaction [@@deriving sexp_of]
   type query    = action   Query.Stable.V1.t                         [@@deriving sexp]
-  type response = reaction Or_error.Stable.V1.t Response.Stable.V1.t [@@deriving sexp]
+  type response = reaction Or_error.Stable.V1.t Response.Stable.V1.t [@@deriving sexp_of]
 
   include Name
 
@@ -41,7 +41,7 @@ end
 
 module type S_pipe_rpc = sig
   type action   [@@deriving sexp]
-  type reaction [@@deriving sexp]
+  type reaction [@@deriving sexp_of]
   type query    = action Query.Stable.V1.t [@@deriving sexp]
 
   include Name
@@ -81,7 +81,7 @@ module type Action = sig
 end
 
 module type Reaction = sig
-  type t [@@deriving bin_io, sexp]
+  type t [@@deriving bin_io, sexp_of]
 
   (** [of_model] should be the identity function.  It is present for consistency between
       [Action] and [Old_action]. *)

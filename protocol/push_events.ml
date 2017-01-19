@@ -23,7 +23,6 @@ module Stable = struct
 
     module Reaction = struct
       module V1 = Unit
-
       module Model = V1
     end
   end
@@ -52,7 +51,6 @@ module Stable = struct
 
     module Reaction = struct
       module V1 = Unit
-
       module Model = V1
     end
   end
@@ -85,8 +83,8 @@ module Add = struct
       (Stable.Action.V1)
       (Stable.Reaction.V1)
 
-  module Action   = Stable.Action  .Model
-  module Reaction = Stable.Reaction.Model
+  module Action   = Stable.Action.   Model
+  module Reaction = Stable.Reaction. Model
 end
 
 module Change = struct
@@ -98,6 +96,6 @@ module Change = struct
       (Stable.Action.V1)
       (Stable.Reaction.V1)
 
-  module Action   = Stable.Action  .Model
-  module Reaction = Stable.Reaction.Model
+  module Action   = Stable.Action.   Model
+  module Reaction = Stable.Reaction. Model
 end

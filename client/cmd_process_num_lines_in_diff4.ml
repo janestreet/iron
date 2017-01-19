@@ -21,21 +21,12 @@ let command =
   Command.async'
     ~summary:"compute num lines of a diff4"
     (let open Command.Let_syntax in
-     let%map_open () = return () in
+     let%map_open input = anon ("ACTION-SEXP" %: string) in
      fun () ->
        let open! Deferred.Let_syntax in
-       let stdin  = Lazy.force Reader.stdin in
-       let stdout = Lazy.force Writer.stdout in
-       match%bind Reader.read_sexp stdin with
-       | `Eof -> failwith "Eof. sexp expected"
-       | `Ok sexp ->
-         let%bind () =
-           let%map v = compute (Action.t_of_sexp sexp) in
-           v
-           |> Reaction.sexp_of_t
-           |> Writer.write_sexp stdout
-         in
-         Writer.newline stdout;
-         Writer.flushed stdout
+       let action = Sexp.of_string_conv_exn (String.strip input) Action.t_of_sexp in
+       let%map reaction = compute action in
+       Writer.write_sexp (Lazy.force Writer.stdout)
+         (Reaction.sexp_of_t reaction) ~terminate_with:Newline;
     )
 ;;

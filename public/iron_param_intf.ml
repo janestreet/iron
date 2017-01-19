@@ -224,7 +224,7 @@ module type T = sig
   val maybe_sort_review_files          : Review_sort.t option t
 
   val without_enough_whole_feature_reviewers : bool t
-  val included_features_order : [ `Name | `Release_order ] t
+  val included_features_order : Iron.Feature.Sorted_by.t Or_error.t t
 
   val terminal_width_command : Command.t
 end

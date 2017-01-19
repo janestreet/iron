@@ -32,7 +32,7 @@ module Stable = struct
     module Reaction = struct
       module V1 = struct
         type t = Unresolved_name.V1.Set.t
-        [@@deriving bin_io, sexp]
+        [@@deriving bin_io, sexp_of]
 
         let%expect_test _ =
           print_endline [%bin_digest: t];
@@ -53,7 +53,7 @@ module Stable = struct
     module Reaction = struct
       module V1 = struct
         type t = Unresolved_name.V1.Set.t Group_name.V1.Map.t
-        [@@deriving bin_io, sexp]
+        [@@deriving bin_io, sexp_of]
 
         let%expect_test _ =
           print_endline [%bin_digest: t];
@@ -81,8 +81,8 @@ module List_users = struct
       (Stable.Action.V1)
       (Stable.Reaction.V1)
 
-  module Action   = Stable.Action   .Model
-  module Reaction = Stable.Reaction .Model
+  module Action   = Stable.Action.   Model
+  module Reaction = Stable.Reaction. Model
 end
 
 module List_groups = struct
@@ -94,6 +94,6 @@ module List_groups = struct
       (Stable.Action.V1)
       (Stable.Reaction.V1)
 
-  module Action   = Stable.Action   .Model
-  module Reaction = Stable.Reaction .Model
+  module Action   = Stable.Action.   Model
+  module Reaction = Stable.Reaction. Model
 end

@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Bookmark_without_feature = Bookmark_without_feature.Stable
 
@@ -404,7 +404,7 @@ module Stable = struct
         ; bookmarks_without_feature : (Remote_repo_path.V1.t
                                        * Bookmark_without_feature.V1.t list) list
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io, fields, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

@@ -180,6 +180,20 @@ let list_users_in_groups =
     )
 ;;
 
+let allow_review_for =
+  Command.async'
+    ~summary:"output the permission settings for review done by others"
+    (let open Command.Let_syntax in
+     let%map_open () = return ()
+     and which_obligations = which_obligations_param
+     in
+     fun () ->
+       let open! Deferred.Let_syntax in
+       let%map obligations = load_obligations which_obligations in
+       print_endline (Sexp.to_string_hum
+                        [%sexp (obligations.allow_review_for : Allow_review_for.t)]))
+;;
+
 let projection =
   Command.async'
     ~summary:"output build projection(s)"
@@ -303,47 +317,6 @@ let show =
     )
 ;;
 
-let synthesize =
-  Command.async'
-    ~summary:"synthesize [.fe.sexp] files from [spec.txt]"
-    (let open Command.Let_syntax in
-     let%map_open () = return () in
-     fun () ->
-       let open! Deferred.Let_syntax in
-       let repo_root = ok_exn Repo_root.program_started_in in
-       let below = Repo_root.relativize_exn repo_root Abspath.program_started_in in
-       let%bind obligations = create_obligations repo_root ~dirs:(`Below below) in
-       let obligations_by_dir =
-         obligations.by_path
-         |> Hashtbl.to_alist
-         |> List.filter_map ~f:(fun (path_in_repo, attribute) ->
-           let relpath = Path_in_repo.to_relpath path_in_repo in
-           (* We don't synthesize [.fe.sexp] files in [.projections], because that
-              directory will be deleted as part of the transition. *)
-           if Relpath.is_prefix ~prefix:(Relpath.of_string ".projections") relpath
-           then None
-           else (
-             let dir, file = Relpath.split_dir_file_exn relpath in
-             Some (dir, (file, attribute))))
-         |> Relpath.Table.of_alist_multi
-         |> Hashtbl.map ~f:(fun alist ->
-           Dot_fe.synthesize (File_name.Map.of_alist_exn alist))
-         |> Hashtbl.to_alist
-       in
-       Deferred.List.iter ~how:(`Max_concurrent_jobs 100) obligations_by_dir
-         ~f:(fun (dir, obligations) ->
-           Writer.save
-             (Abspath.to_string
-                (Abspath.extend
-                   (Abspath.append (Repo_root.to_abspath repo_root) dir)
-                   File_name.dot_fe))
-             ~contents:(obligations
-                        |> List.map ~f:[%sexp_of: Dot_fe.Declaration.t]
-                        |> List.map ~f:Sexp.to_string_hum
-                        |> String.concat ~sep:"\n"))
-    )
-;;
-
 let update_low_review_files =
   Command.async'
     ~summary:"update .fe/low-review-in-* files"
@@ -385,7 +358,8 @@ let update_low_review_files =
 
 let command =
   Command.group ~summary: "process Iron obligations files"
-    [ "check"                   , check
+    [ "allow-review-for"        , allow_review_for
+    ; "check"                   , check
     ; "list-groups"             , list_groups
     ; "list-projections"        , list_projections
     ; "list-users"              , list_users
@@ -393,7 +367,6 @@ let command =
     ; "projection"              , projection
     ; "report"                  , report
     ; "show"                    , show
-    ; "synthesize"              , synthesize
     ; "update-low-review-files" , update_low_review_files
     ]
 ;;

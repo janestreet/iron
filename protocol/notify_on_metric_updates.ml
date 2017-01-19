@@ -27,7 +27,7 @@ module Stable = struct
         ; value        : float
         ; added_at     : Time.V1_round_trippable.t
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io, fields, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

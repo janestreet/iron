@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V1 = struct
@@ -32,5 +32,5 @@ include Iron_versioned_rpc.Make
     (Stable.Action.V1)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action.  Model
-module Reaction = Stable.Reaction.Model
+module Action   = Stable.Action.   Model
+module Reaction = Stable.Reaction. Model

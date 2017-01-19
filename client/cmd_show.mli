@@ -69,7 +69,7 @@ val command : Command.t
 
 val render_email_body
   :  Feature.t
-  -> included_features_order : [ `Name | `Release_order ]
+  -> included_features_order : Feature.Sorted_by.t
   -> string
 
 val render_release_email_command : Command.t

@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Pause = struct
     module Action = struct
@@ -17,36 +17,43 @@ module Stable = struct
 
         let to_model t = t
       end
+      module Model = V1
     end
 
     module Reaction = struct
       module V1 = Unit
+      module Model = V1
     end
   end
 
   module Prior_changes_synced_to_file_system = struct
     module Action = struct
       module V1 = Unit
+      module Model = V1
     end
 
     module Reaction = struct
       module V1 = Unit
+      module Model = V1
     end
   end
 
   module Resume = struct
     module Action = struct
       module V1 = Unit
+      module Model = V1
     end
 
     module Reaction = struct
       module V1 = Unit
+      module Model = V1
     end
   end
 
   module Status = struct
     module Action = struct
       module V1 = Unit
+      module Model = V1
     end
 
     module Reaction = struct
@@ -61,6 +68,7 @@ module Stable = struct
 
         let of_model t = t
       end
+      module Model = V1
     end
   end
 end
@@ -72,8 +80,8 @@ module Pause = struct
       (struct let version = 1 end)
       (Stable.Action.V1)
       (Stable.Reaction.V1)
-  module Action   = Stable.Action.V1
-  module Reaction = Stable.Reaction.V1
+  module Action   = Stable.Action.   Model
+  module Reaction = Stable.Reaction. Model
 end
 
 module Prior_changes_synced_to_file_system = struct
@@ -83,8 +91,8 @@ module Prior_changes_synced_to_file_system = struct
       (struct let version = 1 end)
       (Stable.Action.V1)
       (Stable.Reaction.V1)
-  module Action   = Stable.Action.V1
-  module Reaction = Stable.Reaction.V1
+  module Action   = Stable.Action.   Model
+  module Reaction = Stable.Reaction. Model
 end
 
 module Resume = struct
@@ -94,8 +102,8 @@ module Resume = struct
       (struct let version = 1 end)
       (Stable.Action.V1)
       (Stable.Reaction.V1)
-  module Action   = Stable.Action.V1
-  module Reaction = Stable.Reaction.V1
+  module Action   = Stable.Action.   Model
+  module Reaction = Stable.Reaction. Model
 end
 
 module Status = struct
@@ -105,6 +113,6 @@ module Status = struct
       (struct let version = 1 end)
       (Stable.Action.V1)
       (Stable.Reaction.V1)
-  module Action   = Stable.Action.V1
-  module Reaction = Stable.Reaction.V1
+  module Action   = Stable.Action.   Model
+  module Reaction = Stable.Reaction. Model
 end

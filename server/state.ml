@@ -51,6 +51,7 @@ type t =
   ; cached_attributes_errors            : Error.t Queue.t
   ; rpc_stats                           : Rpc_stats.t
   ; metrics                             : Metrics.t
+  ; dynamic_upgrade_state               : Dynamic_upgrade.State.t
   ; push_events                         : Push_events.t
   ; worker_cache                        : Worker_cache.t
   ; unclean_workspaces                  : Unclean_workspaces_manager.t
@@ -162,6 +163,7 @@ let invariant t : unit =
     ~cached_attributes_errors:ignore
     ~rpc_stats:(check Rpc_stats.invariant)
     ~metrics:(check Metrics.invariant)
+    ~dynamic_upgrade_state:(check Dynamic_upgrade.State.invariant)
     ~push_events:(check Push_events.invariant)
     ~worker_cache:(check Worker_cache.invariant)
     ~unclean_workspaces:(check Unclean_workspaces_manager.invariant)
@@ -214,6 +216,8 @@ let iter_catch_up_managers_of_feature_path t feature_path ~f =
            creation
            queries
      event-subscriptions/
+     dynamic-upgrade/
+      state
      push-events/
       properties
      user-info/
@@ -242,6 +246,7 @@ let worker_cache_dir                   = Relpath.of_string "worker-cache"
 let push_events_dir                    = Relpath.of_string "push-events"
 let unclean_workspaces_dir             = Relpath.of_string "unclean-workspaces"
 let event_subscriptions_dir            = Relpath.of_string "event-subscriptions"
+let dynamic_upgrade_dir                = Relpath.of_string "dynamic-upgrade"
 
 
 module Persist = struct
@@ -490,6 +495,7 @@ let create_review_manager t feature user ~cr_comments =
       ~base_facts:(Feature.base_facts feature)
       ~register_catch_up:(make_register_catch_up t feature user)
       ~feature_cache_invalidator:(Feature.cache_invalidator feature)
+      ~dynamic_upgrade_state:t.dynamic_upgrade_state
       (Serializer.relativize (serializer_exn t)
          ~dir:(review_manager_dir (Feature.feature_id feature) user))
   in
@@ -643,7 +649,7 @@ let compute_review_analysis state feature : Review_analysis.t option =
             remaining (n-k) users to review that diff.  We do not want to this to flicker
             each time one of the [k] starts a new session.  This is not a statement of
             what they have in their brain, because of the distinction ensured by the flag
-            [has_uncommitted_session:true] *)
+            [has_uncommited_session:true] *)
          List.iter
            (Review_manager.reviewed_diff4s_output_in_current_session review_manager)
            ~f:(mark_as_completed_review user ~have_review_session_in_progress:true)));
@@ -1291,6 +1297,7 @@ let initialize_and_sync_file_system serializer =
     ; catch_up_dir
     ; event_subscriptions_dir
     ; features_dir
+    ; dynamic_upgrade_dir
     ; push_events_dir
     ; unclean_workspaces_dir
     ; user_info_dir
@@ -1303,10 +1310,10 @@ let prior_changes_synced_to_file_system t =
   Serializer.prior_changes_synced_to_file_system (serializer_exn t)
 ;;
 
-let feature_deserializer =
+let feature_deserializer ~dynamic_upgrade_state=
   let open Deserializer.Let_syntax in
   let%map_open () = return ()
-  and feature = Feature.deserializer
+  and feature = Feature.deserializer ~dynamic_upgrade_state
   and review_managers =
     in_subdir review_managers_dir_in_feature_dir
       (all_subdirs Review_manager.deserializer)
@@ -1333,7 +1340,7 @@ let install_deserialized_feature t feature review_managers =
   add_feature_exn t feature;
   Map.iteri review_managers ~f:(fun ~key:user ~data:review_manager ->
     let user = User_name.of_string (File_name.to_string user) in
-    let review_manager =
+    let review_manager : Review_manager.t =
       review_manager
         ~whole_feature_followers:(Feature.whole_feature_followers feature)
         ~whole_feature_reviewers:(Feature.whole_feature_reviewers feature)
@@ -1342,6 +1349,7 @@ let install_deserialized_feature t feature review_managers =
         ~indexed_diff4s:(Feature.indexed_diff4s feature)
         ~register_catch_up:(make_register_catch_up t feature user)
         ~feature_cache_invalidator:(Feature.cache_invalidator feature)
+        ~dynamic_upgrade_state:t.dynamic_upgrade_state
     in
     add_review_manager t feature review_manager);
 ;;
@@ -1363,7 +1371,8 @@ let get_cached_or_reload_archived_feature_exn t feature_id =
        will fail. *)
     let%bind () = prior_changes_synced_to_file_system t in
     let%bind (feature, _) =
-      Deserializer.load feature_deserializer
+      Deserializer.load
+        (feature_deserializer ~dynamic_upgrade_state:t.dynamic_upgrade_state)
         ~root_directory:(Abspath.append
                            (Serializer.root_directory (serializer_exn t))
                            archived_feature_dir)
@@ -1602,11 +1611,17 @@ let execute_timed_event t id (action : Timed_event.Action.t) =
 
 let deserializer = Deserializer.with_serializer (fun serializer ->
   let open Deserializer.Let_syntax in
+  let%bind dynamic_upgrade_state =
+    Deserializer.in_subdir dynamic_upgrade_dir Dynamic_upgrade.State.deserializer
+  in
   let%map_open () = return ()
   and user_info = in_subdir user_info_dir User_info.deserializer
   and features_and_review_managers =
-    in_subdir features_dir (all_subdirs feature_deserializer)
-  and archived_features = in_subdir archived_features_dir Archived_features.deserializer
+    in_subdir features_dir
+      (all_subdirs (feature_deserializer ~dynamic_upgrade_state))
+  and archived_features =
+    in_subdir archived_features_dir
+      (Archived_features.deserializer ~dynamic_upgrade_state)
   and catch_up_managers =
     in_subdir catch_up_dir
       (all_subdirs (all_subdirs Catch_up_session.deserializer))
@@ -1651,6 +1666,7 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
       ; cached_attributes_errors  = Queue.create ()
       ; rpc_stats                 = Rpc_stats.create ()
       ; metrics                   = Metrics.create ()
+      ; dynamic_upgrade_state
       ; push_events
       ; worker_cache
       ; unclean_workspaces
@@ -1677,14 +1693,16 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
       change_fully_reviewed_revisions_internal t q);
     (* We process the features in increasing order of feature-path length, so
        that parents are always added before children. *)
-    List.iter
-      (List.sort (Map.data features_and_review_managers)
-         ~cmp:(fun (feature1, _) (feature2, _) ->
-           Int.compare
-             (Feature_path.num_parts (Feature.feature_path feature1))
-             (Feature_path.num_parts (Feature.feature_path feature2))))
-      ~f:(fun (feature, review_managers) ->
-        install_deserialized_feature t feature review_managers);
+    let features_and_review_managers =
+      features_and_review_managers
+      |> Map.data
+      |> List.sort ~cmp:(fun (feature1, _) (feature2, _) ->
+        Int.compare
+          (Feature_path.num_parts (Feature.feature_path feature1))
+          (Feature_path.num_parts (Feature.feature_path feature2)))
+    in
+    List.iter features_and_review_managers ~f:(fun (feature, review_managers) ->
+      install_deserialized_feature t feature review_managers);
     List.iter fact_actions ~f:(fun action ->
       ok_exn (Fact.Db.handle_action t.fact_db action));
     Incr.set_should_stabilize true;
@@ -2165,6 +2183,7 @@ let occurrences_by_user_name t =
     ~cached_attributes_errors:ignore
     ~rpc_stats:ignore
     ~metrics:ignore
+    ~dynamic_upgrade_state:ignore
     ~push_events:ignore
     ~worker_cache:ignore
     ~unclean_workspaces:(process (fun t ->
@@ -2369,30 +2388,38 @@ let () =
          review_authorization_exn t feature review_manager query
            ~reason:`Not_supported ~create_catch_up_for_me:false
        in
-       Review_manager.forget_from_brain_exn review_manager review_authorization ~what_to_forget;
-       (match Hashtbl2_pair.find t.catch_up_managers feature_path for_ with
-        | None -> ()
-        | Some catch_up_manager ->
-          let should_catch_up =
-            match what_to_forget with
-            | `All -> const true
-            | `Files files -> Hash_set.mem (Path_in_repo.Hash_set.of_list files)
-          in
-          let catch_up_sessions =
-            Catch_up_manager.find_all_for_feature_id
-              catch_up_manager (Feature.feature_id feature)
-          in
-          List.iter catch_up_sessions ~f:(fun catch_up_session ->
-            let ids_to_catch_up =
-              List.filter_map (Catch_up_session.diff4s_to_catch_up catch_up_session)
-                ~f:(fun diff4_to_catch_up ->
-                  if should_catch_up
-                       (Diff4_to_catch_up.path_in_repo_at_f2 diff4_to_catch_up)
-                  then Some (Diff4_to_catch_up.id diff4_to_catch_up)
-                  else None)
-            in
-            catch_up_in_session t query feature_path catch_up_manager catch_up_session
-              ids_to_catch_up for_)));
+       Review_manager.forget_from_brain_exn review_manager review_authorization
+         ~what_to_forget;
+       if User_name.equal for_ (Query.by query)
+       then (
+         (* Rationale: When a user with catch-up forgets file in their brain, they are
+            going to have to review them again, so there is no need to catch-up on those
+            files.  The actual catch-up diff is more likely to be stale than helpful.
+            However, we do not want users to be able to silently delete others' people
+            catch-up. *)
+         match Hashtbl2_pair.find t.catch_up_managers feature_path for_ with
+         | None -> ()
+         | Some catch_up_manager ->
+           let should_catch_up =
+             match what_to_forget with
+             | `All -> const true
+             | `Files files -> Hash_set.mem (Path_in_repo.Hash_set.of_list files)
+           in
+           let catch_up_sessions =
+             Catch_up_manager.find_all_for_feature_id
+               catch_up_manager (Feature.feature_id feature)
+           in
+           List.iter catch_up_sessions ~f:(fun catch_up_session ->
+             let ids_to_catch_up =
+               List.filter_map (Catch_up_session.diff4s_to_catch_up catch_up_session)
+                 ~f:(fun diff4_to_catch_up ->
+                   if should_catch_up
+                        (Diff4_to_catch_up.path_in_repo_at_f2 diff4_to_catch_up)
+                   then Some (Diff4_to_catch_up.id diff4_to_catch_up)
+                   else None)
+             in
+             catch_up_in_session t query feature_path catch_up_manager catch_up_session
+               ids_to_catch_up for_)));
 ;;
 
 let () =
@@ -2735,6 +2762,16 @@ let check_workspace_update_exn query ~for_ =
 ;;
 
 let () =
+  let module With_dynamic_upgrade_state = Iron_protocol.With_dynamic_upgrade_state in
+  implement_rpc ~log:true Post_check_in_features.none
+    (module With_dynamic_upgrade_state)
+    (fun t query ->
+       only_user_with_admin_privileges_is_authorized_exn t query;
+       match Query.action query with
+       | Set value -> Dynamic_upgrade.set_exn t.dynamic_upgrade_state value)
+;;
+
+let () =
   let module Update_unclean_workspaces = Iron_protocol.Update_unclean_workspaces in
   implement_rpc ~log:true Post_check_in_features.none
     (module Update_unclean_workspaces)
@@ -2768,30 +2805,40 @@ let () =
          Feature_forest.iteri_roots t.features ~f:(iter_root ~f:maybe);
          !completions
        in
-       List.concat_map types ~f:(function
-         | Feature_path          ->
-           Feature_forest.complete t.features ~prefix `Of_partial_name
-         | Feature_path_with_catch_up ->
-           Feature_path.complete ~iter_features:(fun ~f ->
-             Hashtbl2_pair.iter1 t.catch_up_managers ~f:(fun feature_path _users ->
-               f feature_path)) ~prefix `Of_partial_name
-         | Absolute_feature_path ->
-           Feature_forest.complete t.features ~prefix `Of_full_name
-         | Archived_feature_path ->
-           Archived_features.complete t.archived_features ~prefix `Of_partial_name
-         | Metric_name ->
-           Metrics.complete t.metrics ~prefix
-         | Remote_repo_path ->
-           complete_from_roots (fun ~f:maybe _ feature ->
-             match Feature.remote_repo_path feature with
-             | None -> ()
-             | Some remote_repo_path ->
-               maybe (Remote_repo_path.to_string remote_repo_path))
-         | Root_feature_path ->
-           complete_from_roots (fun ~f:maybe feature_name _ ->
-             maybe (Feature_name.to_string feature_name))
-         | User_info which -> User_info.complete t.user_info ~prefix which)
-       |> String.Set.stable_dedup_list
+       let relative_feature_path_completion_types, other_completions =
+         List.partition_map types ~f:(function
+           | Feature_path          -> `Fst `Existing
+           | Feature_path_with_catch_up -> `Fst `With_catch_up
+           | Absolute_feature_path ->
+             `Snd (Feature_forest.complete t.features ~prefix `Of_full_name)
+           | Archived_feature_path ->
+             `Fst `Archived
+           | Metric_name ->
+             `Snd (Metrics.complete t.metrics ~prefix)
+           | Remote_repo_path ->
+             `Snd (complete_from_roots (fun ~f:maybe _ feature ->
+               match Feature.remote_repo_path feature with
+               | None -> ()
+               | Some remote_repo_path ->
+                 maybe (Remote_repo_path.to_string remote_repo_path)))
+           | Root_feature_path ->
+             `Snd (complete_from_roots (fun ~f:maybe feature_name _ ->
+               maybe (Feature_name.to_string feature_name)))
+           | User_info which ->
+             `Snd (User_info.complete t.user_info ~prefix which))
+       in
+       let relative_feature_path_completions =
+         Feature_path.complete ~prefix `Of_partial_name
+           ~iter_features:(fun ~f ->
+             let f_key key _data = f key in
+             List.iter relative_feature_path_completion_types ~f:(function
+               | `Existing -> Feature_forest.iteri t.features ~f:f_key
+               | `With_catch_up -> Hashtbl2_pair.iter1 t.catch_up_managers ~f:f_key
+               | `Archived -> Archived_features.iteri t.archived_features ~f:f_key
+             ))
+       in
+       String.Set.stable_dedup_list
+         (List.concat (relative_feature_path_completions :: other_completions))
     )
 ;;
 
@@ -2858,7 +2905,7 @@ let create_feature_exn t query =
   ok_exn (Feature_forest.check_add t.features feature_path);
   let tip = Option.value tip ~default:base in
   let feature_id = Feature_id.create () in
-  (* Extra attributes requested by [create] shall be set after the inheritance logic has
+  (* Extra attributes requested by [create] shall be set after the inheritence logic has
      run below, so as to chose what the right behavior is for conflicting attributes.  See
      [add_whole_feature_reviewers] for an example. *)
   let feature =
@@ -2866,6 +2913,7 @@ let create_feature_exn t query =
       ~feature_id
       ~feature_path ~owners ~is_permanent ~description ~base ~tip ~rev_zero
       ~remote_repo_path:remote_repo_path_opt
+      ~dynamic_upgrade_state:t.dynamic_upgrade_state
       ~serializer:(lazy (create_feature_serializer t feature_id))
   in
   add_feature_exn t feature;
@@ -3547,6 +3595,8 @@ let () =
          if not am_functional_testing
          then failwith "dumping state can only be done in test";
          t |> [%sexp_of: t]
+       | Dynamic_upgrade_state ->
+         Dynamic_upgrade.State.dump t.dynamic_upgrade_state
        | Push_events what_to_dump ->
          if Iron_protocol.Push_events.What_to_dump.require_admin_privileges what_to_dump
          then only_user_with_admin_privileges_is_authorized_exn t query;
@@ -5250,7 +5300,8 @@ let () =
           whether or not it's on disk. *)
        let%bind () = prior_changes_synced_to_file_system t in
        let%map (feature, review_managers) =
-         Deserializer.load feature_deserializer
+         Deserializer.load
+           (feature_deserializer ~dynamic_upgrade_state:t.dynamic_upgrade_state)
            ~root_directory:(Abspath.append
                               (Serializer.root_directory (serializer_exn t))
                               (feature_dir feature_id))

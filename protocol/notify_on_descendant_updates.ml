@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V2 = struct
@@ -45,7 +45,7 @@ module Stable = struct
         | `Archived
         | `Renamed
         ]
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

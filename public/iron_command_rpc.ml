@@ -41,9 +41,9 @@ module Make
   module Model = struct
     include Name
     type action   = Action.t    [@@deriving bin_io, sexp]
-    type reaction = Reaction.t  [@@deriving bin_io, sexp]
+    type reaction = Reaction.t  [@@deriving bin_io, sexp_of]
     type query    = Action.t    [@@deriving bin_io, sexp]
-    type response = Reaction.t  [@@deriving bin_io, sexp]
+    type response = Reaction.t  [@@deriving bin_io, sexp_of]
   end
 
   include Model

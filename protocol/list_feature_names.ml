@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V2 = struct
@@ -55,7 +55,7 @@ module Stable = struct
   module Reaction = struct
     module V1 = struct
       type t = Feature_path.V1.t list
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

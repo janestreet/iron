@@ -127,7 +127,7 @@ let uninitialized ~name () =
   { compute_depends_on = (fun () -> [])
   ; equal              = (fun _ _ -> false)
   ; sexp_of_a          = const (Sexp.Atom "<uninitialized>")
-  ; compute_result     = (fun _ -> failwiths "attempt to compute uninitialized Cached.t"
+  ; compute_result     = (fun _ -> failwiths "attempt to compute unitialized Cached.t"
                                      name [%sexp_of: string])
   ; cached_result      = None
   }

@@ -21,17 +21,16 @@ let internal_group = "process-num-lines-in-diff4"
 
 let compute input =
   let prog = Sys.executable_name in
-  let args = [ "internal" ; internal_group ] in
-  let input_sexp = Action.sexp_of_t input in
-  match%map Process.run ~stdin:(Sexp.to_string input_sexp) ~prog ~args () with
+  let args = [ "internal" ; internal_group; Sexp.to_string (Action.sexp_of_t input) ] in
+  match%map Process.run ~prog ~args () with
   | Error error ->
     failwiths "line count computation error"
-      (input_sexp, error)
-      [%sexp_of: Sexp.t * Error.t]
+      (input, error)
+      [%sexp_of: Action.t * Error.t]
   | Ok stdout ->
     try Sexp.of_string_conv_exn stdout Reaction.t_of_sexp
     with exn ->
       failwiths "line count process parse sexp error"
-        (input_sexp, stdout, exn)
-        [%sexp_of: Sexp.t * string * Exn.t]
+        (input, stdout, exn)
+        [%sexp_of: Action.t * string * Exn.t]
 ;;

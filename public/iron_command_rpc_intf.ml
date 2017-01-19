@@ -14,9 +14,9 @@ end
 
 module type S = sig
   type action   [@@deriving sexp]
-  type reaction [@@deriving sexp]
+  type reaction [@@deriving sexp_of]
   type query    = action   [@@deriving sexp]
-  type response = reaction [@@deriving sexp]
+  type response = reaction [@@deriving sexp_of]
 
   include Name
 
@@ -39,7 +39,7 @@ module type Action = sig
 end
 
 module type Reaction = sig
-  type t [@@deriving bin_io, sexp]
+  type t [@@deriving bin_io, sexp_of]
 
   val of_model : t -> t
 end

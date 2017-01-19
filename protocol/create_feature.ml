@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V4 = struct
@@ -37,7 +37,7 @@ module Stable = struct
         ; remote_repo_path : Remote_repo_path.V1.t
         ; tip              : Rev.V1.t
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io, fields, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

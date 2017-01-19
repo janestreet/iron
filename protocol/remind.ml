@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Feature = Feature.Stable
 
@@ -45,7 +45,7 @@ module Stable = struct
         ; users                          : User_name.V1.Set.t
         ; next_bookmark_update           : Next_bookmark_update.V1.t
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

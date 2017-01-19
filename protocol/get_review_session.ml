@@ -388,7 +388,7 @@ module Stable = struct
         ; remote_repo_path  : Remote_repo_path.V1.t
         ; may_second        : bool
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

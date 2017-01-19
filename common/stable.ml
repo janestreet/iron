@@ -8,6 +8,7 @@ module Catch_up_kind                 = Catch_up_kind.                  Stable
 module Constants                     = Constants
 module Diamond                       = Diamond.                        Stable
 module Digest                        = Iron_digest.                    Stable
+module Dynamic_upgrade               = Dynamic_upgrade.                Stable
 module Email_address                 = Email_address.                  Stable
 module Fact                          = Fact.                           Stable
 module Feature_id                    = Feature_id.                     Stable

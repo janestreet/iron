@@ -46,7 +46,7 @@ module Stable = struct
     module Reaction = struct
       module V2 = struct
         type t = Metric.Data_point.V1.t list Metric_name.V1.Map.t Feature_path.V1.Map.t
-        [@@deriving bin_io, sexp]
+        [@@deriving bin_io, sexp_of]
 
         let%expect_test _ =
           print_endline [%bin_digest: t];
@@ -83,7 +83,6 @@ module Stable = struct
 
     module Reaction = struct
       module V1 = Unit
-
       module Model = V1
     end
   end

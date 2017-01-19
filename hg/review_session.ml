@@ -447,16 +447,16 @@ module Persist = struct
         (Stable.Creation.Context)
         (struct let version = 5 end)
         (Stable.Creation.V5)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 4 end)
         (Stable.Creation.V4)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 3 end)
         (Stable.Creation.V3)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 2 end)
         (Stable.Creation.V2)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 1 end)
         (Stable.Creation.V1)
   end
@@ -464,21 +464,22 @@ module Persist = struct
     include Persistent.Make
         (struct let version = 2 end)
         (Stable.Action_query.V2)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 1 end)
         (Stable.Action_query.V1)
   end
 end
 
 type t =
-  { reviewer           : Reviewer.t
-  ; id                 : Session_id.t
-  ; diff4s             : Diff4s.t
-  ; tip                : Rev.t
-  ; base               : Rev.t
-  ; reviewable_diff4s  : Reviewable_diff4s.t
-  ; mutable is_locked  : bool
-  ; mutable serializer : Serializer.t option
+  { reviewer              : Reviewer.t
+  ; id                    : Session_id.t
+  ; diff4s                : Diff4s.t
+  ; tip                   : Rev.t
+  ; base                  : Rev.t
+  ; reviewable_diff4s     : Reviewable_diff4s.t
+  ; mutable is_locked     : bool
+  ; dynamic_upgrade_state : Dynamic_upgrade.State.t
+  ; mutable serializer    : Serializer.t option
   }
 [@@deriving fields, sexp_of]
 
@@ -494,6 +495,7 @@ let invariant t =
       ~reviewable_diff4s:(check (fun reviewable_diff4s ->
         Reviewable_diff4s.invariant reviewable_diff4s t.reviewer))
       ~is_locked:(check (ignore : bool -> unit))
+      ~dynamic_upgrade_state:(check Dynamic_upgrade.State.Reference.invariant)
       ~serializer:(check (Option.iter ~f:Serializer.invariant)))
 ;;
 
@@ -563,24 +565,24 @@ let serializer_exn t =
 ;;
 
 let record t query action =
-  let recording_query_will_allow_to_rollback =
+  let allowed_from =
     match (action : Action.t) with
     (* Note to devs: please keep at least this line so that it is easy to add/remove
        lines there *)
-    | #Action.t -> true
+    | #Action.t -> Dynamic_upgrade.U1
   in
   let serializer = serializer_exn t in
-  if not recording_query_will_allow_to_rollback
-  then
+  match Dynamic_upgrade.commit_to_upgrade t.dynamic_upgrade_state ~allowed_from with
+  | `Disabled ->
     (* Make sure to invalidate the cache in the case where the event are not recorded.
        This is handled by the serializer directly in the other case. *)
     Serializer.invalidate_dependents serializer
-  else
+  | `Ok ->
     Serializer.append_to serializer ~file:queries_file
       (Query.with_action query action) (module Persist.Action_query);
 ;;
 
-let t_of_creation creation ~serializer =
+let t_of_creation creation ~dynamic_upgrade_state ~serializer =
   let { Creation.
         reviewer
       ; id
@@ -597,12 +599,14 @@ let t_of_creation creation ~serializer =
   ; base
   ; reviewable_diff4s = Reviewable_diff4s.create diff4s reviewer ~sort_diff4s
   ; is_locked = false
+  ; dynamic_upgrade_state
   ; serializer
   }
 ;;
 
 let create ~serializer_dir_of_id ~reviewer
       ~diff4s ~tip ~base ~feature_cache_invalidator
+      ~dynamic_upgrade_state
       serializer =
   let id = Session_id.create () in
   let serializer = Serializer.relativize serializer ~dir:(serializer_dir_of_id id) in
@@ -623,7 +627,10 @@ let create ~serializer_dir_of_id ~reviewer
       user_name = reviewer.user_name
     }
   in
-  let t = t_of_creation creation ~serializer:(Some serializer) in
+  let t =
+    t_of_creation creation ~dynamic_upgrade_state
+      ~serializer:(Some serializer)
+  in
   Serializer.set_contents serializer
     ~file:creation_file (context, creation)
     (module Persist.Creation.Writer);
@@ -757,9 +764,9 @@ let deserializer =
     and creation = one         (module Persist.Creation.Reader) ~in_file:creation_file
     and queries  = sequence_of (module Persist.Action_query)    ~in_file:queries_file
     in
-    fun ~user_name ~feature_cache_invalidator ->
+    fun ~user_name ~feature_cache_invalidator ~dynamic_upgrade_state ->
       let creation = creation { Creation.Context. user_name } in
-      let t = t_of_creation creation ~serializer:None in
+      let t = t_of_creation creation ~dynamic_upgrade_state ~serializer:None in
       List.iter queries ~f:(fun query -> apply_query_internal t query);
       t.serializer <- Some serializer;
       Serializer.add_cache_invalidator serializer feature_cache_invalidator;

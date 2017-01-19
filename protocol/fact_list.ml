@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V1 = struct
@@ -12,11 +12,12 @@ module Stable = struct
       ;;
       let to_model t = t
     end
+    module Model = V1
   end
 
   module Reaction = struct
     module V1 = struct
-      type t = (Fact.Scope.V1.t * Fact.Evidence.V1.t) list [@@deriving bin_io, sexp]
+      type t = (Fact.Scope.V1.t * Fact.Evidence.V1.t) list [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -24,6 +25,7 @@ module Stable = struct
       ;;
       let of_model t = t
     end
+    module Model = V1
   end
 end
 
@@ -33,5 +35,5 @@ include Iron_versioned_rpc.Make
     (Stable.Action.V1)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action.V1
-module Reaction = Stable.Reaction.V1
+module Action   = Stable.Action.   Model
+module Reaction = Stable.Reaction. Model

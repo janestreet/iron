@@ -2,12 +2,6 @@ open Core.Std
 open Async.Std
 open Import
 
-let controller_name_for_pruning root_feature =
-  match Feature_name.to_string root_feature with
-  | "jane" -> "jane-for-pruning"
-  | root   -> concat [ "iron-"; root ]
-;;
-
 let prune ~root_feature rev =
   if am_functional_testing
   then return ()
@@ -19,7 +13,7 @@ let prune ~root_feature rev =
             ~prog:"/j/office/app/hydra/prod/bin/hydra"
             ~args:[ "prune"
                   ; Rev.to_string_40 rev
-                  ; "-repo"; controller_name_for_pruning root_feature
+                  ; "-repo"; concat [ "iron-"; Feature_name.to_string root_feature ]
                   ])
     with
     | Ok    (_stdout : string)  -> ()

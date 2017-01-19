@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   (* The [of_model] functions are called only to build a Reaction containing an echo of
      the updates sent in the first place by an old client.  As a result, failing on

@@ -67,7 +67,7 @@ module Stable = struct
     module Reaction = struct
       module V1 = struct
         type t = User_name.V1.Set.t
-        [@@deriving bin_io, sexp]
+        [@@deriving bin_io, sexp_of]
 
         let%expect_test _ =
           print_endline [%bin_digest: t];

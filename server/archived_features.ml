@@ -47,10 +47,11 @@ module Cached_features = Lru_cache.Make (struct
   end)
 
 type t =
-  { features           : Archived_feature.t list Feature_forest.t
-  ; features_by_id     : Archived_feature.t Feature_id.Table.t
-  ; cached_features    : Iron_protocol.Feature.t Cached_features.t
-  ; mutable serializer : Serializer.t option
+  { features              : Archived_feature.t list Feature_forest.t
+  ; features_by_id        : Archived_feature.t Feature_id.Table.t
+  ; cached_features       : Iron_protocol.Feature.t Cached_features.t
+  ; dynamic_upgrade_state : Dynamic_upgrade.State.t
+  ; mutable serializer    : Serializer.t option
   }
 [@@deriving fields, sexp_of]
 
@@ -109,6 +110,7 @@ let invariant t =
       ~features_by_id:(check (Feature_id.Table.iteri ~f:(fun ~key ~data ->
         [%test_result: Feature_id.t] ~expect:key (Archived_feature.feature_id data))))
       ~cached_features:(check (Cached_features.invariant (ignore : Cache.data -> unit)))
+      ~dynamic_upgrade_state:(check Dynamic_upgrade.State.Reference.invariant)
       ~serializer:(check (Option.iter ~f:Serializer.invariant)))
 ;;
 
@@ -138,14 +140,15 @@ let serializer_exn t =
 ;;
 
 let persist_query t query action =
-  let recording_query_will_allow_to_rollback =
+  let allowed_from =
     match action with
     (* Note to devs: please keep at least this line so that it is easy to add/remove
        lines there *)
-    | #Action.t -> true
+    | #Action.t -> Dynamic_upgrade.U1
   in
-  if recording_query_will_allow_to_rollback
-  then
+  match Dynamic_upgrade.commit_to_upgrade t.dynamic_upgrade_state ~allowed_from with
+  | `Disabled -> ()
+  | `Ok ->
     Serializer.append_to (serializer_exn t) ~file:queries_file
       (Query.with_action query action) (module Persist.Action_query)
 ;;
@@ -194,21 +197,23 @@ let apply_query_internal t query =
   | `Set_max_cache_size size -> set_max_cache_size_internal t ~max_size:size
 ;;
 
-let deserializer =
+let deserializer ~dynamic_upgrade_state =
   Deserializer.with_serializer (fun serializer ->
-    Deserializer.(
-      map (sequence_of (module Persist.Action_query) ~in_file:queries_file))
-      ~f:(fun queries ->
-        let t =
-          { features        = Feature_forest.create ()
-          ; features_by_id  = Feature_id.Table.create ()
-          ; cached_features = Cached_features.create ~max_size:500
-          ; serializer      = None
-          }
-        in
-        List.iter queries ~f:(fun query -> apply_query_internal t query);
-        t.serializer <- Some serializer;
-        t))
+    let open Deserializer.Let_syntax in
+    let%map_open queries =
+      sequence_of (module Persist.Action_query) ~in_file:queries_file
+    in
+    let t =
+      { features        = Feature_forest.create ()
+      ; features_by_id  = Feature_id.Table.create ()
+      ; cached_features = Cached_features.create ~max_size:500
+      ; dynamic_upgrade_state
+      ; serializer      = None
+      }
+    in
+    List.iter queries ~f:(fun query -> apply_query_internal t query);
+    t.serializer <- Some serializer;
+    t)
 ;;
 
 let find_by_id t feature_id =

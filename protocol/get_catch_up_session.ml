@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   (* [for_] is for testing mainly. Catch_up on behalf of someone else will be rejected
      later on during the [catch_up_diffs] query *)
@@ -45,7 +45,7 @@ module Stable = struct
         ; seconder                         : User_name.V1.t option
         ; lines_required_to_separate_ddiff_hunks : int
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -285,7 +285,7 @@ module Stable = struct
         [ `Up_to_date
         | `Catch_up_session of Catch_up_session.V5.t
         ]
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

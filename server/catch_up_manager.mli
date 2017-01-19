@@ -25,7 +25,7 @@ val add
   -> Catch_up_session.t
   -> unit
 
-(* Dereferencing a session will just remove the link to it from the catch-up manager, but
+(* Deferencing a session will just remove the link to it from the catch-up manager, but
    this will not delete the session.  It is up to the caller to independently either
    delete the session or link it back to another manager.  If not the session directory
    will just be stale on disk and most probably reloaded on restart. *)

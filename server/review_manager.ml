@@ -32,7 +32,7 @@ module Persist = struct
     include Persistent.Make
         (struct let version = 3 end)
         (Brain.Stable.V3)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 1 end)
         (Brain.Stable.V2)
   end
@@ -134,12 +134,13 @@ type t =
        brain ---session---> session_end ---from_session_end_to_goal---> review_goal
      v}
   *)
-  ; mutable review_goal                        : Review_goal.t Or_error.t Or_pending.t
-  ; mutable indexed_diff4s                     : Indexed_diff4s.t Or_error.t Or_pending.t
-  ; mutable brain                              : Brain_with_goal.t
-  ; mutable current_session                    : Review_session.t option
-  ; register_catch_up                          : Register_catch_up.t
-  ; feature_cache_invalidator                  : Cached.Invalidator.t
+  ; mutable review_goal               : Review_goal.t Or_error.t Or_pending.t
+  ; mutable indexed_diff4s            : Indexed_diff4s.t Or_error.t Or_pending.t
+  ; mutable brain                     : Brain_with_goal.t
+  ; mutable current_session           : Review_session.t option
+  ; register_catch_up                 : Register_catch_up.t
+  ; feature_cache_invalidator         : Cached.Invalidator.t
+  ; dynamic_upgrade_state             : Dynamic_upgrade.State.t
   }
 [@@deriving fields, sexp_of]
 
@@ -194,6 +195,7 @@ let invariant t =
         (check (Or_pending.invariant (Or_error.invariant Indexed_diff4s.invariant)))
       ~register_catch_up:ignore
       ~feature_cache_invalidator:(check Cached.Invalidator.invariant)
+      ~dynamic_upgrade_state:(check Dynamic_upgrade.State.Reference.invariant)
       ~serializer:(check Serializer.invariant))
 ;;
 
@@ -423,7 +425,9 @@ let undefined = error_string "undefined -- please report Iron bug"
 let create user_name ~is_whole_feature_follower ~is_whole_feature_reviewer
       ~is_using_locked_sessions
       ~cr_comments ~base_facts
-      ~register_catch_up ~feature_cache_invalidator serializer =
+      ~register_catch_up ~feature_cache_invalidator
+      ~dynamic_upgrade_state
+      serializer =
   Serializer.add_cache_invalidator serializer feature_cache_invalidator;
   Serializer.set_contents serializer
     ~file:user_name_file user_name (module Persist.User_name_file);
@@ -442,6 +446,7 @@ let create user_name ~is_whole_feature_follower ~is_whole_feature_reviewer
     ; current_session = None
     ; register_catch_up
     ; feature_cache_invalidator
+    ; dynamic_upgrade_state
     ; serializer
     }
   in
@@ -545,6 +550,7 @@ cannot create review session -- the feature has problems that need to be fixed"
         ~tip:(Review_goal.tip_rev review_goal)
         ~base:(Review_goal.base_rev review_goal)
         ~feature_cache_invalidator:t.feature_cache_invalidator
+        ~dynamic_upgrade_state:t.dynamic_upgrade_state
         t.serializer
     in
     set_current_session t (Some session);
@@ -1196,7 +1202,8 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
   fun ~whole_feature_followers ~whole_feature_reviewers
     ~users_using_locked_sessions
     ~review_goal ~indexed_diff4s ~register_catch_up
-    ~feature_cache_invalidator ->
+    ~feature_cache_invalidator
+    ~dynamic_upgrade_state ->
     Serializer.add_cache_invalidator serializer feature_cache_invalidator;
     let is_whole_feature_follower =
       Set.mem whole_feature_followers user_name in
@@ -1211,8 +1218,8 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
              ~is_whole_feature_reviewer))
     in
     let current_session =
-      Option.map current_session
-        ~f:(fun f -> f ~user_name ~feature_cache_invalidator)
+      Option.map current_session ~f:(fun f ->
+        f ~user_name ~feature_cache_invalidator ~dynamic_upgrade_state)
     in
     let t =
       { user_name
@@ -1228,11 +1235,11 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
       ; current_session
       ; register_catch_up
       ; feature_cache_invalidator
+      ; dynamic_upgrade_state
       ; serializer
       }
     in
     set_crs t crs ~persist:false;
     maybe_advance_brain t;
-    t
-)
+    t)
 ;;

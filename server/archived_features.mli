@@ -19,7 +19,9 @@ type t [@@deriving sexp_of]
 
 include Invariant.S with type t := t
 
-val deserializer : t Deserializer.t
+val deserializer
+  : dynamic_upgrade_state:Dynamic_upgrade.State.t
+  -> t Deserializer.t
 
 (** [feature_dir archived_feature] returns the directory where [archived_feature] is
     serialized, which is of the form [$YYYY/$MM/$DD/$FEATURE_ID]. *)

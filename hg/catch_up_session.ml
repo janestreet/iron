@@ -156,7 +156,7 @@ module Stable = struct
             ; is_whole_feature_reviewer =
                 (* When Iron was using V2 the logic was such that review client would
                    always show both the attributes and the contents for any diff, so this
-                   has the desired effect *)
+                   has the desirated effect *)
                 true
             }
         ; diff4s_in_session
@@ -264,7 +264,7 @@ module Persist = struct
         (Stable.Creation.Context)
         (struct let version = 3 end)
         (Stable.Creation.V3)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 1 end)
         (Stable.Creation.V2)
   end
@@ -272,7 +272,7 @@ module Persist = struct
     include Persistent.Make
         (struct let version = 3 end)
         (Stable.Action_query.V3)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 1 end)
         (Stable.Action_query.V2)
   end

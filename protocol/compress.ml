@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V3 = struct
@@ -68,21 +68,9 @@ module Stable = struct
   end
 
   module Reaction = struct
-    module V1 = struct
-      type t = unit
-      [@@deriving bin_io, sexp]
-
-      let%expect_test _ =
-        print_endline [%bin_digest: t];
-        [%expect {| 86ba5df747eec837f0b391dd49f33f9e |}]
-      ;;
-
-      let of_model t = t
-    end
-
+    module V1 = Unit
     module Model = V1
   end
-
 end
 
 include Iron_versioned_rpc.Make

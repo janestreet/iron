@@ -56,7 +56,7 @@ module Stable = struct
       type t =
         { bookmarks_to_rerun : string list
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

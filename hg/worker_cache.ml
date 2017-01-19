@@ -146,7 +146,7 @@ module Status = struct
   New values computed by the worker are ignored."
       | Write_only -> "\
   No cached values are sent to the worker.
-  New values computed by the worker are added to the cache on the server."
+  New alues computed by the worker are added to the cache on the server."
       | Read_write -> "\
   Relevant cached values are sent to the worker.
   New values computed by the worker are added to the cache for later use."
@@ -333,7 +333,7 @@ module Persist = struct
     include Persistent.Make
         (struct let version = 2 end)
         (Stable.Properties.V2)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 1 end)
         (Stable.Properties.V1)
   end

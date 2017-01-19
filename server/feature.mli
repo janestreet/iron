@@ -5,7 +5,9 @@ type t [@@deriving sexp_of]
 
 include Invariant.S with type t := t
 
-val deserializer : t Deserializer.t
+val deserializer
+  : dynamic_upgrade_state:Dynamic_upgrade.State.t
+  -> t Deserializer.t
 
 (** Accessors. *)
 val base                      : t -> Rev.t
@@ -82,16 +84,17 @@ val to_protocol
     if [create_exn] raises. *)
 val create_exn
   :  _ Query.t
-  -> feature_id       : Feature_id.t
-  -> feature_path     : Feature_path.t
-  -> owners           : User_name.t list
-  -> is_permanent     : bool
-  -> description      : string
-  -> base             : Rev.t
-  -> tip              : Rev.t
-  -> rev_zero         : Rev.t
-  -> remote_repo_path : Remote_repo_path.t option
-  -> serializer       : Serializer.t Lazy.t
+  -> feature_id            : Feature_id.t
+  -> feature_path          : Feature_path.t
+  -> owners                : User_name.t list
+  -> is_permanent          : bool
+  -> description           : string
+  -> base                  : Rev.t
+  -> tip                   : Rev.t
+  -> rev_zero              : Rev.t
+  -> remote_repo_path      : Remote_repo_path.t option
+  -> dynamic_upgrade_state : Dynamic_upgrade.State.t
+  -> serializer            : Serializer.t Lazy.t
   -> t
 
 val change

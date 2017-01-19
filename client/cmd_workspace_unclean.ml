@@ -306,11 +306,34 @@ let show_command =
     )
 ;;
 
+let remove_machine_command =
+  Command.async'
+    ~summary:"clear unclean workspaces associated with a pair \
+              USER * MACHINE on the server"
+    ~readme:(fun () -> "\
+This command updates the set of workspaces known to be unclean by the server for a given
+USER: It removes from the unclean state all workspaces located on the given MACHINE.
+
+Running the command does not affect local workspaces.  It has no effect on the local disk
+on the host it is run, even if this host is indeed the MACHINE in question.
+
+The command needs to be run by the USER, otherwise admin privileges are required.
+")
+    (let open Command.Let_syntax in
+     let%map_open () = return ()
+     and for_ = for_
+     and machine = anon ("MACHINE" %: (Arg_type.create Machine.of_string))
+     in
+     fun () ->
+       With_unclean_workspaces.rpc_to_server_exn (Remove_machine (for_, machine)))
+;;
+
 let command =
   Command.group
     ~summary:"manage unclean workspaces"
     [ "check"         , check_command
     ; "list"          , list_command
+    ; "remove-machine", remove_machine_command
     ; "show"          , show_command
     ; "update-server" , update_server_command
     ]

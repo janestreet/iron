@@ -45,7 +45,7 @@ module Declaration = struct
     | More_than_max_reviewers  of bool
     (** Apply current attribute values to a set of files. *)
     | Apply_to                 of File_set.t
-    (** Enter a local scope for specifying attributes. *)
+    (** Enter a local scope for specifying attribtues. *)
     | Local                    of u sexp_list
     (** Use this .fe.sexp in at least one subdirectory. *)
     | Used_in_subdirectory
@@ -450,119 +450,4 @@ let eval ts ~dot_fe ~used_in_subdirectory ~used_in_subdirectory_declaration_is_a
           ]) : Sexp.t list)
         ];
     File_name.Map.of_alist_exn alist)
-;;
-
-let establish ({ Review_attributes.
-                 build_projections
-               ; tags
-               ; followers
-               ; is_read_by_whole_feature_reviewers = _
-               ; more_than_max_reviewers
-               ; owner
-               ; review_obligation
-               ; scrutiny_name
-               ; scrutiny_level                     = _
-               ; fewer_than_min_reviewers
-               } as attributes)
-      ~given file_set =
-  let if_changed field equal (t : Declaration.syntax) =
-    match given with
-    | None -> [ t ]
-    | Some prev ->
-      if equal (Field.get field prev) (Field.get field attributes)
-      then [ ]
-      else [ t ]
-  in
-  let module Fields = Review_attributes.Fields in
-  if_changed Fields.build_projections Build_projection_name.Set.equal
-    (Build_projections (Set.to_list build_projections))
-  @ if_changed Fields.tags Tag.Set.equal
-      (Tags (Set.to_list tags))
-  @ if_changed Fields.followers User_name.Set.equal
-      (Followers
-         (Set.to_list followers
-          |> List.map ~f:(fun user ->
-            Followers.Users [ User_name.to_unresolved_name user ])))
-  @ if_changed Fields.scrutiny_name Scrutiny_name.equal
-      (Scrutiny scrutiny_name)
-  @ if_changed Fields.owner User_name.equal
-      (Owner (User_name.to_unresolved_name owner))
-  @ (if is_none given && not (Review_obligation.has_a_may_reviewer review_obligation)
-     then []
-     else [ Declaration.Reviewed_by (Reviewed_by.synthesize review_obligation) ])
-  @ [ let local = [] in
-      let local : Declaration.syntax list =
-        if fewer_than_min_reviewers
-        then Fewer_than_min_reviewers true :: local
-        else local
-      in
-      let local : Declaration.syntax list =
-        if more_than_max_reviewers
-        then More_than_max_reviewers true :: local
-        else local
-      in
-      if List.is_empty local
-      then Apply_to file_set
-      else Local (And_sexp.creates (local @ [ Apply_to file_set ]))
-    ]
-;;
-
-let synthesize attributes_by_file =
-  let attributes_by_file =
-    (* If a [.fe.sexp] has no reviewers and isn't ignored, then make its owner the
-       reviewer. *)
-    Map.change attributes_by_file File_name.dot_fe ~f:(function
-      | None -> None
-      | Some review_attributes ->
-        if Review_obligation.has_a_may_reviewer
-             review_attributes.Review_attributes.review_obligation
-        || Scrutiny_level.equal review_attributes.scrutiny_level
-             Scrutiny_level.ignored
-        then Some review_attributes
-        else
-          Some (Review_attributes.with_review_obligation review_attributes
-                  ~review_obligation:
-                    (Review_obligation.all_of
-                       (User_name.Set.singleton review_attributes.owner))))
-  in
-  let universe = File_name.Set.of_list (Map.keys attributes_by_file) in
-  let files_by_attributes =
-    attributes_by_file
-    |> Map.to_alist
-    |> List.map ~f:(fun (file, attributes) -> (attributes, file))
-    |> Review_attributes.Map.of_alist_multi
-    |> Map.to_alist
-    |> List.map ~f:(fun (attributes, files) ->
-      let file_set =
-        File_set.synthesize ~desired:(File_name.Set.of_list files) ~universe
-      in
-      (attributes, file_set, List.length files))
-    |> List.sort ~cmp:
-         (* The sort order agrees with the order in which attributes are
-            [establish]ed. *)
-         (Comparable.lexicographic
-            [ (fun ((a1 : Review_attributes.t), _, _) (a2, _, _) ->
-                Set.length a1.build_projections - Set.length a2.build_projections)
-            ; (fun (a1, _, _) (a2, _, _) ->
-                 Build_projection_name.Set.compare
-                   a1.build_projections a2.build_projections)
-            ; (fun (a1, _, _) (a2, _, _) ->
-                 - (Scrutiny_level.compare a1.scrutiny_level a2.scrutiny_level))
-            ; (fun (a1, _, _) (a2, _, _) -> User_name.compare a1.owner a2.owner)
-            ; (fun (_, _, n1) (_, _, n2) -> n1 - n2)
-            ])
-  in
-  let syntaxes =
-    let _, accum =
-      List.fold files_by_attributes ~init:(None, [])
-        ~f:(fun (prev_attributes, accum) (attributes, file_set, _) ->
-          let accum =
-            establish attributes ~given:prev_attributes file_set
-            :: accum
-          in
-          Some attributes, accum)
-    in
-    List.concat (List.rev accum)
-  in
-  And_sexp.creates (And_sexp.creates syntaxes)
 ;;

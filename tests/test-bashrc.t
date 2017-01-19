@@ -16,9 +16,11 @@ Create some features.
   $ fe create root/child1 -desc child1
   $ fe create root/child2 -desc child2 -owner owner
 
-Define a helper.
+Define helpers.
 
-  $ function pwd () { builtin pwd | sed "s;$HOME;\$HOME;"; }
+  $ function rewrite_pwd { sed "s;$HOME;\$HOME;"; }
+
+  $ function pwd () { builtin pwd | rewrite_pwd; }
 
 Cdw without argument.
 
@@ -39,7 +41,7 @@ Cdc without argument.
 
 Cdf - when there was no previous feature.
 
-  $ cdf - && pwd
+  $ cdf -
   cdf: OLD_CDF_FEATURE not set
   [1]
 
@@ -55,7 +57,7 @@ Cdf - when previous workspace exists.
   $HOME/workspaces/root/child1/+share+
   $ cdf root/child2 && pwd
   $HOME/workspaces/root/child2/+share+
-  $ cdf - && pwd
+  $ cdf - | rewrite_pwd
   $HOME/workspaces/root/child1/+share+
   $ cdw
 

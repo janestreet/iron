@@ -61,6 +61,11 @@ val match_
   -> [ `Of_partial_name | `Of_full_name ]
   -> (t -> string option) Lazy.t
 
+(** If you want to complete on several sets of feature paths at the same time,
+    this should be done by combining the iteration functions into one big
+    iteration function and calling [complete] once on that.
+    Calling [complete] many times and concatenating the result works in simple
+    cases but not all the time. *)
 val complete
   :  iter_features:(f:(t -> unit) -> unit)
   -> prefix:string

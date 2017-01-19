@@ -892,6 +892,7 @@ let grep_conflicts_exn ?(below = Path_in_repo.root) repo_root ~grep_display_opti
   in
   let grep_process = ok_exn grep_process in
   let grep_in = Process.stdin grep_process in
+  Writer.set_buffer_age_limit grep_in `Unlimited;
   List.iter files_to_grep ~f:(fun file ->
     Writer.write_line grep_in (Relpath.to_string file));
   (* According to its man page, [xargs] returns status 123 if any of the
@@ -930,7 +931,7 @@ let manifest repo_root source =
            -u --unknown             show only unknown (not tracked) files
          v}
 
-         This is actually very slightly wrong because a file that is both added and deleted
+         This is actually very slighly wrong because a file that is both added and deleted
          from the working copy would have status 'deleted' but hg commit would be
          perfectly happy to succeed while ignoring this file.  *)
       hg ~repo_root "status" ~args:[ "-acdmn" ] ~how:Capture_stdout
@@ -1312,7 +1313,7 @@ let phase repo_root revision =
     | "secret" -> `Secret
     | _ ->
       raise_s
-        [%sexp (sprintf "unexpected output while finding phase of %s" rev : string)
+        [%sexp (sprintf "unexepected output while finding phase of %s" rev : string)
              , (line : string)
         ]
 ;;
@@ -1796,6 +1797,7 @@ let unix_sort ?(args = []) lines =
   let%bind sorter = Process.create ~prog:"/bin/sort" ~args () in
   let sorter = ok_exn sorter in
   let sort_input = Process.stdin sorter in
+  Writer.set_buffer_age_limit sort_input `Unlimited;
   List.iter lines ~f:(fun line -> Writer.write_line sort_input line);
   let%bind () = Writer.close sort_input in
   Process.collect_stdout_lines_and_wait sorter |> Deferred.map ~f:ok_exn
@@ -1874,6 +1876,7 @@ let cat repo_root rev files ~dir =
     let%bind process = hg ~repo_root "cat" ~how:Create_process ~args in
     let process = ok_exn process in
     let to_hg_cat = Process.stdin process in
+    Writer.set_buffer_age_limit to_hg_cat `Unlimited;
     List.iter files ~f:(fun file ->
       Writer.write_line to_hg_cat ("path:" ^ Path_in_repo.to_string file));
     let%bind () = Writer.close to_hg_cat in

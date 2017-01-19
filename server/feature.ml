@@ -231,10 +231,10 @@ module Persist = struct
     include Persistent.Make
         (struct let version = 3 end)
         (Released_feature.Stable.V3)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 2 end)
         (Released_feature.Stable.V2)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 1 end)
         (Released_feature.Stable.V1)
   end
@@ -303,6 +303,7 @@ type t =
   ; mutable base_facts                : Rev_facts.t Or_pending.t
   ; mutable tip_facts                 : Rev_facts.t Or_pending.t
   ; allow_review_for : (Allow_review_for.t, read_write) Ref.Permissioned.t
+  ; mutable dynamic_upgrade_state     : Dynamic_upgrade.State.t
   ; mutable serializer                : Serializer.t option
   (* [diff_from_base_to_tip] is the *entire* diff, including even things that
      whole-feature reviewers and file reviewers never see.  This is useful to support
@@ -372,8 +373,8 @@ let set_cached_attributes t ~line_count_by_user ~next_steps ~review_analysis =
      itself (rec) and thus cannot be built before the feature. *)
   invalidate_dependents t;
   t.line_count_by_user_cached <- line_count_by_user;
-  t.next_steps_cached <- next_steps;
-  t.review_analysis_cached <- review_analysis;
+  t.next_steps_cached         <- next_steps;
+  t.review_analysis_cached    <- review_analysis;
 ;;
 
 let line_count_by_user t = Cached.get t.line_count_by_user_cached
@@ -632,6 +633,7 @@ let invariant t =
       ~included_features:(check (List.iter ~f:Released_feature.invariant))
       ~queries:(check (fun queries ->
         List.iter queries ~f:(Query.invariant Action.invariant)))
+      ~dynamic_upgrade_state:(check Dynamic_upgrade.State.Reference.invariant)
       ~serializer:(check (Option.iter ~f:Serializer.invariant))
       ~cr_soons:
         (check (Or_pending.invariant (Or_error.invariant Cr_soons.In_feature.invariant)))
@@ -754,7 +756,7 @@ let set_latest_release t latest_release =
     latest_release (module Persist.Latest_release);
 ;;
 
-let create_internal creation ~serializer =
+let create_internal creation ~dynamic_upgrade_state ~serializer =
   let { Attributes.
         feature_id
       ; feature_path
@@ -808,6 +810,7 @@ let create_internal creation ~serializer =
   ; review_analysis_cached = Cached.uninitialized ~name:"Feature.review_analysis" ()
   ; included_features = []
   ; queries = []
+  ; dynamic_upgrade_state
   ; serializer
   ; cr_soons = pending
   ; properties = Property.Table.create ()
@@ -823,7 +826,7 @@ let create_internal creation ~serializer =
 
 let create_exn query
       ~feature_id ~feature_path ~owners ~is_permanent ~description ~base ~tip ~rev_zero
-      ~remote_repo_path ~serializer =
+      ~remote_repo_path ~dynamic_upgrade_state ~serializer =
   if List.is_empty owners
   then failwith "feature must have an owner"
   else if is_some remote_repo_path && not (Feature_path.is_root feature_path)
@@ -846,7 +849,10 @@ let create_exn query
         }
     in
     let serializer = force serializer in
-    let t = create_internal creation ~serializer:(Some serializer) in
+    let t =
+      create_internal creation ~dynamic_upgrade_state
+        ~serializer:(Some serializer)
+    in
     Serializer.add_cache_invalidator serializer t.cache_invalidator;
     set_cr_soons t t.cr_soons;
     let pending = pending_now () in
@@ -875,18 +881,18 @@ let review_goal t =
 ;;
 
 let record t query action =
-  let recording_query_will_allow_to_rollback =
+  let allowed_from =
     match (action : Action.t) with
     (* Note to devs: please keep at least this line so that it is easy to add/remove
        lines there *)
-    | #Action.t -> true
+    | #Action.t -> Dynamic_upgrade.U1
   in
-  if not recording_query_will_allow_to_rollback
-  then
+  match Dynamic_upgrade.commit_to_upgrade t.dynamic_upgrade_state ~allowed_from with
+  | `Disabled ->
     (* Make sure to invalidate the cache in the case where the event are not recorded.
        This is handled by the serializer directly in the other case. *)
     invalidate_dependents t
-  else (
+  | `Ok ->
     let query = Query.with_action query action in
     t.queries <- query :: t.queries;
     match t.serializer with
@@ -899,7 +905,7 @@ let record t query action =
       ()
     | Some serializer ->
       Serializer.append_to serializer ~file:queries_file query
-        (module Persist.Action_query))
+        (module Persist.Action_query)
 ;;
 
 let include_released_feature t released_feature =
@@ -1683,38 +1689,38 @@ let change t query (updates : Change_feature.Update.t list) =
     update, Result.bind (action_for update) ~f:(apply_change_internal t query))
 ;;
 
-let deserializer = Deserializer.with_serializer (fun serializer ->
-  let open Deserializer.Let_syntax in
-  let%map_open () = return ()
-  and cr_soons =
-    one (module Persist.Cr_soons_or_pending) ~in_file:cr_soons_file
-  and creation =
-    one (module Persist.Creation) ~in_file:creation_file
-  and queries  =
-    sequence_of (module Persist.Action_query) ~in_file:queries_file
-  and diff_from_base_to_tip =
-    one (module Persist.Diff_from_base_to_tip) ~in_file:diff_from_base_to_tip_file
-  and diff4s = one (module Persist.Diff4s_file) ~in_file:diff4s_file
-  and included_features =
-    sequence_of (module Persist.Included_feature) ~in_file:included_features_file
-  and allow_review_for =
-    one (module Persist.Allow_review_for) ~in_file:allow_review_for_file
-      ~default:Allow_review_for.all
-  and latest_release =
-    one_opt (module Persist.Latest_release) ~in_file:latest_release_file
-  in
-  let t = create_internal creation ~serializer:None in
-  List.iter queries ~f:(fun query -> apply_query_internal t query);
-  set_diffs_internal t diff_from_base_to_tip diff4s;
-  set_allow_review_for_internal t allow_review_for;
-  set_cr_soons_internal t cr_soons;
-  Option.iter latest_release ~f:(set_latest_release_internal t);
-  t.included_features <- List.rev included_features;
-  t.serializer <- Some serializer;
-  Serializer.add_cache_invalidator serializer t.cache_invalidator;
-  assert (Option.is_none t.hydra_master_state);
-  (* See the comment on [needs_bookmark_update] for why we have to refresh here. *)
-  refresh_next_bookmark_update t;
-  t
-)
+let deserializer ~dynamic_upgrade_state =
+  Deserializer.with_serializer (fun serializer ->
+    let open Deserializer.Let_syntax in
+    let%map_open () = return ()
+    and cr_soons =
+      one (module Persist.Cr_soons_or_pending) ~in_file:cr_soons_file
+    and creation =
+      one (module Persist.Creation) ~in_file:creation_file
+    and queries  =
+      sequence_of (module Persist.Action_query) ~in_file:queries_file
+    and diff_from_base_to_tip =
+      one (module Persist.Diff_from_base_to_tip) ~in_file:diff_from_base_to_tip_file
+    and diff4s = one (module Persist.Diff4s_file) ~in_file:diff4s_file
+    and included_features =
+      sequence_of (module Persist.Included_feature) ~in_file:included_features_file
+    and allow_review_for =
+      one (module Persist.Allow_review_for) ~in_file:allow_review_for_file
+        ~default:Allow_review_for.all
+    and latest_release =
+      one_opt (module Persist.Latest_release) ~in_file:latest_release_file
+    in
+    let t = create_internal creation ~dynamic_upgrade_state ~serializer:None in
+    List.iter queries ~f:(fun query -> apply_query_internal t query);
+    set_diffs_internal t diff_from_base_to_tip diff4s;
+    set_allow_review_for_internal t allow_review_for;
+    set_cr_soons_internal t cr_soons;
+    Option.iter latest_release ~f:(set_latest_release_internal t);
+    t.included_features <- List.rev included_features;
+    t.serializer <- Some serializer;
+    Serializer.add_cache_invalidator serializer t.cache_invalidator;
+    assert (Option.is_none t.hydra_master_state);
+    (* See the comment on [needs_bookmark_update] for why we have to refresh here. *)
+    refresh_next_bookmark_update t;
+    t)
 ;;

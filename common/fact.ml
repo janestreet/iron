@@ -189,7 +189,7 @@ module Action = struct
     include Persistent.Make
         (struct let version = 2 end)
         (Stable.V2)
-    include Register_read_old_persist
+    include Register_read_old_version
         (struct let version = 1 end)
         (Stable.V1)
   end

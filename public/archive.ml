@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V1 = struct
@@ -23,7 +23,6 @@ module Stable = struct
 
   module Reaction = struct
     module V1 = Unit
-
     module Model = V1
   end
 end

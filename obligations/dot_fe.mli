@@ -21,6 +21,4 @@ val eval
   -> aliases                                     : User_name_by_alternate_name.t
   -> Review_attributes.t File_name.Map.t Or_error.t
 
-val synthesize : Review_attributes.t File_name.Map.t -> t
-
 val has_used_in_subdirectory : t -> bool

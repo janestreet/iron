@@ -158,9 +158,9 @@ module Make
   module Model = struct
     include Name
     type action   = Action.t                                             [@@deriving bin_io, sexp]
-    type reaction = Reaction.t                                           [@@deriving bin_io, sexp]
+    type reaction = Reaction.t                                           [@@deriving bin_io, sexp_of]
     type query    = Action.t Query.Stable.V1.t                           [@@deriving bin_io, sexp]
-    type response = Reaction.t Or_error.Stable.V1.t Response.Stable.V1.t [@@deriving bin_io, sexp]
+    type response = Reaction.t Or_error.Stable.V1.t Response.Stable.V1.t [@@deriving bin_io, sexp_of]
   end
 
   include Model
@@ -318,9 +318,9 @@ module Make_pipe_rpc
   module Model = struct
     include Name
     type action   = Action.t                      [@@deriving bin_io, sexp]
-    type reaction = Reaction.t                    [@@deriving bin_io, sexp]
+    type reaction = Reaction.t                    [@@deriving bin_io, sexp_of]
     type query    = Action.t Query.Stable.V1.t    [@@deriving bin_io, sexp]
-    type response = reaction Or_error.Stable.V2.t [@@deriving bin_io, sexp]
+    type response = reaction Or_error.Stable.V2.t [@@deriving bin_io, sexp_of]
     type error    = Error.Stable.V2.t             [@@deriving bin_io, sexp]
   end
 

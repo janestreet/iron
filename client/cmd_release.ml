@@ -173,6 +173,7 @@ let command =
      in
      fun () ->
        let feature_path = ok_exn feature_path in
+       let included_features_order = ok_exn included_features_order in
        main { feature_path; for_; included_features_order }
     )
 ;;

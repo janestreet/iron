@@ -10,7 +10,7 @@ module Stable = struct
         ; at           : Time.V1_round_trippable.t
         ; is_permanent : bool
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -24,7 +24,7 @@ module Stable = struct
         ; reason : string
         ; at     : Time.V1_round_trippable.t
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -41,6 +41,29 @@ module Stable = struct
         ; reason
         ; at
         }
+      ;;
+    end
+
+    module Model = V2
+  end
+
+  module Sorted_by = struct
+
+    module V2 = struct
+      type t =
+        [ `Name
+        | `Release_time
+        | `Release_time_decreasing
+        ]
+      [@@deriving bin_io, compare, sexp]
+    end
+
+    module V1 = struct
+      type t = [ `Name | `Release_order ] [@@deriving bin_io]
+
+      let to_v2 = function
+        | `Name as name  -> name
+        | `Release_order -> `Release_time
       ;;
     end
 
@@ -92,7 +115,7 @@ module Stable = struct
       ; inheritable_attributes    : Inheritable_attributes.V1.t
       }
 
-    [@@deriving bin_io, fields, sexp]
+    [@@deriving bin_io, fields, sexp_of]
 
     let%expect_test _ =
       print_endline [%bin_digest: t];
@@ -1418,18 +1441,23 @@ module Locked = struct
   [@@deriving sexp_of]
 end
 
+module Sorted_by = struct
+  type t = Stable.Sorted_by.Model.t [@@deriving compare, sexp_of]
+end
+
 let released_features t ~sorted_by =
   let module Released_feature = Iron_hg.Std.Released_feature in
-  let r = ref [] in
-  let rec aux (released_feature : Released_feature.t) =
-    r := released_feature :: !r;
-    List.iter ~f:aux released_feature.includes;
+  let by_release_time_decreasing =
+    let rec aux r (released_feature : Released_feature.t) =
+      List.fold ~init:(released_feature :: r) ~f:aux released_feature.includes
+    in
+    List.fold ~init:[] ~f:aux t.included_features
   in
-  List.iter ~f:aux t.included_features;
-  match sorted_by with
-  | `Release_order -> List.rev !r
+  match (sorted_by : Sorted_by.t) with
+  | `Release_time_decreasing -> by_release_time_decreasing
+  | `Release_time -> List.rev by_release_time_decreasing
   | `Name ->
-    List.sort !r ~cmp:(fun (r1 : Released_feature.t) r2 ->
+    List.sort by_release_time_decreasing ~cmp:(fun (r1 : Released_feature.t) r2 ->
       Feature_path.compare r1.feature_path r2.feature_path)
 ;;
 

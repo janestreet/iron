@@ -2,22 +2,12 @@ open! Core.Std
 open! Async.Std
 open! Import
 
-let remove_machine =
-  Command.async'
-    ~summary:"clear unclean workspaces associated with a pair USER * MACHINE on the server"
-    (let open Command.Let_syntax in
-     let%map_open () = return ()
-     and for_ = for_
-     and machine = anon ("MACHINE" %: (Arg_type.create Machine.of_string))
-     in
-     fun () ->
-       With_unclean_workspaces.rpc_to_server_exn (Remove_machine (for_, machine))
-    )
-;;
-
 let remove_user =
   Command.async'
     ~summary:"clear unclean workspaces associated with a USER on the server"
+    ~readme:(fun () -> "\
+This command may be run by the USER, otherwise admin privileges are required.
+")
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and user = anon ("USER" %: (Arg_type.create User_name.of_string))
@@ -34,7 +24,8 @@ let command =
       concat [ "\
 Operations side effecting someone else's state require admin privileges.
 "])
-    [ "remove-machine", remove_machine
+    [ "remove-machine", Cmd_has_moved.command
+                          ~moved_to:[ "fe"; "workspace"; "unclean"; "remove-machine" ]
     ; "remove-user"   , remove_user
     ]
 ;;

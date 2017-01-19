@@ -455,3 +455,39 @@ Check that [fe show] displays the base and tip as of before the latest release.
 
   $ [ ${nested_child_base} = $(fe show root/app/child/nested -archived -base) ]
   $ [ ${nested_child_tip}  = $(fe show root/app/child/nested -archived -tip)  ]
+
+  $ hg update root >/dev/null
+  $ fe create root/aap2 -d "another app"
+  $ echo 5 > file; hg commit -m 5
+  $ fe enable
+  $ feature_to_server root/aap2 -fake-valid
+  $ fe change -add-whole-feature-reviewers user1
+  $ IRON_USER=user1 fe second
+  $ make-releasable root/aap2
+  $ fe release root/aap2
+
+  $ fe show root -included-features -order-included-features-by-release-time | sexp query each
+  root/app
+  root/app/child
+  root/app/child/nested
+  root/aap2
+
+  $ fe show root -included-feature -order-included-features-by-decreasing-release-time | sexp query each
+  root/aap2
+  root/app/child/nested
+  root/app/child
+  root/app
+
+  $ fe show root -included-features | sexp query each
+  root/aap2
+  root/app
+  root/app/child
+  root/app/child/nested
+
+  $ fe show root -included-features \
+  >  -order-included-features-by-release-time \
+  >  -order-included-features-by-decreasing-release-time
+  ("These flags are mutually exclusive."
+   -order-included-features-by-decreasing-release-time
+   -order-included-features-by-release-time)
+  [1]

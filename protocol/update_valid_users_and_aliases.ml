@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module User_aliases = struct
     module V1 = struct
@@ -15,6 +15,7 @@ module Stable = struct
         [%expect {| 1b38bb8f45e9213845af6e2c1e5daee7 |}]
       ;;
     end
+    module Model = V1
   end
 
   module Action = struct
@@ -32,10 +33,12 @@ module Stable = struct
 
       let to_model t = t
     end
+    module Model = V2
   end
 
   module Reaction = struct
     module V1 = Unit
+    module Model = V1
   end
 end
 
@@ -45,6 +48,6 @@ include Iron_versioned_rpc.Make
     (Stable.Action.V2)
     (Stable.Reaction.V1)
 
-module User_aliases = Stable.User_aliases.V1
-module Action       = Stable.Action.V2
-module Reaction     = Stable.Reaction.V1
+module User_aliases = Stable.User_aliases. Model
+module Action       = Stable.Action.       Model
+module Reaction     = Stable.Reaction.     Model

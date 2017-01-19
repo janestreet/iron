@@ -18,7 +18,7 @@
 │ create-feature                             │ 5, 6                                       │
 │ de-alias-feature                           │ 1, 2                                       │
 │ define-typos                               │ 1                                          │
-│ dump                                       │ 12                                         │
+│ dump                                       │ 13                                         │
 │ enable-review                              │ 2                                          │
 │ expect-next-base-update                    │ 1                                          │
 │ fact-action                                │ 2                                          │
@@ -107,6 +107,7 @@
 │ user-set-get                               │ 1, 2                                       │
 │ with-archived-features-cache               │ 1                                          │
 │ with-cached-attributes-errors              │ 1                                          │
+│ with-dynamic-upgrade-state                 │ 1                                          │
 │ with-event-subscriptions                   │ 1                                          │
 │ with-timed-event-errors                    │ 1                                          │
 │ with-unclean-workspaces                    │ 1                                          │

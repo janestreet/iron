@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V4 = struct
@@ -120,7 +120,7 @@ module Stable = struct
         { disposition           : Disposition.V3.t
         ; send_release_email_to : Email_address.V1.Set.t
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -129,8 +129,6 @@ module Stable = struct
 
       let of_model m = m
     end
-
-    module Model = V4
 
     module V3 = struct
       type t =
@@ -151,6 +149,8 @@ module Stable = struct
         }
       ;;
     end
+
+    module Model = V4
   end
 end
 
@@ -173,9 +173,9 @@ include Register_old_rpc
     (Stable.Action.V2)
     (Stable.Reaction.V3)
 
-module Action      = Stable.Action.     Model
-module Reaction    = Stable.Reaction.   Model
-module Disposition = Stable.Disposition.Model
+module Action      = Stable.Action.      Model
+module Reaction    = Stable.Reaction.    Model
+module Disposition = Stable.Disposition. Model
 
 module Reasons_for_not_archiving = struct
   include Stable.Reasons_for_not_archiving.V1

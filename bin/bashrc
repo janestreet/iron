@@ -49,7 +49,7 @@ function cdf {
             echo >&2 "cdf: OLD_CDF_FEATURE not set"
             return 1
         else
-            private_cdf "$OLD_CDF_FEATURE" "$starting_feature"
+            private_cdf "$OLD_CDF_FEATURE" "$starting_feature" && builtin pwd
         fi
     else
         # If stdin is a terminal, we would like to give a chance to the user to

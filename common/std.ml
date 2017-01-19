@@ -24,6 +24,7 @@ module Deserializer                = Deserializer
 module Diamond                     = Diamond
 module Diff4_class                 = Diff4_class
 module Digest                      = Iron_digest
+module Dynamic_upgrade             = Dynamic_upgrade
 module Email_address               = Email_address
 module Enum                        = Enum
 module Error_context               = Error_context

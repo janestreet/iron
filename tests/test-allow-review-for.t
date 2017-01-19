@@ -59,6 +59,17 @@
     (reviewed_by (Users (user2))))
    ((reviewed_for (Users (jdoe3))) (reviewed_by All_users)))
 
+One can also show the setting built off of the local state of the obligations
+files.  This may be useful when working on some local change to that setting,
+for example to verify a changeset before pushing it.
+
+  $ fe obligations allow-review-for
+  (((reviewed_for (Users (user1)))
+    (reviewed_by (Users (unix-login-for-testing user2))))
+   ((reviewed_for (Users (unix-login-for-testing)))
+    (reviewed_by (Users (user2))))
+   ((reviewed_for (Users (jdoe3))) (reviewed_by All_users)))
+
 Now review for others.  We turn off display_ascii so that we begin
 review (and potentially fail) rather than just printing the review
 session.

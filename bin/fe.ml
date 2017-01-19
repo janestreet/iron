@@ -33,6 +33,7 @@ let internal =
     ; "de-alias"                     , Iron_client.Cmd_de_alias_feature.command
     ; "diffs"                        , Iron_hg.Diff4s_for_diamond.command
     ; "dump"                         , Iron_client.Cmd_dump.command
+    ; "dynamic-upgrade"              , Iron_client.Cmd_dynamic_upgrade_internal.command
     ; "event-subscriptions"          , Iron_client.Cmd_event_subscriptions_internal.command
     ; "fully-reviewed-edge"          , Iron_client.Cmd_fully_reviewed_edge.internal
     ; "fully-reviewed-revision"      , Iron_client.Cmd_fully_reviewed_revision.internal

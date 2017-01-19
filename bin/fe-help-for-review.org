@@ -1594,6 +1594,7 @@
 :                                                revs
 :   dump                                         output part of server internal
 :                                                state as a sexp
+:   dynamic-upgrade                              dynamic upgrade of the server
 :   event-subscriptions                          deal with long standing
 :                                                connections to Iron which consume
 :                                                asynchronous events
@@ -2121,6 +2122,50 @@
 :   [-help]  print this help text and exit
 :            (alias: -?)
 
+*** dynamic-upgrade
+
+: dynamic upgrade of the server
+: 
+:   fe.exe internal dynamic-upgrade SUBCOMMAND
+: 
+: When a roll introduces new persisted types, typically there is a period of time directly
+: following the roll during which we prevent values from being persisted if they cannot be
+: deserialized by the previous binary.  The reason is that we want to be able to roll back:
+: the previous binary needs to be able to reload the persisted state.  Those non backward
+: compatible changes are identified and grouped by [upgrades].
+: 
+: An admin can dynamically enable a new upgrade, by calling the relevant RPC.  By doing so
+: they commit to the changes and give up the ability to roll back.
+: 
+: 
+: === subcommands ===
+: 
+:   set   set the dynamic upgrade state
+:   show  show the dynamic upgrade state
+:   help  explain a given subcommand (perhaps recursively)
+
+**** set
+
+: set the dynamic upgrade state
+: 
+:   fe.exe internal dynamic-upgrade set UPGRADE
+: 
+: === flags ===
+: 
+:   [-help]  print this help text and exit
+:            (alias: -?)
+
+**** show
+
+: show the dynamic upgrade state
+: 
+:   fe.exe internal dynamic-upgrade show 
+: 
+: === flags ===
+: 
+:   [-help]  print this help text and exit
+:            (alias: -?)
+
 *** event-subscriptions
 
 : deal with long standing connections to Iron which consume asynchronous events
@@ -2416,7 +2461,7 @@
 
 : compute num lines of a diff4
 : 
-:   fe.exe internal process-num-lines-in-diff4 
+:   fe.exe internal process-num-lines-in-diff4 ACTION-SEXP
 : 
 : === flags ===
 : 
@@ -2499,10 +2544,15 @@
 : 
 : === flags ===
 : 
-:   [-order-included-features-by-release-time]  display included features from
-:                                               oldest to newest
-:   [-help]                                     print this help text and exit
-:                                               (alias: -?)
+:   [-order-included-features-by-decreasing-release-time]  display included
+:                                                          features from newest to
+:                                                          oldest
+:   [-order-included-features-by-release-time]             display included
+:                                                          features from oldest to
+:                                                          newest
+:   [-help]                                                print this help text
+:                                                          and exit
+:                                                          (alias: -?)
 
 *** rpc-to-server
 
@@ -2804,28 +2854,31 @@
 : 
 : === subcommands ===
 : 
-:   remove-machine  clear unclean workspaces associated with a pair USER * MACHINE
-:                   on the server
+:   remove-machine  DEPRECATED
 :   remove-user     clear unclean workspaces associated with a USER on the server
 :   help            explain a given subcommand (perhaps recursively)
 
 **** remove-machine
 
-: clear unclean workspaces associated with a pair USER * MACHINE on the server
+: DEPRECATED
 : 
-:   fe.exe internal unclean-workspaces remove-machine MACHINE
+:   fe.exe internal unclean-workspaces remove-machine [IGNORED ...]
+: 
+: This command has been moved to: [fe workspace unclean remove-machine]
 : 
 : === flags ===
 : 
-:   [-for USER]  for user (default is unix login)
-:   [-help]      print this help text and exit
-:                (alias: -?)
+:   [-help]  print this help text and exit
+:            (alias: -?)
 
 **** remove-user
 
 : clear unclean workspaces associated with a USER on the server
 : 
 :   fe.exe internal unclean-workspaces remove-user USER
+: 
+: This command may be run by the USER, otherwise admin privileges are required.
+: 
 : 
 : === flags ===
 : 
@@ -2927,7 +2980,7 @@
 : 
 : write-only:
 :   No cached values are sent to the worker.
-:   New values computed by the worker are added to the cache on the server.
+:   New alues computed by the worker are added to the cache on the server.
 : 
 : read-write:
 :   Relevant cached values are sent to the worker.
@@ -3031,7 +3084,7 @@
 :   $ fe lock -rebase -release -reason 'updated reason'
 : 
 : Locks may be made permanent by supplying [-permanent] as a way to emphasis that
-: the lock is intended for a non transient period.  For example, certain features
+: the lock is intended for a non transiant period.  For example, certain features
 : are not meant to be ever released.
 : 
 : Use [fe unlock] to unlock a lock.  To see what is locked for a feature, use:
@@ -3072,6 +3125,8 @@
 : 
 : === subcommands ===
 : 
+:   allow-review-for         output the permission settings for review done by
+:                            others
 :   check                    check obligations of the current subtree
 :   list-groups              output all groups defined in obligations files, one
 :                            per line
@@ -3083,9 +3138,21 @@
 :   projection               output build projection(s)
 :   report                   output attributes of all files in the current subtree
 :   show                     show obligations for a single file
-:   synthesize               synthesize [.fe.sexp] files from [spec.txt]
 :   update-low-review-files  update .fe/low-review-in-* files
 :   help                     explain a given subcommand (perhaps recursively)
+
+*** allow-review-for
+
+: output the permission settings for review done by others
+: 
+:   fe.exe obligations allow-review-for 
+: 
+: === flags ===
+: 
+:   [-resolve-aliases]  resolve user names using latest aliases from iron server
+:   [-rev REV]          load the obligations at REV (default: working directory)
+:   [-help]             print this help text and exit
+:                       (alias: -?)
 
 *** check
 
@@ -3191,17 +3258,6 @@
 :   [-help]                    print this help text and exit
 :                              (alias: -?)
 
-*** synthesize
-
-: synthesize [.fe.sexp] files from [spec.txt]
-: 
-:   fe.exe obligations synthesize 
-: 
-: === flags ===
-: 
-:   [-help]  print this help text and exit
-:            (alias: -?)
-
 *** update-low-review-files
 
 : update .fe/low-review-in-* files
@@ -3292,13 +3348,20 @@
 : 
 : === flags ===
 : 
-:   [-for USER]                                 for user (default is unix login)
-:   [-interactive BOOL]                         be interactive via the terminal
-:                                               (default is false)
-:   [-order-included-features-by-release-time]  display included features from
-:                                               oldest to newest
-:   [-help]                                     print this help text and exit
-:                                               (alias: -?)
+:   [-for USER]                                            for user (default is
+:                                                          unix login)
+:   [-interactive BOOL]                                    be interactive via the
+:                                                          terminal (default is
+:                                                          false)
+:   [-order-included-features-by-decreasing-release-time]  display included
+:                                                          features from newest to
+:                                                          oldest
+:   [-order-included-features-by-release-time]             display included
+:                                                          features from oldest to
+:                                                          newest
+:   [-help]                                                print this help text
+:                                                          and exit
+:                                                          (alias: -?)
 
 ** remind
 
@@ -3662,85 +3725,104 @@
 : 
 : === flags ===
 : 
-:   [-allow-review-for]                             show allow-review-for
-:   [-archived]                                     lookup only among archived
-:                                                   features
-:   [-base]                                         show base
-:   [-crs-are-enabled]                              show crs-are-enabled
-:   [-crs-shown-in-todo-only-for-users-reviewing]   show
-:                                                   crs-shown-in-todo-only-for-users-reviewing
-:   [-display-ascii]                                display ASCII characters, with
-:                                                   no ANSI color escapes or
-:                                                   unicode characters
-:   [-existing-or-most-recently-archived]           try finding the most recently
-:                                                   archived feature if the
-:                                                   feature does not exist
-:   [-feature-path]                                 show feature-path
-:   [-first-owner]                                  show first-owner
-:   [-has-bookmark]                                 show has-bookmark
-:   [-id]                                           show id
-:   [-included-features]                            show included-features
-:   [-inheritable-attributes]                       show inheritable-attributes
-:   [-is-archived]                                  show is-archived
-:   [-is-permanent]                                 show is-permanent
-:   [-is-seconded]                                  show is-seconded
-:   [-max-output-columns INT]                       maximum column width for table
-:                                                   output
-:   [-next-base-update]                             show next-base-update
-:   [-next-bookmark-update]                         show next-bookmark-update
-:   [-next-steps]                                   show next-steps
-:   [-omit-attribute-table]                         don't include feature
-:                                                   attributes
-:   [-omit-completed-review]                        omit completed review lines
-:   [-omit-description]                             don't include feature
-:                                                   descriptions
-:   [-omit-review-sessions-in-progress-table]       don't include review sessions
-:                                                   in progress
-:   [-omit-unclean-workspaces-table]                don't include the unclean
-:                                                   workspaces table
-:   [-order-included-features-by-release-time]      display included features from
-:                                                   oldest to newest
-:   [-org-mode]                                     produce output in org-mode
-:                                                   format
-:   [-owners]                                       show owners
-:   [-print-attribute]                              print all required attributes
-:                                                   and exit
-:   [-properties]                                   show properties
-:   [-property ATTR[,ATTR...]]                      show user-defined properties
-:   [-release-process]                              show release-process
-:   [-remote-repo-path]                             show remote-repo-path
-:   [-rev-zero]                                     show rev-zero
-:   [-review-is-enabled]                            show review-is-enabled
-:   [-reviewers]                                    show reviewers
-:   [-reviewing]                                    show reviewing
-:   [-seconder]                                     show seconder
-:   [-send-email-to]                                show send-email-to
-:   [-send-email-upon]                              show send-email-upon
-:   [-sexp]                                         print [Feature.t] as a sexp
-:                                                   and exit
-:   [-show-completed-review]                        DEPRECATED -- became the
-:                                                   default
-:   [-show-diff-stat]                               compute and show [hg diff
-:                                                   --stat] in org-mode output
-:   [-show-included-feature-details]                show included-feature
-:                                                   descriptions and attributes
-:   [-show-inheritable-attributes]                  show inheritable attributes in
-:                                                   attributes table
-:   [-show-lock-reasons]                            show lock reasons as well
-:   [-tip]                                          show tip
-:   [-users-with-review-session-in-progress]        show
-:                                                   users-with-review-session-in-progress
-:   [-users-with-unclean-workspaces]                show
-:                                                   users-with-unclean-workspaces
-:   [-what-is-locked]                               show what-is-locked
-:   [-who-can-release-into-me]                      show who-can-release-into-me
-:   [-who-can-review]                               show who-can-review
-:   [-whole-feature-followers]                      show whole-feature-followers
-:   [-whole-feature-reviewers]                      show whole-feature-reviewers
-:   [-xcrs-shown-in-todo-only-for-users-reviewing]  show
-:                                                   xcrs-shown-in-todo-only-for-users-reviewing
-:   [-help]                                         print this help text and exit
-:                                                   (alias: -?)
+:   [-allow-review-for]                                    show allow-review-for
+:   [-archived]                                            lookup only among
+:                                                          archived features
+:   [-base]                                                show base
+:   [-crs-are-enabled]                                     show crs-are-enabled
+:   [-crs-shown-in-todo-only-for-users-reviewing]          show
+:                                                          crs-shown-in-todo-only-for-users-reviewing
+:   [-display-ascii]                                       display ASCII
+:                                                          characters, with no
+:                                                          ANSI color escapes or
+:                                                          unicode characters
+:   [-existing-or-most-recently-archived]                  try finding the most
+:                                                          recently archived
+:                                                          feature if the feature
+:                                                          does not exist
+:   [-feature-path]                                        show feature-path
+:   [-first-owner]                                         show first-owner
+:   [-has-bookmark]                                        show has-bookmark
+:   [-id]                                                  show id
+:   [-included-features]                                   show included-features
+:   [-inheritable-attributes]                              show
+:                                                          inheritable-attributes
+:   [-is-archived]                                         show is-archived
+:   [-is-permanent]                                        show is-permanent
+:   [-is-seconded]                                         show is-seconded
+:   [-max-output-columns INT]                              maximum column width
+:                                                          for table output
+:   [-next-base-update]                                    show next-base-update
+:   [-next-bookmark-update]                                show
+:                                                          next-bookmark-update
+:   [-next-steps]                                          show next-steps
+:   [-omit-attribute-table]                                don't include feature
+:                                                          attributes
+:   [-omit-completed-review]                               omit completed review
+:                                                          lines
+:   [-omit-description]                                    don't include feature
+:                                                          descriptions
+:   [-omit-review-sessions-in-progress-table]              don't include review
+:                                                          sessions in progress
+:   [-omit-unclean-workspaces-table]                       don't include the
+:                                                          unclean workspaces
+:                                                          table
+:   [-order-included-features-by-decreasing-release-time]  display included
+:                                                          features from newest to
+:                                                          oldest
+:   [-order-included-features-by-release-time]             display included
+:                                                          features from oldest to
+:                                                          newest
+:   [-org-mode]                                            produce output in
+:                                                          org-mode format
+:   [-owners]                                              show owners
+:   [-print-attribute]                                     print all required
+:                                                          attributes and exit
+:   [-properties]                                          show properties
+:   [-property ATTR[,ATTR...]]                             show user-defined
+:                                                          properties
+:   [-release-process]                                     show release-process
+:   [-remote-repo-path]                                    show remote-repo-path
+:   [-rev-zero]                                            show rev-zero
+:   [-review-is-enabled]                                   show review-is-enabled
+:   [-reviewers]                                           show reviewers
+:   [-reviewing]                                           show reviewing
+:   [-seconder]                                            show seconder
+:   [-send-email-to]                                       show send-email-to
+:   [-send-email-upon]                                     show send-email-upon
+:   [-sexp]                                                print [Feature.t] as a
+:                                                          sexp and exit
+:   [-show-completed-review]                               DEPRECATED -- became
+:                                                          the default
+:   [-show-diff-stat]                                      compute and show [hg
+:                                                          diff --stat] in
+:                                                          org-mode output
+:   [-show-included-feature-details]                       show included-feature
+:                                                          descriptions and
+:                                                          attributes
+:   [-show-inheritable-attributes]                         show inheritable
+:                                                          attributes in
+:                                                          attributes table
+:   [-show-lock-reasons]                                   show lock reasons as
+:                                                          well
+:   [-tip]                                                 show tip
+:   [-users-with-review-session-in-progress]               show
+:                                                          users-with-review-session-in-progress
+:   [-users-with-unclean-workspaces]                       show
+:                                                          users-with-unclean-workspaces
+:   [-what-is-locked]                                      show what-is-locked
+:   [-who-can-release-into-me]                             show
+:                                                          who-can-release-into-me
+:   [-who-can-review]                                      show who-can-review
+:   [-whole-feature-followers]                             show
+:                                                          whole-feature-followers
+:   [-whole-feature-reviewers]                             show
+:                                                          whole-feature-reviewers
+:   [-xcrs-shown-in-todo-only-for-users-reviewing]         show
+:                                                          xcrs-shown-in-todo-only-for-users-reviewing
+:   [-help]                                                print this help text
+:                                                          and exit
+:                                                          (alias: -?)
 
 ** todo
 
@@ -4510,12 +4592,14 @@
 : 
 : === subcommands ===
 : 
-:   check          fail if your workspaces have pending changes
-:   list           find unclean workspaces on the local machine and show them
-:   show           output the unclean workspaces state on the server
-:   update-server  compute unclean workspaces statuses on the local machine and
-:                  communicate this information to Iron
-:   help           explain a given subcommand (perhaps recursively)
+:   check           fail if your workspaces have pending changes
+:   list            find unclean workspaces on the local machine and show them
+:   remove-machine  clear unclean workspaces associated with a pair USER * MACHINE
+:                   on the server
+:   show            output the unclean workspaces state on the server
+:   update-server   compute unclean workspaces statuses on the local machine and
+:                   communicate this information to Iron
+:   help            explain a given subcommand (perhaps recursively)
 
 **** check
 
@@ -4568,6 +4652,27 @@
 :   [-name-only]               show only the feature names, one per line
 :   [-help]                    print this help text and exit
 :                              (alias: -?)
+
+**** remove-machine
+
+: clear unclean workspaces associated with a pair USER * MACHINE on the server
+: 
+:   fe.exe workspace unclean remove-machine MACHINE
+: 
+: This command updates the set of workspaces known to be unclean by the server for a given
+: USER: It removes from the unclean state all workspaces located on the given MACHINE.
+: 
+: Running the command does not affect local workspaces.  It has no effect on the local disk
+: on the host it is run, even if this host is indeed the MACHINE in question.
+: 
+: The command needs to be run by the USER, otherwise admin privileges are required.
+: 
+: 
+: === flags ===
+: 
+:   [-for USER]  for user (default is unix login)
+:   [-help]      print this help text and exit
+:                (alias: -?)
 
 **** show
 

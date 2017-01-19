@@ -111,6 +111,15 @@ Review & Catch up.
      [ ] 3 a
   Quit
 
+Completion of a feature with both review and catch-up, when it has children
+without catch-up:
+
+  $ fe create test/foo
+  $ completion-test fe review t
+  test/
+  $ fe archive test/foo
+  $ hg up -r test > /dev/null
+
 Persistence.
 
   $ fe-server stop

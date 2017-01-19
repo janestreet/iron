@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V1 = Unit
@@ -11,7 +11,7 @@ module Stable = struct
   module Reaction = struct
     module V1 = struct
       type t = Rpc_description.V1.t list
-      [@@deriving bin_io, compare, sexp]
+      [@@deriving bin_io, compare, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -31,5 +31,5 @@ include Iron_command_rpc.Make
     (Stable.Action.V1)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action   .Model
-module Reaction = Stable.Reaction .Model
+module Action   = Stable.Action.   Model
+module Reaction = Stable.Reaction. Model

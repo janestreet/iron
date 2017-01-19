@@ -1,7 +1,7 @@
 open! Core.Std
 open! Import
 
-(** This module only contains the types and some accessors to manipulate the review
+(** This module only contains the types and some accessors to manipluate the review
     analysis, to be used by various modules such as review_manager without introducing a
     cyclic dependency.  The whole logic to build values of that types needs to access the
     server state and thus lives in [state.ml] *)

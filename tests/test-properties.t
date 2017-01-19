@@ -45,3 +45,12 @@ Overwriting properties
   $ fe change -set-property prop3=value3-again
   $ fe show | grep prop | single_space
   | prop3 | value3-again |
+
+Pretty-printing properties
+
+  $ fe change -set-property 'prop4=(rev((human_readable(jane-114.13+51))(node_hash 85f4645b2f8bcaf3afb94e6a393fa41104da6071)))'
+  $ COLUMNS=120 fe show | grep -A 3 prop3 | single_space
+  | prop3 | value3-again |
+  | prop4 | (rev |
+  | | ((human_readable (jane-114.13+51)) |
+  | | (node_hash 85f4645b2f8bcaf3afb94e6a393fa41104da6071))) |

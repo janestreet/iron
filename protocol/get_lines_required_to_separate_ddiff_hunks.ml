@@ -9,7 +9,7 @@ module Stable = struct
 
   module Reaction = struct
     module V1 = struct
-      type t = int Feature_name.V1.Map.t [@@deriving bin_io, sexp]
+      type t = int Feature_name.V1.Map.t [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

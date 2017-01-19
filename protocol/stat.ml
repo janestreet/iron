@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Kind = struct
     module V1 = struct
@@ -12,6 +12,7 @@ module Stable = struct
         [%expect {| 6e6713e64d289d735bdef058106bbe12 |}]
       ;;
     end
+    module Model = V1
   end
 
   module Action = struct
@@ -28,12 +29,13 @@ module Stable = struct
 
       let to_model t = t
     end
+    module Model = V1
   end
 
   module Reaction = struct
     module V1 = struct
       type t = Sexp.t
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -42,8 +44,8 @@ module Stable = struct
 
       let of_model t = t
     end
+    module Model = V1
   end
-
 end
 
 open! Core.Std
@@ -68,6 +70,6 @@ include Register_map_reaction_in_client (struct
     ;;
   end)
 
-module Action   = Stable.Action.V1
-module Kind     = Stable.Kind.V1
-module Reaction = Stable.Reaction.V1
+module Action   = Stable.Action.   Model
+module Kind     = Stable.Kind.     Model
+module Reaction = Stable.Reaction. Model

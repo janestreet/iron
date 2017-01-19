@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Feature_base_to_tip = struct
     module V3 = struct
@@ -22,7 +22,7 @@ module Stable = struct
         { feature_path              : Feature_path.V1.t
         ; even_if_release_is_locked : bool
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -83,7 +83,7 @@ module Stable = struct
                      | `From_to             of Rev.V1.t * Rev.V1.t
                      ]
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

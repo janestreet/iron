@@ -640,9 +640,28 @@ let anon_feature_paths =
 ;;
 
 let included_features_order =
-  map ~f:(function true -> `Release_order | false -> `Name)
-    (no_arg_flag "-order-included-features-by-release-time"
-       ~doc:"display included features from oldest to newest")
+  let release_time_switch =
+    "-order-included-features-by-release-time"
+  and release_time_decreasing_switch =
+    "-order-included-features-by-decreasing-release-time"
+  in
+  let%map_open release_time =
+    no_arg_flag release_time_switch
+      ~doc:"display included features from oldest to newest"
+  and release_time_decreasing =
+    no_arg_flag release_time_decreasing_switch
+      ~doc:"display included features from newest to oldest"
+  in
+  match release_time, release_time_decreasing with
+  | false, false -> Ok `Name
+  | true,  false -> Ok `Release_time
+  | false, true  -> Ok `Release_time_decreasing
+  | true,  true  ->
+    Or_error.error_s
+      [%sexp "These flags are mutually exclusive."
+           , (release_time_decreasing_switch : string)
+           , (release_time_switch            : string)
+      ]
 ;;
 
 let include_active_cr_soons =

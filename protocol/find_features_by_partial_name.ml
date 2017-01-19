@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Namespace = struct
     module V4 = Maybe_archived_feature_spec.Namespace.V4
@@ -132,7 +132,7 @@ module Stable = struct
 
   module Reaction = struct
     module V4 = struct
-      type t = Feature_path.V1.t list [@@deriving bin_io, sexp]
+      type t = Feature_path.V1.t list [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

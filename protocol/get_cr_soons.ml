@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V2 = struct
@@ -18,11 +18,12 @@ module Stable = struct
 
       let to_model t = t
     end
+    module Model = V2
   end
 
   module Reaction = struct
     module V1 = struct
-      type t = Cr_soon_multiset.V1.t [@@deriving bin_io, sexp]
+      type t = Cr_soon_multiset.V1.t [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -31,8 +32,8 @@ module Stable = struct
 
       let of_model t = t
     end
+    module Model = V1
   end
-
 end
 
 include Iron_versioned_rpc.Make
@@ -41,5 +42,5 @@ include Iron_versioned_rpc.Make
     (Stable.Action.V2)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action.V2
-module Reaction = Stable.Reaction.V1
+module Action   = Stable.Action.   Model
+module Reaction = Stable.Reaction. Model

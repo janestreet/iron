@@ -236,7 +236,7 @@ let%test_module _ =
     let users_generator ?(at_least = 0) () =
       let open Generator in
       let open Monad_infix in
-      Int.gen_between ~lower_bound:(Incl at_least) ~upper_bound:(Incl 8)
+      Int.gen_incl at_least 8
       >>= fun num_users ->
       List.gen' ~length:(`Between_inclusive (1, 5)) Char.gen_lowercase
       >>| fun name ->
@@ -247,25 +247,26 @@ let%test_module _ =
 
     let t_generator =
       let open Generator in
-      recursive (fun f ~size ->
-        let smaller_t = if size = 0 then None else Some (f ~size:(size - 1)) in
+      recursive (fun t ->
+        size >>= fun size ->
         let all_of = map (users_generator ()) ~f:(fun users -> All_of users) in
         let at_least_wide =
           let open Monad_infix in
           users_generator () ~at_least:1
           >>= fun users ->
-          Int.gen_between
-            ~lower_bound:(Excl 0) ~upper_bound:(Incl (Set.length users))
+          Int.gen_incl 1 (Set.length users)
           >>| fun k ->
           At_least_wide (k, users)
         in
         let or_wide =
-          Option.map smaller_t ~f:(fun t ->
-            map ~f:(fun ts -> Or_wide ts) (List.gen' ~length:(`At_least 1) t))
+          if size = 0
+          then None
+          else Some (map ~f:(fun ts -> Or_wide ts) (List.gen' ~length:(`At_least 1) t))
         in
         let and_ =
-          Option.map smaller_t ~f:(fun t ->
-            map ~f:(fun ts -> And ts) (List.gen t))
+          if size = 0
+          then None
+          else Some (map ~f:(fun ts -> And ts) (List.gen t))
         in
         filter_map
           (union (List.filter_opt [Some all_of; Some at_least_wide; or_wide; and_]))

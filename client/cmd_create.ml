@@ -80,12 +80,12 @@ let main { Fe.Create.Action.
     if am_functional_testing
     then
       (* The heuristic used to allow the local repo to be used is to extract
-         successfully the repo family from the [.hg/hgrc] file.  In test, we clone
+         succesfully the repo family from the [.hg/hgrc] file.  In test, we clone
          repository locally with no hg repo root, causing this heuristic to fail.
          This code here is just to help the heuristic to apply.  The variable
          [IRON_FUNCTIONAL_TESTING_FORCE_WORKSPACES] is honored during functional
          testing only, and in addition to IRON_OPTIONS -- because some of the tests
-         set [IRON_OPTIONS], using a independent variable allow the same tests to be
+         set [IRON_OPTIONS], using a independant variable allow the same tests to be
          run with or without the workspaces forced. *)
       if Feature_path.is_root feature_path
       && Option.is_some (Sys.getenv "IRON_FUNCTIONAL_TESTING_FORCE_WORKSPACES")

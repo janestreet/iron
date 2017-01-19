@@ -68,9 +68,20 @@ type t =
   }
 [@@deriving fields, sexp_of]
 
+module Sorted_by : sig
+  type t =
+    [ `Name
+    (** [Release_time] is local: siblings are ordered by release time, and nested features
+        are grouped with their parents. *)
+    | `Release_time
+    | `Release_time_decreasing
+    ]
+  [@@deriving compare, sexp_of]
+end
+
 val released_features
   :  t
-  -> sorted_by:[ `Release_order | `Name ]
+  -> sorted_by:Sorted_by.t
   -> Released_feature.t list
 
 val user_is_currently_reviewing : t -> User_name.t -> bool
@@ -95,11 +106,28 @@ module Stable : sig
       type t = Locked.t [@@deriving sexp_of]
     end
     module V2 : sig
-      type t = Model.t [@@deriving bin_io, sexp]
+      type t = Model.t [@@deriving bin_io, sexp_of]
     end
     module V1 : sig
-      type t [@@deriving bin_io, sexp]
+      type t [@@deriving bin_io]
       val of_v2 : V2.t -> t
+    end
+  end
+
+  module Sorted_by : sig
+
+    module Model : sig
+      type t = Sorted_by.t [@@deriving sexp_of]
+    end
+
+    module V2 : sig
+      type t = Model.t [@@deriving bin_io, sexp]
+    end
+
+    module V1 : sig
+      type t [@@deriving bin_io]
+
+      val to_v2 : t -> V2.t
     end
   end
 
@@ -108,7 +136,7 @@ module Stable : sig
   end
 
   module V20 : sig
-    type t = Model.t [@@deriving bin_io, sexp]
+    type t = Model.t [@@deriving bin_io, sexp_of]
     val of_model : Model.t -> t
   end
 

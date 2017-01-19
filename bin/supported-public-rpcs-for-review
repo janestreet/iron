@@ -32,7 +32,7 @@ Command RPCs:
 │ obligations-list-groups │ 1        │
 │ obligations-list-users  │ 1        │
 │ rebase                  │ 1, 2     │
-│ release                 │ 1        │
+│ release                 │ 1, 2     │
 │ rename                  │ 1        │
 │ supported-command-rpcs  │ 1        │
 │ unarchive               │ 1        │

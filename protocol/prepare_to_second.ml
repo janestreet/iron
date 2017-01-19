@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V4 = struct
@@ -47,7 +47,7 @@ module Stable = struct
         { whole_feature_review_remaining : (User_name.V1.t * Line_count.V5.t) list
         ; cr_summary                     : Cr_comment.Summary.V1.t
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

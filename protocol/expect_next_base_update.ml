@@ -1,5 +1,5 @@
 module Stable = struct
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V1 = struct

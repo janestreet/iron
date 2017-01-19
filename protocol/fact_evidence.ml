@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V1 = struct
@@ -16,7 +16,7 @@ module Stable = struct
 
   module Reaction = struct
     module V1 = struct
-      type t = Fact.Evidence.V1.t [@@deriving bin_io, sexp]
+      type t = Fact.Evidence.V1.t [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

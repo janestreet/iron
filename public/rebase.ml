@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Validation_command = struct
     module V1 = struct
@@ -75,7 +75,6 @@ module Stable = struct
 
   module Reaction = struct
     module V1 = Unit
-
     module Model = V1
   end
 end
@@ -91,6 +90,6 @@ include Register_old_rpc
     (Stable.Action.V1)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action   .Model
-module Reaction = Stable.Reaction .Model
-module Validation_command = Stable.Validation_command.Model
+module Action             = Stable.Action.             Model
+module Reaction           = Stable.Reaction.           Model
+module Validation_command = Stable.Validation_command. Model

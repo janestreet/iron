@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V2 = struct
@@ -26,7 +26,7 @@ module Stable = struct
         { remote_repo_path : Remote_repo_path.V1.t
         ; send_email_to    : Email_address.V1.Set.t
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];

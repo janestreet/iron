@@ -40,6 +40,7 @@ val deserializer
      -> indexed_diff4s              : Indexed_diff4s.t Or_error.t Or_pending.t
      -> register_catch_up           : Register_catch_up.t
      -> feature_cache_invalidator   : Cached.Invalidator.t
+     -> dynamic_upgrade_state       : Dynamic_upgrade.State.t
      -> t
     ) Deserializer.t
 
@@ -52,6 +53,7 @@ val create
   -> base_facts                : Rev_facts.t Or_pending.t
   -> register_catch_up         : Register_catch_up.t
   -> feature_cache_invalidator : Cached.Invalidator.t
+  -> dynamic_upgrade_state     : Dynamic_upgrade.State.t
   -> Serializer.t
   -> t
 

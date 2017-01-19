@@ -14,8 +14,3 @@ val eval
   -> universe : File_name.Set.t
   -> Error_context.t
   -> File_name.Set.t
-
-val synthesize
-  :  desired  : File_name.Set.t
-  -> universe : File_name.Set.t
-  -> t

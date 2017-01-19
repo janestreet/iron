@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V1 = struct
@@ -18,6 +18,7 @@ module Stable = struct
 
       let to_model t = t
     end
+    module Model = V1
   end
 
   module Reaction = struct
@@ -27,7 +28,7 @@ module Stable = struct
         ; base         : Rev.V1.t
         ; tip          : Rev.V1.t
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: one];
@@ -38,7 +39,7 @@ module Stable = struct
         { remote_repo_path : Remote_repo_path.V1.t
         ; features         : one list
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -47,6 +48,7 @@ module Stable = struct
 
       let of_model t = t
     end
+    module Model = V1
   end
 end
 
@@ -56,5 +58,5 @@ include Iron_versioned_rpc.Make
     (Stable.Action.V1)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action.V1
-module Reaction = Stable.Reaction.V1
+module Action   = Stable.Action.   Model
+module Reaction = Stable.Reaction. Model

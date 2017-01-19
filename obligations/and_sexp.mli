@@ -4,7 +4,7 @@
 
    ['sexp] is either [Sexp.t] or [Sexp.Annotated.t].
 
-   [t_of_sexp sexp] stores [sexp] in the resulting [t].
+   [t_of_sexp sexp] stores [sexp] in the resuting [t].
 *)
 
 type ('syntax, 'sexp) t =

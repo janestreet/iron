@@ -956,6 +956,7 @@ let grep_files repo_root format ~files_to_grep ~file_owner =
     in
     let grep_process = ok_exn grep_process in
     let grep_in = Process.stdin grep_process in
+    Writer.set_buffer_age_limit grep_in `Unlimited;
     List.iter files_to_grep ~f:(fun file ->
       Writer.write_line grep_in (Path_in_repo.to_string file));
     let%map result =

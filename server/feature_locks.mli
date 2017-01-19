@@ -32,7 +32,7 @@ val create : Feature_path.t -> t
 val set_feature_path : t -> Feature_path.t -> unit
 
 (** [lock] always succeeds.  If the lock is already taken by [for_] the lock information
-    is overridden.  Users may take at most one lock for a given lock_name. *)
+    is overriden.  Users may take at most one lock for a given lock_name. *)
 val lock
   :  t
   -> query        : _ Query.t

@@ -36,7 +36,7 @@ module Worker_session : sig
       to the server when [back_to_server] is called.  There is no attempt in that module
       to deal with race condition in which [use_or_compute_and_store] is called multiple
       times on the same non cached revision before the closure provided terminates, or if
-      [back_to_server] is called before those computation have finished computing. *)
+      [back_to_server] is called before those compuation have finished computing. *)
   val use_or_compute_and_store :
     t
     -> 'a Key.t -> Rev.t -> (Rev.t -> 'a Deferred.t)

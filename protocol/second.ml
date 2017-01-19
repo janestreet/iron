@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V4 = struct
@@ -16,10 +16,8 @@ module Stable = struct
         [%expect {| 7ff04ba3148a46af4f8d6c86ab5c1742 |}]
       ;;
 
-      let to_model t = t
+      let to_model (t : t) = t
     end
-
-    module Model = V4
 
     module V3 = struct
       type t =
@@ -36,13 +34,16 @@ module Stable = struct
       ;;
 
       let to_model { feature_path; even_though_empty; even_though_owner; _ } =
-        { Model. feature_path; even_though_empty; even_though_owner }
+        V4.to_model { feature_path; even_though_empty; even_though_owner }
       ;;
     end
+
+    module Model = V4
   end
 
   module Reaction = struct
     module V1 = Unit
+    module Model = V1
   end
 end
 
@@ -57,5 +58,5 @@ include Register_old_rpc
     (Stable.Action.V3)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action.V4
-module Reaction = Stable.Reaction.V1
+module Action   = Stable.Action.   Model
+module Reaction = Stable.Reaction. Model

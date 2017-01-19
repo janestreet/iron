@@ -126,7 +126,7 @@ Check that forget is cleaning catch-up if any.
   |---------+----------|
   | root    |        4 |
   |--------------------|
-  $ fe brain forget -file file -for user1
+  $ IRON_USER=user1 fe brain forget -file file
   $ fe todo -for user1
   CRs and review line counts:
   |-----------------------------|
@@ -134,7 +134,7 @@ Check that forget is cleaning catch-up if any.
   |---------+--------+----------|
   | root    |      2 |        2 |
   |-----------------------------|
-  $ fe brain forget -file file2 -for user1
+  $ IRON_USER=user1 fe brain forget -file file2
   $ fe todo -for user1
   CRs and review line counts:
   |------------------|
@@ -150,7 +150,38 @@ Check that forget is cleaning catch-up if any.
   |---------+----------|
   | root    |        4 |
   |--------------------|
+
+When [fe brain forget] is run by another user, this preserves any catch-up.
+
   $ fe brain forget -all -for user1
+  $ fe todo -for user1
+  CRs and review line counts:
+  |-----------------------------|
+  | feature | review | catch-up |
+  |---------+--------+----------|
+  | root    |      4 |        4 |
+  |-----------------------------|
+
+  $ IRON_USER=user1 fe catch-up clear
+  $ fe todo -for user1
+  CRs and review line counts:
+  |------------------|
+  | feature | review |
+  |---------+--------|
+  | root    |      4 |
+  |------------------|
+  $ fe internal mark-fully-reviewed root -for user1 -reason testing
+  $ fe todo -for user1
+  CRs and review line counts:
+  |--------------------|
+  | feature | catch-up |
+  |---------+----------|
+  | root    |        4 |
+  |--------------------|
+
+But when [fe brain forget] is run by the actual user, the catch-up is cleared.
+
+  $ IRON_USER=user1 fe brain forget -all
   $ fe todo -for user1
   CRs and review line counts:
   |------------------|

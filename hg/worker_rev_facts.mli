@@ -31,7 +31,7 @@ end
 module On_server : sig
 
   (** This type is morally [type nonrec t = t], but its representation on server is
-      different to allow for a more aggressive sharing across revisions and features.  *)
+      different to allow for a more agressive sharing across revisions and features.  *)
   type t [@@deriving sexp_of]
 
   include Invariant.S with type t := t

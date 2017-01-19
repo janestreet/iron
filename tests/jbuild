@@ -1,6 +1,6 @@
 
 (unified_tests
- ((target fe-runtest)
+ ((target feature-subtree-build)
   (deps (../bin/fe.exe
          (glob_files *.t)
          (files_recursively_in bin)
@@ -9,7 +9,6 @@
          (files_recursively_in sample-repos)
          ../hg/hgrc
          ))
-  (setup_script "bin/setup-script")
-  ))
+  (setup_script "bin/setup-script")))
 
 (enforce_style ())

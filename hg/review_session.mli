@@ -51,6 +51,7 @@ include Invariant.S  with type t := t
 val deserializer
   : (user_name: User_name.t
      -> feature_cache_invalidator : Cached.Invalidator.t
+     -> dynamic_upgrade_state : Dynamic_upgrade.State.t
      -> t
     ) Deserializer.t
 
@@ -70,12 +71,13 @@ val diff4s_in_session_not_implicitly_reviewed : t -> Diff4_in_session.t array
 val not_reviewed_diff4s : t -> Diff4s.t
 
 val create
-  :  serializer_dir_of_id      : (Session_id.t -> Relpath.t)
-  -> reviewer                  : Reviewer.t
-  -> diff4s                    : Diff4s.t
-  -> tip                       : Rev.t
-  -> base                      : Rev.t
-  -> feature_cache_invalidator : Cached.Invalidator.t
+  :  serializer_dir_of_id          : (Session_id.t -> Relpath.t)
+  -> reviewer                      : Reviewer.t
+  -> diff4s                        : Diff4s.t
+  -> tip                           : Rev.t
+  -> base                          : Rev.t
+  -> feature_cache_invalidator     : Cached.Invalidator.t
+  -> dynamic_upgrade_state         : Dynamic_upgrade.State.t
   -> Serializer.t
   -> t
 

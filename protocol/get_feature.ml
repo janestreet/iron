@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Feature = Feature.Stable
 
@@ -11,7 +11,7 @@ module Stable = struct
           { feature_id       : Feature_id.V1.t
           ; even_if_archived : bool
           }
-        [@@deriving bin_io, sexp, fields]
+        [@@deriving bin_io, fields, sexp]
 
         let%expect_test _ =
           print_endline [%bin_digest: t];
@@ -20,8 +20,6 @@ module Stable = struct
 
         let to_model t = t
       end
-
-      module Model = V2
 
       module V1 = struct
         type t = Feature_id.V1.t
@@ -40,6 +38,8 @@ module Stable = struct
             }
         ;;
       end
+
+      module Model = V2
     end
 
     module Reaction = Feature

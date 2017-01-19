@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Import_stable
+  open! Import_stable
 
   module Action = struct
     module V6 = struct
@@ -21,8 +21,6 @@ module Stable = struct
 
       let to_model t = t
     end
-
-    module Model = V6
 
     module V5 = struct
       type t =
@@ -82,10 +80,12 @@ module Stable = struct
           }
       ;;
     end
+    module Model = V6
   end
 
   module Reaction = struct
     module V1 = Unit
+    module Model = V1
   end
 end
 
@@ -105,5 +105,5 @@ include Register_old_rpc
     (Stable.Action.V4)
     (Stable.Reaction.V1)
 
-module Action   = Stable.Action.V6
-module Reaction = Stable.Reaction.V1
+module Action   = Stable.Action.   Model
+module Reaction = Stable.Reaction. Model

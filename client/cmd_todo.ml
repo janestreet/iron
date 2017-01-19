@@ -308,10 +308,10 @@ let command =
        let open! Deferred.Let_syntax in
        let feature_path_option = ok_exn feature_path_option in
        (if do_not_show_cr_soons && my_cr_soons
-        then failwithf "The flags [%s] and [%s] and mutually exclusive"
+        then failwithf "The flags [%s] and [%s] are mutually exclusive"
                Switch.do_not_show_cr_soons switch_my_cr_soons ());
        (if do_not_show_unclean_workspaces && my_unclean_workspaces
-        then failwithf "The flags [%s] and [%s] and mutually exclusive"
+        then failwithf "The flags [%s] and [%s] are mutually exclusive"
                Switch.do_not_show_unclean_workspaces switch_my_unclean_workspaces ());
        let client_config = Client_config.get () in
        let do_not_show_cr_soons =

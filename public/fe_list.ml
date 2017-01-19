@@ -1,15 +1,15 @@
 module Table = struct
   module Stable = struct
 
-    open Import_stable
+    open! Import_stable
 
     module Action = struct
       module V1 = struct
         type t =
-          { features                    : Iron_protocol.List_features.Reaction.Stable.V8.t
-          ; preserve_input_ordering     : bool
-          ; display_ascii               : bool
-          ; max_output_columns          : int
+          { features                : Iron_protocol.List_features.Reaction.Stable.V8.t
+          ; preserve_input_ordering : bool
+          ; display_ascii           : bool
+          ; max_output_columns      : int
           }
         [@@deriving bin_io, sexp]
 
@@ -27,7 +27,7 @@ module Table = struct
     module Reaction = struct
       module V1 = struct
         type t = string
-        [@@deriving bin_io, sexp]
+        [@@deriving bin_io, sexp_of]
 
         let%expect_test _ =
           print_endline [%bin_digest: t];
@@ -46,6 +46,6 @@ module Table = struct
       (Stable.Action.V1)
       (Stable.Reaction.V1)
 
-  module Action   = Stable.Action   .Model
-  module Reaction = Stable.Reaction .Model
+  module Action   = Stable.Action.   Model
+  module Reaction = Stable.Reaction. Model
 end

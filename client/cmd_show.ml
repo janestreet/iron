@@ -11,7 +11,26 @@ let underline char line =
 ;;
 
 let header feature_path =
-  sprintf "%s" (underline '=' (Feature_path.to_string feature_path));
+  let render_tree_if_feature_path_longer_than = 90 in
+  let feature_path_string = Feature_path.to_string feature_path in
+  if String.length feature_path_string <= render_tree_if_feature_path_longer_than
+  then sprintf "%s" (underline '=' feature_path_string)
+  else (
+    let path_as_tree =
+      List.foldi (Feature_path.parts feature_path)
+        ~init:[]
+        ~f:(fun i ac feature_name ->
+          "\n"
+          :: Feature_name.to_string feature_name
+          :: String.make (2 * i) ' '
+          :: ac)
+      |> List.rev
+      |> String.concat
+    in
+    sprintf "%s\n\n%s%s\n"
+      feature_path_string
+      path_as_tree
+      (String.make render_tree_if_feature_path_longer_than '='))
 ;;
 
 let render_description description =
@@ -304,7 +323,7 @@ let send_email_to_row   = set_to_row "send email to"   ~f:Email_address.to_strin
 
 let property_rows properties =
   Map.to_alist properties
-  |> List.map ~f:(fun (key, value) -> (key, ([], Sexp.to_string value)))
+  |> List.map ~f:(fun (key, value) -> (key, ([], Sexp.to_string_hum value)))
 ;;
 
 let release_process_row release_process =
@@ -792,9 +811,7 @@ let display_included_features_org_mode (feature : Feature.t) ~depth
          | Some repo_root ->
            print_string (org_header ~depth "Affected files");
            let%bind output =
-             Hg.diff repo_root ~from:r.base ~to_:(`Rev r.tip)
-               (* Don't show changes in files in [.projections] except for [spec.txt]. *)
-               ~args:["--stat"; "set:(** - (.projections/** - .projections/spec.txt))" ]
+             Hg.diff repo_root ~from:r.base ~to_:(`Rev r.tip) ~args:["--stat"]
            in
            let output = ok_exn output in
            List.iter (String.split_lines output) ~f:(fun line -> printf ":%s\n" line);
@@ -900,6 +917,7 @@ let command =
          not (omit_unclean_workspaces_table
               || Client_config.Cmd.Show.omit_unclean_workspaces_table client_config)
        in
+       let included_features_order = ok_exn included_features_order in
        if print_attribute
        then (
          List.iter Attribute.all ~f:(fun attribute ->
@@ -1014,6 +1032,7 @@ let render_release_email_command =
      fun () ->
        let open! Deferred.Let_syntax in
        let feature_path = ok_exn feature_path in
+       let included_features_order = ok_exn included_features_order in
        let%bind feature =
          Get_feature.rpc_to_server_exn { feature_path; rev_zero = None }
        in

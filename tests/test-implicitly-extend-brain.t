@@ -1,5 +1,5 @@
 Regression test to make sure we don't extend users brain with implicitly
-reviewed diff4s too eagerly, which causes an unecessary number of revisions in
+reviewed diff4s too eagerly, which causes an unnecessary number of revisions in
 [need-diff4s-starting-from]
 
   $ export NUM=5

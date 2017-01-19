@@ -45,7 +45,7 @@ module Declaration = struct
     | More_than_max_reviewers  of bool
     (** Apply current attribute values to a set of files. *)
     | Apply_to                 of File_set.t
-    (** Enter a local scope for specifying attribtues. *)
+    (** Enter a local scope for specifying attributes. *)
     | Local                    of u sexp_list
     (** Use this .fe.sexp in at least one subdirectory. *)
     | Used_in_subdirectory

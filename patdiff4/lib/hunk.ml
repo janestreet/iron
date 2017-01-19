@@ -221,7 +221,7 @@ let nested_views ?hunk_name t =
           (* We decide to repeat the hunk label only if there are more than one view so
              because there might be a lot of space between the last time we saw the
              hunk number. If there is only one view, the hunk name is printed right
-             above so we should not bother writting it again *)
+             above so we should not bother writing it again *)
           match hunk_name with
           | Some name when number_of_views_shown > 1 -> name ^ " "
           | Some _ | None -> ""

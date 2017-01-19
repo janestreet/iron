@@ -70,7 +70,7 @@ Make user1 not a whole-feature reviewer and he has to forget his knowledge.
   +|line2
   +|line3
 
-Check that implicitely reviewed diff are automatically committed.
+Check that implicitly reviewed diff are automatically committed.
 
   $ cat >a <<EOF
   > space  space

@@ -1,7 +1,7 @@
 (** A specification of which users can modify review of other users.  These are defined in
     obligations-repo.sexp.  They are computed in the Iron-hydra worker, passed to the
     server, and stored in features, review managers, and review sessions.  They are
-    ulimately tested in the client, before allowing a reviewer to review a diff for
+    ultimately tested in the client, before allowing a reviewer to review a diff for
     another user.  They are also double checked in the server, before allowing one user to
     adjust another user's brain or review session. *)
 

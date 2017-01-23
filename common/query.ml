@@ -9,7 +9,7 @@ module Stable = struct
       ; by                 : User_name.V1.t
       ; at                 : Time.V1_round_trippable.t
       ; hostname           : string
-      ; machine_zone       : Core.Stable.Zone.V1.t
+      ; machine_zone       : Core.Stable.Time.Zone.V1.t
       ; executable         : string
       ; executable_version : string
       (* [action] is last because it might be big, and the sexp is easier to read with

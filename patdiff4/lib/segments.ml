@@ -31,7 +31,7 @@ let%test_unit _ =
 let equal_for_classify lines1 lines2 =
   let format_rules = User_config.get () |> User_config.diff_config in
   let module Patdiff_core = Patdiff_lib.Patdiff_core in
-  Patdiff_core.diff ~context:0 ~compare:String.compare ~keep_ws:false
+  Patdiff_core.diff ~context:0 ~keep_ws:false
     ~mine:lines1 ~other:lines2
   |> Patdiff_core.refine
        ~output:Patdiff_core.Output.Ansi
@@ -228,27 +228,41 @@ let of_matches ~verbose ~file_names ~context ~lines_required_to_separate_ddiff_h
   finalize ()
 ;;
 
-(* NB: Same signature as [Patience_diff.matches], which is the implementation of patience
-   common subsequence.
-   First attempt was: longest common subsequence. but turns out lcs is too slow O(n2).
-   This one is O(ND) with D size of diff *)
-let diff_common_sequence a b =
-  if false
-  then
-    Patience_diff.matches ~compare:Pervasives.compare a b
-  else (
-    let matches = ref [] in
-    Plain_diff.iter_matches ~f:(fun elt -> matches := elt::!matches) a b;
-    List.rev !matches)
-;;
+module Diff = struct
+  module type S = sig
+    type elt
+    val diff_common_sequence : elt array -> elt array -> (int * int) list
+  end
+
+  module Make (Elt : Hashtbl.Key) : S with type elt := Elt.t = struct
+    module P = Patience_diff.Make (Elt)
+
+    (* NB: Same signature as [Patience_diff.matches], which is the implementation of
+       patience common subsequence.
+       First attempt was: longest common subsequence. but turns out lcs is too slow O(n2).
+       This one is O(ND) with D size of diff *)
+    let diff_common_sequence a b =
+      if false
+      then
+        P.matches a b
+      else (
+        let matches = ref [] in
+        Plain_diff.iter_matches ~f:(fun elt -> matches := elt::!matches) a b;
+        List.rev !matches)
+  end
+
+  module String = Make (String)
+end
 
 let%test_module "lcs" =
   (module struct
-    let%test _ = List.is_empty (diff_common_sequence [||] [||])
+    module D = Diff.Make (Int)
+
+    let%test _ = List.is_empty (D.diff_common_sequence [||] [||])
 
     let%test_unit _ =
       [%test_result: (int*int) list]
-        (diff_common_sequence
+        (D.diff_common_sequence
            [| 0; 10; 0;     1; 42; 2;  20; 5 |]
            [| 0; 8;  0; 15; 1; 42; 10;     5 |])
         ~expect:[ (0,0); (2,2); (3,4); (4,5); (7,7) ]
@@ -292,7 +306,7 @@ let of_files ?(verbose=false) ?(force_should_split_files_in_hunks_for_tests=fals
     let pcs geta getb =
       let a_arr = geta arrays in
       let b_arr = getb arrays in
-      Patience_diff.matches ~compare:String.compare a_arr b_arr
+      Patience_diff.String.matches a_arr b_arr
       |> Array.of_list
       |> Array.map ~f:(fun (idx0, idx1) ->
         [%test_eq: string] a_arr.(idx0) b_arr.(idx1);
@@ -311,10 +325,9 @@ let of_files ?(verbose=false) ?(force_should_split_files_in_hunks_for_tests=fals
             ]);
 
     let matches =
-      let for_polymorphic_cmp (line, _, _) : string = line in
-      diff_common_sequence
-        (Array.map ~f:for_polymorphic_cmp pcs_old_base_old_tip)
-        (Array.map ~f:for_polymorphic_cmp pcs_new_base_new_tip)
+      Diff.String.diff_common_sequence
+        (Array.map ~f:fst3 pcs_old_base_old_tip)
+        (Array.map ~f:fst3 pcs_new_base_new_tip)
     in
 
     (if verbose

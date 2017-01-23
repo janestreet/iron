@@ -85,7 +85,6 @@ let diff_of_change
   let module Patdiff_core = Patdiff_lib.Patdiff_core in
   Patdiff_core.diff
     ~context
-    ~compare:String.compare
     ~keep_ws:false
     ~mine:(Array.of_list minus)
     ~other:(Array.of_list plus)
@@ -96,7 +95,7 @@ let diff_of_change
              ~produce_unified_lines
              ~keep_ws:false
              ~split_long_lines:false
-      else Patience_diff.unified)
+      else Patience_diff.Hunks.unified)
   |> (fun hunks ->
     let lines = ref [] in
     let f_hunk_break =

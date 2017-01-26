@@ -2,7 +2,7 @@
     bookmark, to avoid making hydra keep handling the same bookmark over and over
     again. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving sexp_of, compare]

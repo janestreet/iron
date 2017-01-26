@@ -2,7 +2,7 @@
     description of the scrutiny, but only what is relevant to review a particular file.
     File scrutinies are compared by their levels, but displayed using their names. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving sexp_of]

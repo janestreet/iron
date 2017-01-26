@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   module V1 = struct
     (* We choose [type t = string] so that we can add new values without changing the
        serialization format. *)
@@ -13,16 +13,16 @@ module Stable = struct
       ;;
     end
     include T
-    module Unstable : Core.Std.Comparable.S with type t := t
-      = Core.Std.Comparable.Make (T)
-    include Core.Stable.Comparable.V1.Make (struct
+    module Unstable : Core.Comparable.S with type t := t
+      = Core.Comparable.Make (T)
+    include Core.Core_stable.Comparable.V1.Make (struct
         include T
         include Unstable
       end)
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module V = Stable.V1

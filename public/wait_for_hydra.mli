@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** The aim of the RPC is to wait until the feature is no longer pending.  It raises on

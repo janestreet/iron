@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (* Dedicated type for locks in next steps, since all locks do not make sense as a next

@@ -1,6 +1,6 @@
 (** A machine such as a rackmount where users have workspaces *)
 
-open! Core.Std
+open! Core
 open! Import
 
 include Validated_string.S

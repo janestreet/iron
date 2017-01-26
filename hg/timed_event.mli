@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** This module is part of the runtime of fe server.  It is in hg/ just because some other

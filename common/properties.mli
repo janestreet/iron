@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 type t = Sexp.t Property.Map.t

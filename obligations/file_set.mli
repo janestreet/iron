@@ -1,6 +1,6 @@
 (** Syntactic form in [.fe.sexp] files for specifying a set of files. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving sexp]

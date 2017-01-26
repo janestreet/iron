@@ -2,7 +2,7 @@
     a reviewer by other users.  It maintains a set of diff4s that the reviewer needs to
     catch up on. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Id_and_kind : sig

@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 module Reviewed_by_someone_else : sig

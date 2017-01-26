@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 type ssh = private { host : string; path : Abspath.t }

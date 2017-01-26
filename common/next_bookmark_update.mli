@@ -1,7 +1,7 @@
 (** What Iron server thinks for a feature about the next bookmark update coming from Iron
     hydra. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t =

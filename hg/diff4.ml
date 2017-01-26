@@ -1,5 +1,5 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
   open Import_stable
 
   module V2 = struct
@@ -39,7 +39,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 
@@ -52,7 +52,7 @@ include Hashable.Make (T)
 
 (* let limit_memory_use =
  *   lazy (In_thread.run (fun () ->
- *     let open Core.Std in
+ *     let open Core in
  *     let module R = Unix.RLimit in
  *     match R.virtual_memory with
  *     | Error _ -> ()

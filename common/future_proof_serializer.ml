@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 
 type 'a sexpable = (module Sexpable with type t = 'a)
 

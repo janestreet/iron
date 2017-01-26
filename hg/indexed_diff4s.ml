@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 open! Import
 
 module By_diff2 = Diff2.Ignoring_rev.Table

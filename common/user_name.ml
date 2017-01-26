@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open Import
 
 include Validated_string.Make_regex (struct
@@ -13,7 +13,7 @@ let unix_login =
        match Sys.getenv "IRON_USER" with
        | None -> "unix-login-for-testing"
        | Some s -> s)
-     else Core.Std.Unix.getlogin ())
+     else Core.Unix.getlogin ())
 ;;
 
 let missing_file_owner = of_string "missing-file-owner"

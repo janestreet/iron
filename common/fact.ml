@@ -2,11 +2,11 @@ module Scope = struct
 
   module Key = Validated_string.Make (struct
       let module_name = "Iron_common.Fact.Scope.Key"
-      let check_valid _ = Core.Std.Result.Ok ()
+      let check_valid _ = Core.Result.Ok ()
     end) ()
 
   module Stable = struct
-    open Core.Stable
+    open Core.Core_stable
     module V1 = struct
       type t = string Key.Stable.V1.Map.t [@@deriving sexp, bin_io, compare]
 
@@ -17,7 +17,7 @@ module Scope = struct
     end
   end
 
-  open Core.Std
+  open Core
 
   module T = struct
     include Stable.V1
@@ -32,12 +32,12 @@ end
 module Spec = struct
   module Id = Validated_string.Make (struct
       let module_name = "Iron_common.Fact.Spec.Id"
-      let check_valid _ = Core.Std.Result.Ok ()
+      let check_valid _ = Core.Result.Ok ()
     end) ()
 
   module Stable = struct
 
-    open Core.Stable
+    open Core.Core_stable
 
     module Authorization_rule = struct
       module V1 = struct
@@ -66,7 +66,7 @@ module Spec = struct
         [%expect {| a33f47db1e91310e63c3171aab6d5a2a |}]
       ;;
 
-      open Core.Std
+      open Core
       let t_of_sexp sexp =
         let t = t_of_sexp sexp in
         (* Ensure that authorization rules only refer to legitimate scope keys. *)
@@ -86,7 +86,7 @@ module Spec = struct
     end
   end
 
-  open Core.Std
+  open Core
 
   module Authorization_rule = struct
     type t = Stable.Authorization_rule.V1.t =
@@ -116,7 +116,7 @@ end
 
 module Evidence = struct
   module Stable = struct
-    open Core.Stable
+    open Core.Core_stable
     module V1 = struct
       module Time = Iron_time.Stable
 
@@ -129,7 +129,7 @@ module Evidence = struct
     end
   end
 
-  open Core.Std
+  open Core
 
   type t = Stable.V1.t =
     { asserter : User_name.t
@@ -140,7 +140,7 @@ end
 
 module Action = struct
   module Stable = struct
-    open Core.Stable
+    open Core.Core_stable
     module V2 = struct
       type t =
         Spec.Id.Stable.V1.t
@@ -195,7 +195,7 @@ module Action = struct
   end
 end
 
-open Core.Std
+open Core
 
 module Db = struct
   type t =

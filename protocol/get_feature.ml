@@ -135,7 +135,7 @@ module Stable = struct
   module Reaction = Feature
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Iron_versioned_rpc.Make

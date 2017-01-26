@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Diff2s           = Diff2s.           Stable
@@ -24,7 +24,7 @@ module Stable = struct
   module Model = V1
 end
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

@@ -1,6 +1,6 @@
 (** Build-projection records. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t = private

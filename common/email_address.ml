@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open Import
 
 include Validated_string.Make_regex (struct

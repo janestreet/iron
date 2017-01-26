@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
 
   module Unstable = struct
     module Scrutiny_level = Scrutiny_level
@@ -37,7 +37,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Stable.V1

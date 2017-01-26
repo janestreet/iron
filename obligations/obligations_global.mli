@@ -1,6 +1,6 @@
 (** Global spec file [.fe/obligations-global.sexp]. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Declaration : sig

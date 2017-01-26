@@ -1,6 +1,6 @@
 (** A map from alternate name to user name. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving compare, sexp_of]

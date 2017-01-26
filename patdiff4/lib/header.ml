@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 
 module Ansi_terminal = struct
   include Textutils.Std.Console.Ansi

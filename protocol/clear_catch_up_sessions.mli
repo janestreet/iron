@@ -1,6 +1,6 @@
 (** Remove and return all catch-up sessions for a user for a feature. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Action : sig

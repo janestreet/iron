@@ -1,6 +1,6 @@
 (** Obligations for all files in a repo. *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

@@ -35,7 +35,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Iron_versioned_rpc.Make

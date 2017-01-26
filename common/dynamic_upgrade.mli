@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** This module allows Iron admins to enable/disable new functionalities remotely while

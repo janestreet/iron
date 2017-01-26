@@ -3,7 +3,7 @@
     The fe server never creates such a value, so it cannot run any functions in this
     library that calls out to hg, since they all take such a value. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving compare, sexp_of]

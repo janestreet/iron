@@ -36,7 +36,7 @@ module Stable = struct
         [%expect {| a273209afc783673cb8f1be748af8134 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_model m = m
@@ -58,7 +58,7 @@ module Stable = struct
         [%expect {| 55da2913122cc8ec37f3f639de598366 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_v3 { V3.
@@ -82,7 +82,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Iron_versioned_rpc.Make

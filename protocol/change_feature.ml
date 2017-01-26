@@ -7,7 +7,7 @@ module Stable = struct
      unknown constructor is fine because the old clients cannot have sent these updates in
      the first place, so this is an unreachable execution path. *)
   let assert_false__invariant_in_reaction here =
-    let open Core.Std in
+    let open Core in
     raise_s [%sexp "assert false", (here : Source_code_position.t)]
   ;;
 
@@ -140,7 +140,7 @@ module Stable = struct
         [%expect {| 4b92dfa291675eae0afdb7e0c543bc85 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_v9 (t: t) : V9.t = (t :> V9.t)
@@ -200,7 +200,7 @@ module Stable = struct
         [%expect {| a26cf217411c9e99163d0c090a225dcf |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_v8 (t: t) : V8.t =
@@ -259,7 +259,7 @@ module Stable = struct
         [%expect {| 116c17197d022d295bcf781cfb312c6f |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_v7 (t : t) : V7.t =
@@ -317,7 +317,7 @@ module Stable = struct
         [%expect {| 19aea7c181b2b614f3b27aacffc4fff8 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_v6 (t : t) : V6.t =

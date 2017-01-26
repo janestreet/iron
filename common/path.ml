@@ -1,5 +1,5 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
 
   module Parts = struct
     module V1 = struct
@@ -11,7 +11,7 @@ module Stable = struct
         [%expect {| 296be80010ace497614f92952e5510c4 |}]
       ;;
 
-      open Core.Std
+      open Core
 
       let join t =
         String.concat ~sep:Filename.dir_sep (List.map t ~f:File_name.to_string)
@@ -52,7 +52,7 @@ module Stable = struct
     ;;
 
     let of_string string =      (* Used by the various of_string's below. *)
-      let open Core.Std in
+      let open Core in
       (* [Filename.parts] splits a filename at slashes.  It always returns a non-empty
          list whose first element is either "/" or ".".  - [File_name.of_string] will
          check the path elements for nul chars, for us. *)
@@ -92,7 +92,7 @@ module Stable = struct
         match V1.of_string string with
         | Abspath file_names -> file_names
         | Relpath _ ->
-          Core.Std.failwiths "Abspath.of_string got relative path"
+          Core.failwiths "Abspath.of_string got relative path"
             string [%sexp_of: string]
       ;;
 
@@ -119,7 +119,7 @@ module Stable = struct
         match V1.of_string string with
         | Relpath file_names -> file_names
         | Abspath _ ->
-          Core.Std.failwiths "Relpath.of_string got absolute path"
+          Core.failwiths "Relpath.of_string got absolute path"
             string [%sexp_of: string]
       ;;
 
@@ -133,7 +133,7 @@ module Stable = struct
 
 end
 
-open Core.Std
+open Core
 open Import
 
 (* Some internal, unexported utilities

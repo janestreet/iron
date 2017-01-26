@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 
@@ -116,8 +116,8 @@ is deleted.  In case of an error, the directory is kept untouched for inspection
        let hookdir =
          Abspath.append (Repo_root.to_abspath repo_root) (Hook_name.relpath hook_name)
        in
-       Core.Std.Unix.mkdir_p (Abspath.to_string hookdir);
-       let basedir = Core.Std.Unix.mkdtemp (Abspath.to_string hookdir ^/ "run") in
+       Core.Unix.mkdir_p (Abspath.to_string hookdir);
+       let basedir = Core.Unix.mkdtemp (Abspath.to_string hookdir ^/ "run") in
        let main ~basedir:_ =
          match%bind
            Monitor.try_with_or_error ~extract_exn:true (fun () ->

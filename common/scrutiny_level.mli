@@ -4,7 +4,7 @@
     requires a higher level of attention.  Scrutiny levels are defined in
     [obligations-global.sexp]. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving sexp_of]

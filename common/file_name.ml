@@ -1,11 +1,11 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
 
   module V1 = struct
     module Unshared = struct
       type t = string [@@deriving bin_io, compare, sexp]
       let module_name = "Iron_common.File_name"
-      let hash = Core.Std.String.hash
+      let hash = Core.String.hash
     end
     include Hash_consing.Stable.Make_stable_private (Unshared) ()
 
@@ -16,7 +16,7 @@ module Stable = struct
   end
 end
 
-open Core.Std
+open Core
 open! Import
 
 module T = struct

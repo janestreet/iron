@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 
 let char_value_for_alphabetic_compare =
   let num_chars = Char.(to_int max_value - to_int min_value) + 1 in

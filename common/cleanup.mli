@@ -3,7 +3,7 @@
     Shutdown will be delayed until the action finishes, whether the action was run
     explicitly or implicitly at shutdown. *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

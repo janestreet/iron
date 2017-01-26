@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** This is a single file's hunk. For the full 4-way hunk, see [Segment.t]. *)

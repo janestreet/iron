@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 
 include (Iron_common.Std : module type of struct include Iron_common.Std end
@@ -18,7 +18,7 @@ module Abspath = struct
     match program_started_in with
     | Ok path -> path
     | Error (_ : Error.t) ->
-      Core.Std.Unix.chdir "/";
+      Core.Unix.chdir "/";
       root
   ;;
 end

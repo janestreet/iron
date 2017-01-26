@@ -8,7 +8,7 @@
     preferable to not have a spurious event, and [At_next_change] can be used.
 *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t =

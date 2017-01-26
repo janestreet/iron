@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
 
   module Property = Property.Stable
 
@@ -13,7 +13,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 type t = Sexp.t Property.Map.t [@@deriving sexp_of]

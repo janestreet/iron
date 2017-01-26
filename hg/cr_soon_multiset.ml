@@ -19,7 +19,7 @@ module Pre_stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Cr_soon_in_feature = struct

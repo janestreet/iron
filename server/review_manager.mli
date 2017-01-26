@@ -15,7 +15,7 @@
     mark a diff4 as reviewed.
 *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving sexp_of]

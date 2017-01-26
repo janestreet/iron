@@ -1,5 +1,5 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
   module User_name = User_name.Stable
   module Reviewed_by_someone_else = struct
     module V1 = struct
@@ -34,7 +34,7 @@ module Stable = struct
   module Model = V1
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Reviewed_by_someone_else = struct

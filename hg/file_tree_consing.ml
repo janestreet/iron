@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 include File_tree_consing_intf

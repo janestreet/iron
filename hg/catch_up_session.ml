@@ -1,5 +1,5 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
   open Import_stable
 
   module Diff4_in_session = Review_session.Stable.Diff4_in_session
@@ -32,7 +32,7 @@ module Stable = struct
         [%expect {| 8f3cc47f57a124a4143720230d174839 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_v3 { V3.diff4_in_session; reason } =
@@ -66,7 +66,7 @@ module Stable = struct
   module Creation = struct
 
     module Context = struct
-      open! Core.Std
+      open! Core
       open! Import
 
       type t =
@@ -126,7 +126,7 @@ module Stable = struct
         }
       [@@deriving sexp, fields]
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_v3 (context : Context.t)
@@ -196,7 +196,7 @@ module Stable = struct
         ]
       [@@deriving sexp]
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_v3 : t -> V3.t = function
@@ -223,7 +223,7 @@ module Stable = struct
   end
 end
 
-open Core.Std
+open Core
 open Import
 
 module Creation = struct

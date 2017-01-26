@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 
 let env_var = "IRON_OPTIONS"
 

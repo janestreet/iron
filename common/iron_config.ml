@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 open Async.Std
 open Import
 
@@ -40,7 +40,7 @@ module Make(T : sig type t [@@deriving of_sexp] end) = struct
     | Some ("prod" | "PROD") -> prod ()
     | Some s -> return (Sexp.of_string_conv_exn s [%of_sexp: T.t])
     | None ->
-      if String.is_prefix Core.Std.Sys.executable_name ~prefix:"/j/office/app"
+      if String.is_prefix Core.Sys.executable_name ~prefix:"/j/office/app"
       then prod ()
       else
         failwithf "\

@@ -7,7 +7,7 @@
     of the file system.
 *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

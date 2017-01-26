@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 module Patdiff_core = Patdiff_lib.Patdiff_core
 module Rule  = Patdiff_core.Format.Rule
 module Rules = Patdiff_core.Format.Rules

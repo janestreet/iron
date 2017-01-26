@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 module Feature_base_to_tip : sig

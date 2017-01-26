@@ -5,7 +5,7 @@
     trip to the real server for each incoming RPC connection.
 *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 
 val simple_server

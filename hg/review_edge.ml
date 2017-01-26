@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module V1 = struct
@@ -27,7 +27,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module T = struct

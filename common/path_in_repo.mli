@@ -2,7 +2,7 @@
 
     This is like a [Relpath], but the types are not equal. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving sexp_of]

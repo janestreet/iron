@@ -1,5 +1,5 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
   module V1 = struct
     type t = bool
     [@@deriving bin_io, compare, sexp]
@@ -11,7 +11,7 @@ module Stable = struct
   end
 end
 
-open Core.Std
+open Core
 open! Import
 
 include Bool

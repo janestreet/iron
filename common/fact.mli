@@ -1,7 +1,7 @@
 (** Facts are propositions about scopes that can be asserted or retracted by authorized
     asserters. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 (** A scope is a set of key-value pairs describing the domain over

@@ -11,7 +11,7 @@
     modification before it is ready.
 *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

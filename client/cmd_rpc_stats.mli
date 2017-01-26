@@ -1,3 +1,3 @@
-open! Core.Std
+open! Core
 
 val command : Command.t

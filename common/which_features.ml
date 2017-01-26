@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
 
   module Feature_path = Feature_path.Stable
 
@@ -41,7 +41,7 @@ module Feature = Stable.Feature.Model
 
 include Stable.Model
 
-open! Core.Std
+open! Core
 open! Import
 
 let these_features feature_paths =

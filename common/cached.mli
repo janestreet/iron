@@ -13,7 +13,7 @@
     values that depend on it, by calling [Invalidator.invalidate_dependents].
 *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Invalidator : sig

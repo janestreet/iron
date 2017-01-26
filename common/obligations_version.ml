@@ -1,5 +1,5 @@
 module Stable_format = struct
-  open! Core.Stable
+  open! Core.Core_stable
   module V1 = struct
     type t = int [@@deriving bin_io, compare, sexp]
 
@@ -10,7 +10,7 @@ module Stable_format = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 type t =

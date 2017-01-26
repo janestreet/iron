@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 
 (** Returns the equivalent of [List.filter_map configuration ~f:find_in_available], where

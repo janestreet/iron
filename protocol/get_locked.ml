@@ -44,7 +44,7 @@ module Stable = struct
         [%expect {| cc1252937498d7815d0fbd1eca2f9e0d |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_model m =
@@ -88,7 +88,7 @@ include Register_old_rpc
     (Stable.Action.V1)
     (Stable.Reaction.V2)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Locked   = Feature.Stable.Locked. Model

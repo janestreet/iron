@@ -2,7 +2,7 @@
     names.
 *)
 
-open! Core.Std
+open! Core
 open! Import
 
 (** All CR-soons in a feature, where assignees are unresolved names. *)

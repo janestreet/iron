@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   module V1 = struct
     type 'a t =
       { b1 : 'a
@@ -15,7 +15,7 @@ module Stable = struct
     ;;
 
     let map t ~f =
-      let f field = f (Core.Std.Field.get field t) in
+      let f field = f (Core.Field.get field t) in
       Fields.map
         ~b1:f
         ~b2:f
@@ -25,7 +25,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Async.Std
 
 include Stable.V1

@@ -26,7 +26,7 @@
     obligations) and these can be resolved into user_names by
     [User_name_by_alternate_name]. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 include Validated_string.S

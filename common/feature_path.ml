@@ -1,5 +1,5 @@
 module Stable_workaround = struct
-  open! Core.Stable
+  open! Core.Core_stable
 
   module Feature_name = Feature_name.Stable
 
@@ -16,7 +16,7 @@ module Stable_workaround = struct
       *)
       type t = Feature_name.V1.t list [@@deriving bin_io]
 
-      open Core.Std
+      open Core
 
       let to_string t =
         String.concat ~sep:"/" (List.rev_map t ~f:Feature_name.V1.to_string)
@@ -69,7 +69,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module T = struct
@@ -352,7 +352,7 @@ let prevent_final_space_if_more_completion_will_follow = function
 *)
 let complete ~iter_features ~prefix of_what =
   let module Feature_path_hash_set = Hash_set in
-  let module Hash_set = Core.Std.Hash_set in
+  let module Hash_set = Core.Hash_set in
   let match_ = match_ ~prefix of_what in
   let result =
     let have_children = Feature_path_hash_set.create () in

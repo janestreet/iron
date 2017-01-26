@@ -1,6 +1,6 @@
 (** An expression denoting a set of users. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t = User_name.Set.t [@@deriving sexp_of]

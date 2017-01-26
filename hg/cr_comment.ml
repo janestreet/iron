@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Core.Stable
+  open Core.Core_stable
   open Iron_common.Stable
 
   module Raw = struct
@@ -145,7 +145,7 @@ module Stable = struct
 
 end
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

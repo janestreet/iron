@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
 
   module Relpath = Relpath.Stable
 
@@ -22,7 +22,7 @@ module Stable = struct
   module Model = V1
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module T = Stable.Model

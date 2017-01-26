@@ -1,5 +1,5 @@
 module Stable_format = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Obligations_repo = Obligations_repo.Stable
@@ -21,7 +21,7 @@ module Stable_format = struct
   module Model = V5
 end
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Core.Stable
+  open Core.Core_stable
 
   module V1 = struct
 
@@ -42,7 +42,7 @@ module Stable = struct
     ;;
 
     let hash t =
-      let open Core.Std in
+      let open Core in
       let open Import in
       match t with
       | Ssh { host; path } -> Hashtbl.hash (String.hash host, Abspath.hash path)
@@ -51,7 +51,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

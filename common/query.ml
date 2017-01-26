@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   module Time = Import.Time.Stable
   module User_name = User_name.Stable
   module V1 = struct
@@ -9,7 +9,7 @@ module Stable = struct
       ; by                 : User_name.V1.t
       ; at                 : Time.V1_round_trippable.t
       ; hostname           : string
-      ; machine_zone       : Core.Stable.Time.Zone.V1.t
+      ; machine_zone       : Core.Core_stable.Time.Zone.V1.t
       ; executable         : string
       ; executable_version : string
       (* [action] is last because it might be big, and the sexp is easier to read with
@@ -28,7 +28,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Stable.V1
@@ -58,7 +58,7 @@ let create ?(by = User_name.unix_login) ?(at = Time.now ()) action =
   ; by
   ; at
   ; hostname
-  ; machine_zone       = Core.Std.(force Time.Zone.local)
+  ; machine_zone       = Core.(force Time.Zone.local)
   ; executable
   ; executable_version = Version_util.version
   ; action

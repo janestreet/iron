@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open Core.Stable
+  open Core.Core_stable
 
   module Rev = Rev.Stable
 
@@ -80,7 +80,7 @@ module Stable = struct
   end
 end
 
-open Core.Std
+open Core
 open Async.Std
 open! Import
 

@@ -1,6 +1,6 @@
 module Stable = struct
   open! Import_stable
-  open Core.Stable
+  open Core.Core_stable
   module Diff2 = Diff2.Stable
   module V2 = struct
     type t = Diff2.V2.t list
@@ -13,7 +13,7 @@ module Stable = struct
   end
 end
 
-open Core.Std
+open Core
 open Import
 
 include Stable.V2

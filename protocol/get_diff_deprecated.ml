@@ -77,7 +77,7 @@ module Stable = struct
         [%expect {| 355db5d905934bc366e749ff01fb05ab |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_model { feature_path
@@ -200,7 +200,7 @@ module Stable = struct
         [%expect {| cf3e8b81daf420d0b232fb2bbfce2c81 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_model m =

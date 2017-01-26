@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 open Import
 open Patience_diff_lib.Std
 

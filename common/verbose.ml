@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 open! Import
 
 include Iron_options.Verbose
@@ -23,7 +23,7 @@ let message string a sexp_of_a =
   in
   let elapsed_since_program_start = Time.diff now program_started_at in
   last_message_at := Some now;
-  Core.Std.eprintf "%s\n%!"
+  Core.eprintf "%s\n%!"
     ({ Message.
        elapsed_since_program_start
      ; elapsed_since_last_message

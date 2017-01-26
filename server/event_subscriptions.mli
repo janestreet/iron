@@ -2,7 +2,7 @@
     currently open, for debugging and administration. The actual pipes are handled
     by [Feature_updates_manager] instead. *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

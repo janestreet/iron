@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Obligations_are_valid = Rev_facts.Stable.Obligations_are_valid
@@ -20,7 +20,7 @@ module Stable = struct
   module Model = V5
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Obligations_are_valid = Rev_facts.Obligations_are_valid

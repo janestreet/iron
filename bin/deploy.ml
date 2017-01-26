@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 
@@ -20,8 +20,8 @@ let generic_deploy_arguments =
 ;;
 
 let fork_exec_wait ~prog ~args =
-  Core.Std.Unix.waitpid_exn
-    (Core.Std.Unix.fork_exec ~prog
+  Core.Unix.waitpid_exn
+    (Core.Unix.fork_exec ~prog
        ~args:(prog :: args) ())
 ;;
 

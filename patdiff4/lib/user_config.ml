@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 open! Iron_common.Std
 
@@ -35,8 +35,8 @@ module Dot_patdiff = struct
       let module Patdiff_config = Patdiff_lib.Configuration in
       let config =
         Option.try_with (fun () ->
-          Option.bind (Core.Std.Sys.getenv "HOME") ~f:(fun home ->
-            match Core.Std.Sys.file_exists (home ^/ dot_patdiff4) with
+          Option.bind (Core.Sys.getenv "HOME") ~f:(fun home ->
+            match Core.Sys.file_exists (home ^/ dot_patdiff4) with
             | `Yes | `Unknown -> None
             | `No ->
               Patdiff_config.load ~quiet_errors:true (home ^/ dot_patdiff)))

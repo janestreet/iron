@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 
 module Stable = Time_ns.Stable
 

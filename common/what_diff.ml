@@ -41,7 +41,7 @@ module Stable = struct
   module Model = V2
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Stable.Model

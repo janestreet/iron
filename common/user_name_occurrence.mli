@@ -1,6 +1,6 @@
 (** Circumstances in which a user name can appear in Iron server's state. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t =

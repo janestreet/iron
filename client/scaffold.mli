@@ -13,7 +13,7 @@
     locate all of the satellites.
 *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

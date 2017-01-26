@@ -1,6 +1,6 @@
 (** A symbolic representation of the set of reviewing users. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t =

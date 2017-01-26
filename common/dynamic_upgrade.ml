@@ -1,5 +1,5 @@
 module T = struct
-  open! Core.Std
+  open! Core
   open! Import
 
   type t =
@@ -24,7 +24,7 @@ end
 
 module Stable = struct
   module V1 = struct
-    open! Core.Stable
+    open! Core.Core_stable
     let hash = T.hash
     include Make_stable.Of_stable_format.V1 (struct
         type t = int [@@deriving bin_io, compare, sexp]
@@ -50,7 +50,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include T

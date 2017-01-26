@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Namespace = struct
@@ -130,7 +130,7 @@ module Stable = struct
   module Model = V3
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Namespace = Stable.Namespace.Model

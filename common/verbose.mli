@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 include module type of struct include Iron_options.Verbose end

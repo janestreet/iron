@@ -1,6 +1,6 @@
 (** Get the next catch-up session for a user for a feature. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Action : sig

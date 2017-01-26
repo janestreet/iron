@@ -175,7 +175,7 @@ module Stable = struct
       print_endline [%bin_digest: t];
       [%expect {| f446db0d717c71116bd10fff3c797e8a |}]
     ;;
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_model m =
@@ -322,7 +322,7 @@ module Stable = struct
       [%expect {| e7793dae462a87da88774894eb599e89 |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_model m =
@@ -608,7 +608,7 @@ module Stable = struct
       [%expect {| 0eb5b62f1188654f48ddca51ea89a3e0 |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_model m =
@@ -1014,7 +1014,7 @@ module Stable = struct
       [%expect {| 5f036347ab82677d08969dd2814bb0ab |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_model m =
@@ -1240,7 +1240,7 @@ module Stable = struct
       [%expect {| 262d0dfecb185a16db850185641581dd |}]
     ;;
 
-    open Core.Std
+    open Core
     open Import
 
     let of_model m =
@@ -1419,7 +1419,7 @@ module Stable = struct
   module Model = V20
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Stable.Model

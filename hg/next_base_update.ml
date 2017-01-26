@@ -36,7 +36,7 @@ module Stable = struct
   module Model = V1
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Update_expected = struct

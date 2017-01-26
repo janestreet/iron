@@ -65,7 +65,7 @@ module Stable = struct
 
 end
 
-open Core.Std
+open Core
 open Import
 
 (* We don't use CR-soons if there are conflicts or invalid obligations. *)

@@ -1,6 +1,6 @@
 (** The metadata for each file as specified by .fe.sexp files. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t = private

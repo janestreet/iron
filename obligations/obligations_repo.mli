@@ -22,7 +22,7 @@
     repo, and even when it does, #3 involves running hg over ssh, and so can be slow.
 *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

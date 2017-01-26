@@ -1,5 +1,5 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
   module V1 = struct
     type t =
       | Num of int
@@ -17,7 +17,7 @@ module Stable = struct
   module Model = V1
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Stable.Model

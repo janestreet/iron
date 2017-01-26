@@ -1,10 +1,10 @@
 module Stable_format = struct
-  open Core.Stable
+  open Core.Core_stable
 
   module V1 = Uuid.V1
 end
 
-open Core.Std
+open Core
 open! Import
 
 module T : sig
@@ -36,7 +36,7 @@ let create ()      = Uuid.create () |> shared_t
 let to_file_name t = File_name.of_string (to_string t)
 
 let length_of_string_repr =
-  String.length (Core.Std.Uuid.to_string Core.Std.Uuid.Stable.V1.for_testing)
+  String.length (Core.Uuid.to_string Core.Uuid.Stable.V1.for_testing)
 ;;
 
 module Stable = struct

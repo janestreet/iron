@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 open Import
 
 include Validated_string_intf
@@ -45,7 +45,7 @@ module Make (M : sig
       end
 
       include T
-      module Comparable = Core.Stable.Comparable.V1.Make(T_with_comparator)
+      module Comparable = Core.Core_stable.Comparable.V1.Make(T_with_comparator)
       module Map = struct
         include Comparable.Map
         let hash hash_data = Hash_consing.map_hash T.hash hash_data
@@ -59,7 +59,7 @@ module Make (M : sig
         include T
         include Hash_consing.Stable.Make_stable_public (T) ()
       end
-      include Core.Stable.Hashable.V1.Make(T_with_comparator)
+      include Core.Core_stable.Hashable.V1.Make(T_with_comparator)
     end
   end
 

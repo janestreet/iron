@@ -7,7 +7,7 @@
     feature, and that are used to quickly create a share.
 *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

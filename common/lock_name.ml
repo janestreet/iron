@@ -25,7 +25,7 @@ module Stable = struct
       [%expect {| 87cdeca4e3128fc2c80f2225d290c51b |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_v2 (v2 : V2.t) =
@@ -51,7 +51,7 @@ module T = struct
   let hash = Hashtbl.hash
 end
 
-open Core.Std
+open Core
 open! Import
 
 include T

@@ -4,7 +4,7 @@ module Unstable = struct
 end
 
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Build_projection            = Build_projection.            Stable
@@ -53,7 +53,7 @@ module Stable = struct
   module Model = V5
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Declaration = struct

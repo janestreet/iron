@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** This type represents the result of a computation that can partially fail.  In that

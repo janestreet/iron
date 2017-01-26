@@ -1,5 +1,5 @@
 module Stable_format = struct
-  open! Core.Stable
+  open! Core.Core_stable
   module User_name  = User_name.Stable
   module Group_name = Group_name.Stable
 
@@ -19,7 +19,7 @@ module Stable_format = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 type t = User_name.Set.t [@@deriving compare, sexp_of]

@@ -1,6 +1,6 @@
 (** A set of CR-soons, where the assignee is an unresolved name. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Cr_soon_in_feature : sig

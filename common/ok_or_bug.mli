@@ -15,6 +15,6 @@
     However, because we'd like to keep it a little undefined what the effects (control and
     otherwise) are when this check fails, we leave _exn off the name of the function. *)
 
-open! Core.Std
+open! Core
 
 val ok_or_bug : 'a Or_error.t -> 'a

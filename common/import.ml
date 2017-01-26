@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 
 module String      = Iron_string
@@ -8,7 +8,7 @@ module Clock_ns    = struct end
 
 include Stable_module_types
 
-module Make_stable = Core.Stable.Make_stable
+module Make_stable = Core.Core_stable.Make_stable
 
 let concat = String.concat
 

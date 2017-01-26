@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 module Command_rpc : sig

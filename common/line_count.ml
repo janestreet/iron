@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
 
   module Review_or_commit = Review_or_commit.Stable
 
@@ -70,7 +70,7 @@ module Stable = struct
       [%expect {| 9048bea09e73944b1f04912460f0e852 |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_v5 { V5.
@@ -105,7 +105,7 @@ module Stable = struct
       [%expect {| 079195a277e05830df211eaaea8f7aa6 |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_v4 { V4.
@@ -162,7 +162,7 @@ module Stable = struct
       [%expect {| 2e9568ada259731ec62136f50a02d6ba |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_v3 { V3.
@@ -184,7 +184,7 @@ module Stable = struct
   module Model = V5
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 let update_field t field ~f = Field.fset field t (Field.get field t |> f)

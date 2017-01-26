@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open! Core.Stable
+  open! Core.Core_stable
   open! Iron_common.Stable
 
   module Rev = Rev.Stable
@@ -42,7 +42,7 @@ module Stable = struct
         [%expect {| 22403e51c42e09e66dab7e49bac34b06 |}]
       ;;
 
-      open Core.Std
+      open Core
       open Import
 
       let of_v1 { V1. hash; owner; followers; scrutiny_level
@@ -104,7 +104,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

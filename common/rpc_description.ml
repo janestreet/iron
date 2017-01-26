@@ -1,5 +1,5 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
 
   module V1 = struct
     (* Note: keep the equality between [t] and [Async.Std.Rpc.Description.t].  The day it
@@ -17,7 +17,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module T = Stable.V1

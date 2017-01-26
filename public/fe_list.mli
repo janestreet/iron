@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** Displays an arbitrary list of feature the same way [fe list] would. *)

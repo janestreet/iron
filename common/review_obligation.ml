@@ -1,7 +1,7 @@
 module Stable_format = struct
 
   module V1 = struct
-    open! Core.Stable
+    open! Core.Core_stable
     module Symbolic_user_set = Symbolic_user_set.Stable
     module User_name         = User_name.Stable
 
@@ -21,7 +21,7 @@ module Stable_format = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module T = struct

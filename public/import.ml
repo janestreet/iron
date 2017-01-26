@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 
 (* Stop : do not include Iron_common, Iron_hg, Iron_protocol.  We use [Export] to
    introduce the aliases that we need to deal with Iron modules *)

@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 module Rpc = Async.Std.Rpc
@@ -3813,7 +3813,7 @@ let () =
        | Gc_quick_stat ->
          Gc.quick_stat () |> [%sexp_of: Gc.Stat.t]
        | Process_times ->
-         Unix.times () |> [%sexp_of: Core.Std.Unix.process_times])
+         Unix.times () |> [%sexp_of: Core.Unix.process_times])
 ;;
 
 let () =

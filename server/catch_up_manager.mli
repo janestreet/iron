@@ -3,7 +3,7 @@
     Catch up sessions are created when one user reviews for another, [fe review -for], for
     example, when one user reviews for another who is on vacation. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving sexp_of]

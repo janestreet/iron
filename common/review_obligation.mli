@@ -1,6 +1,6 @@
 (** Specifies who must review changes to a file. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t = private

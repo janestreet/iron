@@ -81,7 +81,7 @@ module Stable = struct
         [%expect {| c0965e955ce0be7f9a5659dcc60c9e82 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_v5
@@ -156,7 +156,7 @@ module Stable = struct
         [%expect {| dc15c5fcd2c50b030a0fe01be0cbd72e |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_v4
@@ -230,7 +230,7 @@ module Stable = struct
         [%expect {| a2abaf42825f733295086add2b8da421 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_v3

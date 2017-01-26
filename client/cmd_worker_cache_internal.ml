@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 
@@ -275,7 +275,7 @@ are given.
              ; string ~header:"process" (cell (fun t ->
                  Table_line.duration_to_build_tree t
                  |> Time.Span.to_span
-                 |> Core.Std.Time.Span.to_string_hum))
+                 |> Core.Time.Span.to_string_hum))
              ; int    ~header:"dirs (total)"
                  (cell Table_line.cumulative_number_of_dirs)
              ; int    ~header:"files (total)"

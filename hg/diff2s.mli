@@ -12,7 +12,7 @@
     I.e., there can be at most one fact about the "current" state of a path in the repo.
 *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t = Diff2.t list [@@deriving compare, sexp_of]

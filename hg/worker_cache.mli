@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 module From_server_to_worker : sig

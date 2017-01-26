@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 open! Iron_common.Std
 open! Iron_hg.Std
@@ -41,7 +41,7 @@ let blang_arg_type_with_completion
   let complete _ ~part =
     match get_universe () with
     | Error err ->
-      Core.Std.eprintf !"\n%{sexp:Error.t}\n%!" err;
+      Core.eprintf !"\n%{sexp:Error.t}\n%!" err;
       []
     | Ok universe ->
       let sexp_start, partial_atom =
@@ -171,7 +171,7 @@ let rev_from_string_40_or_local_repo_arg_type =
 let rev = anon ("REV" %: rev_arg_type)
 
 let completion_problem error =
-  Core.Std.eprintf !"\n%{sexp:Error.t}\n%!" error;
+  Core.eprintf !"\n%{sexp:Error.t}\n%!" error;
   []
 ;;
 

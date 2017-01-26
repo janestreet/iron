@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** Tags are identifiers in obligations files which group related projects.

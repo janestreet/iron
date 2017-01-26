@@ -4,7 +4,7 @@ module Unstable = struct
 end
 
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module V2 = struct
@@ -54,7 +54,7 @@ module Stable = struct
   module Model = V2
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module T = struct
@@ -116,7 +116,7 @@ let attribute_table t =
     in
     let set_to_string f set =
       set
-      |> Core.Std.Set.to_list
+      |> Core.Set.to_list
       |> List.map ~f
       |> String.concat ~sep:", "
     in

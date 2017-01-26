@@ -1,12 +1,12 @@
 module Stable = struct
   module Unstable = struct
-    open! Core.Std
+    open! Core
     open! Import
 
     module Property = Property
   end
 
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Cr_soons_or_pending = struct
@@ -167,7 +167,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Action = struct
@@ -213,7 +213,7 @@ module Persist = struct
   end
   module Diff4s_file = struct
     module V2 = struct
-      open Core.Stable
+      open Core.Core_stable
       open Import_stable
       type t = Diff4.V2.t list Or_error.V1.t Or_pending.V1.t
       [@@deriving sexp]

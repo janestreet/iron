@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 
 include (Iron_common.Std : module type of struct include Iron_common.Std end

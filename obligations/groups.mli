@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 type t = Unresolved_name.Set.t Group_name.Map.t

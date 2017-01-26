@@ -9,7 +9,7 @@
     and assign it to the feature owner.
 *)
 
-open! Core.Std
+open! Core
 open! Import
 
 include Validated_string.S

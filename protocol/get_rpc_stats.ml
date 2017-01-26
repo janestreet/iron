@@ -23,7 +23,7 @@ module Stable = struct
         [%expect {| 6da9b5b2a0991162b3b4f8a45b22a8e9 |}]
       ;;
 
-      let hash (t : t) = Core.Std.Hashtbl.hash t
+      let hash (t : t) = Core.Hashtbl.hash t
     end
 
     module Model = V1
@@ -64,7 +64,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Iron_versioned_rpc.Make

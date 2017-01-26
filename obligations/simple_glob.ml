@@ -1,7 +1,7 @@
-open Core.Std
+open Core
 open Import
 
-let fnmatch = Core.Std.Unix.fnmatch
+let fnmatch = Core.Unix.fnmatch
 
 module T = struct
   type t = string

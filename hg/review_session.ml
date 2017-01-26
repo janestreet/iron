@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Unstable_diff4 = Diff4
@@ -70,7 +70,7 @@ module Stable = struct
   module Creation = struct
 
     module Context = struct
-      open! Core.Std
+      open! Core
       open! Import
 
       type t =
@@ -106,7 +106,7 @@ module Stable = struct
         }
       [@@deriving sexp]
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_model (context : Context.t)
@@ -151,7 +151,7 @@ module Stable = struct
              base of the review goal, so we take the tip.  Given that we only use this
              field to avoid recreating a new session, the worst that can happen is
              recreating empty sessions. *)
-          match Core.Std.List.find_map diff4s ~f:b2_if_not_forget with
+          match Core.List.find_map diff4s ~f:b2_if_not_forget with
           | None -> tip
           | Some b2 -> b2
         in
@@ -169,7 +169,7 @@ module Stable = struct
         }
       [@@deriving sexp]
 
-      open! Core.Std
+      open! Core
 
       let to_model context { reviewer; id; diff4s; sort_diff4s; tip } =
         let diff4s =
@@ -195,7 +195,7 @@ module Stable = struct
         }
       [@@deriving sexp]
 
-      open! Core.Std
+      open! Core
 
       let to_model context { id; diff4s; tip } =
         V2.to_model context
@@ -231,7 +231,7 @@ module Stable = struct
         ]
       [@@deriving sexp]
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_v2 : t -> V2.t = function
@@ -263,7 +263,7 @@ module Stable = struct
 
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Diff4_in_session = struct

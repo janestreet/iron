@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** A 4 way diff algo, also called view is a particular way to look at a the 4 files *)

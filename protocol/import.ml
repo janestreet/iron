@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 
 include Iron_common.Std
 include Iron_obligations.Std

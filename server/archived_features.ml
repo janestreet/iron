@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Archived_feature = Archived_feature.Stable
@@ -27,7 +27,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Action       = Stable.Action.      Model
@@ -116,7 +116,7 @@ let invariant t =
 
 let iteri t ~f = Feature_forest.iteri t.features ~f
 
-let archive_date_zone = Core.Std.Time.Zone.find_exn "America/New_York"
+let archive_date_zone = Core.Time.Zone.find_exn "America/New_York"
 
 let feature_dir archived_feature =
   let date =

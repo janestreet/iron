@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open Import_stable
 
   module Rev = Rev.Stable
@@ -53,7 +53,7 @@ module Stable = struct
       [%expect {| b0509c12fa47737d25b650bd3ef64eed |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let rec to_v3
@@ -139,7 +139,7 @@ module Stable = struct
       [%expect {| 754279db9d054278ee9c8d907a491709 |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let rec to_v2
@@ -202,7 +202,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

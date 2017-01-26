@@ -133,7 +133,7 @@ module Stable = struct
   module Model = V5
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Lock_name = struct

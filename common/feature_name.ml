@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open Import
 
 (* Dashes are fine, but not at the front of the name, otherwise [hg bookmark $book]

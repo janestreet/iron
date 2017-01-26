@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open! Core.Stable
+  open! Core.Core_stable
   module Time = Import.Time.Stable
 
   module Data_point = struct
@@ -20,7 +20,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Data_point = struct

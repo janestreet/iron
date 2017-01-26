@@ -3,7 +3,7 @@
 *)
 
 
-open! Core.Std
+open! Core
 
 type t
 
@@ -11,5 +11,5 @@ type t
 include Identifiable with type t := t
 
 val matches : t -> string -> bool
-val rewrite : t -> template:string -> string -> string Core.Std.Or_error.t
+val rewrite : t -> template:string -> string -> string Core.Or_error.t
 val valid_rewrite_template : t -> template:string -> bool

@@ -2,7 +2,7 @@
     in the user's workspace basedir, and they include all the feature repo's satellites if
     it is scaffolded.  Share basenames are [+share+]. *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
   module Diff2 = Diff2.Stable
 
@@ -60,7 +60,7 @@ module Stable = struct
       [%expect {| 6adaad1ab18aad7d705bef2041b3b5c5 |}]
     ;;
 
-    open! Core.Std
+    open! Core
 
     let to_model diff2s : Model.t =
       V3.to_model
@@ -77,7 +77,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 let verbose = Verbose.knowledge

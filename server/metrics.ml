@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 module Metric_name_subscriptions  = Event_subscriptions_manager.Make (Metric_name)

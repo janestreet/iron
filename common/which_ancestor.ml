@@ -1,6 +1,6 @@
 module Stable = struct
 
-  open! Core.Stable
+  open! Core.Core_stable
 
   module Feature_path = Feature_path.Stable
 
@@ -22,7 +22,7 @@ module Stable = struct
   module Model = V1
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Stable.Model

@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 module Command = Iron_command
@@ -26,7 +26,7 @@ module Make (X : Config) = struct
     List.iter files ~f:(fun file ->
       Or_error.try_with (fun () ->
         let file = Abspath.to_string file in
-        if Core.Std.Sys.file_exists_exn file
+        if Core.Sys.file_exists_exn file
         then (
           (* That way we get located errors happening either in [t_of_sexp] or [update] *)
           let execute sexp = X.update x (X.Statement.t_of_sexp sexp) in
@@ -49,7 +49,7 @@ module Make (X : Config) = struct
     @ (if not Iron_options.load_user_configs
        then []
        else (
-         match Core.Std.Sys.getenv "HOME" with
+         match Core.Sys.getenv "HOME" with
          | None -> []
          | Some home -> [ Abspath.of_string (home ^/ X.home_basename) ])))
   ;;
@@ -66,7 +66,7 @@ module Make (X : Config) = struct
   let%test_unit _ =
     (* We depends on [load_sexps_conv_or_errors] to catch exceptions and returns location,
        so we better make sure it stays that way or better, gets cleaned up *)
-    let open Core.Std in
+    let open Core in
     let file = Filename.temp_file "make_client_config" "unit_test" in
     Out_channel.write_all file ~data:"()";
     let module A = struct

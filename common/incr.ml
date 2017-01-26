@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 open! Import
 
 include Incremental_lib.Std.Incremental.Make ()

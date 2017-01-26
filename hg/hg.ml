@@ -14,7 +14,7 @@ module Stable = struct
     module Hash_consing = Hash_consing
   end
 
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Node_hash = struct
@@ -23,7 +23,7 @@ module Stable = struct
         module Unshared = struct
           type t = string [@@deriving bin_io, compare, sexp]
           let module_name = "Node_hash.First_12"
-          let hash = Core.Std.String.hash
+          let hash = Core.String.hash
         end
         include Hash_consing.Make_stable_private (Unshared) ()
 
@@ -38,7 +38,7 @@ module Stable = struct
       module Unshared = struct
         type t = string [@@deriving bin_io, compare, sexp]
         let module_name = "Node_hash"
-        let hash = Core.Std.String.hash
+        let hash = Core.String.hash
       end
       include Hash_consing.Make_stable_private (Unshared) ()
 
@@ -59,7 +59,7 @@ module Stable = struct
           let hash_0 = Hashtbl.hash 0
           let hash = function
             | None -> hash_0
-            | Some str -> Core.Std.String.hash str
+            | Some str -> Core.String.hash str
         end
         include Hash_consing.Make_stable_private (Unshared) ()
 
@@ -110,7 +110,7 @@ module Stable = struct
 
 end
 
-open Core.Std
+open Core
 open Async.Std
 open! Import
 

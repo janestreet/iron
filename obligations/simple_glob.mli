@@ -1,7 +1,7 @@
 (** A glob pattern for a *simple file name*, not for a full path.
     Thus (1) slashes & nul chars not permitted; (2) must be legal glob pattern. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t

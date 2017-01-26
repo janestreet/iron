@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 (* No [open Import].  This module is used in import.ml. *)
 
 module type Stable_identifiable = sig

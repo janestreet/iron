@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 
 module Rpc_for (M : sig

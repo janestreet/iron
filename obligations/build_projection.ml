@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   module Scrutiny = Scrutiny.Stable
@@ -28,7 +28,7 @@ module Stable = struct
   module Model = V2
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 type t = Stable.Model.t =

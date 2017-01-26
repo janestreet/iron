@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open Import
 
 let create inputs ?preserve_input_ordering feature_path make_output =

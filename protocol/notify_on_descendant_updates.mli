@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** Return a pipe of events reflecting each time a feature is modified on the server in a

@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 module Attributed_file               = Attributed_file

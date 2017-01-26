@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** This type is used to manipulate a diff4 that is shown to a user *)

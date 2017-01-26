@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   open! Import_stable
 
   (* The intent is to keep only the latest used type.  If the types have changed, we just
@@ -13,7 +13,7 @@ module Stable = struct
         }
       [@@deriving compare, sexp]
 
-      let t_of_sexp sexp = Core.Std.Sexp.of_sexp_allow_extra_fields t_of_sexp sexp
+      let t_of_sexp sexp = Core.Sexp.of_sexp_allow_extra_fields t_of_sexp sexp
     end
 
     module Model = V2
@@ -42,14 +42,14 @@ module Stable = struct
         }
       [@@deriving compare, sexp]
 
-      let t_of_sexp sexp = Core.Std.Sexp.of_sexp_allow_extra_fields t_of_sexp sexp
+      let t_of_sexp sexp = Core.Sexp.of_sexp_allow_extra_fields t_of_sexp sexp
     end
 
     module Model = V2
   end
 end
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

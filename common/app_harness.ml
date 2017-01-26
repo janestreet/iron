@@ -1,8 +1,8 @@
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 
-module Command = Core.Std.Command
+module Command = Core.Command
 
 module Mode = struct
   module T = struct
@@ -42,22 +42,22 @@ module Lock_file = struct
   let path ~lockdir = lockdir ^/ "lock"
 
   let create_exn ~lockdir =
-    let timeout = Core.Std.Time.Span.of_sec 1. in
+    let timeout = Core.Time.Span.of_sec 1. in
     let lock_file = path ~lockdir in
-    Core.Std.Lock_file.Nfs.blocking_create ~timeout lock_file
+    Core.Lock_file.Nfs.blocking_create ~timeout lock_file
   ;;
 
   let read_exn ~basedir:lockdir =
     let lock_file = path ~lockdir in
     let is_locked =
-      try Core.Std.Lock_file.Nfs.critical_section
-            ~timeout:Core.Std.Time.Span.zero lock_file ~f:(fun () -> false)
+      try Core.Lock_file.Nfs.critical_section
+            ~timeout:Core.Time.Span.zero lock_file ~f:(fun () -> false)
       with _ -> true
     in
     if not is_locked
     then failwithf "Lock file %s is not locked by any process" lock_file ()
     else (
-      match Core.Std.Lock_file.Nfs.get_hostname_and_pid lock_file with
+      match Core.Lock_file.Nfs.get_hostname_and_pid lock_file with
       | None -> failwithf "unable to read hostname and pid from %s" lock_file ()
       | Some (host, pid) ->
         let my_host = Unix.gethostname () in
@@ -102,7 +102,7 @@ let start ~init_stds ~log_format ~main ~basedir ~mode ~fg () =
   configure_log ~log_format ~logdir ~fg;
   Signal.handle [Signal.term; Signal.int] ~f:(fun signal ->
     if keep_stdout_and_stderr
-    then Core.Std.Printf.printf !"shutting down upon receiving signal %{Signal} at %{Time}\n%!"
+    then Core.Printf.printf !"shutting down upon receiving signal %{Signal} at %{Time}\n%!"
            signal (Time.now ());
     Log.Global.info !"shutting down upon receiving signal %{Signal}" signal;
     upon (Log.Global.flushed ()) (fun () ->
@@ -122,10 +122,10 @@ let start ~init_stds ~log_format ~main ~basedir ~mode ~fg () =
     then (
       (* Multiple runs usually append to the same "keep" files, so these separator
          lines are helpful for distinguishing the output of one run from another. *)
-      let now = Core.Std.Time.now () in
+      let now = Core.Time.now () in
       List.iter [ Pervasives.stdout ; Pervasives.stderr ] ~f:(fun oc ->
-        Core.Std.Printf.fprintf oc !"%s Daemonized with tags=%{Sexp}\n%!"
-          (Core.Std.Time.to_string_abs now ~zone:Core.Std.(force Time.Zone.local))
+        Core.Printf.fprintf oc !"%s Daemonized with tags=%{Sexp}\n%!"
+          (Core.Time.to_string_abs now ~zone:Core.(force Time.Zone.local))
           ([%sexp_of: (string * string) list] tags)
       ))
   );
@@ -182,10 +182,10 @@ let status_command ~appname ~appdir_for_doc ~appdir =
     (fun ~basedir ~mode:_ () ->
        try
          let host, pid = Lock_file.read_exn ~basedir in
-         Core.Std.printf "%s: RUNNING on host %s pid %d\n%!" appname host (Pid.to_int pid);
+         Core.printf "%s: RUNNING on host %s pid %d\n%!" appname host (Pid.to_int pid);
          Pervasives.exit 0
        with exn ->
-         Core.Std.printf "%s: NOT RUNNING %s\n%!" appname (Exn.to_string exn);
+         Core.printf "%s: NOT RUNNING %s\n%!" appname (Exn.to_string exn);
          Pervasives.exit 1
     )
 ;;

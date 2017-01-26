@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 open Iron_common.Std
 
 module To_stringable_with_dashes ( X : Sexpable ) = struct

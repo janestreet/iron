@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 
 (* A header is just some text that looks something like:
 

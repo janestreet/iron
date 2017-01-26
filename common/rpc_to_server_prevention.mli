@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 module Reason_for_disabling_rpc_to_server : sig

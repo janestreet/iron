@@ -10,7 +10,7 @@ module Stable = struct
 
   module Reaction = struct
     let map ~f =
-      let open! Core.Std in
+      let open! Core in
       let open! Import in
       Map.map ~f:(List.map ~f:(fun occurrence ->
         match f occurrence with

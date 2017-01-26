@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 val load_state_and_check_invariants : Command.t

@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 val mark_file : deprecated:bool -> Command.t

@@ -1,6 +1,6 @@
 (** The change in a single file from a base rev to a tip rev. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t = private

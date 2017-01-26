@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** A value of type [t] holds a collection of changes that one wants to make on a feature,

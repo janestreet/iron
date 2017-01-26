@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open Import
 
 module Ascii_table = Textutils.Ascii_table

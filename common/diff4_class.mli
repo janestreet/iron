@@ -21,7 +21,7 @@
    An equivalence between these revisions is used to show more intelligent diffs.
 *)
 
-open! Core.Std
+open! Core
 
 type t =
   [ `b1_b2_f1_f2

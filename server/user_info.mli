@@ -12,7 +12,7 @@
    typos and valid user names.
 *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t [@@deriving sexp_of]

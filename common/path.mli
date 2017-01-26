@@ -1,6 +1,6 @@
 (** File name -- a full path. Paths may include .. elements. **)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

@@ -6,7 +6,7 @@
     value -- to actually perform deserialization, one calls [load].
 *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

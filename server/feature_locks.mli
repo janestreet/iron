@@ -1,6 +1,6 @@
 (** All locks for a feature, at most one for each pair [User_name * [Lock_name]. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Locked : sig

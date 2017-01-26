@@ -12,7 +12,7 @@
     Example:
 
     {[
-      open Core.Std
+      open Core
       open Async.Std
       open Iron.Std
 

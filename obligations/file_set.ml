@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 open Import
 
 type t = (syntax, Sexp.t) And_sexp.t

@@ -1,6 +1,6 @@
 (** Keeps track of a user's review of a review goal. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Diff4_in_session : sig

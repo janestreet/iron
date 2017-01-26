@@ -1,5 +1,5 @@
 
-open! Core.Std
+open! Core
 open! Import
 
 module Action : sig

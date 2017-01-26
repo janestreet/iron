@@ -5,7 +5,7 @@
     another user.  They are also double checked in the server, before allowing one user to
     adjust another user's brain or review session. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Users : sig

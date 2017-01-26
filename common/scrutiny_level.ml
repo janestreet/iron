@@ -1,5 +1,5 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
 
   module V1 = struct
     type t = int [@@deriving bin_io, compare, sexp]
@@ -9,7 +9,7 @@ module Stable = struct
       [%expect {| 698cfa4093fe5e51523842d37b92aeac |}]
     ;;
 
-    open Core.Std
+    open Core
 
     let invariant t =
       if t < 0 || t > 100
@@ -28,7 +28,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Syntax = Stable.V1

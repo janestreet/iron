@@ -157,7 +157,7 @@ module Stable = struct
         [%expect {| 8022f82fa771ad92056ca2420f6c20f1 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_v9 { V9.
@@ -207,7 +207,7 @@ module Stable = struct
         [%expect {| 9e24061dbccd6821372183e4740ff15f |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_v8 { V8.
@@ -255,7 +255,7 @@ module Stable = struct
         [%expect {| 60299e8beab60fd3f22ab6ee4b1fc594 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_v7 { V7.
@@ -296,7 +296,7 @@ module Stable = struct
         [%expect {| 5f10ab212b2c048c697290d0e15b5bef |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_v6 { V6.
@@ -542,7 +542,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Iron_versioned_rpc.Make

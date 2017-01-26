@@ -20,7 +20,7 @@
     and pairs are appended when they are added to the set.
 *)
 
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 

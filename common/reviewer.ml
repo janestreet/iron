@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
   module User_name = User_name.Stable
   module V2 = struct
     type t =
@@ -29,7 +29,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Stable.Model

@@ -1,6 +1,6 @@
 (** A per-directory Iron obligations file, [.fe.sexp]. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Declaration : sig

@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 open! Import
 open! Iron_common.Std
@@ -200,7 +200,7 @@ module Cmd_wait_for_hydra = struct
 end
 
 let unix_wordexp_resolve string =
-  match Core.Std.Unix.wordexp with
+  match Core.Unix.wordexp with
   | Error _ -> string
   | Ok wordexp ->
     match wordexp string with

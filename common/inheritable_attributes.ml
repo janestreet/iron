@@ -1,5 +1,5 @@
 module Stable = struct
-  open! Core.Stable
+  open! Core.Core_stable
 
   module Email_address           = Email_address.           Stable
   module Properties              = Properties.              Stable
@@ -32,7 +32,7 @@ module Stable = struct
   module Model = V1
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 include Stable.V1

@@ -2,7 +2,7 @@
 
     A file name is a nonempty string and is not allowed to contain a '/' or '\000'. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t

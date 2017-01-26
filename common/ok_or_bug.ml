@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 
 let ok_or_bug x =
   match x with

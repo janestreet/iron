@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Async.Std
 
 include module type of struct include Async.Std.Command end

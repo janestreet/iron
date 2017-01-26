@@ -1,5 +1,5 @@
 module type S = sig
-  open! Core.Std
+  open! Core
   open! Import
 
   type t [@@deriving sexp_of]

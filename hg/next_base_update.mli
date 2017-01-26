@@ -1,7 +1,7 @@
 (** What Iron server thinks for a feature about the next base update coming from a
     client. *)
 
-open! Core.Std
+open! Core
 open! Import
 
 module Update_expected : sig

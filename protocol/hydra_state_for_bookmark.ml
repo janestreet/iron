@@ -128,7 +128,7 @@ module Stable = struct
   module Model = V2
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Broken_info          = Stable.Broken_info          .Model

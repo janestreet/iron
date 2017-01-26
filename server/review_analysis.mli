@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 (** This module only contains the types and some accessors to manipulate the review

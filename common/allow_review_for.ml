@@ -1,5 +1,5 @@
 module Stable = struct
-  open Core.Stable
+  open Core.Core_stable
   module User_name = User_name.Stable
 
   module Users = struct
@@ -15,7 +15,7 @@ module Stable = struct
       ;;
 
       let hash = function
-        | All_users -> Core.Std.Int.hash 1
+        | All_users -> Core.Int.hash 1
         | Users users -> Hash_consing.fold_hash 2 (User_name.V1.Set.hash users)
       ;;
     end
@@ -51,7 +51,7 @@ module Stable = struct
   end
 end
 
-open! Core.Std
+open! Core
 open! Import
 
 module Users = struct

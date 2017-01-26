@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 include Persistent_intf

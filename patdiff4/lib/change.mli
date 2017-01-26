@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 
 (** Frequently, instead of a full diff, we can just show a change from one set of lines to
     another. *)

@@ -1,5 +1,5 @@
 
-open Core.Std
+open Core
 
 module Elt = struct
   type 'a t =

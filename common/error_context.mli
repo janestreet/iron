@@ -10,7 +10,7 @@
     so that any call to [error] by [f] returns immediately to the [within].
 *)
 
-open! Core.Std
+open! Core
 open! Import
 
 type t

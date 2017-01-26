@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 open Async.Std
 open! Import
 
@@ -25,7 +25,7 @@ let in_async param =
       let monitor = Monitor.create () in
       Stream.iter (Monitor.detach_and_get_error_stream monitor) ~f:(fun exn ->
         shutdown 1;
-        Core.Std.eprintf "%s\n%!"
+        Core.eprintf "%s\n%!"
           (match Monitor.extract_exn exn with
            | Failure str -> to_string_hum str
            | exn ->

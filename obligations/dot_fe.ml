@@ -1,4 +1,4 @@
-open! Core.Std
+open! Core
 open! Import
 
 let one_or_more name count = sprintf "%s%s" name (if count = 1 then "" else "s")

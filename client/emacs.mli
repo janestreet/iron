@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 val open_file : Abspath.t -> unit Deferred.t

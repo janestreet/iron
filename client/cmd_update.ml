@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 open Import
 
 let satellites_only_switch = "-satellites-only"

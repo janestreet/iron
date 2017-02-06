@@ -1,7 +1,7 @@
 (** File name -- a full path. Paths may include .. elements. **)
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 type abspath (* For forward reference to Abspath.t from Relpath module. *)

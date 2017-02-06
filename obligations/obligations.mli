@@ -1,7 +1,7 @@
 (** Obligations for all files in a repo. *)
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 type t = private

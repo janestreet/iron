@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 (** Memoize the query [List_root_features].  Root features don't change often *)

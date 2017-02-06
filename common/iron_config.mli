@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 (** After [use_prod_IRON_CONFIG ()], a subsequent use of [as_per_IRON_CONFIG] or

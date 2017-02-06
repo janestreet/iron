@@ -1,7 +1,7 @@
 open! Core
-open! Async.Std
+open! Async
 
-include module type of struct include Async.Std.Command end
+include module type of struct include Async.Command end
 
 val async'
   :  summary:string

@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let prod_directory = "/j/office/app/fe/prod"

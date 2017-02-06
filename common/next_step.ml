@@ -200,7 +200,7 @@ let to_attrs_and_string ts ~review_is_enabled =
   let color =
     if List.exists ts ~f:should_be_red
     then [ `Red ]
-    else if List.mem ts Release
+    else if List.mem ts Release ~equal
     then [ `Green ]
     else if review_is_enabled
     then [ `Yellow ]

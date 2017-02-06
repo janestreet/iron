@@ -2,9 +2,9 @@ module Stable = struct
   open Core.Core_stable
 
   module V1 = struct
-    (* Note: keep the equality between [t] and [Async.Std.Rpc.Description.t].  The day it
+    (* Note: keep the equality between [t] and [Async.Rpc.Description.t].  The day it
        breaks, mint V2.t with the same equality. *)
-    type t = Async.Std.Rpc.Description.t =
+    type t = Async.Rpc.Description.t =
       { name    : string
       ; version : int
       }

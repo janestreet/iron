@@ -40,7 +40,7 @@ module Stable = struct
 end
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let verbose = Verbose.knowledge

@@ -146,7 +146,7 @@ module Stable = struct
 end
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let verbose = Verbose.cr_comment
@@ -945,7 +945,7 @@ let grep_files repo_root format ~files_to_grep ~file_owner =
     | Only_those_files only_those_files -> Path_in_repo.root, return only_those_files
   in
   let%bind files_to_grep =
-    let module Process = Async.Std.Process in
+    let module Process = Async.Process in
     let%bind files_to_grep = files_to_grep in
     let%bind grep_process =
       Process.create

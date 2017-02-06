@@ -2,9 +2,9 @@ open! Core
 
 include Import
 
-let (>>>) = Async.Std.(>>>)
-let (>>=) = Async.Std.(>>=)
-let (>>|) = Async.Std.(>>|)
+let (>>>) = Async.(>>>)
+let (>>=) = Async.(>>=)
+let (>>|) = Async.(>>|)
 
 module Abspath                     = Abspath
 module Allow_review_for            = Allow_review_for

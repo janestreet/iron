@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 module Action = Process_num_lines_in_diff4.Action

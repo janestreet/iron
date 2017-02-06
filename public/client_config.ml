@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 open! Iron_common.Std
 open! Iron_hg.Std

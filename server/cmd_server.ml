@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let async_rpc_server t (async_rpc_port : Async_rpc_port.t) =

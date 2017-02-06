@@ -1,8 +1,8 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
-module Versioned_rpc = Async.Std.Versioned_rpc
+module Versioned_rpc = Async.Versioned_rpc
 
 module type Name = sig
   val name : string

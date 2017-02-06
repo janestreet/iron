@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let main  { Fe.Unarchive.Action. feature_path; feature_id } =

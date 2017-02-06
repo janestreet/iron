@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 (** Or one level lower for vim users or people running jenga via the terminal  *)

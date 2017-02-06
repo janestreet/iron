@@ -22,7 +22,7 @@ module Stable_format = struct
 end
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 (* The sharing across values of that type in the worker_cache on the server is

@@ -235,7 +235,7 @@ end
 
 module Worker_session = struct
 
-  open Async.Std
+  open Async
 
   module Cached = struct
     type 'a t =

@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 open Import
 
 module User_aliases = Update_valid_users_and_aliases.User_aliases

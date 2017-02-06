@@ -12,7 +12,7 @@
 *)
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 type t [@@deriving sexp_of]

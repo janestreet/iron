@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 (** [sort repo_root xs path_in_repo] sorts [xs] in dependency order of their

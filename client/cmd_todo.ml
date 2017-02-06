@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 module Assigned     = Todo.Assigned
@@ -21,7 +21,7 @@ let print_table title ~columns ~rows ~display_ascii ~max_output_columns =
 let assigned_table_name = "CRs and review line counts"
 
 let feature_display_attributes ~next_steps ~review_is_enabled ~feature_path_exists =
-  if List.mem next_steps Next_step.Release
+  if List.mem next_steps Next_step.Release ~equal:Next_step.equal
   then [ `Green ]
   else if review_is_enabled
   then [ `Yellow ]
@@ -367,7 +367,7 @@ let command =
          then reaction
          else (
            let should_include next_steps =
-             List.mem next_steps Next_step.Release
+             List.mem next_steps Next_step.Release ~equal:Next_step.equal
            in
            { assigned =
                List.filter reaction.assigned ~f:(fun t -> should_include t.next_steps)

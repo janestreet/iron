@@ -302,7 +302,7 @@ let obligations_global_path = Relpath.of_string ".fe/obligations-global.sexp"
 let obligations_repo_path   = Relpath.of_string ".fe/obligations-repo.sexp"
 
 let load (module Hg : Hg_dependency.S) repo_root ~aliases =
-  let open Async.Std in
+  let open Async in
   let repo_root_as_abspath = Repo_root.to_abspath repo_root in
   let lose e file msg =
     Error (Error.tag_arg e msg file [%sexp_of: Abspath.t])

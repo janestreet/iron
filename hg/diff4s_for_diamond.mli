@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 (** This is a cache of hg commands for a particular repository.  It is there to allow

@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 open Import
 
 let table { Fe.List.Table.Action.
@@ -55,7 +55,7 @@ let table { Fe.List.Table.Action.
              | `Was_archived_at time -> ([ `Yellow ], Time.to_string time)
            in
            let attr =
-             if List.mem next_steps Release
+             if List.mem next_steps Release ~equal:Next_step.equal
              then [ `Green ]
              else if review_is_enabled
              then [ `Yellow ]

@@ -105,7 +105,7 @@ module Stable = struct
 end
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 module Attributes = struct

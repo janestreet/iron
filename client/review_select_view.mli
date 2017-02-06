@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 
 (** Returns the equivalent of [List.filter_map configuration ~f:find_in_available], where
     [find_in_available] returns the first pair in [available] with the given first

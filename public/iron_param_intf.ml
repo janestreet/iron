@@ -74,7 +74,7 @@ module type T = sig
 
   val resolve_maybe_archived_feature_spec_exn
     : Maybe_archived_feature_spec.Command_line.t
-    -> Maybe_archived_feature_spec.t Async.Std.Deferred.t
+    -> Maybe_archived_feature_spec.t Async.Deferred.t
 
   val params : 'a t list -> 'a list t
 
@@ -158,7 +158,7 @@ module type T = sig
   val unverified_workspace_arg_type             : Feature_path.t Or_error.t Arg_type.t
   val clone_of_root_feature_of : doc:string -> Feature_name.Set.t Or_error.t t
 
-  val current_bookmark : unit -> Feature_path.t Or_error.t Async.Std.Deferred.t
+  val current_bookmark : unit -> Feature_path.t Or_error.t Async.Deferred.t
 
   val feature_path_flagged
     :  label : string
@@ -219,7 +219,7 @@ module type T = sig
     -> allow_empty_selection:bool
     -> default_to_current_bookmark:bool
     -> unit
-    -> Which_features.t Async.Std.Deferred.t Lazy.t t
+    -> Which_features.t Async.Deferred.t Lazy.t t
   val which_files                      : Which_files.t t
   val maybe_sort_review_files          : Review_sort.t option t
 

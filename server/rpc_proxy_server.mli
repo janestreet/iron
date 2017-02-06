@@ -6,7 +6,7 @@
 *)
 
 open! Core
-open! Async.Std
+open! Async
 
 val simple_server
   :  where_to_listen : Tcp.Where_to_listen.inet

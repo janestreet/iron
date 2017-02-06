@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Iron_common.Std
 
 let default_view_configuration =

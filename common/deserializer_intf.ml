@@ -7,7 +7,7 @@
 *)
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 module type S = sig

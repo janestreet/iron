@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let apply_updates_exn (type update) ~sexp_of_update ~rpc_to_server_exn

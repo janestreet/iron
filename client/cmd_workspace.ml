@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let workspaces_are_enabled () = Client_config.(get () |> Workspaces.are_enabled)

@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 module Id_subscriptions   = Event_subscriptions_manager.Make (Feature_id)

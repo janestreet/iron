@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 
 module type Config = sig
   module Statement : sig

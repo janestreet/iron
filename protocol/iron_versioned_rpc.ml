@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 open Import
 
 include Iron_versioned_rpc_intf

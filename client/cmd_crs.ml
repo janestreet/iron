@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 open Import
 
 let grep repo_root ~aliases =

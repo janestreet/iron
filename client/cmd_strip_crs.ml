@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 open Import
 
 let strip_crs_exn format ~replace_with ~extra_cr_comment_headers file =

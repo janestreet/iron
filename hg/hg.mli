@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 (** A 40-char hg node id, which uniquely identifies a revision. *)

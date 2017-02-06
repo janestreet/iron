@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let fast_cat_or_empty fast_hg_cat_table attributed_file =

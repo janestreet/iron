@@ -26,7 +26,7 @@ module Stable = struct
 end
 
 open! Core
-open! Async.Std
+open! Async
 
 include Stable.V1
 
@@ -173,7 +173,7 @@ let init ~f = map self ~f
 ;;
 
 module Deferred = struct
-  open Async.Std
+  open Async
 
   let map ?(how = `Sequential) { b1; b2; f1; f2 } ~f =
     match how with

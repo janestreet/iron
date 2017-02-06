@@ -23,7 +23,7 @@
 *)
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 (** Fields are ordered following a topologic ordering of dependency. *)

@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 open Import
 
 let send_sigkill_if_pid_exists pid =

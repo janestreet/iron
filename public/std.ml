@@ -13,7 +13,7 @@
 
     {[
       open Core
-      open Async.Std
+      open Async
       open Iron.Std
 
       let is_seconded (feature_path : Iron.Feature_path.t) =

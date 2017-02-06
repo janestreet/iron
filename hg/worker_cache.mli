@@ -19,7 +19,7 @@ module From_worker_back_to_server : sig
 end
 
 module Worker_session : sig
-  open! Async.Std
+  open! Async
 
   type t [@@deriving sexp_of]
 

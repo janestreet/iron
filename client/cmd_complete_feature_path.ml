@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let rec iter_self_and_ancestors feature_path ~f =

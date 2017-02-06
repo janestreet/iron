@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 val prune : root_feature : Feature_name.t -> Rev.t -> unit Deferred.t

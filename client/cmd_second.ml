@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 open Import
 
 let dialog ~feature_path ~display_ascii ~max_output_columns

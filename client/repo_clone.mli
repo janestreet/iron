@@ -8,7 +8,7 @@
 *)
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 val clone_file_name : File_name.t (* ["+clone+"] *)

@@ -24,7 +24,7 @@ end
 
 type t [@@deriving sexp_of]
 
-include Invariant.S  with type t := t
+include Invariant.S with type t := t
 
 val deserializer : (user_name: User_name.t -> t) Deserializer.t
 

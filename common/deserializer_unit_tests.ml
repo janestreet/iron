@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 module M :
@@ -59,7 +59,7 @@ module M :
   ;;
 
   let%test_unit _ =
-    let open Async.Std in
+    let open Async in
     Thread_safe.block_on_async_exn (fun () ->
       Path.with_temp_dir temp_path ~f:(fun root_directory ->
         let r = ref 0 in

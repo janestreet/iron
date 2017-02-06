@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 
 (* Fire up a text editor to edit some string. *)
 val invoke_editor

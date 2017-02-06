@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 (** [num_lines_in_diff] may or may not be the numbers of lines that have to be read.  In

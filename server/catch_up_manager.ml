@@ -44,6 +44,10 @@ module T = struct
     )
   ;;
 
+  let mem t catch_up_session =
+    Hashtbl.mem t.by_id (Catch_up_session.id catch_up_session)
+  ;;
+
   let find t id =
     match Hashtbl.find t.by_id id with
     | Some session -> Some (Heap.Elt.value_exn session)

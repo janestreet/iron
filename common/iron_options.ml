@@ -21,6 +21,8 @@ module Verbose_tag = struct
       | Worker
       | Workspaces
     [@@deriving compare, enumerate, sexp]
+
+    let equal = [%compare.equal: t]
   end
 
   include T
@@ -207,7 +209,7 @@ module Verbose = struct
   let verbose_for tag =
     match t.verbose with
     | None -> false
-    | Some l -> List.mem l tag
+    | Some l -> List.mem l tag ~equal:Verbose_tag.equal
   ;;
 
   let all = verbose_for Verbose_tag.All

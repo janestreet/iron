@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let make_parent_active_if_feature_is_active repo_root feature_path repo_is_clean =

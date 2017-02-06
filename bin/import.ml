@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 
 include (Iron_common.Std : module type of struct include Iron_common.Std end
          with module Command := Iron_common.Std.Command)

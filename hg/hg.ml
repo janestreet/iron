@@ -111,7 +111,7 @@ module Stable = struct
 end
 
 open Core
-open Async.Std
+open Async
 open! Import
 
 module Node_hash = struct
@@ -328,7 +328,8 @@ let hg_with_optional_repo_root :
       in
       let%map wait_result = Unix.waitpid pid in
       match wait_result with
-      | Error (`Exit_non_zero n) when List.mem accept_nonzero_exit n -> Ok ()
+      | Error (`Exit_non_zero n) when List.mem accept_nonzero_exit n ~equal:Int.equal
+        -> Ok ()
       | _ ->
         match Unix.Exit_or_signal.or_error wait_result with
         | Ok () -> Ok ()

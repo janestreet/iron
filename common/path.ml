@@ -366,7 +366,7 @@ module Abspath = struct
            | Error _ -> None))
   ;;
 
-  open Async.Std
+  open Async
 
   let file_exists_exn t =
     Sys.file_exists_exn (to_string t)
@@ -385,7 +385,7 @@ module Abspath = struct
   ;;
 
   let rename_exn ~src ~dst__delete_if_exists:dst =
-    let open Async.Std in
+    let open Async in
     Monitor.try_with ~extract_exn:true (fun () ->
       let dst_parent = to_string (parent_exn dst) in
       Unix.mkdir ~p:() dst_parent
@@ -641,7 +641,7 @@ let%test_unit _ =
 ;;
 
 let with_temp_dir ?in_dir name ~f =
-  let open Async.Std in
+  let open Async in
   let%bind in_dir =
     match in_dir with
     | Some in_dir ->

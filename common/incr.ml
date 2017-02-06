@@ -1,7 +1,7 @@
 open Core
 open! Import
 
-include Incremental_lib.Std.Incremental.Make ()
+include Incremental_lib.Incremental.Make ()
 
 let should_stabilize = ref true
 

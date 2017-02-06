@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 val maybe_send_push_event : repo_root:Repo_root.t -> unit Deferred.t

@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 val set_description_exn : Feature_path.t -> string -> unit Deferred.t

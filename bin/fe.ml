@@ -6,7 +6,7 @@ let () = Int_conversions.sexp_of_int_style := `Underscores
 
 let () = print_elapsed [%here]
 
-let () = Async.Std.Writer.behave_nicely_in_pipeline ()
+let () = Async.Writer.behave_nicely_in_pipeline ()
 
 let server_state_invariant =
   Command.group ~summary:"check server-state invariant"

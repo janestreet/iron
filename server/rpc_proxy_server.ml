@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 
 let log ~level sexp =
   Log.Global.sexp ~level sexp

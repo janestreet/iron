@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 let copy_feature ~from_ ~to_ ~without_copying_review =

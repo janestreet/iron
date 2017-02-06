@@ -81,7 +81,7 @@ module Stable = struct
 end
 
 open Core
-open Async.Std
+open Async
 open! Import
 
 let assert_working_copy_of ?repo_is_clean repo_root ~is:rev =

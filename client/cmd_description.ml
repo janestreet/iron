@@ -1,5 +1,5 @@
 open Core
-open Async.Std
+open Async
 open Import
 
 let get_description_exn maybe_archived_feature =

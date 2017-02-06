@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 
 module String      = Iron_string
 module Time        = Iron_time

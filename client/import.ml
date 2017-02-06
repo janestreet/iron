@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 
 include (Iron_common.Std : module type of struct include Iron_common.Std end
          with module Abspath := Iron_common.Std.Abspath

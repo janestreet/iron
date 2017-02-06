@@ -1,5 +1,5 @@
 open Core;;
-open Async.Std;;
+open Async;;
 
 (* This is not such good code.
    - with_temp_file doesn't work in the Async world. It should.

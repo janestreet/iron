@@ -3,7 +3,7 @@ open! Import
 open! Iron_common.Std
 open! Iron_hg.Std
 
-module Thread_safe = Async.Std.Thread_safe
+module Thread_safe = Async.Thread_safe
 
 module T = struct
 
@@ -291,7 +291,7 @@ let%test_unit _ =
    single feature whose partial_name matches [str].  Fail if there are multiple matches *)
 let feature_path_of_string_or_partial_name_internal_exn
       ?(parse_partial_name_if_no_match=false) partial_name_prefix ~namespace =
-  let open Async.Std in
+  let open Async in
   let%bind matching_features =
     Iron_protocol.Find_features_by_partial_name.rpc_to_server_exn
       { partial_name_prefix; namespace }
@@ -361,7 +361,7 @@ cannot disambiguate among features, and none of them are in the %s repo"
 let feature_path_of_string_or_partial_name_exn partial_name_prefix ~namespace =
   if Iron_options.find_features_by_partial_name
   then feature_path_of_string_or_partial_name_internal_exn partial_name_prefix ~namespace
-  else Async.Std.return (Feature_path.of_string partial_name_prefix)
+  else Async.return (Feature_path.of_string partial_name_prefix)
 ;;
 
 let blocking_feature_path_of_string_or_partial_name partial_name_prefix ~namespace =
@@ -369,7 +369,7 @@ let blocking_feature_path_of_string_or_partial_name partial_name_prefix ~namespa
     feature_path_of_string_or_partial_name_exn partial_name_prefix ~namespace)
   with
   | Ok _ as ok -> ok
-  | Error exn  -> Or_error.of_exn (Async.Std.Monitor.extract_exn exn)
+  | Error exn  -> Or_error.of_exn (Async.Monitor.extract_exn exn)
 ;;
 
 let feature_arg_type ~match_existing_feature =
@@ -472,7 +472,7 @@ let feature_path_flagged_listed ~label ~doc =
 ;;
 
 let current_bookmark () =
-  let open Async.Std in
+  let open Async in
   let client_config = Client_config.get () in
   let result =
     if Client_config.may_infer_feature_path_from_current_bookmark client_config
@@ -504,7 +504,7 @@ let make_feature_path_or_current_bookmark feature_anons =
     | Some (Error _ as e) -> e
     | None ->
       match Thread_safe.block_on_async (fun () -> current_bookmark ()) with
-      | Error exn -> Or_error.of_exn (Async.Std.Monitor.extract_exn exn)
+      | Error exn -> Or_error.of_exn (Async.Monitor.extract_exn exn)
       | Ok result -> result)
 ;;
 
@@ -512,7 +512,7 @@ module Maybe_archived_feature_spec : sig
   val maybe_archived_feature : Maybe_archived_feature_spec.Command_line.t Or_error.t t
   val resolve_maybe_archived_feature_spec_exn
     : Maybe_archived_feature_spec.Command_line.t
-    -> Maybe_archived_feature_spec.t Async.Std.Deferred.t
+    -> Maybe_archived_feature_spec.t Async.Deferred.t
 end = struct
 
   let complete_with_archived_flag_u_key =
@@ -555,7 +555,7 @@ end = struct
       feature_spec
     ; namespace
     } =
-    let open Async.Std in
+    let open Async in
     match feature_spec with
     | ( `Feature_id _ | `Feature_path _ ) as feature_spec ->
       return
@@ -898,7 +898,7 @@ module Which_features = struct
         |> map ~f:Or_error.combine_errors
     in
     Lazy.from_fun (fun () ->
-      let open Async.Std in
+      let open Async in
       let features = ok_exn features in
       if all
       then

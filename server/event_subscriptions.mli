@@ -3,7 +3,7 @@
     by [Feature_updates_manager] instead. *)
 
 open! Core
-open! Async.Std
+open! Async
 open! Import
 
 module Subscription : sig

@@ -1,7 +1,7 @@
 open! Core
 open! Import
 
-module Rpc = Async.Std.Rpc
+module Rpc = Async.Rpc
 
 module Review_managers   = Hashtbl2_pair.Make (Feature_id)   (User_name)
 module Catch_up_managers = Hashtbl2_pair.Make (Feature_path) (User_name)
@@ -1355,7 +1355,7 @@ let install_deserialized_feature t feature review_managers =
 ;;
 
 let get_cached_or_reload_archived_feature_exn t feature_id =
-  let open Async.Std in
+  let open Async in
   match Archived_features.Cache.find t.archived_features feature_id with
   | Some feature_protocol -> return feature_protocol
   | None ->
@@ -1459,7 +1459,7 @@ let restrict_diff_from_base_to_tip
 ;;
 
 let get_maybe_archived_feature_and_reviewer_exn t ~what_feature ~what_diff =
-  let open Async.Std in
+  let open Async in
   let { Maybe_archived_feature_spec. feature_spec; namespace } = what_feature in
   let sexp_of_archived_feature
         { Archived_feature.
@@ -1587,7 +1587,7 @@ let get_maybe_archived_feature_and_reviewer_exn t ~what_feature ~what_diff =
 ;;
 
 let get_maybe_archived_feature_exn t what_feature =
-  let open Async.Std in
+  let open Async in
   let%map (_reviewer, feature_protocol) =
     get_maybe_archived_feature_and_reviewer_exn t ~what_feature ~what_diff:None
   in
@@ -1597,7 +1597,8 @@ let get_maybe_archived_feature_exn t what_feature =
 let parent_owners_are_responsible ~parent =
   match Feature.who_can_release_into_me parent with
   | My_owners_and_child_owners -> `Never
-  | My_owners -> `If (fun ~child -> List.mem (Feature.next_steps child) Release)
+  | My_owners ->
+    `If (fun ~child -> List.mem (Feature.next_steps child) Release ~equal:Next_step.equal)
 ;;
 
 let execute_timed_event t id (action : Timed_event.Action.t) =
@@ -1719,14 +1720,14 @@ let rpc_implementations = ref []
 
 module Eager_deferred_infix = struct
   let (>>|) deferred f =
-    let open Async.Std in
+    let open Async in
     match Deferred.peek deferred with
     | Some d -> return (f d)
     | None -> deferred >>| f
   ;;
 
   let (>>=) deferred f =
-    let open Async.Std in
+    let open Async in
     match Deferred.peek deferred with
     | Some d -> f d
     | None -> deferred >>= f
@@ -1752,7 +1753,7 @@ let implement_deferred_rpc
     M.implement_deferred_rpc (fun state ~version query ->
       let query_uuid = Query.uuid query in
       let server_received_query_at = Time.now () in
-      let open Async.Std in
+      let open Async in
       let open Eager_deferred_infix in
       Monitor.try_with ~run:`Now (fun () ->
         let `run_after_reaction checked_features =
@@ -1846,7 +1847,7 @@ let implement_rpc
       ~log changes_features m f =
   implement_deferred_rpc ?override_sexp_of_action ?override_sexp_of_reaction
     ~log changes_features m
-    (fun state query -> Async.Std.return (f state query));
+    (fun state query -> Async.return (f state query));
 ;;
 
 let implement_deferred_pipe_rpc
@@ -1862,7 +1863,7 @@ let implement_deferred_pipe_rpc
   let implementations =
     M.implement_deferred_rpc (fun state ~version query ->
       let server_received_query_at = Time.now () in
-      let open Async.Std in
+      let open Async in
       let open Eager_deferred_infix in
       let subscription_or_error =
         Event_subscriptions.add state.event_subscriptions
@@ -1927,7 +1928,7 @@ let implement_deferred_pipe_rpc
 
 let implement_pipe_rpc ?override_sexp_of_action ~log m f =
   implement_deferred_pipe_rpc ?override_sexp_of_action ~log m
-    (fun state query -> Async.Std.return (f state query))
+    (fun state query -> Async.return (f state query))
 ;;
 
 let only_server_user_is_authorized_exn query =
@@ -3365,7 +3366,7 @@ let () =
   implement_deferred_rpc ~log:false Post_check_in_features.none
     (module Get_diff)
     (fun t query ->
-       let open Async.Std in
+       let open Async in
        let { Get_diff.Action. what_feature; what_diff } = Query.action query in
        let%map (reviewer, feature_protocol) =
          get_maybe_archived_feature_and_reviewer_exn t ~what_feature ~what_diff
@@ -3736,7 +3737,7 @@ let () =
   implement_deferred_rpc ~log:false Post_check_in_features.none
     (module Feature_description)
     (fun t query ->
-       let open Async.Std in
+       let open Async in
        let%map feature =
          get_maybe_archived_feature_exn t (Query.action query)
        in
@@ -3961,7 +3962,7 @@ let () =
   implement_deferred_rpc ~log:false Post_check_in_features.none
     (module Get_feature_maybe_archived)
     (fun t query ->
-       let open Async.Std in
+       let open Async in
        let { Get_feature_maybe_archived.Action.
              what_feature
            ; what_diff
@@ -5293,7 +5294,7 @@ let () =
        Serializer.rename (serializer_exn t)
          ~from_:archived_feature_dir
          ~to_:  (feature_dir feature_id);
-       let open Async.Std in
+       let open Async in
        (* We need to make sure that the archived feature made it to disk.  Waiting for all
           prior changes is a crude way of doing so.  But it seems tricky and not worth the
           code to do something more clever, e.g. tracking for each archived feature
@@ -5440,7 +5441,7 @@ let () =
   implement_pipe_rpc ~log:false
     (module Notify_on_feature_updates)
     (fun t query ->
-       let open Async.Std in
+       let open Async in
        let { Notify_on_feature_updates.Action. feature_id; when_to_first_notify } =
          Query.action query
        in
@@ -5468,7 +5469,7 @@ let () =
 ;;
 
 let rpc_implementations =
-  let open Async.Std in
+  let open Async in
   Rpc.Implementations.create_exn
     ~implementations:(Versioned_rpc.Menu.add !rpc_implementations)
     ~on_unknown_rpc:(`Call (fun _ ~rpc_tag ~version ->

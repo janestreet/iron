@@ -1,5 +1,5 @@
 open! Core
-open! Async.Std
+open! Async
 
 module Rpc_for (M : sig
     module Action   : T

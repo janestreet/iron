@@ -64,8 +64,8 @@ val pull_and_update
 
 val may_modify_others_review_exn
   :  Feature_path.t
-  -> reason     : [ `Not_supported | `This of string ]
-  -> for_or_all : [ `All_users | `User of User_name.t ]
+  -> reason       : [ `Not_supported | `This of string ]
+  -> whose_review : User_name.Or_all_or_all_but.t
   -> unit Deferred.t
 
 val confirm_review_session_id_exn

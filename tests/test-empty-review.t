@@ -31,7 +31,6 @@ another potential seconder who's not an owner.
   |------------------------|
 
   $ fe todo -for user1
-  CRs and review line counts:
   |---------------------|
   | feature | next step |
   |---------+-----------|

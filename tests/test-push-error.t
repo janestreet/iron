@@ -19,7 +19,7 @@ Make a releasable child.
   $ r1=$(hg tip --template={node})
   $ feature_to_server root/child -fake-valid
   $ fe enable
-  $ fe internal mark-fully-reviewed child -reason reason
+  $ fe tools mark-fully-reviewed child -reason reason
   $ fe second -even-though-owner
 
 Set the root bookmark to r2, from which r1 does not descend.

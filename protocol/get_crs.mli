@@ -4,7 +4,7 @@ open! Import
 module Action : sig
   type t =
     { feature_path : Feature_path.t
-    ; for_or_all   : [ `User of User_name.t | `All_users ]
+    ; for_or_all   : User_name.Or_all.t
     }
   [@@deriving fields, sexp_of]
 end

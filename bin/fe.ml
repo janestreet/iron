@@ -41,7 +41,8 @@ let internal =
     ; "hydra-worker"                 , Iron_client.Hydra_worker.command
     ; "infer-base"                   , Iron_client.Hydra_worker.infer_base_command
     ; "invariant"                    , invariant
-    ; "mark-fully-reviewed"          , Iron_client.Cmd_mark_fully_reviewed.command
+    ; "mark-fully-reviewed"          , Iron_client.Cmd_has_moved.command
+                                         ~moved_to:[ "fe"; "tools"; "mark-fully-reviewed"; ]
     ; "need-diff4s-starting-from"    , Iron_client.Cmd_need_diff4s_starting_from.command
     ; "notify-on-descendant-updates" , Iron_client.Cmd_notify_on_descendant_updates.command
     ; "notify-on-feature-updates"    , Iron_client.Cmd_notify_on_feature_updates.command
@@ -81,6 +82,7 @@ let tools =
     ; "restore-bookmark"         , Iron_client.Cmd_restore_bookmark.command
     ; "review-ddiff"             , Iron_client.Cmd_review_ddiff.command
     ; "strip-crs"                , Iron_client.Cmd_strip_crs.command
+    ; "mark-fully-reviewed"      , Iron_client.Cmd_mark_fully_reviewed.command
     ; "unbookmarked-head"        , Iron_client.Cmd_unbookmarked_head.command
     ; "validate-ferc"            , Iron.Client_config.validate_config
     ; "wait-for-hydra"           , Iron_client.Cmd_wait_for_hydra.command

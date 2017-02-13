@@ -63,7 +63,7 @@ not required to review to release.
      [ ] 1 .fe/obligations-repo.sexp
 
   $ fe enable-review
-  $ fe internal mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root
   $ fe second -even-though-owner
 
   $ fe show -omit-attribute-table

@@ -344,12 +344,17 @@ let add_review_manager t feature review_manager =
     review_manager
 ;;
 
-let iter_review_managers_of_feature t ?for_:(user_or_all = `All_users) feature ~f =
-  match user_or_all with
+let iter_review_managers_of_feature t ?of_:(whose_review_managers = `All_users)
+      feature ~f =
+  match whose_review_managers with
   | `User user ->
     f user (ok_exn (find_review_manager t feature user))
   | `All_users ->
     iter_review_managers_of_feature t feature ~f
+  | `All_users_but users_to_skip ->
+    iter_review_managers_of_feature t feature ~f:(fun user_name review_manager ->
+      if not (Set.mem users_to_skip user_name)
+      then f user_name review_manager)
 ;;
 
 let remote_repo_path ?rev_zero t feature =
@@ -1980,7 +1985,7 @@ let check_catch_up_for_exn t ~for_ ~by =
 ;;
 
 let review_authorization_may_skip_user_exn t feature review_manager query
-      ~reason ~create_catch_up_for_me ~for_or_all
+      ~reason ~create_catch_up_for_me ~is_reviewing_for
   =
   let review_authorization =
     Review_manager.Review_authorization.create
@@ -1995,37 +2000,32 @@ let review_authorization_may_skip_user_exn t feature review_manager query
       query
     |> ok_exn
   in
-  let not_for_follow_only =
-    match
-      Review_manager.Review_authorization.unauthorized_for_user_with_only_follow_lines
-        review_authorization
-    with
-    | Ok () -> `Ok
-    | Error err ->
-      match for_or_all with
-      | `User _ ->
-        if user_has_admin_privileges t (Query.by query)
-        && not am_functional_testing
-        then `Ok
-        else `Error err
-      | `All_users ->
-        (* Skip the followers when running -for all, for convenience (regardless of
-           whether the user has admin privileges). *)
-        `Skip_user err
-  in
-  review_authorization, `Follow not_for_follow_only
+  match
+    Review_manager.Review_authorization.unauthorized_for_user_with_only_follow_lines
+      review_authorization
+  with
+  | Ok () -> `Ok review_authorization
+  | Error err ->
+    match is_reviewing_for with
+    | `User _ ->
+      if user_has_admin_privileges t (Query.by query)
+      && not am_functional_testing
+      then `Ok review_authorization
+      else `Error err
+    | `All_users | `All_users_but _ ->
+      (* This variant allow one to skip the followers when running -for all, for
+         convenience (regardless of whether the user has admin privileges). *)
+      `Unauthorized_for_users_with_only_follow_lines err
 ;;
 
 let review_authorization_exn t feature review_manager query
       ~reason ~create_catch_up_for_me =
-  let review_authorization, `Follow not_for_follow_only =
+  match
     review_authorization_may_skip_user_exn t feature review_manager query
-      ~reason ~create_catch_up_for_me ~for_or_all:(`User ())
-  in
-  (match not_for_follow_only with
-   | `Ok -> ()
-   | `Error e | `Skip_user e -> Error.raise e);
-  review_authorization
+      ~reason ~create_catch_up_for_me ~is_reviewing_for:(`User ())
+  with
+  | `Ok review_authorization -> review_authorization
+  | `Error e | `Unauthorized_for_users_with_only_follow_lines e -> Error.raise e
 ;;
 
 let () =
@@ -3578,10 +3578,10 @@ let () =
   implement_rpc ~log:false Post_check_in_features.none
     (module Dump)
     (fun t query ->
-       let review_managers feature user_or_all =
+       let review_managers feature of_ =
          list_of_iter (fun ~f ->
-           iter_review_managers_of_feature t feature
-             ~for_:user_or_all ~f:(fun _user review_manager -> f review_manager))
+           iter_review_managers_of_feature t feature ~of_
+             ~f:(fun _user review_manager -> f review_manager))
        in
        match Query.action query with
        | Archived_features_cache what_to_dump ->
@@ -4346,7 +4346,7 @@ let () =
     (module Mark_fully_reviewed)
     (fun t query ->
        let { Mark_fully_reviewed.Action.
-             feature_path; for_or_all; reason; create_catch_up_for_me; base; tip }
+             feature_path; whom_to_mark; reason; create_catch_up_for_me; base; tip }
          = Query.action query
        in
        let feature = find_feature_exn t feature_path in
@@ -4367,23 +4367,18 @@ let () =
        in
        check_rev "base" Feature.base base;
        check_rev "tip"  Feature.tip  tip;
-       iter_review_managers_of_feature t feature ~for_:for_or_all
+       iter_review_managers_of_feature t feature ~of_:whom_to_mark
          ~f:(fun _user review_manager ->
-           let review_authorization, `Follow not_for_follow_only =
+           match
              review_authorization_may_skip_user_exn t feature review_manager query
-               ~reason:(`This reason) ~create_catch_up_for_me ~for_or_all
-           in
-           let do_mark =
-             match not_for_follow_only with
-             | `Ok -> true
-             | `Skip_user _ -> false
-             | `Error e -> Error.raise e
-           in
-           if do_mark
-           then (
+               ~reason:(`This reason) ~create_catch_up_for_me
+               ~is_reviewing_for:whom_to_mark
+           with
+           | `Error e -> Error.raise e
+           | `Unauthorized_for_users_with_only_follow_lines _ -> ()
+           | `Ok review_authorization ->
              Review_manager.mark_fully_reviewed review_manager query
-               (`Review_authorization review_authorization))
-         ))
+               (`Review_authorization review_authorization)))
 ;;
 
 let () =
@@ -4402,21 +4397,21 @@ let () =
   implement_rpc ~log:false Post_check_in_features.none
     (module May_modify_others_review)
     (fun t query ->
-       let { May_modify_others_review.Action. for_or_all; feature_path; reason } =
+       let { May_modify_others_review.Action. feature_path; whose_review; reason } =
          Query.action query
        in
        let feature = find_feature_exn t feature_path in
        let check_review_manager _ review_manager =
-         let review_authorization, `Follow not_for_follow_only =
+         match
            review_authorization_may_skip_user_exn t feature review_manager query
-             ~reason ~create_catch_up_for_me:false ~for_or_all
-         in
-         ignore (review_authorization : Review_manager.Review_authorization.t);
-         (match not_for_follow_only with
-          | `Ok | `Skip_user _ -> ()
-          | `Error e -> Error.raise e)
+             ~reason ~create_catch_up_for_me:false ~is_reviewing_for:whose_review
+         with
+         | `Error e -> Error.raise e
+         | `Ok (_ : Review_manager.Review_authorization.t)  -> ()
+         | `Unauthorized_for_users_with_only_follow_lines _ -> ()
        in
-       iter_review_managers_of_feature t feature ~for_:for_or_all ~f:check_review_manager)
+       iter_review_managers_of_feature t feature ~of_:whose_review
+         ~f:check_review_manager)
 ;;
 
 let () =

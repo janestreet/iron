@@ -40,7 +40,6 @@ Enable review for [user1], and they have one line to review -- the attribute cha
   $ fe enable-review
   $ fe change -set-reviewing user1
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -61,7 +60,6 @@ have to review the change.
 
   $ fe change -add-whole-feature-reviewer user1
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -94,8 +92,8 @@ the attributes only and the contents.  The other behavior shown is that the user
 does not review the ddiff on the attributes.
 
   $ fe change -remove-whole-feature-reviewers user1
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root
-  $ fe internal mark-fully-reviewed root -for all -reason reason
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root -for all -reason reason
 
   $ fe change -set-base ${rev_b2}
   $ hg book -f -r ${rev_f2} root
@@ -151,7 +149,7 @@ rebase.
   -|reviewed by = (All_of (Users user1))
   +|reviewed by = None
 
-  $ fe internal mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root
 
   $ fe change -set-base ${rev_f1}
   $ hg book -f -r ${rev_f2} root

@@ -91,7 +91,7 @@ about who follow their files, or there would be too much friction in adding foll
   +|  (Followers (Group file-followers))
   +|  (Apply_to (Files file)))
 
-  $ fe internal mark-fully-reviewed root/add-follower
+  $ fe tools mark-fully-reviewed root/add-follower
   $ fe show -next-steps root/add-follower
   (Release)
 
@@ -106,7 +106,7 @@ about who follow their files, or there would be too much friction in adding foll
   -|followed by file-follower = no
   +|followed by file-follower = yes
 
-  $ IRON_USER=file-follower fe internal mark-fully-reviewed root/add-follower
+  $ IRON_USER=file-follower fe tools mark-fully-reviewed root/add-follower
 
   $ fe release
   $ feature_to_server root
@@ -202,18 +202,18 @@ Now add some changes in the file, check what happens.
 
 All normal users can review for themselves, or via catch-up as usual.
 
-  $ fe internal mark-fully-reviewed root/add-follower
-  $ fe internal mark-fully-reviewed root/add-follower -for user1 -reason 'reason'
+  $ fe tools mark-fully-reviewed root/add-follower
+  $ fe tools mark-fully-reviewed root/add-follower -for user1 -reason 'reason'
 
 But one cannot review for a file follower, it serves no purpose.
 
-  $ fe internal mark-fully-reviewed root/add-follower -for file-follower -reason reason
+  $ fe tools mark-fully-reviewed root/add-follower -for file-follower -reason reason
   (error
    (may-modify-others-review
     ("unauthorized review for a user with only lines to follow" file-follower)))
   [1]
 
-  $ IRON_USER=file-follower fe internal mark-fully-reviewed root/add-follower
+  $ IRON_USER=file-follower fe tools mark-fully-reviewed root/add-follower
 
   $ fe show -omit-description -omit-attribute-table
   root/add-follower
@@ -246,7 +246,7 @@ with some follow review already done.
   -|A change happens in the file
   +|Dropped from file followers with a brain
 
-  $ IRON_USER=file-follower fe internal mark-fully-reviewed root/add-follower
+  $ IRON_USER=file-follower fe tools mark-fully-reviewed root/add-follower
   $ hg cat -r ${ORIGIN} .fe.sexp >.fe.sexp
   $ hg commit -q -m 'temporarily removed a file follower'
   $ feature_to_server root/add-follower
@@ -279,7 +279,7 @@ Add him back and go back to previous state as of CHECK_POINT.
   $ hg cat -r ${CHECK_POINT} .fe.sexp >.fe.sexp
   $ hg commit -q -m 'put him back'
   $ feature_to_server root/add-follower
-  $ IRON_USER=file-follower fe internal mark-fully-reviewed root/add-follower
+  $ IRON_USER=file-follower fe tools mark-fully-reviewed root/add-follower
   $ fe show -next-steps
   (Release)
 
@@ -300,8 +300,8 @@ This time, add a change but release before the file-follower reviews it.
   | file-follower          |        |      2 |         1 |
   |------------------------------------------------------|
 
-  $ fe internal mark-fully-reviewed root/add-follower
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root/add-follower
+  $ fe tools mark-fully-reviewed root/add-follower
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root/add-follower
 
   $ fe show -next-steps root/add-follower
   (Release)
@@ -309,7 +309,6 @@ This time, add a change but release before the file-follower reviews it.
   $ feature_to_server root
 
   $ IRON_USER=file-follower fe todo
-  CRs and review line counts:
   |---------------------------|
   | feature        | catch-up |
   |----------------+----------|
@@ -367,7 +366,7 @@ change to the file [.fe.sexp], expect for the follower themselves.
   -|followed by file-follower = yes
   +|followed by file-follower = no
 
-  $ IRON_USER=file-follower fe internal mark-fully-reviewed root/remove-follower
+  $ IRON_USER=file-follower fe tools mark-fully-reviewed root/remove-follower
 
   $ fe session diff -do-not-lock-session | fe internal remove-color
   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ .fe.sexp @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -388,7 +387,7 @@ change to the file [.fe.sexp], expect for the follower themselves.
   -|  (Followers (Group file-followers))
   -|  (Apply_to (Files file)))
 
-  $ fe internal mark-fully-reviewed root/remove-follower
+  $ fe tools mark-fully-reviewed root/remove-follower
   $ fe show -next-steps root/remove-follower
   (Release)
 

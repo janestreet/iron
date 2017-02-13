@@ -36,7 +36,7 @@ Then make user1 review all of the feature, so it becomes releasable:
   $ echo '2 2' > file2
   $ hg commit -m 'change'
   $ feature_to_server root
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root
   $ fe show -next-step
   (Release)
   $ fe show -omit-attribute-table

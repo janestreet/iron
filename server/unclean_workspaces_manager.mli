@@ -9,9 +9,7 @@ val deserializer : t Deserializer.t
 
 val dump
   : t
-  ->[ `All_users
-    | `User of User_name.t
-    ]
+  -> User_name.Or_all.t
   -> Sexp.t
 
 val find_user

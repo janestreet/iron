@@ -55,7 +55,7 @@ Now add in whole feature reviewers.
 
 After we review.
 
-  $ fe internal mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root
   $ fe show -who-can-review
   jdoe3
 

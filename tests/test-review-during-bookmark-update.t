@@ -20,7 +20,7 @@ Now during the next bookmark update, add a reviewer:
   $ hg commit -m c
   $ feature_to_server root -fake-valid -run-between-rpcs '
   >  fe change root -add-whole-feature-reviewer user
-  >  IRON_USER=user fe internal mark-fully-reviewed root'
+  >  IRON_USER=user fe tools mark-fully-reviewed root'
 
 And this reviewer should have a normal review, not a forget followed
 by a review from scratch:
@@ -49,7 +49,7 @@ comes in:
   $ fe rebase |& matches "merging a failed"
   $ echo child2 > a; hg commit -q -m child
   $ feature_to_server root/child -fake-valid -run-between-rpcs '
-  >  IRON_USER=unix-login-for-testing fe internal mark-fully-reviewed root/child'
+  >  IRON_USER=unix-login-for-testing fe tools mark-fully-reviewed root/child'
 
 And one would expect a conflict diff4, instead of a forget and a review from scratch:
 

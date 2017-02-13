@@ -2,7 +2,6 @@
 (unified_tests
  ((target feature-subtree-build)
   (deps (../bin/fe.exe
-         (glob_files *.t)
          (files_recursively_in bin)
          (files_recursively_in lib)
          (files_recursively_in etc)

@@ -22,7 +22,7 @@ Review child.
   $ u=unix-login-for-testing
   $ fe change -add-whole-feature-reviewers seconder
   $ IRON_USER=seconder fe second
-  $ fe internal mark-fully-reviewed root/child -for all -reason reason
+  $ fe tools mark-fully-reviewed root/child -for all -reason reason
   $ fe catch-up mark-file root/child file -for seconder
 
 Release child.

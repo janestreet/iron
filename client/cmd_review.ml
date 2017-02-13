@@ -844,18 +844,18 @@ let review_or_catch_up
    case, but fail as early as possible, before the user does any work that would later be
    thrown away due to missing permission or reason. *)
 
-let may_modify_others_review_exn feature_path ~reason ~for_or_all =
+let may_modify_others_review_exn feature_path ~reason ~whose_review =
   let by = User_name.unix_login in
   let can_short_circuit =
-    match for_or_all with
-    | `User user -> User_name.equal user by
-    | `All_users -> false
+    match whose_review with
+    | `User user -> (User_name.equal user by)
+    | `All_users | `All_users_but _ -> false
   in
   if can_short_circuit
   || is_some (Sys.getenv
                 "IRON_FUNCTIONAL_TESTING_CLIENT_DOES_NOT_CHECK_REVIEW_PERMISSIONS")
   then return ()
-  else May_modify_others_review.rpc_to_server_exn { feature_path; for_or_all; reason }
+  else May_modify_others_review.rpc_to_server_exn { feature_path; whose_review; reason }
 ;;
 
 let may_modify_others_catch_up_exn ~for_ =
@@ -1160,7 +1160,7 @@ let review_loop ~repo_root ~repo_root_kind ~feature_path ~create_catch_up_for_me
           | Some diff4s_to_review ->
             let%bind () =
               may_modify_others_review_exn feature_path ~reason:(`This reason)
-                ~for_or_all:(`User for_)
+                ~whose_review:(`User for_)
             in
             let mark_as_reviewed diff4s_to_review =
               Reviewed_diffs.rpc_to_server_exn
@@ -1291,7 +1291,7 @@ else's catch-up requires admin privileges, and may be done with:
        let open! Deferred.Let_syntax in
        let review_params = review_params () in
        let create_catch_up_for_me =
-         create_catch_up_for_me ~for_or_all:(`User review_params.for_) |> ok_exn
+         create_catch_up_for_me ~is_reviewing_for:(`User review_params.for_) |> ok_exn
        in
        let is_acting_for_another_user =
          User_name.(<>) review_params.for_ User_name.unix_login

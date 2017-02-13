@@ -67,9 +67,9 @@ Helper function for checking whether various sets of reviewers satisfy a reviewe
   >         for user in $all_users; do
   >             fe brain forget -all -for $user >/dev/null 2>&1 || true
   >         done
-  >         fe internal mark-fully-reviewed root >/dev/null 2>&1
+  >         fe tools mark-fully-reviewed root >/dev/null 2>&1
   >         for user in $users; do
-  >             fe internal mark-fully-reviewed root -for $user -reason reason \
+  >             fe tools mark-fully-reviewed root -for $user -reason reason \
   >                 >/dev/null 2>&1 || true
   >         done
   >         is_releasable=$(if fe is-releasable >/dev/null 2>/dev/null; then echo yes; else echo no; fi)

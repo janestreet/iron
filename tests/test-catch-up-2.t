@@ -12,7 +12,7 @@ Setup a repo
   $ fe change -add-whole-feature-reviewers user2
   $ fe enable-review test-root
   $ feature_to_server test-root -fake-valid-obligations
-  $ fe internal mark-fully-reviewed test-root -for all -reason reason
+  $ fe tools mark-fully-reviewed test-root -for all -reason reason
   $ fe second test-root -even-though-owner -even-though-empty
 
 Release a child into test-root

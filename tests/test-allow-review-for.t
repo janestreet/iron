@@ -90,7 +90,7 @@ Sessions should be protected by the same permissions.
   $ fe session mark-file root/a b -for user2 \
   >   |& matches "may-modify-others-review.*not allowed"
   [1]
-  $ fe internal mark-fully-reviewed root/a -for all -reason test \
+  $ fe tools mark-fully-reviewed root/a -for all -reason test \
   >   |& matches "may-modify-others-review.*not allowed"
   [1]
   $ fe session show -for jdoe3 | matches "\[X\] 3 a"
@@ -134,7 +134,7 @@ If we disable client-side checks the server should still not allow bad permissio
 
 First we finish some review sessions.
 
-  $ fe internal mark-fully-reviewed root/a -for user1 -reason test
+  $ fe tools mark-fully-reviewed root/a -for user1 -reason test
 
 Changing permissions.
 
@@ -148,7 +148,7 @@ Changing permissions.
   $ base=$(hg id | cut -d ' ' -f 1)
   $ fe change -set-base ${base}
   $ feature_to_server root
-  $ fe internal mark-fully-reviewed root -for all -reason test
+  $ fe tools mark-fully-reviewed root -for all -reason test
   $ fe rebase root/a > /dev/null
   $ echo "a change" >> a
   $ echo "more lines" >> b

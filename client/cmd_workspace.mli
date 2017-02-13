@@ -39,6 +39,7 @@ type use =
   | `Share
   | `Share_or_clone_if_share_does_not_exist
   ]
+
 module Repo_root_kind : sig
   type t =
     | Clone
@@ -47,14 +48,24 @@ module Repo_root_kind : sig
     | Workspace
   [@@deriving sexp_of]
 end
+
 val repo_for_hg_operations_exn
   :  Feature_path.t
   -> use : use
   -> Repo_root.t Deferred.t
+
 val repo_for_hg_operations_and_kind_exn
   :  Feature_path.t
   -> use : use
   -> (Repo_root.t * Repo_root_kind.t) Deferred.t
+
+val run_concurrent_actions_exn
+  : get_feature_path: ('a -> Feature_path.t)
+  -> action:string
+  -> max_concurrent_jobs:int
+  -> 'a list
+  -> f:('a -> unit Deferred.t)
+  -> unit Deferred.t
 
 (** If workspaces are enabled, returns the clone of the common root of the features in the
     given list.  Returns [Repo_root.program_started_in] if workspaces are not enabled, or

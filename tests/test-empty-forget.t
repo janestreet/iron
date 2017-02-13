@@ -27,7 +27,7 @@ Start test.
 
   $ fe enable-review root/child
   $ fe second root/child -even-though-owner
-  $ fe internal mark-fully-reviewed root/child
+  $ fe tools mark-fully-reviewed root/child
 
   $ fe release root/child
   $ feature_to_server root -fake-valid

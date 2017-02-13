@@ -181,9 +181,8 @@ Review managers test.
   $ hg commit -m "0"
   $ fe enable-review -add-whole-feature-reviewer user1,user2
   $ feature_to_server root/baz -fake-valid
-  $ fe internal mark-fully-reviewed root/baz -for user2 -reason reason
+  $ fe tools mark-fully-reviewed root/baz -for user2 -reason reason
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -191,7 +190,6 @@ Review managers test.
   |   baz   |      1 |
   |------------------|
   $ fe todo -for user2
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|
@@ -228,7 +226,6 @@ Review managers test.
 
   $ fe rename root/baz root/bzz
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -236,7 +233,6 @@ Review managers test.
   |   bzz   |      1 |
   |------------------|
   $ fe todo -for user2
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|
@@ -277,7 +273,6 @@ Check consistency after restart.
   $ fe-server start
 
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -285,7 +280,6 @@ Check consistency after restart.
   |   bzz   |      1 |
   |------------------|
   $ fe todo -for user2
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|

@@ -1357,8 +1357,6 @@
 : === flags ===
 : 
 :   [-archived]                            lookup only among archived features
-:   [-do-not-show-comments]                filter out comments from the
-:                                          description
 :   [-existing-or-most-recently-archived]  try finding the most recently archived
 :                                          feature if the feature does not exist
 :   [-help]                                print this help text and exit
@@ -1611,7 +1609,7 @@
 :                                                (assuming it is the tip of a
 :                                                feature)
 :   invariant                                    check invariant
-:   mark-fully-reviewed                          mark a feature as fully reviewed
+:   mark-fully-reviewed                          DEPRECATED
 :   need-diff4s-starting-from                    show review edges for all users
 :   notify-on-descendant-updates                 watch for updates to a feature
 :                                                and its descendants, reflect each
@@ -2249,6 +2247,13 @@
 : 
 :   fe.exe internal fully-reviewed-edge add 
 : 
+: This command is unsound because it marks an arbitrary edge as fully-reviewed.  This
+: requires admin privileges.  To mark as fully-reviewed the edge of a releasable feature,
+: see instead the user-facing command:
+: 
+:   $ fe tools fully-reviewed-edge add
+: 
+: 
 : === flags ===
 : 
 :   -from    REV
@@ -2400,28 +2405,16 @@
 
 *** mark-fully-reviewed
 
-: mark a feature as fully reviewed
+: DEPRECATED
 : 
-:   fe.exe internal mark-fully-reviewed FEATURE
+:   fe.exe internal mark-fully-reviewed [IGNORED ...]
 : 
-: Catchup review will be generated for everyone but yourself (unless you supply
-: -create-catch-up-for-me).
-: 
-: When base or tip are provided, server will check if they match server's knowledge
-: and only continue when they totally match.  If a 40-character hg revision is provided
-: then this command works without a local hg repo.
-: 
+: This command has been moved to: [fe tools mark-fully-reviewed]
 : 
 : === flags ===
 : 
-:   [-base REV]                base of the feature you know
-:   [-create-catch-up-for-me]  create catch-up review even when reviewing for
-:                              oneself
-:   [-for USER|all]            for user (default is unix login)
-:   [-reason REASON]           why you are reviewing this for someone else
-:   [-tip REV]                 tip of the feature you know
-:   [-help]                    print this help text and exit
-:                              (alias: -?)
+:   [-help]  print this help text and exit
+:            (alias: -?)
 
 *** need-diff4s-starting-from
 
@@ -3832,6 +3825,8 @@
 : 
 : === flags ===
 : 
+:   [-assigned]                        show only the assigned table
+:                                      (alias: -crs-and-review)
 :   [-bookmarks-without-feature]       list bookmarks from the 'Bookmarks without
 :                                      a feature' table
 :   [-catch-up-names]                  list feature names, including features with
@@ -3839,9 +3834,7 @@
 :   [-cr-soons]                        show only the 'CR-soons assigned to you'
 :                                      table
 :   [-crs-and-review-names]            list feature names, including features from
-:                                      the 'CRs and review line counts' table
-:   [-crs-and-review]                  show only the 'CRs and review line counts'
-:                                      table
+:                                      the assigned table
 :   [-display-ascii]                   display ASCII characters, with no ANSI
 :                                      color escapes or unicode characters
 :   [-do-not-show-cr-soons]            don't show cr soons
@@ -3891,6 +3884,7 @@
 :   fully-reviewed-revision    check the set of fully-reviewed revisions
 :   hg                         runs hg the same way as fe does internally
 :   hg-hooks                   implement hg hooks for Iron
+:   mark-fully-reviewed        mark a feature as fully reviewed
 :   pairwise-common-revisions  show revisions common to pairs of features
 :   ping                       ping the server
 :   restore-bookmark           create the bookmark, set to the feature tip
@@ -3979,6 +3973,24 @@
 : 
 :   fe.exe tools fully-reviewed-edge SUBCOMMAND
 : 
+: Fully-reviewed edges are added lazily to the server state, typically each time a feature
+: is released.  However, one may choose to add new edges manually using this command, at any
+: point using the current base and tip of a releasable feature.
+: 
+: Fully-reviewed edges affect the behavior of Iron in various ways.  For example, when
+: [fe create] is called with a [-base] and [-tip] matching an existing fully-reviewed edge,
+: all users are automatically marked as reviewed with no catch-up.
+: 
+: To check whether an edge has been marked as fully-reviewed in the server state, see:
+: 
+:   $ fe tools fully-reviewed-edge check -help
+: 
+: To check whether there exists a path of fully-reviewed edges leading to a particular
+: revision, see:
+: 
+:   $ fe tools fully-reviewed-revision check -help
+: 
+: 
 : === subcommands ===
 : 
 :   add    add a fully-reviewed edge from a feature's base to tip
@@ -3990,6 +4002,13 @@
 : add a fully-reviewed edge from a feature's base to tip
 : 
 :   fe.exe tools fully-reviewed-edge add [FEATURE]
+: 
+: This command fails if the feature is not releasable.
+: 
+: For more info, see:
+: 
+:   $ fe tools fully-reviewed-edge -help
+: 
 : 
 : === flags ===
 : 
@@ -4005,6 +4024,11 @@
 : check whether a fully-reviewed edge exists
 : 
 :   fe.exe tools fully-reviewed-edge check REV REV
+: 
+: See:
+: 
+:   $ fe tools fully-reviewed-edge -help
+: 
 : 
 : === flags ===
 : 
@@ -4069,6 +4093,32 @@
 :   [-fg]    run in foreground, don't daemonize
 :   [-help]  print this help text and exit
 :            (alias: -?)
+
+*** mark-fully-reviewed
+
+: mark a feature as fully reviewed
+: 
+:   fe.exe tools mark-fully-reviewed FEATURE
+: 
+: Catchup review will be generated for everyone but yourself (unless you supply
+: -create-catch-up-for-me).
+: 
+: When base or tip are provided, server will check if they match server's knowledge
+: and only continue when they totally match.  If a 40-character hg revision is provided
+: then this command works without a local hg repo.
+: 
+: 
+: === flags ===
+: 
+:   [-base REV]                    base of the feature you know
+:   [-create-catch-up-for-me]      create catch-up review even when reviewing for
+:                                  oneself
+:   [-for USER|all]                (default is unix login)
+:   [-for-all-but USER[,USER...]]  for all but these users
+:   [-reason REASON]               why you are reviewing this for someone else
+:   [-tip REV]                     tip of the feature you know
+:   [-help]                        print this help text and exit
+:                                  (alias: -?)
 
 *** pairwise-common-revisions
 

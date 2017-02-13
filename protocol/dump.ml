@@ -27,8 +27,7 @@ module Stable = struct
                                        | `Ids_and_feature_paths
                                        | `Value of Feature_id.V1.t
                                        ]
-        | Bookmarks_without_feature of Remote_repo_path.V1.t option
-                                       * [ `All_users | `User of User_name.V1.t ]
+        | Bookmarks_without_feature of Remote_repo_path.V1.t option * User_name.Or_all.V1.t
         | Build_info
         | Event_subscriptions
         | Feature                   of Feature_path.V1.t
@@ -44,13 +43,11 @@ module Stable = struct
                                        | `Values
                                        ]
         | Review_analysis           of Feature_path.V1.t
-        | Review_manager            of Feature_path.V1.t
-                                       * [ `All_users | `User of User_name.V1.t ]
-        | Review_lines              of Feature_path.V1.t
-                                       * [ `All_users | `User of User_name.V1.t ]
+        | Review_manager            of Feature_path.V1.t * User_name.Or_all.V1.t
+        | Review_lines              of Feature_path.V1.t * User_name.Or_all.V1.t
         | State
         | Timed_event_table
-        | Unclean_workspaces        of [ `All_users | `User of User_name.V1.t ]
+        | Unclean_workspaces        of User_name.Or_all.V1.t
         | User_info                 of Which_user_info.V1.t
         | Version
         | Worker_cache              of [ `Stats

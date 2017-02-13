@@ -31,7 +31,7 @@ Can't add an edge for an unreleasable feature.
   $ fe second -even-though-owner
   $ fe tools fully-reviewed-edge add |& matches "feature is not fully reviewed"
   [1]
-  $ fe internal mark-fully-reviewed root/child -for all -reason reason
+  $ fe tools mark-fully-reviewed root/child -for all -reason reason
 
 Add an edge for a fully-reviewed, but unrebased, feature.
 

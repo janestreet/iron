@@ -6,7 +6,7 @@ module Stable = struct
     module V2 = struct
       type t =
         { root_feature   : Feature_name.V1.t
-        ; for_or_all     : [ `User of User_name.V1.t | `All_users ]
+        ; for_or_all     : User_name.Or_all.V1.t
         ; include_active : bool
         }
       [@@deriving bin_io, fields, sexp]

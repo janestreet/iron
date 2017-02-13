@@ -35,7 +35,7 @@ Mark the feature as reviewed (from the remote).
 
   $ fe enable-review
   $ IRON_USER=user1 fe second -even-though-owner
-  $ fe internal mark-fully-reviewed root/child -for user1 -reason reason
+  $ fe tools mark-fully-reviewed root/child -for user1 -reason reason
 
 Show the root attributes.
 

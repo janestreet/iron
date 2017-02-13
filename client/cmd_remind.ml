@@ -161,7 +161,8 @@ Warning: a bookmark update is expected since %s.\n"
              Deferred.unit
            | `Yes  ->
              let me = User_name.unix_login |> User_name.to_string in
-             Core_extended.Sendmail.send ~subject ~recipients ~cc:(me::cc) body;
+             let module Sendmail = Core_extended.Std.Sendmail.Deprecated_use_async_smtp_std_simplemail in
+             Sendmail.send ~subject ~recipients ~cc:(me::cc) body;
              print_string "Email sent.\n";
              Deferred.unit
            | `Edit ->

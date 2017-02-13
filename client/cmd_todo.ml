@@ -7,18 +7,19 @@ module Feature_info = Todo.Feature_info
 
 let preceding_text = ref false
 
-let print_table title ~columns ~rows ~display_ascii ~max_output_columns =
+let print_table ~table_name ~columns ~rows ~display_ascii ~max_output_columns =
   if not (List.is_empty rows)
   then (
     if !preceding_text then printf "\n";
     preceding_text := true;
-    printf "%s:\n%s" title
+    printf "%s%s"
+      (if String.is_empty table_name
+       then ""
+       else table_name ^ ":\n")
       (Ascii_table.to_string (Ascii_table.create ~columns ~rows)
          ~display_ascii
          ~max_output_columns))
 ;;
-
-let assigned_table_name = "CRs and review line counts"
 
 let feature_display_attributes ~next_steps ~review_is_enabled ~feature_path_exists =
   if List.mem next_steps Next_step.Release ~equal:Next_step.equal
@@ -91,7 +92,7 @@ let show_assigned assigned ~display_ascii ~max_output_columns =
             (if_assigned (fun { may_second; _ } -> if may_second then "second" else ""))
         ])
     in
-    print_table assigned_table_name ~columns ~rows ~display_ascii ~max_output_columns)
+    print_table ~table_name:"" ~columns ~rows ~display_ascii ~max_output_columns)
 ;;
 
 let show_unclean_workspaces
@@ -103,9 +104,8 @@ let show_unclean_workspaces
         unclean_workspaces
     in
     print_table
-      (sprintf "Unclean workspaces on %s" (Machine.to_string machine))
-      ~columns ~rows ~display_ascii ~max_output_columns
-  )
+      ~table_name:(sprintf "Unclean workspaces on %s" (Machine.to_string machine))
+      ~columns ~rows ~display_ascii ~max_output_columns)
 ;;
 
 let show_feature_info feature_info ~table_name ~display_ascii ~max_output_columns =
@@ -179,7 +179,7 @@ let show_feature_info feature_info ~table_name ~display_ascii ~max_output_column
                    ~review_is_enabled:feature_info.review_is_enabled))
         ])
   in
-  print_table table_name ~columns ~rows ~display_ascii ~max_output_columns
+  print_table ~table_name ~columns ~rows ~display_ascii ~max_output_columns
 ;;
 
 let cr_soons_table_name = "CR-soons assigned to you"
@@ -203,7 +203,8 @@ let show_cr_soons cr_soons ~display_ascii ~max_output_columns =
       ])
   in
   let rows = List.sort cr_soons ~cmp:Cr_soon_in_feature.For_sorted_output.compare in
-  print_table cr_soons_table_name ~columns ~rows ~display_ascii ~max_output_columns
+  print_table ~table_name:cr_soons_table_name
+    ~columns ~rows ~display_ascii ~max_output_columns
 ;;
 
 let bookmarks_without_feature_name = "Bookmarks without a feature"
@@ -227,7 +228,7 @@ let show_bookmarks_without_feature bookmarks_without_feature
       ; string ~header:"bookmark" (cell (fun (_, b) -> Bookmark_without_feature.bookmark b))
       ])
   in
-  print_table bookmarks_without_feature_name
+  print_table ~table_name:bookmarks_without_feature_name
     ~columns ~rows ~display_ascii ~max_output_columns;
 ;;
 
@@ -251,8 +252,7 @@ let command =
                  bookmarks_without_feature_name)
      and crs_and_review_names =
        no_arg_flag "-crs-and-review-names"
-         ~doc:(sprintf "list feature names, including features from the '%s' table"
-                 assigned_table_name)
+         ~doc:"list feature names, including features from the assigned table"
      and my_unclean_workspaces_names =
        no_arg_flag "-unclean-workspaces-names"
          ~doc:"list feature names, including features with unclean workspaces"
@@ -285,9 +285,10 @@ let command =
          ~doc:"include owned features that are normally omitted"
      and feature_path_option =
        feature_path_option
-     and crs_and_review =
-       no_arg_flag "-crs-and-review"
-         ~doc:(sprintf "show only the '%s' table" assigned_table_name)
+     and assigned_to_me =
+       no_arg_flag "-assigned"
+         ~aliases:[ "-crs-and-review" ]
+         ~doc:"show only the assigned table"
      and my_cr_soons =
        no_arg_flag switch_my_cr_soons
          ~doc:(sprintf "show only the '%s' table" cr_soons_table_name)
@@ -429,13 +430,13 @@ let command =
               doesn't make sense to show nothing.  Otherwise we only show what is
               requested. *)
            let force_show =
-             not crs_and_review
+             not assigned_to_me
              && not owned_by_me
              && not watched_by_me
              && not my_unclean_workspaces
              && not my_cr_soons
            in
-           if crs_and_review || force_show
+           if assigned_to_me || force_show
            then show_assigned assigned ~display_ascii ~max_output_columns;
            if my_unclean_workspaces || (force_show && not do_not_show_unclean_workspaces)
            then show_unclean_workspaces unclean_workspaces

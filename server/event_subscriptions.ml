@@ -268,11 +268,7 @@ let drop_all_by_user t query by_whom =
       some_subscription_was_dropped := true));
   if not !some_subscription_was_dropped
   then
-    raise_s
-      [%sexp
-        "no subscriptions to drop for"
-      , (by_whom : [ `All_users | `User of User_name.t ])
-      ]
+    raise_s [%sexp "no subscriptions to drop for" , (by_whom : User_name.Or_all.t)]
 ;;
 
 let dump

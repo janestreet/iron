@@ -6,7 +6,7 @@
 
 Mark the user.
 
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing
 
 Add new commits, leaving the feature unchanged.
 

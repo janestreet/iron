@@ -56,7 +56,7 @@ Have user2 do a partial review.
 
   $ echo second-change >file; hg com -m file
   $ feature_to_server root/child
-  $ fe internal mark-fully-reviewed root/child
+  $ fe tools mark-fully-reviewed root/child
 
 At this point user1 or user2 may review the feature.
 
@@ -79,7 +79,6 @@ At this point user1 or user2 may review the feature.
   |-----------------------------|
 
   $ fe todo -for user2
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -109,7 +108,7 @@ that very user's session, which was confusing.
 If user1 review the entire feature, user2 is no longer required to finish their
 partial review.  Instead what is left to review becomes a follow review.
 
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root/child
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root/child
 
   $ fe show -omit-attribute-table -omit-description
   root/child
@@ -130,7 +129,6 @@ partial review.  Instead what is left to review becomes a follow review.
   |-----------------------------|
 
   $ fe todo -for user2
-  CRs and review line counts:
   |-----------------------------------|
   | feature |         review | follow |
   |---------+----------------+--------|
@@ -193,7 +191,6 @@ session show] makes this distinction to guide the user.
   |---------------------------------------------|
 
   $ fe todo -for user2
-  CRs and review line counts:
   |------------------|
   | feature | follow |
   |---------+--------|
@@ -247,7 +244,6 @@ After the release, checks that the partial review lines are due for user2 as
 catch-up review.
 
   $ fe todo -for user2
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|
@@ -390,7 +386,6 @@ releasable and user2's review turns into a follow review.
   (Release)
 
   $ fe todo -for user2
-  CRs and review line counts:
   |------------------|
   | feature | follow |
   |---------+--------|
@@ -401,7 +396,6 @@ releasable and user2's review turns into a follow review.
   $ fe release
   $ feature_to_server root
   $ fe todo -for user2
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|

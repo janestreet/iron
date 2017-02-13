@@ -18,7 +18,7 @@ Put some contents in the users' brain for each file.
   > feature_to_server root -fake-valid
 
   $ TIP1=$(fe show -tip)
-  $ fe internal mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root
   $ fe internal need-diff4s-starting-from | sed "s;$BASE;\$BASE;" | sed "s;$TIP1;\$TIP1;"
   ((((base
       ((human_readable ())

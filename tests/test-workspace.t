@@ -666,8 +666,8 @@ Check workspaces operations on release.
   $ hg -q push --cwd $(fe workspace dir jane/a/child)
   $ (cd $(fe workspace dir jane/a) && fe update jane/a && feature_to_server jane/a -fake-valid)
 
-  $ IRON_USER=file-owner fe internal mark-fully-reviewed jane/a/child
-  $ fe internal mark-fully-reviewed jane/a/child
+  $ IRON_USER=file-owner fe tools mark-fully-reviewed jane/a/child
+  $ fe tools mark-fully-reviewed jane/a/child
 
   $ tree $HOME/workspaces/jane/a | sed "s;$HOME;\$HOME;"
   $HOME/workspaces/jane/a

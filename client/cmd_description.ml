@@ -36,7 +36,7 @@ let edit =
          let%bind new_description =
            Editor.invoke_editor previous_description
          in
-         let new_description = ok_exn new_description in
+         let new_description = ok_exn new_description |> String.strip in
          if String.equal new_description initial_description
          then (print_endline "You didn't change the description."; Deferred.unit)
          else (
@@ -69,7 +69,7 @@ let set =
        let open! Deferred.Let_syntax in
        let feature_path = ok_exn feature_path in
        let%bind description = Reader.contents stdin in
-       set_description_exn feature_path description
+       set_description_exn feature_path (String.strip description)
     )
 ;;
 
@@ -78,11 +78,7 @@ let show =
     ~summary:"output description on stdout"
     (let open Command.Let_syntax in
      let%map_open () = return ()
-     and maybe_archived_feature = maybe_archived_feature
-     and do_not_show_comments =
-       no_arg_flag "do-not-show-comments"
-         ~doc:"filter out comments from the description"
-     in
+     and maybe_archived_feature = maybe_archived_feature in
      fun () ->
        let open! Deferred.Let_syntax in
        let%map description =
@@ -91,11 +87,6 @@ let show =
              (ok_exn maybe_archived_feature)
          in
          get_description_exn feature
-       in
-       let description =
-         if do_not_show_comments
-         then Cmd_show.render_description description
-         else description
        in
        let n = String.length description in
        if n = 0

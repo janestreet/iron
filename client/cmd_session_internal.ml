@@ -18,12 +18,13 @@ let mark_id =
      fun () ->
        let open! Deferred.Let_syntax in
        let feature_path = ok_exn feature_path in
+       let is_reviewing_for = `User for_ in
        let create_catch_up_for_me =
-         create_catch_up_for_me ~for_or_all:(`User for_) |> ok_exn
+         create_catch_up_for_me ~is_reviewing_for |> ok_exn
        in
        let%bind () =
          Cmd_review.may_modify_others_review_exn feature_path ~reason:(`This reason)
-           ~for_or_all:(`User for_)
+           ~whose_review:is_reviewing_for
        in
        Reviewed_diffs.rpc_to_server_exn
          { for_

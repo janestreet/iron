@@ -134,7 +134,7 @@ Persistence.
 
 Check that mark-fully-reviewed also triggers some catch-up.
 
-  $ fe internal mark-fully-reviewed test -for user1 -reason reason
+  $ fe tools mark-fully-reviewed test -for user1 -reason reason
   $ fe internal session show-num-lines test -for user1
   0
   $ fe internal catch-up show-num-lines test -for user1

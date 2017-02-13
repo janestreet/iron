@@ -42,9 +42,7 @@ val set_max_subscriptions_global : t -> int -> unit
 val drop_all_by_user
   :  t
   -> Iron_protocol.With_event_subscriptions.Action.t Query.t
-  -> [ `User of User_name.t
-     | `All_users
-     ]
+  -> User_name.Or_all.t
   -> unit
 
 val dump : t -> Sexp.t

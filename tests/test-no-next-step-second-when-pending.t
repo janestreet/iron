@@ -6,10 +6,9 @@ Setup a feature with seconding recommended.
   $ feature_to_server root -fake-valid
   $ fe change -add-whole-feature-reviewers user1
   $ fe enable
-  $ fe internal mark-fully-reviewed root
-  $ fe internal mark-fully-reviewed root -for user1 -reason reason
+  $ fe tools mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root -for user1 -reason reason
   $ fe todo -for user1
-  CRs and review line counts:
   |--------------------------------|
   | feature | catch-up | next step |
   |---------+----------+-----------|
@@ -35,7 +34,6 @@ Change the feature and start hydra working on it:
 Now seconding is not recommend.
 
   $ fe todo -for user1
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|

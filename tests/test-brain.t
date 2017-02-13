@@ -19,7 +19,7 @@ Clearing an already empty brain interactively doesn't prompt.
 
 Mark, and the brain knows stuff.
 
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing -reason reason
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing -reason reason
   $ fe brain show
   |---------------------|
   | file  | op  | lines |
@@ -91,7 +91,7 @@ Forget, answer "y" to the prompt, and the brain is empty.
 
 Mark and then clear each file separately.
 
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing
   $ fe brain show
   |---------------------|
   | file  | op  | lines |
@@ -112,15 +112,13 @@ Mark and then clear each file separately.
 Check that forget is cleaning catch-up if any.
 
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
   | root    |      4 |
   |------------------|
-  $ fe internal mark-fully-reviewed root -for user1 -reason testing
+  $ fe tools mark-fully-reviewed root -for user1 -reason testing
   $ fe todo -for user1
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|
@@ -128,7 +126,6 @@ Check that forget is cleaning catch-up if any.
   |--------------------|
   $ IRON_USER=user1 fe brain forget -file file
   $ fe todo -for user1
-  CRs and review line counts:
   |-----------------------------|
   | feature | review | catch-up |
   |---------+--------+----------|
@@ -136,15 +133,13 @@ Check that forget is cleaning catch-up if any.
   |-----------------------------|
   $ IRON_USER=user1 fe brain forget -file file2
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
   | root    |      4 |
   |------------------|
-  $ fe internal mark-fully-reviewed root -for user1 -reason testing
+  $ fe tools mark-fully-reviewed root -for user1 -reason testing
   $ fe todo -for user1
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|
@@ -155,7 +150,6 @@ When [fe brain forget] is run by another user, this preserves any catch-up.
 
   $ fe brain forget -all -for user1
   $ fe todo -for user1
-  CRs and review line counts:
   |-----------------------------|
   | feature | review | catch-up |
   |---------+--------+----------|
@@ -164,15 +158,13 @@ When [fe brain forget] is run by another user, this preserves any catch-up.
 
   $ IRON_USER=user1 fe catch-up clear
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
   | root    |      4 |
   |------------------|
-  $ fe internal mark-fully-reviewed root -for user1 -reason testing
+  $ fe tools mark-fully-reviewed root -for user1 -reason testing
   $ fe todo -for user1
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|
@@ -183,7 +175,6 @@ But when [fe brain forget] is run by the actual user, the catch-up is cleared.
 
   $ IRON_USER=user1 fe brain forget -all
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -192,7 +183,7 @@ But when [fe brain forget] is run by the actual user, the catch-up is cleared.
 
 Mark and then forget both files.
 
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing
   $ fe brain show
   |---------------------|
   | file  | op  | lines |

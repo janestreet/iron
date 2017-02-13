@@ -4,7 +4,7 @@ open! Import
 module Action : sig
   type t =
     { feature_path           : Feature_path.t
-    ; for_or_all             : [ `All_users | `User of User_name.t ]
+    ; whom_to_mark           : User_name.Or_all_or_all_but.t
     ; reason                 : string
     ; create_catch_up_for_me : bool
     ; base                   : Rev.t option

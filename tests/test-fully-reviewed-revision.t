@@ -7,7 +7,7 @@ Start test.
   $ echo change >file; hg com -m change
   $ rev1=$(hg log -r . --template {node})
   $ feature_to_server root -fake-valid
-  $ fe internal mark-fully-reviewed root -for all -reason reason
+  $ fe tools mark-fully-reviewed root -for all -reason reason
   $ fe enable
   $ fe second -even-though-owner
   $ fe release

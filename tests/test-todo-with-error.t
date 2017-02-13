@@ -27,7 +27,6 @@ And breaking the feature:
 And now, the owner sees the error. He also sees his existing session:
 
   $ fe todo
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -50,7 +49,6 @@ The seconder also sees his old session, but not the error:
      [X] 1 b
 
   $ IRON_USER=seconder fe todo
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|

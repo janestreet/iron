@@ -23,7 +23,7 @@ Create some features.
 
   $ fe enable-review root/a/aa
   $ fe second -even-though-owner root/a/aa
-  $ fe internal mark-fully-reviewed root/a/aa -for all -reason reason
+  $ fe tools mark-fully-reviewed root/a/aa -for all -reason reason
 
   $ fe create root/b -description 'b'
   $ fe create root/c -description 'c'

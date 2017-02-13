@@ -199,7 +199,6 @@ Add some changes in the file, check what happens.
 The feature followers have the feature they follow in their watch table.
 
   $ fe todo -for user2
-  CRs and review line counts:
   |-------------------------|
   | feature        | follow |
   |----------------+--------|
@@ -220,15 +219,15 @@ The feature followers have the feature they follow in their watch table.
 
 All normal users can review for them self, or via catch-up as usual.
 
-  $ fe internal mark-fully-reviewed root/add-follower
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root/add-follower
+  $ fe tools mark-fully-reviewed root/add-follower
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root/add-follower
 
   $ fe show -next-steps root/add-follower
   (Release)
 
 But one cannot review for a feature follower, it serves no purpose.
 
-  $ fe internal mark-fully-reviewed root/add-follower -for user2 -reason reason
+  $ fe tools mark-fully-reviewed root/add-follower -for user2 -reason reason
   (error
    (may-modify-others-review
     ("unauthorized review for a user with only lines to follow" user2)))
@@ -259,7 +258,7 @@ only has follow lines.
   | user2                       |
   |-----------------------------|
 
-  $ IRON_USER=user2 fe internal mark-fully-reviewed root/add-follower
+  $ IRON_USER=user2 fe tools mark-fully-reviewed root/add-follower
   $ fe show -next-steps root/add-follower
   (Release)
 
@@ -278,7 +277,7 @@ with some follow review already done.
   -|A change happens
   +|Dropped from followers with a brain
 
-  $ IRON_USER=user2 fe internal mark-fully-reviewed root/add-follower
+  $ IRON_USER=user2 fe tools mark-fully-reviewed root/add-follower
   $ fe change -remove-whole-feature-follower user2
   $ fe show -omit-description -omit-attribute-table
   root/add-follower
@@ -315,7 +314,7 @@ with some follow review already done.
   | +|A change happens
   |_
 
-  $ IRON_USER=user2 fe internal mark-fully-reviewed root/add-follower
+  $ IRON_USER=user2 fe tools mark-fully-reviewed root/add-follower
 
 Check that subsequent changes to the feature are no longer followed by user2.
 
@@ -339,7 +338,7 @@ Add him back and go back to previous state as of CHECK_POINT.
   $ fe change -add-whole-feature-follower user2
   $ hg commit -q -m 'put him back'
   $ feature_to_server root/add-follower
-  $ IRON_USER=user2 fe internal mark-fully-reviewed root/add-follower
+  $ IRON_USER=user2 fe tools mark-fully-reviewed root/add-follower
   $ fe show -next-steps
   (Release)
 
@@ -360,8 +359,8 @@ This time, add a change but release before the user2 reviews it.
   | user2                  |        |      2 |         4 |
   |------------------------------------------------------|
 
-  $ fe internal mark-fully-reviewed root/add-follower
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root/add-follower
+  $ fe tools mark-fully-reviewed root/add-follower
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root/add-follower
 
   $ fe show -next-steps root/add-follower
   (Release)
@@ -369,7 +368,6 @@ This time, add a change but release before the user2 reviews it.
   $ feature_to_server root
 
   $ IRON_USER=user2 fe todo
-  CRs and review line counts:
   |---------------------------|
   | feature        | catch-up |
   |----------------+----------|

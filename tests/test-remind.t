@@ -146,8 +146,8 @@ When the feature is ready to be seconded, send the reminder to w-f-reviewers and
   $ feature_to_server test/a
 
   $ fe change -set-reviewing-all
-  $ IRON_USER=owner fe internal mark-fully-reviewed test/a
-  $ fe internal mark-fully-reviewed test/a -for all -reason reason
+  $ IRON_USER=owner fe tools mark-fully-reviewed test/a
+  $ fe tools mark-fully-reviewed test/a -for all -reason reason
   $ echo n | fe remind test/a -interactive true
   Sending mail
   

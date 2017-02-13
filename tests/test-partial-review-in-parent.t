@@ -38,7 +38,7 @@ Create child, have user1 review it and release it.
   $ echo first-change >file; hg com -m file
   $ feature_to_server root/child
   $ IRON_USER=user1 fe second -even-though-owner
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root/child
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root/child
   $ fe release
   $ feature_to_server root
 
@@ -78,8 +78,8 @@ Simulate a rebase of root in which it would pick up conflicts.
 
 Have user2 review the conflicts.
 
-  $ fe internal mark-fully-reviewed root
-  $ IRON_USER=user2 fe internal mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root
+  $ IRON_USER=user2 fe tools mark-fully-reviewed root
   $ fe show -omit-attribute-table -omit-description
   root
   ====
@@ -107,7 +107,7 @@ Create child, have user1 review it and release it.
   $ echo second-change >file; hg com -m file
   $ feature_to_server root/child
   $ IRON_USER=user1 fe second -even-though-owner
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root/child
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root/child
   $ fe release
   $ feature_to_server root
 
@@ -151,8 +151,8 @@ This time, user1 will review the conflicts.
 Have user1 review the conflicts.  Check that no spurious follow lines are
 generated for user2.
 
-  $ fe internal mark-fully-reviewed root
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root
   $ fe show -omit-attribute-table -omit-description
   root
   ====

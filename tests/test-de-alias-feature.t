@@ -14,7 +14,7 @@
 
 Put the alias [user2], in my brain.
 
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing
 
 Update aliases and make a change.
 

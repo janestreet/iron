@@ -4,7 +4,7 @@ open! Import
 module Action : sig
   type t =
     { feature_path : Feature_path.t
-    ; for_or_all   : [ `All_users | `User of User_name.t ]
+    ; whose_review : User_name.Or_all_or_all_but.t
     ; reason       : [ `Not_supported | `This of string ]
     }
   [@@deriving sexp_of]

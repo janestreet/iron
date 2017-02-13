@@ -18,7 +18,7 @@ let commit =
        let feature_path = ok_exn feature_path in
        let%bind () =
          Cmd_review.may_modify_others_review_exn feature_path ~reason:`Not_supported
-           ~for_or_all:(`User for_)
+           ~whose_review:(`User for_)
        in
        let%bind repo_root =
          Monitor.try_with_or_error (fun () ->
@@ -155,7 +155,7 @@ let forget =
        let feature_path = ok_exn feature_path in
        let%bind () =
          Cmd_review.may_modify_others_review_exn feature_path ~reason:`Not_supported
-           ~for_or_all:(`User for_)
+           ~whose_review:(`User for_)
        in
        let action =
          match what_to_forget with
@@ -199,7 +199,7 @@ let set_lock ~set_is_locked_to ~summary ~readme =
        let feature_path = ok_exn feature_path in
        let%bind () =
          Cmd_review.may_modify_others_review_exn feature_path ~reason:`Not_supported
-           ~for_or_all:(`User for_)
+           ~whose_review:(`User for_)
        in
        Session.Set_lock.rpc_to_server_exn
          { feature_path
@@ -278,12 +278,13 @@ This command is deprecated and has been subsumed by " ; subsumed_by ; ".
        then failwithf "This command is deprecated.  \
                        Tests should be updated to use %s instead" subsumed_by ();
        let feature_path = ok_exn feature_path in
+       let is_reviewing_for = `User for_ in
        let create_catch_up_for_me =
-         create_catch_up_for_me ~for_or_all:(`User for_) |> ok_exn
+         create_catch_up_for_me ~is_reviewing_for |> ok_exn
        in
        let%bind () =
          Cmd_review.may_modify_others_review_exn feature_path ~reason:(`This reason)
-           ~for_or_all:(`User for_)
+           ~whose_review:is_reviewing_for
        in
        let%bind { status; _ } =
          Get_review_session.rpc_to_server_exn

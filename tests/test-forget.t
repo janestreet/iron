@@ -21,9 +21,9 @@ Create hg repo.
   $ feature_to_server root
   $ fe enable-review
   $ fe change -set-reviewing all
-  $ IRON_USER=owner fe internal mark-fully-reviewed root
+  $ IRON_USER=owner fe tools mark-fully-reviewed root
   $ IRON_USER=owner fe second -even-though-owner
-  $ IRON_USER=user2 fe internal mark-fully-reviewed root
+  $ IRON_USER=user2 fe tools mark-fully-reviewed root
 
 Make user1 a whole-feature reviewer and do his review.
 
@@ -33,7 +33,7 @@ Make user1 a whole-feature reviewer and do his review.
   2 files to review: 4 lines total
      [ ] 1 a
      [ ] 3 b
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root
   $ fe session show -for user1 |& matches "reviewer is up to date"
   [1]
 
@@ -86,7 +86,6 @@ This follow review does not prevent release.
   $ IRON_USER=owner fe release
 
   $ fe todo -for user1
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|

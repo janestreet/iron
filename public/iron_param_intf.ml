@@ -99,20 +99,16 @@ module type T = sig
 
   val property_values_flag : switch:string -> doc:string -> Properties.t option t
 
-  module User_or_all : sig
-    type t =
-      [ `User of User_name.t
-      | `All_users
-      ]
-  end
+  val for_or_all_default_me  : User_name.Or_all.t t
+  val for_or_all_default_all : User_name.Or_all.t t
+  val for_or_all_required    : User_name.Or_all.t t
 
-  val for_or_all_default_me  : User_or_all.t        t
-  val for_or_all_default_all : User_or_all.t        t
-  val for_or_all_no_default  : User_or_all.t option t
-  val for_or_all_required    : User_or_all.t        t
+  val for_or_all_or_all_but_default_me : User_name.Or_all_or_all_but.t Or_error.t t
 
-  (** Error out if [catch_up_for_me] is used in combination with [-for] for another user. *)
-  val create_catch_up_for_me : (for_or_all:User_or_all.t -> bool Or_error.t) t
+  (** Error out if [catch_up_for_me] is used in combination with [-for] for other users
+      only. *)
+  val create_catch_up_for_me
+    : (is_reviewing_for:User_name.Or_all_or_all_but.t -> bool Or_error.t) t
 
   val archived_feature_path            : Feature_path.t Or_error.t      t
   val anon_feature_paths               : Feature_path.t list Or_error.t t

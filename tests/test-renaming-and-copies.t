@@ -36,11 +36,11 @@ And now, when the feature is rebased, nothing special should happen,
 in particular no conflicts between the redundant rename information
 from the various edges of the diamond.
 
-  $ fe internal mark-fully-reviewed root/feature -for all -reason reason
+  $ fe tools mark-fully-reviewed root/feature -for all -reason reason
   $ hg -q update -r root
   $ echo c > c; hg add c; hg -q commit -m 2
   $ feature_to_server root -fake-valid-obligations
-  $ fe internal mark-fully-reviewed root -for all -reason reason
+  $ fe tools mark-fully-reviewed root -for all -reason reason
   $ fe rebase root/feature > /dev/null
   $ echo changed >> a-renamed; hg commit -m 4
   $ feature_to_server root/feature -fake-valid-obligations

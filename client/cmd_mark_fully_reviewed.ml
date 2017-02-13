@@ -18,7 +18,7 @@ then this command works without a local hg repo.
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and feature_path = feature_path
-     and for_or_all = for_or_all_default_me
+     and whom_to_mark = for_or_all_or_all_but_default_me
      and reason = review_reason
      and create_catch_up_for_me = create_catch_up_for_me
      and base =
@@ -31,17 +31,19 @@ then this command works without a local hg repo.
      fun () ->
        let open! Deferred.Let_syntax in
        let feature_path = ok_exn feature_path in
+       let whom_to_mark = ok_exn whom_to_mark in
        let%bind repo_root =
          Cmd_workspace.repo_for_hg_operations_exn feature_path ~use:`Clone
        in
        let%bind base = Raw_rev.resolve_opt_exn base ~in_:(Ok repo_root) in
        let%bind tip = Raw_rev.resolve_opt_exn tip  ~in_:(Ok repo_root) in
-       let create_catch_up_for_me = create_catch_up_for_me ~for_or_all |> ok_exn in
+       let create_catch_up_for_me =
+         create_catch_up_for_me ~is_reviewing_for:whom_to_mark |> ok_exn
+       in
        let%bind () =
          Cmd_review.may_modify_others_review_exn feature_path ~reason:(`This reason)
-           ~for_or_all
+           ~whose_review:whom_to_mark
        in
        Mark_fully_reviewed.rpc_to_server_exn
-         { feature_path; for_or_all; reason; create_catch_up_for_me; base; tip }
-    )
+         { feature_path; whom_to_mark; reason; create_catch_up_for_me; base; tip })
 ;;

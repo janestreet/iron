@@ -184,6 +184,13 @@ We complete all the way, above, because only root/foo1 is archived, not root/foo
   user2
   user3
 
+  $ completion-test fe tools mark-fully-reviewed feature -for al
+  all
+
+  $ completion-test fe tools mark-fully-reviewed feature -for-all-but user2,un
+  user2,unix-login-for-testing
+  user2,unix-login-for-testing,
+
 Trailing comma if there is a single completion string:
 
   $ completion-test fe change feature -add-owners user2,un

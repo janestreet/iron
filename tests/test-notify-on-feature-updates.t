@@ -13,7 +13,7 @@ it (almost) releaseable, except for stuff that needs to happen in the parent.
   $ hg commit -m "0"
   $ feature_to_server root/parent/child -fake-valid
   $ fe enable-review
-  $ fe internal mark-fully-reviewed root/parent/child
+  $ fe tools mark-fully-reviewed root/parent/child
   $ fe second -even-though-owner
 
 Start the pipe in the background, redirecting its output.

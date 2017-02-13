@@ -6,7 +6,7 @@ Start test.
   $ echo change >file; hg com -m change
   $ feature_to_server root -fake-valid
   $ fe enable
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing
 
 Verify that spurious sessions aren't created.
 Wait for the session to appear on disk by flushing the serializer events.

@@ -4,6 +4,14 @@ open! Import
 
 let internal_add =
   Command.async' ~summary:"add a fully-reviewed edge"
+    ~readme:(fun () ->
+      concat [ "\
+This command is unsound because it marks an arbitrary edge as fully-reviewed.  This
+requires admin privileges.  To mark as fully-reviewed the edge of a releasable feature,
+see instead the user-facing command:
+
+  $ fe tools fully-reviewed-edge add
+"])
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and from = flag "-from" (required rev_arg_type) ~doc:"REV"
@@ -28,6 +36,14 @@ let internal =
 
 let tools_add =
   Command.async' ~summary:"add a fully-reviewed edge from a feature's base to tip"
+    ~readme:(fun () ->
+      concat [ "\
+This command fails if the feature is not releasable.
+
+For more info, see:
+
+  $ fe tools fully-reviewed-edge -help
+"])
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and feature_path =
@@ -62,6 +78,12 @@ let tools_add =
 
 let tools_check =
   Command.async' ~summary:"check whether a fully-reviewed edge exists"
+    ~readme:(fun () ->
+      concat [ "\
+See:
+
+  $ fe tools fully-reviewed-edge -help
+"])
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and from = rev
@@ -78,6 +100,25 @@ let tools_check =
 
 let tools =
   Command.group ~summary:"deal with the set of fully-reviewed edges"
+    ~readme:(fun () ->
+      concat [ "\
+Fully-reviewed edges are added lazily to the server state, typically each time a feature
+is released.  However, one may choose to add new edges manually using this command, at any
+point using the current base and tip of a releasable feature.
+
+Fully-reviewed edges affect the behavior of Iron in various ways.  For example, when
+[fe create] is called with a [-base] and [-tip] matching an existing fully-reviewed edge,
+all users are automatically marked as reviewed with no catch-up.
+
+To check whether an edge has been marked as fully-reviewed in the server state, see:
+
+  $ fe tools fully-reviewed-edge check -help
+
+To check whether there exists a path of fully-reviewed edges leading to a particular
+revision, see:
+
+  $ fe tools fully-reviewed-revision check -help
+"])
     [ "add"  , tools_add
     ; "check", tools_check
     ]

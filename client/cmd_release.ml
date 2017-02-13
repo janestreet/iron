@@ -108,7 +108,8 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
           then Some [ List.hd_exn feature.owners |> User_name.to_string ]
           else None
         in
-        Core_extended.Sendmail.send
+        let module Sendmail = Core_extended.Std.Sendmail.Deprecated_use_async_smtp_std_simplemail in
+        Sendmail.send
           (Cmd_show.render_email_body feature ~included_features_order)
           ?reply_to
           ~subject:(sprintf !"feature was released: %{Feature_path}" feature_path)

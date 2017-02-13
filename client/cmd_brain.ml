@@ -117,7 +117,7 @@ let forget =
        let feature_path = ok_exn feature_path in
        let%bind () =
          Cmd_review.may_modify_others_review_exn feature_path ~reason:`Not_supported
-           ~for_or_all:(`User for_)
+           ~whose_review:(`User for_)
        in
        let what_to_forget =
          match all, files with

@@ -17,7 +17,6 @@ There is review to do.
 
   $ fe enable-review
   $ fe todo
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -48,7 +47,6 @@ knowledge.
   $ fe change -set-base 1
   $ feature_to_server root -fake-valid
   $ fe todo
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|

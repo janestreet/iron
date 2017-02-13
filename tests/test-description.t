@@ -32,8 +32,20 @@ Show the new description.
   A new description
   # with a comment in it
 
-  $ fe description show -do-not-show-comments
+Set to the same description, but with leading and trailing whitespace.
+
+  $ fe description set <<EOF
+  > 
+  > A new description
+  > # with a comment in it
+  > 
+  > EOF
+
+The whitespace has been stripped.
+
+  $ fe description show
   A new description
+  # with a comment in it
 
 Archived the feature, and one can still show the description.
 
@@ -46,6 +58,3 @@ Archived the feature, and one can still show the description.
   $ fe description show root -archived
   A new description
   # with a comment in it
-
-  $ fe description show root -archived -do-not-show-comments
-  A new description

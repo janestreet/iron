@@ -36,6 +36,10 @@ let even_if_some_files_are_already_reviewed = "-even-if-some-files-are-already-r
 
 let feature_id = "-id"
 
+let for_ = "-for"
+
+let for_all_but = "-for-all-but"
+
 let include_active_cr_soons = "-include-active-cr-soons"
 
 let lines_required_to_separate_ddiff_hunks = "-lines-required-to-separate-ddiff-hunks"

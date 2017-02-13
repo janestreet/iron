@@ -5,7 +5,7 @@ Make a review manager where the brain matches the goal
   $ setup_repo_and_root file
   $ echo a > file; hg commit -m a
   $ feature_to_server root -fake-valid
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing
 
 Make sure the brain from marking is on disk.
 

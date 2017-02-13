@@ -1,10 +1,6 @@
 open! Core
 open! Import
 
-(** [render_description text] filters out lines from [text] whose first non-whitespace
-    character is [#]. *)
-val render_description : string -> string
-
 val print_table
   :  Ascii_table.t
   -> display_ascii      : bool

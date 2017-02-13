@@ -31,10 +31,10 @@ Start trying to release.
   $ fe enable-review
   $ fe is-releasable |& matches "feature is not releasable.*Review"
   [1]
-  $ fe internal mark-fully-reviewed root/child -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root/child -for unix-login-for-testing
   $ fe is-releasable |& matches "feature is not releasable.*Review"
   [1]
-  $ fe internal mark-fully-reviewed root/child -for seconder -reason reason
+  $ fe tools mark-fully-reviewed root/child -for seconder -reason reason
   $ fe is-releasable |& matches "feature is not releasable.*Ask_seconder"
   [1]
   $ IRON_USER=seconder fe second
@@ -44,10 +44,10 @@ Start trying to release.
   $ fe enable-review root
   $ fe release |& matches "feature is not releasable.*In_parent Review"
   [1]
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing
   $ fe release |& matches "feature is not releasable.*In_parent Review"
   [1]
-  $ fe internal mark-fully-reviewed root -for seconder -reason reason
+  $ fe tools mark-fully-reviewed root -for seconder -reason reason
   $ fe catch-up mark-file root file -for seconder
   $ fe release |& matches "feature is not releasable.*In_parent Ask_seconder"
   [1]
@@ -256,7 +256,7 @@ Releasing by a user that owns the parent but not the child.
   $ fe create root/child -owner user1 -desc description
   $ echo b >file; hg com -q -m commit
   $ feature_to_server root/child -fake-valid
-  $ fe internal mark-fully-reviewed root/child -for user1 -reason reason
+  $ fe tools mark-fully-reviewed root/child -for user1 -reason reason
   $ fe enable-review
   $ IRON_USER=user1 fe second -even-though-owner
   $ [ $(fe show -owner root) != $(fe show -owner root/child) ]

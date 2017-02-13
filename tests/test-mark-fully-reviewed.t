@@ -19,7 +19,6 @@ Make a repo with a feature.
 Review to do.
 
   $ fe todo
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -35,7 +34,7 @@ Review to do.
 
 Mark, and then no review to do.
 
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing
   $ fe todo
   Features you own:
   |----------------------------|
@@ -47,24 +46,10 @@ Mark, and then no review to do.
 Add some whole-feature reviewers.
 
   $ fe change -add-whole-feature-reviewers user1,user2,user3
-  $ fe show
+  $ fe show -omit-attribute-table
   root
   ====
   root
-  
-  |-----------------------------------------------------------------------|
-  | attribute               | value                                       |
-  |-------------------------+---------------------------------------------|
-  | next step               | review                                      |
-  | owner                   | unix-login-for-testing                      |
-  | whole-feature reviewers | unix-login-for-testing, user1, user2, user3 |
-  | seconder                | not seconded                                |
-  | review is enabled       | true                                        |
-  | reviewing               | whole-feature reviewers                     |
-  | is permanent            | false                                       |
-  | tip                     | 1bb712fa1b87                                |
-  | base                    | 6af58578f44e                                |
-  |-----------------------------------------------------------------------|
   
   |---------------------------------------------|
   | user                   | review | completed |
@@ -77,25 +62,11 @@ Add some whole-feature reviewers.
 
 Mark one of them.
 
-  $ fe internal mark-fully-reviewed root -for user1 -reason reason
-  $ fe show
+  $ fe tools mark-fully-reviewed root -for user1 -reason reason
+  $ fe show -omit-attribute-table
   root
   ====
   root
-  
-  |-----------------------------------------------------------------------|
-  | attribute               | value                                       |
-  |-------------------------+---------------------------------------------|
-  | next step               | review                                      |
-  | owner                   | unix-login-for-testing                      |
-  | whole-feature reviewers | unix-login-for-testing, user1, user2, user3 |
-  | seconder                | not seconded                                |
-  | review is enabled       | true                                        |
-  | reviewing               | whole-feature reviewers                     |
-  | is permanent            | false                                       |
-  | tip                     | 1bb712fa1b87                                |
-  | base                    | 6af58578f44e                                |
-  |-----------------------------------------------------------------------|
   
   |--------------------------------------------------------|
   | user                   | review | catch-up | completed |
@@ -108,25 +79,11 @@ Mark one of them.
 
 Mark the rest.
 
-  $ fe internal mark-fully-reviewed root -for all -reason reason
-  $ fe show
+  $ fe tools mark-fully-reviewed root -for all -reason reason
+  $ fe show -omit-attribute-table
   root
   ====
   root
-  
-  |-----------------------------------------------------------------------|
-  | attribute               | value                                       |
-  |-------------------------+---------------------------------------------|
-  | next step               | ask seconder                                |
-  | owner                   | unix-login-for-testing                      |
-  | whole-feature reviewers | unix-login-for-testing, user1, user2, user3 |
-  | seconder                | not seconded                                |
-  | review is enabled       | true                                        |
-  | reviewing               | whole-feature reviewers                     |
-  | is permanent            | false                                       |
-  | tip                     | 1bb712fa1b87                                |
-  | base                    | 6af58578f44e                                |
-  |-----------------------------------------------------------------------|
   
   |-----------------------------------------------|
   | user                   | catch-up | completed |
@@ -136,3 +93,62 @@ Mark the rest.
   | user3                  |        1 |         1 |
   | unix-login-for-testing |          |         1 |
   |-----------------------------------------------|
+
+Mark -for-all-but.
+
+  $ fe change -add-whole-feature-reviewers jdoe1,jdoe2
+  $ fe show -omit-attribute-table
+  root
+  ====
+  root
+  
+  |--------------------------------------------------------|
+  | user                   | review | catch-up | completed |
+  |------------------------+--------+----------+-----------|
+  | jdoe1                  |      1 |          |           |
+  | jdoe2                  |      1 |          |           |
+  | user1                  |        |        1 |         1 |
+  | user2                  |        |        1 |         1 |
+  | user3                  |        |        1 |         1 |
+  | unix-login-for-testing |        |          |         1 |
+  |--------------------------------------------------------|
+
+  $ fe tools mark-fully-reviewed root -for-all-but jdoe1,jdoe2 -reason reason
+  $ fe show -omit-attribute-table
+  root
+  ====
+  root
+  
+  |--------------------------------------------------------|
+  | user                   | review | catch-up | completed |
+  |------------------------+--------+----------+-----------|
+  | jdoe1                  |      1 |          |           |
+  | jdoe2                  |      1 |          |           |
+  | user1                  |        |        1 |         1 |
+  | user2                  |        |        1 |         1 |
+  | user3                  |        |        1 |         1 |
+  | unix-login-for-testing |        |          |         1 |
+  |--------------------------------------------------------|
+
+  $ fe tools mark-fully-reviewed root -for-all-but jdoe1 -reason reason
+  $ fe show -omit-attribute-table
+  root
+  ====
+  root
+  
+  |--------------------------------------------------------|
+  | user                   | review | catch-up | completed |
+  |------------------------+--------+----------+-----------|
+  | jdoe1                  |      1 |          |           |
+  | jdoe2                  |        |        1 |         1 |
+  | user1                  |        |        1 |         1 |
+  | user2                  |        |        1 |         1 |
+  | user3                  |        |        1 |         1 |
+  | unix-login-for-testing |        |          |         1 |
+  |--------------------------------------------------------|
+
+Cannot mark -for and -for-all-but in one command.
+
+  $ fe tools mark-fully-reviewed root -for all -for-all-but jdoe1 -reason reason
+  The flags [-for] and [-for-all-but] are mutually exclusive.
+  [1]

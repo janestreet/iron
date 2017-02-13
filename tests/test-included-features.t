@@ -43,11 +43,11 @@ Make a repo with root and child features.
 Release.
 
   $ function make-releasable {
-  >   fe internal mark-fully-reviewed $1 -for unix-login-for-testing
-  >   fe internal mark-fully-reviewed $1 -for user1 -reason reason
+  >   fe tools mark-fully-reviewed $1 -for unix-login-for-testing
+  >   fe tools mark-fully-reviewed $1 -for user1 -reason reason
   > }
   $ for f in root root/app root/app/child root/app/child/nested; do
-  >     fe internal mark-fully-reviewed $f -for all -reason reason
+  >     fe tools mark-fully-reviewed $f -for all -reason reason
   > done
   $ make-releasable root/app/child/nested
 

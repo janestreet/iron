@@ -51,7 +51,6 @@ Create hg repo.
   | owner |      1 |
   |----------------|
   $ fe todo -for owner
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -65,7 +64,6 @@ Create hg repo.
   | root    |   1 |     1 | CRs, review |
   |-------------------------------------|
   $ fe todo -crs-and-review -for owner
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -79,7 +77,6 @@ Create hg repo.
   | root    |   1 |     1 | CRs, review |
   |-------------------------------------|
   $ fe todo -crs-and-review -owned-by-me -for owner
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -107,7 +104,6 @@ Create hg repo.
   $ fe todo -owned-by-me-names -for user2
 
   $ fe todo -for user2
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|
@@ -121,7 +117,6 @@ Create hg repo.
   $ fe todo -for user2
   $ fe change -set-crs-are-enabled true
   $ fe todo -for user2
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|
@@ -136,7 +131,6 @@ Create hg repo.
   $ fe todo -for user2
   $ fe change -add-reviewing user2
   $ fe todo -for user2
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|
@@ -147,7 +141,6 @@ Create hg repo.
   [1]
   $ fe change -remove-reviewing user2
   $ fe todo -for user2
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|
@@ -166,7 +159,6 @@ Create hg repo.
   $ fe todo -for user1
   $ fe change -add-reviewing user1
   $ fe todo -for user1
-  CRs and review line counts:
   |----------------|
   | feature | XCRs |
   |---------+------|
@@ -177,7 +169,6 @@ Create hg repo.
   [1]
   $ fe change -remove-reviewing user1
   $ fe todo -for user1
-  CRs and review line counts:
   |----------------|
   | feature | XCRs |
   |---------+------|
@@ -190,10 +181,9 @@ Create hg repo.
   $ hg com -m 'added CR'
   $ feature_to_server root -fake-valid-obligations
 
-  $ fe internal mark-fully-reviewed root -for owner -reason reason
+  $ fe tools mark-fully-reviewed root -for owner -reason reason
 
   $ with_visible_colors fe todo -for owner
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------|----------|
@@ -213,7 +203,6 @@ Archived features show up in dim in the todo.
 
   $ fe archive root -for owner
   $ with_visible_colors fe todo -for owner
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------|----------|

@@ -71,7 +71,6 @@ The feature is there.
   | unix-login-for-testing |      1 |
   |---------------------------------|
   $ fe todo
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|
@@ -189,7 +188,6 @@ Unarchive.
   | unix-login-for-testing |      1 |
   |---------------------------------|
   $ fe todo
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|
@@ -212,7 +210,6 @@ Change a review manager and then persist.
      [ ] 1 f1.txt
   $ fe session mark-file root f1.txt
   $ fe todo
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|
@@ -228,7 +225,6 @@ Change a review manager and then persist.
   $ fe-server stop
   $ fe-server start
   $ fe todo
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|

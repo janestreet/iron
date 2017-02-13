@@ -37,7 +37,7 @@ Create child with changes.
   $ hg -q com -m file
   $ feature_to_server root/child
   $ fe enable-review root/child
-  $ fe internal mark-fully-reviewed root/child
+  $ fe tools mark-fully-reviewed root/child
   $ fe second -even-though-owner
   $ fe show -omit-attribute-table -omit-description
   root/child
@@ -86,7 +86,6 @@ Create child with changes.
   (Review)
 
   $ fe todo -for user1
-  CRs and review line counts:
   |--------------------------|
   | feature |         review |
   |---------+----------------|
@@ -108,7 +107,6 @@ Create child with changes.
      [ ] 2 file3
 
   $ fe todo -for user2
-  CRs and review line counts:
   |--------------------------|
   | feature |         review |
   |---------+----------------|
@@ -130,7 +128,6 @@ Create child with changes.
      [ ] 2 file1
 
   $ fe todo -for user3
-  CRs and review line counts:
   |--------------------------|
   | feature |         review |
   |---------+----------------|

@@ -23,7 +23,6 @@ Make user1 a whole-feature reviewer and he has stuff todo.
 
   $ fe change -add-whole-feature-reviewer user1
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|

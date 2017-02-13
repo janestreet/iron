@@ -159,7 +159,6 @@ Dump _accumulated_ aliases.
   [1]
   $ fe change root -set-reviewing 'user1'
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------------|
   | feature | CRs | review |
   |---------+-----+--------|

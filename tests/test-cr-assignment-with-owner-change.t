@@ -34,7 +34,6 @@ The unassigned CR is assigned to the feature owner.
   | total                  |   1 |     1 |
   |--------------------------------------|
   $ fe todo -for unix-login-for-testing
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|
@@ -65,7 +64,6 @@ Change the owner, and the assignment should change.
   |-------------------------|
   $ fe todo -for unix-login-for-testing
   $ fe todo -for new-owner
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|

@@ -33,19 +33,6 @@ let header feature_path =
       (String.make render_tree_if_feature_path_longer_than '='))
 ;;
 
-let render_description description =
-  let lines =
-    String.split_lines description
-    |> List.filter ~f:(fun line ->
-      let line = String.lstrip line in
-      String.is_empty line || not (Char.equal line.[0] '#'))
-  in
-  let description = String.concat lines ~sep:"\n" in
-  if String.is_empty description
-  then description
-  else concat [ description; "\n" ]
-;;
-
 let render_included_features feature ~display_ascii ~max_output_columns
       ~show_attribute_table ~show_description ~show_included_feature_details
       ~included_features_order =
@@ -63,7 +50,8 @@ let render_included_features feature ~display_ascii ~max_output_columns
        @ maybe show_included_feature_details (fun () ->
          List.concat_map included_features ~f:(fun (r : Released_feature.t) ->
            [ sprintf "\n%s" (header r.feature_path) ]
-           @ maybe show_description (fun () -> [ render_description r.description ])
+           @ maybe show_description (fun () ->
+             [ sprintf "%s\n" r.description ])
            @ maybe show_attribute_table (fun () ->
              [ sprintf "\n%s"
                  (Ascii_table.to_string (Released_feature.attribute_table r) ~display_ascii
@@ -721,7 +709,7 @@ let show_whole_feature
       ~show_unclean_workspaces_table
   =
   print_string (header feature.feature_path);
-  (if show_description then print_string (render_description feature.description));
+  (if show_description then printf "%s\n" feature.description);
   (if show_attribute_table
    then (
      printf "\n%s"
@@ -1000,9 +988,7 @@ let command =
 ;;
 
 let header_and_description feature_path ~description =
-  sprintf "%s%s"
-    (header feature_path)
-    (render_description description);
+  sprintf "%s%s\n" (header feature_path) description;
 ;;
 
 let render_email_body (feature : Feature.t) ~included_features_order =

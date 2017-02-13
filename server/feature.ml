@@ -251,9 +251,9 @@ module Hydra_master_state = struct
      (update-bookmark).  This represents the most current state of the hydra master we
      know for a bookmark. *)
   type t =
-    { tip                                    : Node_hash.First_12.t
-    ; status                                 : [ `Done | `Pending_or_working_on_it ]
-    ; override_next_pending_status_if_needed : bool
+    { tip                                 : Node_hash.First_12.t
+    ; status                              : [ `Done | `Pending_or_working_on_it ]
+    ; override_n_pending_status_if_needed : int
     }
   [@@deriving compare, sexp_of]
 end
@@ -266,13 +266,22 @@ module Next_base_update_expected = struct
   [@@deriving fields, sexp_of]
 end
 
+module Feature_description : sig
+  type t [@@deriving sexp_of]
+  include Stringable.S with type t := t
+end = struct
+  type t = string [@@deriving sexp_of]
+  let to_string t = t
+  let of_string string = String.strip string
+end
+
 type t =
   (* The fields are ordered for readability of [sexp_of_t]. *)
   { mutable feature_path              : Feature_path.t
   ; feature_id                        : Feature_id.t
   (* Unassigned CRs are assigned to the first user in [owners]. *)
   ; mutable owners                    : User_name.t list
-  ; mutable description               : string
+  ; mutable description               : Feature_description.t
   ; mutable whole_feature_followers   : User_name.Set.t
   ; mutable whole_feature_reviewers   : User_name.Set.t
   ; mutable seconder                  : User_name.t option
@@ -340,6 +349,8 @@ type t =
   ; mutable lines_required_to_separate_ddiff_hunks : int option
   }
 [@@deriving fields, sexp_of]
+
+let description t = Feature_description.to_string t.description
 
 let rev_zero (t : t) = (Query.action t.creation).rev_zero
 let remote_repo_path (t : t) = (Query.action t.creation).remote_repo_path
@@ -428,7 +439,7 @@ let to_protocol t
   ; tip_facts = t.tip_facts
   ; base_is_ancestor_of_tip = t.base_is_ancestor_of_tip
   ; diff_from_base_to_tip = t.diff_from_base_to_tip
-  ; description = t.description
+  ; description = description t
   ; is_permanent = t.is_permanent
   ; review_is_enabled = t.review_is_enabled
   ; crs_are_enabled = t.crs_are_enabled
@@ -484,7 +495,7 @@ let to_released_feature_exn t ~query ~tagged_tip =
   { Released_feature.
     feature_id              = t.feature_id
   ; feature_path            = t.feature_path
-  ; description             = t.description
+  ; description             = description t
   ; owners                  = t.owners
   ; whole_feature_followers = t.whole_feature_followers
   ; whole_feature_reviewers = t.whole_feature_reviewers
@@ -797,7 +808,7 @@ let create_internal creation ~dynamic_upgrade_state ~serializer =
     = Iron_protocol.Feature.Default_values.crs_shown_in_todo_only_for_users_reviewing
   ; xcrs_shown_in_todo_only_for_users_reviewing
     = Iron_protocol.Feature.Default_values.xcrs_shown_in_todo_only_for_users_reviewing
-  ; description
+  ; description = Feature_description.of_string description
   ; num_lines = pending
   ; bounded_hydra_retry = Bounded_hydra_retry.empty
   ; creation
@@ -1043,7 +1054,7 @@ let set_seconder t query user =
 
 let set_description t query description =
   record t query (`Set_description description);
-  t.description <- description;
+  t.description <- Feature_description.of_string description;
 ;;
 
 let force_hydra_retry t =
@@ -1215,21 +1226,21 @@ let apply_bookmark_update t bookmark_update =
      gratuitous delay by considering that hydra is done if its tip matches the tip we
      received.  Now, this is racy because we could consider that hydra is done, and
      receive immediately a synchronize-state that makes the feature pending again.  So we
-     set [override_next_pending_status_if_needed] to prevent this.  If hydra were more
+     set [override_n_pending_status_if_needed] to prevent this.  If hydra were more
      reactive (i.e. sent a synchronize-state right after iron-hydra jobs finish), we could
      probably get rid of this. *)
   (match t.hydra_master_state with
    | None -> ()
    | Some { tip = last_known_hydra_tip
           ; status = _
-          ; override_next_pending_status_if_needed = _
+          ; override_n_pending_status_if_needed = _
           } ->
      if Rev.has_prefix t.tip last_known_hydra_tip
      then (
        t.hydra_master_state <-
          Some { status = `Done
               ; tip = last_known_hydra_tip
-              ; override_next_pending_status_if_needed = true
+              ; override_n_pending_status_if_needed = 2
               }));
   refresh_next_bookmark_update t;
 ;;
@@ -1315,30 +1326,35 @@ let update_bookmark t query =
 ;;
 
 let synchronize_with_hydra t ~hydra_tip ~hydra_status =
-  let hydra_status =
+  let hydra_status, override_n_pending_status_if_needed =
     match t.hydra_master_state, hydra_status with
-    | Some { tip; override_next_pending_status_if_needed = true; status = `Done },
+    | Some { tip; override_n_pending_status_if_needed = n; status = `Done },
       `Pending_or_working_on_it
-      when Node_hash.First_12.equal tip hydra_tip
-      -> `Done
-    | _ -> hydra_status
+      when Node_hash.First_12.equal tip hydra_tip && n > 0
+      ->
+      `Done, n - 1
+    | _ ->
+      hydra_status, 0
   in
   let hydra_master_state : Hydra_master_state.t =
     { status = hydra_status
     ; tip = hydra_tip
-    ; override_next_pending_status_if_needed = false
+    ; override_n_pending_status_if_needed
     }
   in
   t.hydra_master_state <- Some hydra_master_state;
   let result =
     match would_ask_for_a_bookmark_update t with
-    | None -> `Do_not_retry
+    | None ->
+      `Do_not_retry
     | Some bounded_hydra_retry ->
       t.bounded_hydra_retry <- bounded_hydra_retry;
       (* We anticipate the next synchronize-state rpc, so that even after asking for the
          last retry, [next_bookmark_update] will be [Update_expected_since]. *)
       t.hydra_master_state <-
-        Some { hydra_master_state with status = `Pending_or_working_on_it };
+        Some { hydra_master_state
+               with status = `Pending_or_working_on_it
+                  ; override_n_pending_status_if_needed = 0 };
       `Retry
   in
   refresh_next_bookmark_update t;

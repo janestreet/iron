@@ -27,10 +27,11 @@ let main { Fe.Archive.Action. feature_path; for_ } =
   let%bind () =
     Hg.delete_bookmarks repo_root [ Feature feature_path ] (`Push_to remote_repo_path)
   in
+  let module Sendmail = Core_extended.Std.Sendmail.Deprecated_use_async_smtp_std_simplemail in
   if not am_functional_testing
   && Set.mem feature.send_email_upon Send_email_upon.archive
   then
-    Core_extended.Sendmail.send
+    Sendmail.send
       (Cmd_show.render_email_body feature ~included_features_order:`Name)
       ~subject:(sprintf !"feature was archived: %{Feature_path}" feature_path)
       ~recipients:(List.map (Set.to_list send_email_to) ~f:Email_address.to_string);

@@ -54,34 +54,30 @@ Second.
   $ fe show root -reviewing
   "whole-feature reviewers"
   $ fe todo -for seconder
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
   | root    |      1 |
   |------------------|
-  $ fe internal mark-fully-reviewed root -for seconder -reason reason
+  $ fe tools mark-fully-reviewed root -for seconder -reason reason
   $ fe todo -for seconder
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|
   | root    |        1 |
   |--------------------|
-  $ fe internal mark-fully-reviewed root -for unix-login-for-testing
+  $ fe tools mark-fully-reviewed root -for unix-login-for-testing
   $ fe todo -for seconder
-  CRs and review line counts:
   |--------------------|
   | feature | catch-up |
   |---------+----------|
   | root    |        1 |
   |--------------------|
-  $ fe internal mark-fully-reviewed root -for user1 -reason reason
+  $ fe tools mark-fully-reviewed root -for user1 -reason reason
 
 All whole-feature reviewers have reviewed, so we now recommend seconding.
 
   $ fe todo -for seconder
-  CRs and review line counts:
   |--------------------------------|
   | feature | catch-up | next step |
   |---------+----------+-----------|

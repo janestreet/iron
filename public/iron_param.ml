@@ -112,32 +112,18 @@ let no_arg_flag ?aliases switch ~doc =
   flag ?aliases switch no_arg ~doc
 ;;
 
-module User_or_all = struct
-  type t =
-    [ `User of User_name.t
-    | `All_users
-    ]
-
-  let parse user_name =
-    if String.equal (User_name.to_string user_name) "all"
-    then `All_users
-    else `User user_name
-  ;;
-end
-
 let create_catch_up_for_me =
-  map (no_arg_flag Switch.create_catch_up_for_me
-         ~doc:"create catch-up review even when reviewing for oneself")
-    ~f:(fun create_catch_up_for_me ~for_or_all ->
-      match (for_or_all : User_or_all.t) with
-      | `All_users -> Ok create_catch_up_for_me
-      | `User user ->
-        if create_catch_up_for_me && User_name.(user <> unix_login)
-        then
-          Or_error.error_string
-            (sprintf "cannot use [%s] when using [-for] for another user"
-               Switch.create_catch_up_for_me)
-        else Ok create_catch_up_for_me)
+  let%map create_catch_up_for_me =
+    no_arg_flag Switch.create_catch_up_for_me
+      ~doc:"create catch-up review even when reviewing for oneself"
+  in
+  fun ~is_reviewing_for ->
+    if create_catch_up_for_me
+    && not (User_name.Or_all_or_all_but.mem is_reviewing_for User_name.unix_login)
+    then
+      Or_error.errorf "Cannot use [%s] when reviewing for other users only."
+        Switch.create_catch_up_for_me
+    else Ok create_catch_up_for_me
 ;;
 
 let resolved_file_path_arg_type =
@@ -218,6 +204,10 @@ let complete_in_sequence types =
 let user_name =
   Arg_type.create User_name.of_string
     ~complete:(complete [User_info Existing_user])
+;;
+
+let user_name_or_all =
+  User_name.Or_all.arg_type ~complete_user_name:(complete [User_info Existing_user])
 ;;
 
 let alias =
@@ -776,34 +766,10 @@ let diff4_in_session_ids =
     (listed Diff4_in_session.Id.arg_type)
 ;;
 
-(* The space of -for parameters is large enough to be confusing. Here's the menu:
-   - username, no default -- optional      [in principle -- currently undefined]
-   - username, defaults to me
-
-   - username or all, defaults to me
-   - username or all, defaults to all
-   - username or all, no default -- optional
-*)
-
-(* Produces a [User_name.t], even if it isn't specified on the command line. *)
-let for_gen_with_default arg ~default_value ~default_doc =
-  map ~f:(Option.value ~default:(User_name.of_string default_value))
-    (flag "-for" (optional user_name)
-       ~doc:(sprintf "%s for user (default is %s)" arg default_doc))
+let for_ =
+  flag Switch.for_ (optional user_name) ~doc:"USER for user (default is unix login)"
+  |> map ~f:(Option.value ~default:User_name.unix_login)
 ;;
-
-(* Produces a [User_name.t option]. *)
-let for_gen_no_default arg =
-  flag "-for" ~doc:(arg ^ " for user") (optional user_name)
-;;
-
-let for_gen_default_unix_login arg =
-  for_gen_with_default arg
-    ~default_value:(User_name.to_string User_name.unix_login)
-    ~default_doc:"unix login"
-;;
-
-let for_ = for_gen_default_unix_login "USER"
 
 let review_reason =
   flag Switch.reason (optional_with_default "" string)
@@ -811,22 +777,25 @@ let review_reason =
 ;;
 
 let for_or_all_required =
-  map (flag "-for" (required user_name) ~doc:"USER|all") ~f:User_or_all.parse
+  flag Switch.for_ (required user_name_or_all) ~doc:User_name.Or_all.arg_doc
+;;
+
+let for_or_all_gen_with_default ~default_value ~default_doc =
+  flag Switch.for_ (optional user_name_or_all)
+    ~doc:(sprintf "%s for user (default is %s)" User_name.Or_all.arg_doc default_doc)
+  |> map ~f:(Option.value ~default:default_value)
 ;;
 
 let for_or_all_default_me =
-  map (for_gen_default_unix_login "USER|all") ~f:User_or_all.parse
+  for_or_all_gen_with_default
+    ~default_value:(`User User_name.unix_login)
+    ~default_doc:"unix login"
 ;;
 
 let for_or_all_default_all =
-  for_gen_with_default "USER|all"
-    ~default_value:"all"
-    ~default_doc:"all"
-  |> map ~f:User_or_all.parse
-;;
-
-let for_or_all_no_default =
-  map (for_gen_no_default "USER|all") ~f:(Option.map ~f:User_or_all.parse)
+  for_or_all_gen_with_default
+    ~default_value:`All_users
+    ~default_doc:(User_name.Or_all.to_string `All_users)
 ;;
 
 let no_bookmark =
@@ -1243,6 +1212,25 @@ let metric_name_regex_list_option ~doc =
   flag "-metrics" ~doc
     (optional metric_name_anchored_regex_list_arg_type)
   |> map ~f:(Option.map ~f:Or_error.all)
+;;
+
+let for_or_all_or_all_but_default_me =
+  let open Command.Let_syntax in
+  let%map_open for_or_all =
+    flag Switch.for_ (optional user_name_or_all)
+      ~doc:(sprintf "%s (default is unix login)" User_name.Or_all.arg_doc)
+  and for_all_but =
+    flag Switch.for_all_but (optional user_list_arg_type)
+      ~doc:"USER[,USER...] for all but these users"
+  in
+  match for_or_all, for_all_but with
+  | None  , None   -> Ok (`User User_name.unix_login)
+  | Some x, None   -> Ok (x :> User_name.Or_all_or_all_but.t)
+  | None  , Some x -> Ok (`All_users_but (User_name.Set.of_list x))
+  | Some _, Some _ ->
+    Or_error.errorf "The flags [%s] and [%s] are mutually exclusive."
+      Switch.for_
+      Switch.for_all_but
 ;;
 end
 

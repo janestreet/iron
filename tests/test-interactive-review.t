@@ -175,7 +175,7 @@ Check that some reasonable errors are given when inconsistent combinations of
 the switches are supplied.
 
   $ IRON_USER=user1 review -create-catch-up-for-me -for unix-login-for-testing
-  Cannot use [-create-catch-up-for-me] when using [-for] for another user.
+  Cannot use [-create-catch-up-for-me] when reviewing for other users only.
   [1]
 
   $ review -only-catch-up-review -for unix-login-for-testing -create-catch-up-for-me

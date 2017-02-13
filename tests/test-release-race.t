@@ -13,7 +13,7 @@ Make a repo with root and two children features.
   $ echo a > file; hg commit -m 1
   $ feature_to_server root -fake-valid
   $ fe enable-review root
-  $ fe internal mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root
   $ fe second -even-though-owner root
 
 Make a releasable child1 feature.
@@ -25,7 +25,7 @@ Make a releasable child1 feature.
   $ feature_to_server root/child1 -fake-valid
   $ fe enable-review
   $ fe second -even-though-owner
-  $ fe internal mark-fully-reviewed root/child1
+  $ fe tools mark-fully-reviewed root/child1
   $ fe is-releasable
 
 Make a releasable child2 feature.
@@ -37,7 +37,7 @@ Make a releasable child2 feature.
   $ feature_to_server root/child2 -fake-valid
   $ fe enable-review
   $ fe second -even-though-owner
-  $ fe internal mark-fully-reviewed root/child2
+  $ fe tools mark-fully-reviewed root/child2
   $ fe is-releasable
 
 If hydra tells fe about a different revision, it prevents releasability.

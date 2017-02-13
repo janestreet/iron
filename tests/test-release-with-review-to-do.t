@@ -64,7 +64,7 @@ Create child.
 
 Review for unix-login-for-testing, but can't yet release.
 
-  $ fe internal mark-fully-reviewed root/child
+  $ fe tools mark-fully-reviewed root/child
   $ fe release |& matches "feature is not releasable.*root/child.*Review"
   [1]
 
@@ -72,7 +72,6 @@ Verify that if the set of wrf(s) is such that once they have reviewed the
 feature is releasable, then other users are not showing the lines in their todo.
 
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -81,7 +80,6 @@ feature is releasable, then other users are not showing the lines in their todo.
   |------------------|
 
   $ fe todo -for user2
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -104,7 +102,6 @@ feature is releasable, then other users are not showing the lines in their todo.
 
   $ fe change -add-whole-feature-reviewer user1
   $ fe todo -for user1
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -194,7 +191,7 @@ session, the files he reviewed already do not flicker in user2's todo.
 Review for user1 and we can release, even though user2 has review.
 Iron does not show the lines for user2 both in [fe show] and in user2's [fe todo].
 
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root/child
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root/child
   $ fe show -omit-attribute-table -omit-description
   root/child
   ==========
@@ -325,7 +322,7 @@ Re-create child.
 
 Review for unix-login-for-testing, but can't yet release.
 
-  $ fe internal mark-fully-reviewed root/child2
+  $ fe tools mark-fully-reviewed root/child2
   $ fe release |& matches "feature is not releasable.*root/child2.*Review"
   [1]
 
@@ -336,7 +333,6 @@ Add a whole feature follower.
   $ fe show -whole-feature-followers
   (user3)
   $ fe todo -for user3
-  CRs and review line counts:
   |-------------------|
   | feature  | follow |
   |----------+--------|
@@ -361,7 +357,7 @@ Review for user1 & user3 up to this point, but push another change.
   @@@@@@@@ base 1,2 tip 1,2 @@@@@@@@
   -|change
   +|child2
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root/child2
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root/child2
   $ fe brain show -for user1
   |--------------------------|
   | file       | op  | lines |
@@ -369,7 +365,7 @@ Review for user1 & user3 up to this point, but push another change.
   | file       | mod |     2 |
   | other-file | mod |       |
   |--------------------------|
-  $ IRON_USER=user3 fe internal mark-fully-reviewed root/child2
+  $ IRON_USER=user3 fe tools mark-fully-reviewed root/child2
   $ echo new-contents >file
   $ echo new-contents >other-file
   $ hg com -m file
@@ -377,8 +373,8 @@ Review for user1 & user3 up to this point, but push another change.
 
 Have user2 actually do the review.
 
-  $ fe internal mark-fully-reviewed root/child2
-  $ IRON_USER=user2 fe internal mark-fully-reviewed root/child2
+  $ fe tools mark-fully-reviewed root/child2
+  $ IRON_USER=user2 fe tools mark-fully-reviewed root/child2
 
 user1 is shown as having to follow some diffs because obligations are satisfied
 but they have started reviewing the file.
@@ -400,7 +396,7 @@ but they have started reviewing the file.
 It is not allowed to review for a whole-feature follower.  Since they do not
 prevent the release there is no value in allowing it.
 
-  $ fe internal mark-fully-reviewed root/child2 -for user3 -reason reason
+  $ fe tools mark-fully-reviewed root/child2 -for user3 -reason reason
   (error
    (may-modify-others-review
     ("unauthorized review for a user with only lines to follow" user3)))
@@ -408,7 +404,7 @@ prevent the release there is no value in allowing it.
 
 Same for a file follower.
 
-  $ fe internal mark-fully-reviewed root/child2 -for file-follower -reason reason
+  $ fe tools mark-fully-reviewed root/child2 -for file-follower -reason reason
   (error
    (may-modify-others-review
     ("unauthorized review for a user with only lines to follow" file-follower)))
@@ -418,7 +414,6 @@ Since this is going to generate catch-up upon release, Iron encourages user1 to
 read this diff.
 
   $ fe todo -for user1
-  CRs and review line counts:
   |-------------------|
   | feature  | follow |
   |----------+--------|
@@ -493,7 +488,6 @@ to review it.  Note that the white space only diff is not considered as a review
 started.
 
   $ IRON_USER=user1 fe todo
-  CRs and review line counts:
   |---------------------|
   | feature  | catch-up |
   |----------+----------|
@@ -519,7 +513,6 @@ started.
 Unlike user1, user3 needs to catch-up on all the files since they were w-f-follower.
 
   $ IRON_USER=user3 fe todo
-  CRs and review line counts:
   |---------------------|
   | feature  | catch-up |
   |----------+----------|

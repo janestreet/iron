@@ -10,8 +10,8 @@ Setup feature with review in two files
   $ feature_to_server root -fake-valid -fake-attribute-by-rev "$attributes"
   $ fe enable
   $ fe second -even-though-owner
-  $ fe internal mark-fully-reviewed root
-  $ IRON_USER=user1 fe internal mark-fully-reviewed root
+  $ fe tools mark-fully-reviewed root
+  $ IRON_USER=user1 fe tools mark-fully-reviewed root
   $ CHECK_POINT=$(fe show -tip root)
   $ echo change >file1; echo change >file2; hg com -m change
   $ attributes="$attributes ($(current-rev) $attribute)"

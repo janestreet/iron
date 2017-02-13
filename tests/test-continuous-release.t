@@ -24,7 +24,7 @@ Setup child.
   $ feature_to_server root/child -fake-valid
   $ fe enable-review
   $ IRON_USER=user1 fe second -even-though-owner
-  $ fe internal mark-fully-reviewed root/child -for user1 -reason reason
+  $ fe tools mark-fully-reviewed root/child -for user1 -reason reason
 
 Show the root attributes.
 

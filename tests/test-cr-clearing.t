@@ -31,7 +31,6 @@ Tell the server, and confirm the CR is there.
   | total |   1 |     1 |
   |---------------------|
   $ fe todo -for user
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|

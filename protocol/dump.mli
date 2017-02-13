@@ -16,8 +16,7 @@ module Action : sig
                                    | `Ids_and_feature_paths
                                    | `Value of Feature_id.t
                                    ]
-    | Bookmarks_without_feature of Remote_repo_path.t option
-                                   * [ `All_users | `User of User_name.t ]
+    | Bookmarks_without_feature of Remote_repo_path.t option * User_name.Or_all.t
     | Build_info
     | Event_subscriptions
     | Feature                   of Feature_path.t
@@ -25,11 +24,11 @@ module Action : sig
     | Dynamic_upgrade_state
     | Push_events               of Push_events.What_to_dump.t
     | Review_analysis           of Feature_path.t
-    | Review_manager            of Feature_path.t * [ `All_users | `User of User_name.t ]
-    | Review_lines              of Feature_path.t * [ `All_users | `User of User_name.t ]
+    | Review_manager            of Feature_path.t * User_name.Or_all.t
+    | Review_lines              of Feature_path.t * User_name.Or_all.t
     | State
     | Timed_event_table
-    | Unclean_workspaces        of [ `All_users | `User of User_name.t ]
+    | Unclean_workspaces        of User_name.Or_all.t
     | User_info                 of Which_user_info.t
     | Version
     | Worker_cache              of Worker_cache.What_to_dump.t

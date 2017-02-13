@@ -35,7 +35,6 @@ Whats is there to do?
   | root    |   1 |     1 | CRs       |
   |-----------------------------------|
   $ fe todo -for user2
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|

@@ -160,7 +160,6 @@ Test [-create-catch-up-for-me].
   $ echo y | fe brain forget -all >/dev/null
   $ fe change -add-reviewing unix-login-for-testing
   $ fe todo -crs-and-review
-  CRs and review line counts:
   |------------------|
   | feature | review |
   |---------+--------|
@@ -168,7 +167,6 @@ Test [-create-catch-up-for-me].
   |------------------|
   $ fe session mark-file test a -create-catch-up-for-me
   $ fe todo -crs-and-review
-  CRs and review line counts:
   |-----------------------------|
   | feature | review | catch-up |
   |---------+--------+----------|

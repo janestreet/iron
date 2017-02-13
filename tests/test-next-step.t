@@ -46,7 +46,6 @@ Test various next steps
   $ fe show -next-step
   (CRs)
   $ fe todo
-  CRs and review line counts:
   |---------------|
   | feature | CRs |
   |---------+-----|

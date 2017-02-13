@@ -55,14 +55,14 @@ val iter_inactive_assignees
 
 val get_all
   :  t
-  -> for_or_all     : [ `All_users | `User of User_name.t ]
+  -> for_or_all     : User_name.Or_all.t
   -> include_active : bool
   -> Cr_soon_multiset.t
 
 val get_for_feature_tree
   :  t
   -> root_feature   : Feature_name.t
-  -> for_or_all     : [ `All_users | `User of User_name.t ]
+  -> for_or_all     : User_name.Or_all.t
   -> include_active : bool
   -> Cr_soon_multiset.t
 

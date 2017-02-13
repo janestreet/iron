@@ -62,28 +62,21 @@ be updated during that process, by adding the following in one's ferc file:
            List.filter shares ~f:(fun share ->
              not (Set.mem do_not_auto_update (Workspace.feature_path share)))
          in
-         let%map updates =
-           Deferred.List.map ~how:(`Max_concurrent_jobs 5) shares ~f:(fun share ->
-             let feature_path = Workspace.feature_path share in
-             let repo_root = Workspace.center_repo_root share in
-             Monitor.try_with_or_error (fun () ->
-               match%bind Workspace.unclean_status share with
-               | Unclean _ -> return ()
-               | Clean ->
-                 match%bind
-                   Get_feature_revs.rpc_to_server { feature_path; rev_zero = None }
-                 with
-                 | Error _ -> return ()
-                 | Ok { tip ; remote_repo_path; _ } ->
-                   Cmd_review.pull_and_update
-                     ~repo_root
-                     ~remote_repo_path
-                     ~feature_path
-                     ~review_session_tip:tip
-                     ~feature_tip:tip;
-             ))
-         in
-         updates
-         |> Or_error.combine_errors_unit
-         |> ok_exn))
+         Cmd_workspace.run_concurrent_actions_exn ~max_concurrent_jobs:5 ~action:"update"
+           ~get_feature_path:Workspace.feature_path shares ~f:(fun share ->
+             match%bind Workspace.unclean_status share with
+             | Unclean _ -> return ()
+             | Clean ->
+               let feature_path = Workspace.feature_path share in
+               match%bind
+                 Get_feature_revs.rpc_to_server { feature_path; rev_zero = None }
+               with
+               | Error _ -> return ()
+               | Ok { tip; remote_repo_path; _ } ->
+                 Cmd_review.pull_and_update
+                   ~repo_root:(Workspace.center_repo_root share)
+                   ~remote_repo_path
+                   ~feature_path
+                   ~review_session_tip:tip
+                   ~feature_tip:tip)))
 ;;

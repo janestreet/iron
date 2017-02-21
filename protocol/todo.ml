@@ -80,6 +80,26 @@ module Stable = struct
 
   module Assigned = struct
 
+    module V10 = struct
+      type t =
+        { feature_path        : Feature_path.V1.t
+        ; feature_path_exists : bool
+        ; review_is_enabled   : bool
+        ; user_is_reviewing   : bool
+        ; may_second          : bool
+        ; num_crs             : Num_crs.V1.t
+        ; num_xcrs            : Num_crs.V1.t
+        ; line_count          : Line_count.V5.t
+        ; next_steps          : Next_step.V6.t list
+        }
+      [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7cac5c26366796280ebed11700ee3d64 |}]
+      ;;
+    end
+
     module V9 = struct
       type t =
         { feature_path        : Feature_path.V1.t
@@ -92,11 +112,38 @@ module Stable = struct
         ; line_count          : Line_count.V5.t
         ; next_steps          : Next_step.V5.t list
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
         [%expect {| f43585b08840ff214707b2763f9826ea |}]
+      ;;
+
+      open! Core.Std
+      open! Import
+
+      let of_v10 { V10.
+                   feature_path
+                 ; feature_path_exists
+                 ; review_is_enabled
+                 ; user_is_reviewing
+                 ; may_second
+                 ; num_crs
+                 ; num_xcrs
+                 ; line_count
+                 ; next_steps
+                 } =
+        let next_steps = List.map next_steps ~f:Next_step.Stable.V5.of_v6 in
+        { feature_path
+        ; feature_path_exists
+        ; review_is_enabled
+        ; user_is_reviewing
+        ; may_second
+        ; num_crs
+        ; num_xcrs
+        ; line_count
+        ; next_steps
+        }
       ;;
     end
 
@@ -348,7 +395,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V9
+    module Model = V10
   end
 
   module Rev_facts = struct
@@ -370,6 +417,25 @@ module Stable = struct
   end
 
   module Feature_info = struct
+    module V7 = struct
+      type t =
+        { feature_path                        : Feature_path.V1.t
+        ; num_crs                             : int Or_error.V2.t
+        ; num_xcrs                            : int Or_error.V2.t
+        ; num_reviewers_with_review_remaining : int Or_error.V2.t
+        ; base                                : Rev_facts.V1.t Or_pending.V1.t
+        ; tip                                 : Rev_facts.V1.t Or_pending.V1.t
+        ; review_is_enabled                   : bool
+        ; next_steps                          : Next_step.V6.t list
+        }
+      [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f399131d4228d298eace72bf2ee8db3e |}]
+      ;;
+    end
+
     module V6 = struct
       type t =
         { feature_path                        : Feature_path.V1.t
@@ -381,18 +447,63 @@ module Stable = struct
         ; review_is_enabled                   : bool
         ; next_steps                          : Next_step.V5.t list
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
         [%expect {| 054c28ea9767a4f4f7a5347969e2178c |}]
       ;;
+
+      open! Core.Std
+      open! Import
+
+      let of_v7 { V7.
+                  feature_path
+                ; num_crs
+                ; num_xcrs
+                ; num_reviewers_with_review_remaining
+                ; base
+                ; tip
+                ; review_is_enabled
+                ; next_steps
+                } =
+        let next_steps = List.map next_steps ~f:Next_step.Stable.V5.of_v6 in
+        { feature_path
+        ; num_crs
+        ; num_xcrs
+        ; num_reviewers_with_review_remaining
+        ; base
+        ; tip
+        ; review_is_enabled
+        ; next_steps
+        }
+      ;;
     end
 
-    module Model = V6
+    module Model = V7
   end
 
   module Reaction = struct
+
+    module V15 = struct
+      type t =
+        { assigned                  : Assigned.V10.t list
+        ; unclean_workspaces        : Unclean_workspace.V2.t list Machine.V1.Map.t
+        ; owned                     : Feature_info.V7.t list
+        ; watched                   : Feature_info.V7.t list
+        ; cr_soons                  : Cr_soon_multiset.V1.t
+        ; bookmarks_without_feature : (Remote_repo_path.V1.t
+                                       * Bookmark_without_feature.V1.t list) list
+        }
+      [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8c78ba3a4e9383271e461886ea916712 |}]
+      ;;
+
+      let of_model (m : t) = m
+    end
 
     module V14 = struct
       type t =
@@ -404,14 +515,39 @@ module Stable = struct
         ; bookmarks_without_feature : (Remote_repo_path.V1.t
                                        * Bookmark_without_feature.V1.t list) list
         }
-      [@@deriving bin_io, fields, sexp_of]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
         [%expect {| 0acf850f22a50e42fa83747b841995a3 |}]
       ;;
 
-      let of_model m = m
+      open! Core.Std
+      open! Import
+
+      let of_model m =
+        let { V15.
+              assigned
+            ; unclean_workspaces
+            ; owned
+            ; watched
+            ; cr_soons
+            ; bookmarks_without_feature
+            } = V15.of_model m in
+        let assigned = List.map assigned ~f:Assigned.V9.of_v10 in
+        let unclean_workspaces =
+          Map.map unclean_workspaces ~f:(List.map ~f:Unclean_workspace.Stable.V1.of_v2)
+        in
+        let owned = List.map owned ~f:Feature_info.V6.of_v7 in
+        let watched = List.map watched ~f:Feature_info.V6.of_v7 in
+        { assigned
+        ; unclean_workspaces
+        ; owned
+        ; watched
+        ; cr_soons
+        ; bookmarks_without_feature
+        }
+      ;;
     end
 
     module V13 = struct
@@ -614,7 +750,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V14
+    module Model = V15
   end
 end
 
@@ -623,6 +759,11 @@ open! Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "todo" end)
+    (struct let version = 16 end)
+    (Stable.Action.V3)
+    (Stable.Reaction.V15)
+
+include Register_old_rpc
     (struct let version = 15 end)
     (Stable.Action.V3)
     (Stable.Reaction.V14)

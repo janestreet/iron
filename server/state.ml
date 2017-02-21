@@ -508,14 +508,56 @@ let create_review_manager t feature user ~cr_comments =
   review_manager
 ;;
 
-let feature_email feature =
+module Feature_email_sent_upon = struct
+  type t = Iron_protocol.Get_feature_email_recipients.Sent_upon.t =
+    | Archive
+    | Release
+    | Release_into
+  [@@deriving enumerate, sexp_of]
+
+  let of_send_email_upon : Send_email_upon.t -> t = function
+    | Archive -> Archive
+    | Release -> Release
+  ;;
+
+  let to_send_email_upon : t -> Send_email_upon.t option = function
+    | Archive      -> Some Archive
+    | Release      -> Some Release
+    | Release_into -> None
+  ;;
+
+
+  let%test "Send_email_upon.t round trip via t" =
+    List.for_all Send_email_upon.all ~f:(fun t ->
+      [%compare.equal: Send_email_upon.t] t
+        (t |> of_send_email_upon |> to_send_email_upon |> Option.value_exn))
+  ;;
+
+  let%test "we need two types" =
+    let ts = List.map all ~f:to_send_email_upon in
+    List.exists ts ~f:Option.is_some
+    && List.exists ts ~f:Option.is_none
+  ;;
+end
+
+let feature_email feature ~(sent_upon : Feature_email_sent_upon.t) =
   let users us =
     us
     |> List.map ~f:Email_address.of_user_name
     |> Email_address.Set.of_list
   in
+  let feature_send_email_to =
+    let should_add_send_email_to =
+      match Feature_email_sent_upon.to_send_email_upon sent_upon with
+      | None      -> false
+      | Some upon -> Set.mem (Feature.send_email_upon feature) upon
+    in
+    if should_add_send_email_to
+    then Feature.send_email_to feature
+    else Email_address.Set.empty
+  in
   Email_address.Set.union_list
-    [ Feature.send_email_to feature
+    [ feature_send_email_to
     ; users (Feature.seconder feature |> Option.to_list)
     ; users (Feature.owners feature)
     ; users (Set.to_list (Feature.whole_feature_followers feature))
@@ -523,7 +565,8 @@ let feature_email feature =
     ]
 ;;
 
-let seconding_allowed feature ~by ~even_though_empty ~even_though_owner =
+let seconding_allowed feature ~by ~even_though_empty ~even_though_owner
+      ~even_if_locked =
   try (
     Option.iter (Feature.seconder feature) ~f:(fun seconder ->
       raise_s [%sexp "feature is already seconded by", (seconder : User_name.t)]);
@@ -551,6 +594,8 @@ let seconding_allowed feature ~by ~even_though_empty ~even_though_owner =
     (match Feature.review_goal feature with
      | Ok _ -> ()
      | Error e -> raise_s [%sexp "feature has problems", (e : Error.t)]);
+    (if not even_if_locked
+     then ok_exn (Feature_locks.check_unlocked (Feature.locks feature) Second));
     Ok ())
   with exn ->
     error "cannot second" exn [%sexp_of: exn]
@@ -565,9 +610,10 @@ let some_whole_feature_reviewer_can_make_progress t feature =
         Review_manager.can_make_progress review_manager Entire_goal)
 ;;
 
-let seconding_is_recommended t ~for_ feature =
+let seconding_is_recommended t ~for_ feature ~even_if_locked =
   match
     seconding_allowed feature ~by:for_ ~even_though_empty:false ~even_though_owner:false
+      ~even_if_locked
   with
   | Error _ -> false
   | Ok () ->
@@ -867,18 +913,23 @@ let rec next_steps_gen t feature ~(trying_to : Trying_to.t) : Next_step.t list =
             then maybe_prepend_rebase [ Enable_review ]
             else if not (Feature.is_seconded feature)
             then (
+              let ask_seconder_or_unlock_seconding feature : Next_step.t list =
+                match Feature_locks.check_unlocked (Feature.locks feature) Second with
+                | Ok   () -> [ Ask_seconder ]
+                | Error _ -> [ Unlock Second ]
+              in
               if am_expecting_bookmark_update
               then [ Wait_for_hydra ]
               else if Set.length (Feature.whole_feature_reviewers feature) <=1
               then maybe_prepend_rebase [ Add_whole_feature_reviewer ]
-              else if Set.exists (Feature.whole_feature_reviewers feature)
-                        ~f:(fun for_ -> seconding_is_recommended t ~for_ feature)
-              then maybe_prepend_rebase [ Ask_seconder ]
+              else if Set.exists (Feature.whole_feature_reviewers feature) ~f:(fun for_ ->
+                seconding_is_recommended t ~for_ feature ~even_if_locked:true)
+              then maybe_prepend_rebase (ask_seconder_or_unlock_seconding feature)
               else if Feature.is_empty feature
                    && (match trying_to with
                      | Release -> false
                      | Release_into -> true)
-              then [ Ask_seconder ]
+              then ask_seconder_or_unlock_seconding feature
               else maybe_prepend_rebase [ Widen_reviewing ])
             else if not is_fully_reviewed
             then (
@@ -991,7 +1042,10 @@ let check_releasable t feature ~how_to_release ~trust_cached_attributes =
   let not_releasable () =
     let feature_path = Feature.feature_path feature in
     let next_steps =
-      List.filter next_steps ~f:(function Release -> false | _ -> true)
+      List.filter next_steps ~f:(function
+        | Release
+        | Wait_for_continuous_release -> false
+        | _ -> true)
     in
     let or_lock_error =
       Or_error.combine_errors_unit
@@ -1023,7 +1077,9 @@ let check_releasable t feature ~how_to_release ~trust_cached_attributes =
   in
   match next_steps with
   | [ Release ] -> Ok ()
-  | [ Wait_for_hydra ] | [ Rebase; Release ] ->
+  | [ Wait_for_hydra ]
+  | [ Rebase; Release ]
+  | [ Wait_for_continuous_release ] ->
     (match how_to_release with
      | `Push_to_hydra -> Ok ()
      | `Directly -> not_releasable ())
@@ -1034,7 +1090,7 @@ let users_with_unclean_workspaces t feature_path =
   Unclean_workspaces_manager.find_feature t.unclean_workspaces feature_path
 ;;
 
-let feature_to_protocol ?rev_zero t feature =
+let feature_to_protocol ?rev_zero t feature : Iron_protocol.Feature.t =
   let feature_path = Feature.feature_path feature in
   let line_count_by_user =
     Or_error.try_with (fun () ->
@@ -1601,9 +1657,14 @@ let get_maybe_archived_feature_exn t what_feature =
 
 let parent_owners_are_responsible ~parent =
   match Feature.who_can_release_into_me parent with
-  | My_owners_and_child_owners -> `Never
+  | My_owners_and_child_owners ->
+    `Never
   | My_owners ->
-    `If (fun ~child -> List.mem (Feature.next_steps child) Release ~equal:Next_step.equal)
+    `If (fun ~child ->
+      List.mem
+        (Feature.next_steps child)
+        Release
+        ~equal:Next_step.equal)
 ;;
 
 let execute_timed_event t id (action : Timed_event.Action.t) =
@@ -1641,7 +1702,8 @@ let deserializer = Deserializer.with_serializer (fun serializer ->
   and push_events = in_subdir push_events_dir Push_events.deserializer
   and worker_cache = in_subdir worker_cache_dir Worker_cache.deserializer
   and unclean_workspaces =
-    in_subdir unclean_workspaces_dir Unclean_workspaces_manager.deserializer
+    in_subdir unclean_workspaces_dir
+      (Unclean_workspaces_manager.deserializer ~dynamic_upgrade_state)
   and event_subscriptions =
     in_subdir event_subscriptions_dir Event_subscriptions.deserializer
   in
@@ -2165,7 +2227,7 @@ let occurrences_by_user_name t =
               add Whole_feature_follower user);
             Set.iter (Feature.whole_feature_reviewers feature) ~f:(fun user ->
               add Whole_feature_reviewer user;
-              if seconding_is_recommended t ~for_:user feature
+              if seconding_is_recommended t ~for_:user feature ~even_if_locked:false
               then add Recommended_seconder user);
             Option.iter (Feature.seconder feature) ~f:(add Seconder))))
     ~features_by_parties:ignore
@@ -2237,6 +2299,17 @@ let () =
 ;;
 
 let () =
+  let module Get_feature_email_recipients = Iron_protocol.Get_feature_email_recipients in
+  implement_rpc ~log:false Post_check_in_features.none
+    (module Get_feature_email_recipients)
+    (fun t query ->
+       let { Get_feature_email_recipients.Action. feature_path; sent_upon } =
+         Query.action query
+       in
+       { recipients = feature_email (find_feature_exn t feature_path) ~sent_upon })
+;;
+
+let () =
   let module Get_invalid_users = Iron_protocol.Get_invalid_users in
   implement_rpc ~log:false Post_check_in_features.none
     (module Get_invalid_users)
@@ -2258,7 +2331,10 @@ let create_fully_reviewed_edge rev_zero feature ~even_if_release_is_locked =
                      ] : string)
            , (feature_path : Feature_path.t)]
       | next_steps ->
-        List.exists next_steps ~f:(function Release -> true | _ -> false)
+        List.exists next_steps ~f:(function
+          | Release
+          | Wait_for_continuous_release -> true
+          | _ -> false)
     in
     if not is_fully_reviewed
     then
@@ -2366,7 +2442,7 @@ let () =
        archive_feature t query feature ~for_ ~must_be_owner:true;
        let send_email_to =
          Email_address.Set.union_list
-           [ feature_email feature
+           [ feature_email feature ~sent_upon:Archive
            ; [ Query.by query; for_ ]
              |> List.map ~f:Email_address.of_user_name
              |> Email_address.Set.of_list
@@ -2881,6 +2957,7 @@ let create_feature_exn t query =
     | Ok parent ->
       (* check that we're in the right repo *)
       ignore (remote_repo_path t parent ~rev_zero : Remote_repo_path.t);
+      ok_exn (Feature_locks.check_unlocked (Feature.locks parent) Create_child);
       match base with
       | Some rev -> rev
       | None ->
@@ -3457,7 +3534,9 @@ let () =
                 review_manager review_authorization query ~which_session true));
            result
        in
-       let may_second = seconding_is_recommended t ~for_ feature in
+       let may_second =
+         seconding_is_recommended t ~for_ feature ~even_if_locked:false
+       in
        { Get_review_session.Reaction.
          status
        ; feature_tip      = Feature.tip feature
@@ -3820,7 +3899,10 @@ let () =
 let () =
   let module Supported_rpcs = Iron_protocol.Supported_rpcs in
   let reaction =
-    lazy (!rpc_implementations |> List.map ~f:Rpc.Implementation.description)
+    lazy (
+      List.map !rpc_implementations ~f:(fun impl ->
+        let { Rpc.Description.name; version; } = Rpc.Implementation.description impl in
+        Iron_protocol.Iron_versioned_rpc.find_rpc_exn ~name ~version))
   in
   implement_rpc ~log:true Post_check_in_features.none
     (module Supported_rpcs)
@@ -4275,8 +4357,7 @@ let () =
                ])
        in
        List.map lock_names ~f:(fun lock_name ->
-         Feature.lock feature ~query ~for_ ~lock_name ~reason ~is_permanent;
-         (lock_name, Ok ())))
+         (lock_name, Feature.lock feature ~query ~for_ ~lock_name ~reason ~is_permanent)))
 ;;
 
 let () =
@@ -4549,7 +4630,8 @@ let () =
        in
        let feature = find_feature_exn t feature_path in
        let by = Query.by query in
-       ok_exn (seconding_allowed feature ~by ~even_though_empty ~even_though_owner);
+       ok_exn (seconding_allowed feature ~by ~even_though_empty ~even_though_owner
+                 ~even_if_locked:false);
        let whole_feature_reviewers = Feature.whole_feature_reviewers feature in
        let whole_feature_review_remaining =
          compute_line_count_by_user_exn t feature
@@ -4616,8 +4698,9 @@ let () =
       let parent_release_process = parent_release_process t feature in
       let send_release_email_to =
         Email_address.Set.union_list
-          [ feature_email feature
-          ; Option.value_map parent ~default:Email_address.Set.empty ~f:feature_email
+          [ feature_email feature ~sent_upon:Release
+          ; Option.value_map parent ~default:Email_address.Set.empty
+              ~f:(feature_email ~sent_upon:Release_into)
           ; (match parent_release_process with
              | Continuous ->
                (* In this case, hydra is releasing directly after having validated the
@@ -4810,7 +4893,8 @@ let () =
        in
        let feature = find_feature_exn t feature_path in
        let by = Query.by query in
-       ok_exn (seconding_allowed feature ~by ~even_though_empty ~even_though_owner);
+       ok_exn (seconding_allowed feature ~by ~even_though_empty ~even_though_owner
+                 ~even_if_locked:false);
        ok_exn (Feature.set_seconder feature query (Some by));
        change_feature_exn t feature query [ `Set_reviewing `All ])
 ;;
@@ -4846,74 +4930,146 @@ let () =
 ;;
 
 let () =
+  let users_to_unlock feature lock_name =
+    Next_step.Lock_name.to_lock_name lock_name
+    |> Feature_locks.find (Feature.locks feature)
+    |> List.map ~f:Feature_locks.Locked.by
+    |> User_name.Set.of_list
+  in
+  let users_for_parent_next_step ~next_step_in_parent ~parent =
+    match (next_step_in_parent : Next_step.t) with
+    | Unlock Release_into -> users_to_unlock parent Release_into
+    | Add_code
+    | Add_whole_feature_reviewer
+    | Archive
+    | Ask_seconder
+    | Compress
+    | CRs
+    | Enable_review
+    | Fix_build
+    | Fix_problems
+    | Rebase
+    | Release
+    | Report_iron_bug
+    | Restore_base
+    | Restore_bookmark
+    | Review
+    | Wait_for_hydra
+    | Widen_reviewing
+    | In_parent _
+    | Unlock Rebase
+    | Unlock Release
+    | Unlock Second
+    | Wait_for_continuous_release -> User_name.Set.empty
+  in
   let module Remind = Iron_protocol.Remind in
-  implement_rpc ~log:true Post_check_in_features.none
-    (module Remind)
-    (fun t query ->
-       let { Remind.Action. feature_path; users } = Query.action query in
-       let feature = find_feature_exn t feature_path in
-       let line_count_by_user =
-         compute_line_count_by_user_exn t feature
-         |> List.filter ~f:(fun (user, line_count) ->
-           Feature.user_is_currently_reviewing feature user
-           && Review_or_commit.count (Line_count.to_review_column_shown line_count) > 0)
-       in
-       let review_users = List.map line_count_by_user ~f:fst in
-       let cr_summary = ok_exn (feature_cr_summary t feature) in
-       let cr_users =
-         List.map (Cr_comment.Summary.rows cr_summary) ~f:Cr_comment.Summary.Row.assignee
-       in
-       let maybe_parent_owners =
-         match find_parent t feature_path with
-         | Error _ -> User_name.Set.empty
-         | Ok parent ->
-           let parent_owners_are_responsible =
-             match parent_owners_are_responsible ~parent with
-             | `Never -> false
-             | `If f  -> f ~child:feature
-           in
-           if parent_owners_are_responsible
-           then User_name.Set.of_list (Feature.owners parent)
-           else User_name.Set.empty
-       in
-       let users_with_review_session_in_progress =
-         Feature.users_with_review_session_in_progress feature
-       in
-       let users_with_unclean_workspaces = users_with_unclean_workspaces t feature_path in
-       let active_users =
-         User_name.Set.union_list
-           [ User_name.Set.of_list review_users
-           ; User_name.Set.of_list cr_users
-           ; if List.mem (Feature.next_steps feature) Ask_seconder ~equal:Next_step.equal
-             then Feature.whole_feature_reviewers feature
-             else User_name.Set.empty
-           ; maybe_parent_owners
-           ; (match users_with_review_session_in_progress with
-              | Error _ -> User_name.Set.empty
-              | Ok set -> set)
-           ; users_with_unclean_workspaces |> Map.keys |> User_name.Set.of_list
-           ]
-       in
-       let users =
-         match users with
-         | All_active -> active_users
-         | Some_active only_email ->
-           let active, inactive = Set.partition_tf only_email ~f:(Set.mem active_users) in
-           if not (Set.is_empty inactive)
-           then failwiths "some requested users have nothing to do" inactive
-                  [%sexp_of: User_name.Set.t];
-           active
-       in
-       let users = Set.union users (User_name.Set.of_list (Feature.owners feature)) in
-       { Remind.Reaction.
-         description        = Feature.description feature
-       ; line_count_by_user
-       ; users_with_review_session_in_progress
-       ; users_with_unclean_workspaces
-       ; cr_summary
-       ; users
-       ; next_bookmark_update = Feature.next_bookmark_update feature
-       })
+  implement_rpc ~log:true Post_check_in_features.none (module Remind) (fun t query ->
+    let { Remind.Action. feature_path; users } = Query.action query in
+    let feature = find_feature_exn t feature_path in
+    let line_count_by_user =
+      compute_line_count_by_user_exn t feature
+      |> List.filter ~f:(fun (user, line_count) ->
+        Feature.user_is_currently_reviewing feature user
+        && Review_or_commit.count (Line_count.to_review_column_shown line_count) > 0)
+    in
+    let review_users =
+      List.map line_count_by_user ~f:fst
+      |> User_name.Set.of_list
+    in
+    let cr_summary = ok_exn (feature_cr_summary t feature) in
+    let cr_users =
+      List.map (Cr_comment.Summary.rows cr_summary) ~f:Cr_comment.Summary.Row.assignee
+      |> User_name.Set.of_list
+    in
+    let maybe_parent_owners =
+      match find_parent t feature_path with
+      | Error _ -> User_name.Set.empty
+      | Ok parent ->
+        let parent_owners_are_responsible =
+          match parent_owners_are_responsible ~parent with
+          | `Never -> false
+          | `If f  -> f ~child:feature
+        in
+        if parent_owners_are_responsible
+        then User_name.Set.of_list (Feature.owners parent)
+        else User_name.Set.empty
+    in
+    let users_with_review_session_in_progress =
+      Feature.users_with_review_session_in_progress feature
+    in
+    let users_with_unclean_workspaces =
+      users_with_unclean_workspaces t feature_path
+    in
+    let owners = User_name.Set.of_list (Feature.owners feature) in
+    let next_step_users =
+      List.map (Feature.next_steps feature) ~f:(function
+        (* Since we will union at the end, we produce here every user that makes sense
+           to produce, even if we know they will be produced elsewhere. *)
+        | Add_code
+        | Add_whole_feature_reviewer
+        | Archive
+        | Compress
+        | Enable_review
+        | Fix_build
+        | Fix_problems
+        | Rebase
+        | Release
+        | Report_iron_bug
+        | Restore_base
+        | Restore_bookmark
+        | Widen_reviewing -> owners
+        | Ask_seconder -> Feature.whole_feature_reviewers feature
+        | CRs -> cr_users
+        | In_parent next_step_in_parent ->
+          (match Feature_path.parent (Feature.feature_path feature) with
+           | Error error ->
+             raise_s [%sexp "Iron bug.  Root feature has next step [In_parent _]."
+                          , (Feature.next_steps feature : Next_step.t list)
+                          , (Feature.feature_path feature : Feature_path.t)
+                          , (error : Error.t)]
+           | Ok parent_path ->
+             users_for_parent_next_step
+               ~next_step_in_parent
+               ~parent:(find_feature_exn t parent_path))
+        | Review -> review_users
+        | Unlock lock_name -> users_to_unlock feature lock_name
+        | Wait_for_hydra
+        | Wait_for_continuous_release -> User_name.Set.empty)
+      |> User_name.Set.union_list
+    in
+    let active_users =
+      User_name.Set.union_list
+        [ cr_users
+        ; next_step_users
+        ; maybe_parent_owners
+        ; owners
+        ; review_users
+        ; (match users_with_review_session_in_progress with
+           | Error _ -> User_name.Set.empty
+           | Ok set -> set)
+        ; users_with_unclean_workspaces |> User_name.Set.of_map_keys
+        ]
+    in
+    let requested_active_users =
+      match users with
+      | All_active -> active_users
+      | Some_active only_email ->
+        let active, inactive = Set.partition_tf only_email ~f:(Set.mem active_users) in
+        if not (Set.is_empty inactive)
+        then failwiths "some requested users have nothing to do" inactive
+               [%sexp_of: User_name.Set.t];
+        active
+    in
+    let users = Set.union requested_active_users owners in
+    { Remind.Reaction.
+      description        = Feature.description feature
+    ; line_count_by_user
+    ; users_with_review_session_in_progress
+    ; users_with_unclean_workspaces
+    ; cr_summary
+    ; users
+    ; next_bookmark_update = Feature.next_bookmark_update feature
+    })
 ;;
 
 let () =
@@ -5037,7 +5193,9 @@ let () =
            in
            let review_is_enabled = Feature.review_is_enabled feature in
            let user_is_reviewing = Feature.user_is_currently_reviewing feature for_ in
-           let may_second = seconding_is_recommended t ~for_ feature in
+           let may_second =
+             seconding_is_recommended t ~for_ feature ~even_if_locked:false
+           in
            let need_to_show_crs = function
              | `Disabled -> false
              | `Enabled Error _ -> false

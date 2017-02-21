@@ -24,8 +24,12 @@ module Reaction : sig
   [@@deriving sexp_of]
 
   module Stable : sig
-    module V8 : sig
+    module V9 : sig
       type nonrec t = t [@@deriving bin_io, sexp]
+    end
+    module V8 : sig
+      type t [@@deriving bin_io]
+      val to_v9 : t -> V9.t
     end
   end
 end

@@ -22,13 +22,9 @@ let print_table ~table_name ~columns ~rows ~display_ascii ~max_output_columns =
 ;;
 
 let feature_display_attributes ~next_steps ~review_is_enabled ~feature_path_exists =
-  if List.mem next_steps Next_step.Release ~equal:Next_step.equal
-  then [ `Green ]
-  else if review_is_enabled
-  then [ `Yellow ]
-  else if not feature_path_exists
+  if not feature_path_exists
   then [ `Dim ]
-  else []
+  else Next_step.to_attrs next_steps ~review_is_enabled
 ;;
 
 let show_assigned assigned ~display_ascii ~max_output_columns =
@@ -368,7 +364,10 @@ let command =
          then reaction
          else (
            let should_include next_steps =
-             List.mem next_steps Next_step.Release ~equal:Next_step.equal
+             List.exists (next_steps : Next_step.t list) ~f:(function
+               | Release
+               | Wait_for_continuous_release -> true
+               | _ -> false)
            in
            { assigned =
                List.filter reaction.assigned ~f:(fun t -> should_include t.next_steps)

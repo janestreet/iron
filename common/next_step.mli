@@ -1,13 +1,14 @@
 open! Core
 open! Import
 
-(* Dedicated type for locks in next steps, since all locks do not make sense as a next
-   step.  Example: [Unlock Rename] is not a valid next step. *)
+(** Dedicated type for locks in next steps, since all locks do not make sense as a next
+    step.  Example: [Unlock Rename] is not a valid next step. *)
 module Lock_name : sig
   type t =
     | Rebase
     | Release
     | Release_into
+    | Second
   [@@deriving sexp_of]
 
   val to_lock_name : t -> Lock_name.t
@@ -16,17 +17,22 @@ end
 type t =
   | Add_code
   | Add_whole_feature_reviewer
+  | Archive
   | Ask_seconder
+  | Compress
   | CRs
   | Enable_review
+  | Fix_build
   | Fix_problems
   | In_parent of t
   | Rebase
   | Release
   | Report_iron_bug
+  | Restore_base
   | Restore_bookmark
   | Review
   | Unlock of Lock_name.t
+  | Wait_for_continuous_release
   | Wait_for_hydra
   | Widen_reviewing
 [@@deriving sexp_of]
@@ -44,21 +50,21 @@ val to_attrs_and_string
   -> review_is_enabled : bool
   -> Iron_ascii_table.Attr.t list * string
 
+val to_attrs
+  :  t list
+  -> review_is_enabled : bool
+  -> Iron_ascii_table.Attr.t list
+
 module Stable : sig
   module Model : T with type t = t
 
-  module V5 : sig
+  module V6 : sig
     include Stable_without_comparator with type t = Model.t
-    val of_model : Model.t -> t
   end
 
-  module V4 : sig
+  module V5 : sig
     include Stable_without_comparator
-    val of_model : Model.t -> t
-  end
-
-  module V3 : sig
-    include Stable_without_comparator
-    val of_model : Model.t -> t
+    val to_v6    : t -> V6.t
+    val of_v6    : V6.t -> t
   end
 end

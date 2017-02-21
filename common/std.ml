@@ -72,6 +72,7 @@ module Review_or_commit            = Review_or_commit
 module Reviewer                    = Reviewer
 module Reviewing                   = Reviewing
 module Rpc_description             = Rpc_description
+module Rpc_summary                 = Rpc_summary
 module Rpc_to_server_prevention    = Rpc_to_server_prevention
 module Scrutiny_level              = Scrutiny_level
 module Scrutiny_name               = Scrutiny_name

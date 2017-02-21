@@ -54,13 +54,6 @@ let table { Fe.List.Table.Action.
              | `Existing             -> empty_column
              | `Was_archived_at time -> ([ `Yellow ], Time.to_string time)
            in
-           let attr =
-             if List.mem next_steps Release ~equal:Next_step.equal
-             then [ `Green ]
-             else if review_is_enabled
-             then [ `Yellow ]
-             else []
-           in
            let lines =
              match status with
              | `Was_archived_at _ -> empty_column
@@ -70,7 +63,7 @@ let table { Fe.List.Table.Action.
                | Known (Error _) -> ([ `Red    ], "error")
                | Known (Ok int)  -> ([         ], Int.to_string_hum int)
            in
-           let next_steps =
+           let (attr, _) as next_steps =
              match status with
              | `Was_archived_at _ -> empty_column
              | `Existing -> Next_step.to_attrs_and_string next_steps ~review_is_enabled

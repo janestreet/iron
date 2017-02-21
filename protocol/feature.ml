@@ -56,10 +56,20 @@ module Stable = struct
         | `Release_time_decreasing
         ]
       [@@deriving bin_io, compare, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d2c571136d167ef95a2ca99b1a5ee80e |}]
+      ;;
     end
 
     module V1 = struct
       type t = [ `Name | `Release_order ] [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8657555ed2892969e81c717ea5c480ca |}]
+      ;;
 
       let to_v2 = function
         | `Name as name  -> name
@@ -68,6 +78,61 @@ module Stable = struct
     end
 
     module Model = V2
+  end
+
+  module V21 = struct
+    type t =
+      { feature_id                : Feature_id.V1.t
+      ; feature_path              : Feature_path.V1.t
+      ; rev_zero                  : Rev.V1.t
+      ; whole_feature_followers   : User_name.V1.Set.t
+      ; whole_feature_reviewers   : User_name.V1.Set.t
+      ; owners                    : User_name.V1.t list
+      ; base                      : Rev.V1.t
+      ; base_facts                : Rev_facts.V1.t Or_pending.V1.t
+      ; next_base_update          : Next_base_update.V1.t
+      ; crs_are_enabled           : bool
+      ; crs_shown_in_todo_only_for_users_reviewing  : bool
+      ; xcrs_shown_in_todo_only_for_users_reviewing : bool
+      ; next_bookmark_update      : Next_bookmark_update.V1.t
+      ; has_bookmark              : bool
+      ; tip                       : Rev.V1.t
+      ; tip_facts                 : Rev_facts.V1.t Or_pending.V1.t
+      ; base_is_ancestor_of_tip   : Rev_facts.Is_ancestor.V1.t Or_pending.V1.t
+      ; diff_from_base_to_tip     : Diff2s.V2.t Or_error.V1.t Or_pending.V1.t
+      ; description               : string
+      ; is_permanent              : bool
+      ; seconder                  : User_name.V1.t option
+      ; review_is_enabled         : bool
+      ; reviewing                 : Reviewing.V1.t
+      ; allow_review_for          : Allow_review_for.V1.t
+      ; included_features         : Released_feature.V3.t list
+      ; properties                : Properties.V1.t
+      ; remote_repo_path          : Remote_repo_path.V1.t
+      ; has_children              : bool
+      ; release_process           : Release_process.V1.t
+      ; who_can_release_into_me   : Who_can_release_into_me.V1.t
+      ; send_email_to             : Email_address.V1.Set.t
+      ; send_email_upon           : Send_email_upon.V1.Set.t
+      ; locked                    : (Lock_name.V3.t * Locked.V2.t list) list
+      ; line_count_by_user        : (User_name.V1.t * Line_count.V5.t) list Or_error.V1.t
+      ; cr_summary                : Cr_comment.Summary.V1.t Or_error.V1.t
+      ; next_steps                : Next_step.V6.t list
+      ; users_with_review_session_in_progress : User_name.V1.Set.t Or_error.V1.t
+      ; users_with_unclean_workspaces : Unclean_workspace_reason.V2.t User_name.V1.Map.t
+      ; is_archived               : bool
+      ; latest_release            : Latest_release.V1.t option
+      ; inheritable_attributes    : Inheritable_attributes.V1.t
+      }
+
+    [@@deriving bin_io, fields, sexp_of]
+
+    let%expect_test _ =
+      print_endline [%bin_digest: t];
+      [%expect {| 41d1aeed9a63fcb8622eda64c7686de8 |}]
+    ;;
+
+    let of_model m = m
   end
 
   module V20 = struct
@@ -114,15 +179,113 @@ module Stable = struct
       ; latest_release            : Latest_release.V1.t option
       ; inheritable_attributes    : Inheritable_attributes.V1.t
       }
-
-    [@@deriving bin_io, fields, sexp_of]
+    [@@deriving bin_io]
 
     let%expect_test _ =
       print_endline [%bin_digest: t];
       [%expect {| e2f1270ad04caf2d755873e12cb31fb9 |}]
     ;;
 
-    let of_model m = m
+    open! Core.Std
+    open! Import
+
+    let of_model m =
+      let { V21.
+            feature_id
+          ; feature_path
+          ; rev_zero
+          ; whole_feature_followers
+          ; whole_feature_reviewers
+          ; owners
+          ; base
+          ; base_facts
+          ; next_base_update
+          ; crs_are_enabled
+          ; crs_shown_in_todo_only_for_users_reviewing
+          ; xcrs_shown_in_todo_only_for_users_reviewing
+          ; next_bookmark_update
+          ; has_bookmark
+          ; tip
+          ; tip_facts
+          ; base_is_ancestor_of_tip
+          ; diff_from_base_to_tip
+          ; description
+          ; is_permanent
+          ; seconder
+          ; review_is_enabled
+          ; reviewing
+          ; allow_review_for
+          ; included_features
+          ; properties
+          ; remote_repo_path
+          ; has_children
+          ; release_process
+          ; who_can_release_into_me
+          ; locked
+          ; line_count_by_user
+          ; cr_summary
+          ; next_steps
+          ; users_with_review_session_in_progress
+          ; users_with_unclean_workspaces
+          ; is_archived
+          ; latest_release
+          ; inheritable_attributes
+          ; send_email_to
+          ; send_email_upon
+          } = V21.of_model m
+      in
+      let locked = List.filter_map locked ~f:(fun (lock_name, locked) ->
+        Option.map (Lock_name.Stable.V2.of_v3 lock_name)
+          ~f:(fun lock_name -> lock_name, locked))
+      in
+      let next_steps = List.map next_steps ~f:Next_step.Stable.V5.of_v6 in
+      let users_with_unclean_workspaces =
+        Map.map users_with_unclean_workspaces
+          ~f:Unclean_workspace_reason.Stable.V1.of_v2
+      in
+      { feature_id
+      ; feature_path
+      ; rev_zero
+      ; whole_feature_followers
+      ; whole_feature_reviewers
+      ; owners
+      ; base
+      ; base_facts
+      ; next_base_update
+      ; crs_are_enabled
+      ; crs_shown_in_todo_only_for_users_reviewing
+      ; xcrs_shown_in_todo_only_for_users_reviewing
+      ; next_bookmark_update
+      ; has_bookmark
+      ; tip
+      ; tip_facts
+      ; base_is_ancestor_of_tip
+      ; diff_from_base_to_tip
+      ; description
+      ; is_permanent
+      ; seconder
+      ; review_is_enabled
+      ; reviewing
+      ; allow_review_for
+      ; included_features
+      ; properties
+      ; remote_repo_path
+      ; has_children
+      ; release_process
+      ; who_can_release_into_me
+      ; send_email_to
+      ; send_email_upon
+      ; locked
+      ; line_count_by_user
+      ; cr_summary
+      ; next_steps
+      ; users_with_review_session_in_progress
+      ; users_with_unclean_workspaces
+      ; is_archived
+      ; latest_release
+      ; inheritable_attributes
+      }
+    ;;
   end
 
   module V19 = struct
@@ -1240,8 +1403,8 @@ module Stable = struct
       [%expect {| 262d0dfecb185a16db850185641581dd |}]
     ;;
 
-    open Core
-    open Import
+    open! Core
+    open! Import
 
     let of_model m =
       let { V12.
@@ -1305,7 +1468,7 @@ module Stable = struct
       ; release_process
       ; who_can_release_into_me
       ; send_release_email_to     = send_email_to
-      ; should_send_release_email = Set.mem send_email_upon Send_email_upon.release
+      ; should_send_release_email = Set.mem send_email_upon Release
       ; locked
       }
     ;;
@@ -1416,7 +1579,7 @@ module Stable = struct
     ;;
   end
 
-  module Model = V20
+  module Model = V21
 end
 
 open! Core

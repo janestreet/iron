@@ -1,15 +1,15 @@
 open! Core
 open! Import
 
-type t [@@deriving sexp_of]
+type t =
+  | Archive
+  | Release
+[@@deriving sexp_of]
 
-include Comparable with type t := t
-include Enum.S     with type t := t
-include Equal.S    with type t := t
-include Stringable with type t := t
-
-val archive : t
-val release : t
+include Comparable.S_plain with type t := t
+include Enum.S             with type t := t
+include Equal.S            with type t := t
+include Stringable         with type t := t
 
 val default : Set.t
 

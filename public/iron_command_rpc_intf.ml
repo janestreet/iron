@@ -105,5 +105,6 @@ module type Iron_command_rpc = sig
         : sig end
     end
 
-  val rpc_descriptions  : Iron.Rpc_description.t list Lazy.t
+  val rpc_descriptions : Iron.Rpc_description.t list Lazy.t
+  val find_rpc_exn : name : string -> version : int -> Iron.Rpc_description.t
 end

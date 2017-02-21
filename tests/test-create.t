@@ -41,7 +41,7 @@ Successful creation of a feature.
   |---------+---------+----------------|
   | root    | pending | wait for hydra |
   |------------------------------------|
-  $ fe show  | grep prop | single_space
+  $ fe show | grep prop | single_space
   | prop1 | value1 |
   | prop2 | value2 |
 
@@ -65,7 +65,7 @@ Persistence.
   |---------+---------+----------------|
   | root    | pending | wait for hydra |
   |------------------------------------|
-  $ fe show  | grep prop | single_space
+  $ fe show | grep prop | single_space
   | prop1 | value1 |
   | prop2 | value2 |
 
@@ -98,6 +98,14 @@ Fix root:
   |---------+-------+-----------|
   | root    |     0 | add code  |
   |-----------------------------|
+
+Cannot create when Create_child has been locked on parent.
+
+  $ fe lock -create-child root -reason 'testing'
+  $ fe create root/child -description 'child' \
+  >     |& matches "feature lock is locked.*(feature_path root) (lock_name Create_child).*"
+  [1]
+  $ fe unlock -create-child root
 
 Make the child:
 

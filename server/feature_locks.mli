@@ -18,6 +18,9 @@ type t [@@deriving sexp_of]
 
 include Invariant.S  with type t := t
 
+(** [find t lock_name] returns an empty list if [lock_name] is not locked. *)
+val find : t -> Lock_name.t -> Locked.t list
+
 (** The resulting [Locked.t list]s will all be nonempty. *)
 val what_is_locked : t -> (Lock_name.t * Iron_protocol.Feature.Locked.t list) list
 

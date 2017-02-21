@@ -2342,13 +2342,13 @@
 : 
 : === subcommands ===
 : 
-:   check-workspaces  check invariant on local workspaces
+:   check-workspaces  DEPRECATED
 :   server-state      check server-state invariant
 :   help              explain a given subcommand (perhaps recursively)
 
 **** check-workspaces
 
-: check invariant on local workspaces
+: DEPRECATED
 : 
 :   fe.exe internal invariant check-workspaces [FEATURE]
 : 
@@ -3032,10 +3032,12 @@
 : === flags ===
 : 
 :   [-all-locks]     check all locks
+:   [-create-child]  create-child
 :   [-rebase]        rebase
 :   [-release-into]  release-into
 :   [-release]       release
 :   [-rename]        rename
+:   [-second]        second
 :   [-help]          print this help text and exit
 :                    (alias: -?)
 
@@ -3088,12 +3090,14 @@
 : === flags ===
 : 
 :   -reason REASON   reason for locking
+:   [-create-child]  create-child
 :   [-for USER]      for user (default is unix login)
 :   [-permanent]     make the lock permanent
 :   [-rebase]        rebase
 :   [-release-into]  release-into
 :   [-release]       release
 :   [-rename]        rename
+:   [-second]        second
 :   [-verbose]       be more verbose
 :   [-help]          print this help text and exit
 :                    (alias: -?)
@@ -3872,30 +3876,31 @@
 : 
 : === subcommands ===
 : 
-:   build-order-sort           print files from manifest below current dir in
-:                              build dependency order
-:   complete-feature-path      complete partial feature path in scripts
-:   feature-exists             print [true] or [false], depending on whether the
-:                              feature exists
-:   feature-table-of-csv       print tabular data indexed by feature name
-:   force-retry                make fe ask hydra to redo its work for a given
-:                              feature
-:   fully-reviewed-edge        deal with the set of fully-reviewed edges
-:   fully-reviewed-revision    check the set of fully-reviewed revisions
-:   hg                         runs hg the same way as fe does internally
-:   hg-hooks                   implement hg hooks for Iron
-:   mark-fully-reviewed        mark a feature as fully reviewed
-:   pairwise-common-revisions  show revisions common to pairs of features
-:   ping                       ping the server
-:   restore-bookmark           create the bookmark, set to the feature tip
-:   review-ddiff               Locally compute and review the feature ddiff of the
-:                              given revs diamond.
-:   strip-crs                  strip out CRs from one or more files
-:   unbookmarked-head          manage unbookmarked heads
-:   validate-ferc              Validate config in $HOME/.ferc if it exists
-:   wait-for-hydra             wait until Iron hydra is not processing the
-:                              supplied feature
-:   help                       explain a given subcommand (perhaps recursively)
+:   build-order-sort              print files from manifest below current dir in
+:                                 build dependency order
+:   complete-feature-path         complete partial feature path in scripts
+:   feature-exists                print [true] or [false], depending on whether
+:                                 the feature exists
+:   feature-table-of-csv          print tabular data indexed by feature name
+:   force-retry                   make fe ask hydra to redo its work for a given
+:                                 feature
+:   fully-reviewed-edge           deal with the set of fully-reviewed edges
+:   fully-reviewed-revision       check the set of fully-reviewed revisions
+:   get-feature-email-recipients  output recipients of feature emails
+:   hg                            runs hg the same way as fe does internally
+:   hg-hooks                      implement hg hooks for Iron
+:   mark-fully-reviewed           mark a feature as fully reviewed
+:   pairwise-common-revisions     show revisions common to pairs of features
+:   ping                          ping the server
+:   restore-bookmark              create the bookmark, set to the feature tip
+:   review-ddiff                  Locally compute and review the feature ddiff of
+:                                 the given revs diamond.
+:   strip-crs                     strip out CRs from one or more files
+:   unbookmarked-head             manage unbookmarked heads
+:   validate-ferc                 Validate config in $HOME/.ferc if it exists
+:   wait-for-hydra                wait until Iron hydra is not processing the
+:                                 supplied feature
+:   help                          explain a given subcommand (perhaps recursively)
 
 *** build-order-sort
 
@@ -4056,6 +4061,18 @@
 : 
 :   [-help]  print this help text and exit
 :            (alias: -?)
+
+*** get-feature-email-recipients
+
+: output recipients of feature emails
+: 
+:   fe.exe tools get-feature-email-recipients [FEATURE]
+: 
+: === flags ===
+: 
+:   -sent-upon _  archive | release | release-into
+:   [-help]       print this help text and exit
+:                 (alias: -?)
 
 *** hg
 
@@ -4340,12 +4357,14 @@
 : 
 : === flags ===
 : 
+:   [-create-child]       create-child
 :   [-even-if-permanent]  allow to unlock even if the lock is permanent
 :   [-for USER]           for user (default is unix login)
 :   [-rebase]             rebase
 :   [-release-into]       release-into
 :   [-release]            release
 :   [-rename]             rename
+:   [-second]             second
 :   [-verbose]            be more verbose
 :   [-help]               print this help text and exit
 :                         (alias: -?)

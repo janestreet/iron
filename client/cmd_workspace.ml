@@ -482,53 +482,17 @@ let list_command =
     )
 ;;
 
-let check_shares shares ~f =
-  let errors = ref [] in
-  let%map () =
-    Deferred.List.iter ~how:(`Max_concurrent_jobs 10) shares ~f:(fun share ->
-      match%map Deferred.Or_error.try_with_join (fun () -> f share) with
-      | Ok () -> ()
-      | Error err -> errors := (Workspace.feature_path share, err) :: !errors)
-  in
-  List.sort !errors ~cmp:(fun (f1, _) (f2, _) -> Feature_path.compare f1 f2)
-;;
-
-let check_workspaces which_workspaces ~f =
-  match which_workspaces with
-  | `All ->
-    let%bind shares = Workspace.list () in
-    check_shares shares ~f
-  | `Feature_path feature_path ->
-    match%bind Workspace.find feature_path with
-    | Some share -> check_shares [ share ] ~f
-    | None ->
-      return [ feature_path
-             , Error.createf "You don't have a workspace for [%s]"
-                 (Feature_path.to_string feature_path)
-             ]
-;;
-
 let check_workspaces_invariant_command =
-  Command.async' ~summary:"check invariant on local workspaces"
+  Command.async' ~summary:"DEPRECATED"
     (let open Command.Let_syntax in
      let%map_open () = return ()
-     and feature_opt = feature_path_option
+     and _ = feature_path_option
      in
      fun () ->
        let open! Deferred.Let_syntax in
-       let%map errors =
-         check_workspaces ~f:Workspace.check_workspace_invariant
-           (match ok_exn feature_opt with
-            | None -> `All
-            | Some feature -> `Feature_path feature)
-       in
-       if not (List.is_empty errors)
-       then
-         raise_s
-           [%sexp "invalid workspaces"
-                , (errors : (Feature_path.t * Error.t) list)
-           ]
-    )
+       eprintf "This command is deprecated and will be dropped.\n\n\
+                Its implementation is [Deferred.unit].\n";
+       Deferred.unit)
 ;;
 
 let confirm_or_dry_run shares ~dry_run ~action ~process_share =

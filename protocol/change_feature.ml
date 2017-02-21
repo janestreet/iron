@@ -327,8 +327,8 @@ module Stable = struct
         | `Set_send_release_email_to    emails -> `Set_send_email_to    emails
         | `Set_should_send_release_email bool  ->
           if bool
-          then `Add_send_email_upon    Send_email_upon.(Set.singleton release)
-          else `Remove_send_email_upon Send_email_upon.(Set.singleton release)
+          then `Add_send_email_upon    Send_email_upon.(Set.singleton Release)
+          else `Remove_send_email_upon Send_email_upon.(Set.singleton Release)
         | #same_as_v6 as x -> x
       ;;
 

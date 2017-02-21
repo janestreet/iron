@@ -51,7 +51,7 @@ let () =
     List.concat_map !rpc_implementations ~f:(fun (module T) ->
       let name = T.name in
       List.map (Set.to_list (T.versions ())) ~f:(fun version ->
-        { Rpc.Description. name; version }))
+        Iron_command_rpc.find_rpc_exn ~name ~version))
     |> return)
 ;;
 

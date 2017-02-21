@@ -1,28 +1,15 @@
 open! Core
 open! Async
 open! Import
+open! Iron_common.Std
 
 include Iron_command_rpc_intf
 
 let verbose = Verbose.command_rpc
 
-module Command_rpc_info = struct
-  type t =
-    { name             : string
-    ; versions         : unit -> Int.Set.t
-    }
-end
-
-let rpcs_ref = ref []
-
-let rpcs = lazy !rpcs_ref
-
-let rpc_descriptions =
-  lazy (
-    List.concat_map (force rpcs) ~f:(fun { Command_rpc_info. name; versions } ->
-      List.map (Set.to_list (versions ())) ~f:(fun version ->
-        { Rpc.Description. name; version })))
-;;
+let rpc_summary      = Rpc_summary.create ()
+let rpc_descriptions = Rpc_summary.rpc_descriptions rpc_summary
+let find_rpc_exn     = Rpc_summary.find_rpc_exn     rpc_summary
 
 module Make
     (Name     : Name)
@@ -30,13 +17,6 @@ module Make
     (Action   : Action)
     (Reaction : Reaction)
 = struct
-
-  let ensure_rpcs_not_forced ~while_calling =
-    if Lazy.is_val rpcs
-    then failwithf "cannot call [%s] after [rpcs] has been forced" while_calling ()
-  ;;
-
-  let () = ensure_rpcs_not_forced ~while_calling:"Iron_command_rpc.Make"
 
   module Model = struct
     include Name
@@ -102,11 +82,6 @@ module Make
         reaction)
   ;;
 
-  let () =
-    let versions = Both_convert.versions in
-    rpcs_ref := { Command_rpc_info. name; versions } :: !rpcs_ref;
-  ;;
-
   include Both_convert.Register (struct
       include Model
       include Version
@@ -116,29 +91,46 @@ module Make
       let query_of_caller_model    = Fn.id
     end)
 
+  let () =
+    Rpc_summary.register
+      rpc_summary
+      ~name
+      ~version:Version.version
+      ~query:[%bin_shape: Model.query]
+      ~response:[%bin_shape: Model.response]
+      ~metadata:()
+  ;;
+
   module Register_old_rpc
       (Version : sig val version : int end)
       (Action   : Old_action   with type model := Action.t)
       (Reaction : Old_reaction with type model := Reaction.t)
   = struct
-    let () =
-      ensure_rpcs_not_forced ~while_calling:"Iron_command_rpc.Make.Register_old_rpc"
-    ;;
 
-    include
-      Both_convert.Register (struct
-        include Version
-        type query = Action.t [@@deriving bin_io]
-        type response = Reaction.t [@@deriving bin_io]
-        let callee_model_of_query    = Action.to_model
-        let response_of_callee_model = Reaction.of_model
-        let unsupported () =
-          failwiths "it is not supported to use a new client with an old Iron server"
-            Name.name [%sexp_of: string]
-        ;;
-        let query_of_caller_model    _ = unsupported ()
-        let caller_model_of_response _ = unsupported ()
-      end)
+    module Old_rpc = struct
+      include Version
+      type query = Action.t [@@deriving bin_io]
+      type response = Reaction.t [@@deriving bin_io]
+      let callee_model_of_query    = Action.to_model
+      let response_of_callee_model = Reaction.of_model
+      let unsupported () =
+        failwiths "it is not supported to use a new client with an old Iron server"
+          Name.name [%sexp_of: string]
+      ;;
+      let query_of_caller_model    _ = unsupported ()
+      let caller_model_of_response _ = unsupported ()
+    end
+
+    include Both_convert.Register (Old_rpc)
+
+    let () =
+      Rpc_summary.register_old_version
+        rpc_summary
+        ~name
+        ~version:Version.version
+        ~query:[%bin_shape: Old_rpc.query]
+        ~response:[%bin_shape: Old_rpc.response]
+    ;;
   end
 
   module Register_old_rpc_converting_both_ways
@@ -146,21 +138,27 @@ module Make
       (Action   : Old_action_converting_both_ways   with type model := Action.t)
       (Reaction : Old_reaction_converting_both_ways with type model := Reaction.t)
   = struct
-    let () =
-      ensure_rpcs_not_forced
-        ~while_calling:"Iron_command_rpc.Make.Register_old_rpc_converting_both_ways"
-    ;;
 
-    include
-      Both_convert.Register (struct
-        include Version
-        type query = Action.t [@@deriving bin_io]
-        type response = Reaction.t [@@deriving bin_io]
-        let callee_model_of_query    = Action.to_model
-        let query_of_caller_model    = Action.of_model
-        let response_of_callee_model = Reaction.of_model
-        let caller_model_of_response = Reaction.to_model
-      end)
+    module Old_rpc = struct
+      include Version
+      type query = Action.t [@@deriving bin_io]
+      type response = Reaction.t [@@deriving bin_io]
+      let callee_model_of_query    = Action.to_model
+      let query_of_caller_model    = Action.of_model
+      let response_of_callee_model = Reaction.of_model
+      let caller_model_of_response = Reaction.to_model
+    end
+
+    include Both_convert.Register (Old_rpc)
+
+    let () =
+      Rpc_summary.register_old_version
+        rpc_summary
+        ~name
+        ~version:Version.version
+        ~query:[%bin_shape: Old_rpc.query]
+        ~response:[%bin_shape: Old_rpc.response]
+    ;;
   end
 
   include Both_convert

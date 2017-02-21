@@ -8,6 +8,7 @@ open! Import
 
 type t =
   | U1
+  | U2
 [@@deriving compare, sexp_of]
 
 include Enum.S with type t := t
@@ -37,7 +38,7 @@ val set_exn : State.t -> t -> unit
 val commit_to_upgrade
   : State.t
   -> allowed_from:t
-  -> [ `Ok | `Disabled ]
+  -> [ `Ok | `Not_allowed_yet ]
 
 module Stable : sig
   module V1 : sig

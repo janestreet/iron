@@ -54,11 +54,11 @@ No review remains, even before Iron server hears from hydra.
   | review is enabled       | true                             |
   | reviewing               | all                              |
   | is permanent            | true                             |
-  | bookmark update         | pending for * | (glob)
+  | bookmark update         | pending for *                | (glob)
   | tip                     | cee6d61471f1                     |
   | base                    | cee6d61471f1                     |
-  | base facts              | pending for * | (glob)
-  | base is ancestor of tip | pending for * | (glob)
+  | base facts              | pending for *                | (glob)
+  | base is ancestor of tip | pending for *                | (glob)
   |------------------------------------------------------------|
   
   ("not showing line counts"
@@ -89,3 +89,4 @@ No review remains.
   | tip                     | cee6d61471f1                     |
   | base                    | cee6d61471f1                     |
   |------------------------------------------------------------|
+

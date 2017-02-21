@@ -96,7 +96,7 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
             (`Push_to remote_repo_path)
       in
       if am_functional_testing
-      || not (Set.mem feature.send_email_upon Send_email_upon.release)
+      || not (Set.mem feature.send_email_upon Release)
       then return ()
       else (
         let%map iron_config = force Iron_config.as_per_IRON_CONFIG in

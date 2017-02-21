@@ -23,16 +23,34 @@ module Stable = struct
   end
 
   module Reaction = struct
+    module V5 = struct
+      type t = (Lock_name.V3.t * Locked.V2.t list) list
+      [@@deriving bin_io, sexp_of]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| f3da784e2752d80f71838448f07b267c |}]
+      ;;
+
+      let of_model m = m
+    end
+
     module V4 = struct
       type t = (Lock_name.V2.t * Locked.V2.t list) list
-      [@@deriving bin_io, sexp_of]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
         [%expect {| dab5bace62ecebe12a03fee8540ac78e |}]
       ;;
 
-      let of_model m = m
+      open! Core.Std
+      open! Import
+
+      let of_model m =
+        List.filter_map (V5.of_model m) ~f:(fun (lock_name, locks) ->
+          Option.map (Lock_name.Stable.V2.of_v3 lock_name) ~f:(fun lock -> lock, locks))
+      ;;
     end
 
     module V3 = struct
@@ -68,12 +86,17 @@ module Stable = struct
       ;;
     end
 
-    module Model = V4
+    module Model = V5
   end
 end
 
 include Iron_versioned_rpc.Make
     (struct let name = "get-locked" end)
+    (struct let version = 5 end)
+    (Stable.Action.V1)
+    (Stable.Reaction.V5)
+
+include Register_old_rpc
     (struct let version = 4 end)
     (Stable.Action.V1)
     (Stable.Reaction.V4)

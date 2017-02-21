@@ -84,12 +84,6 @@ have to review the change.
   | +|tip
   |_
 
-Check what happens across rebase.  The rest of this test is really more to keep
-track of the current behavior rather than establishing what we want in the end.
-There is currently a known bug that the rebase would show a spurious forget
-because we do not distinguish in the brain the difference between having read
-the attributes only and the contents.  The other behavior shown is that the user
-does not review the ddiff on the attributes.
 
   $ fe change -remove-whole-feature-reviewers user1
   $ IRON_USER=user1 fe tools mark-fully-reviewed root

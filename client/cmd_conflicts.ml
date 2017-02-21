@@ -15,6 +15,5 @@ let command =
            ~below:(Repo_root.relativize_exn repo_root Abspath.program_started_in)
            ~grep_display_option:"-nH"
        in
-       Writer.write stdout grep_output
-    )
+       Writer.write (force stdout) grep_output)
 ;;

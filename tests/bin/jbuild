@@ -1,0 +1,9 @@
+(executables
+ ((names (program_linking_with_iron_lib))
+  (libraries
+   (async
+    core
+    iron_common
+    iron_hg
+    iron_protocol
+    iron))))

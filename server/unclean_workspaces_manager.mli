@@ -5,7 +5,9 @@ type t [@@deriving sexp_of]
 
 include Invariant.S with type t := t
 
-val deserializer : t Deserializer.t
+val deserializer
+  : dynamic_upgrade_state : Dynamic_upgrade.State.t
+  -> t Deserializer.t
 
 val dump
   : t

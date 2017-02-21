@@ -55,10 +55,12 @@ module Stable = struct
   module Lock_name = struct
     module V2 = struct
       type t = Iron_common.Std.Lock_name.t =
+        | Create_child
         | Rebase
         | Release
         | Release_into
         | Rename
+        | Second
       [@@deriving sexp]
     end
   end
@@ -894,12 +896,14 @@ let review_goal t =
 let record t query action =
   let allowed_from =
     match (action : Action.t) with
+    | `Lock   { lock_name = (Create_child | Second); _ }
+    | `Unlock { lock_name = (Create_child | Second); _ } -> Dynamic_upgrade.U2
     (* Note to devs: please keep at least this line so that it is easy to add/remove
        lines there *)
     | #Action.t -> Dynamic_upgrade.U1
   in
   match Dynamic_upgrade.commit_to_upgrade t.dynamic_upgrade_state ~allowed_from with
-  | `Disabled ->
+  | `Not_allowed_yet ->
     (* Make sure to invalidate the cache in the case where the event are not recorded.
        This is handled by the serializer directly in the other case. *)
     invalidate_dependents t
@@ -1138,7 +1142,7 @@ let set_send_release_email_to t query whom =
 
 let set_should_send_release_email t query bool =
   record t query (`Set_should_send_release_email bool);
-  t.send_email_upon <- Set.add t.send_email_upon Send_email_upon.release;
+  t.send_email_upon <- Set.add t.send_email_upon Release;
 ;;
 
 let set_inheritable_crs_shown_in_todo_only_for_users_reviewing t query option =
@@ -1394,8 +1398,24 @@ let set_properties t query properties =
 ;;
 
 let lock t ~query ~for_ ~lock_name ~reason ~is_permanent =
-  record t query (`Lock { for_ ; lock_name ; reason; is_permanent });
-  Feature_locks.lock t.locks ~query ~for_ ~lock_name ~reason ~is_permanent;
+  match
+    match (lock_name : Lock_name.t) with
+    | Create_child
+    | Rebase
+    | Release
+    | Release_into
+    | Rename
+      -> Ok ()
+    | Second ->
+      if Option.is_some t.seconder
+      then error_s [%sexp "Feature is already seconded."]
+      else Ok ()
+  with
+  | Error _ as error -> error
+  | Ok () ->
+    record t query (`Lock { for_ ; lock_name ; reason; is_permanent });
+    Feature_locks.lock t.locks ~query ~for_ ~lock_name ~reason ~is_permanent;
+    Ok ()
 ;;
 
 let unlock t ~query ~for_ ~lock_name ~even_if_permanent =
@@ -1408,7 +1428,7 @@ let apply_change_internal t query (action : Action.t) =
   | `Ask_hydra_to_retry _ -> Ok ()
   | `Set_force_hydra_retry -> Ok ()
   | `Lock { Lock. for_; lock_name; reason; is_permanent } ->
-    lock t ~query ~for_ ~reason ~lock_name ~is_permanent; Ok ()
+    lock t ~query ~for_ ~reason ~lock_name ~is_permanent
   | `Remove_properties props -> remove_properties t query props
   | `Remove_inheritable_properties props -> remove_inheritable_properties t query props
   | `Set_base rev -> set_base t query rev; Ok ()
@@ -1473,7 +1493,7 @@ module Change_feature = Iron_protocol.Change_feature
 module Add_remove
     (T : sig
        type t [@@deriving sexp_of]
-       include Comparable with type t := t
+       include Comparable.S_plain with type t := t
      end) : sig
 
   val add_list

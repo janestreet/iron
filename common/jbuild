@@ -5,6 +5,7 @@
     async
     async_interactive
     core
+    expect_test_helpers
     incremental
     re2
     textutils

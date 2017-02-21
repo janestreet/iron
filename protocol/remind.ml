@@ -34,6 +34,27 @@ module Stable = struct
   end
 
   module Reaction = struct
+    module V10 = struct
+      type t =
+        { description                    : string
+        ; line_count_by_user             : (User_name.V1.t * Line_count.V5.t) list
+        ; users_with_review_session_in_progress : User_name.V1.Set.t Or_error.V1.t
+        ; users_with_unclean_workspaces
+          : Unclean_workspace_reason.V2.t User_name.V1.Map.t
+        ; cr_summary                     : Cr_comment.Summary.V1.t
+        ; users                          : User_name.V1.Set.t
+        ; next_bookmark_update           : Next_bookmark_update.V1.t
+        }
+      [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| ea1596142dcd746acf42fd48218e1d70 |}]
+      ;;
+
+      let of_model (m : t) = m
+    end
+
     module V9 = struct
       type t =
         { description                    : string
@@ -45,14 +66,39 @@ module Stable = struct
         ; users                          : User_name.V1.Set.t
         ; next_bookmark_update           : Next_bookmark_update.V1.t
         }
-      [@@deriving bin_io, sexp_of]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
         [%expect {| 3787703f3a2baf0a7cdf69a020ff4110 |}]
       ;;
 
-      let of_model (m : t) = m
+      open! Core.Std
+      open! Import
+
+      let of_model m =
+        let { V10.
+              description
+            ; line_count_by_user
+            ; users_with_review_session_in_progress
+            ; users_with_unclean_workspaces
+            ; cr_summary
+            ; users
+            ; next_bookmark_update
+            } = V10.of_model m in
+        let users_with_unclean_workspaces =
+          Map.map users_with_unclean_workspaces
+            ~f:Unclean_workspace_reason.Stable.V1.of_v2
+        in
+        { description
+        ; line_count_by_user
+        ; users_with_review_session_in_progress
+        ; users_with_unclean_workspaces
+        ; cr_summary
+        ; users
+        ; next_bookmark_update
+        }
+      ;;
     end
 
     module V8 = struct
@@ -184,12 +230,17 @@ module Stable = struct
       ;;
     end
 
-    module Model = V9
+    module Model = V10
   end
 end
 
 include Iron_versioned_rpc.Make
     (struct let name = "remind" end)
+    (struct let version = 10 end)
+    (Stable.Action.V1)
+    (Stable.Reaction.V10)
+
+include Register_old_rpc
     (struct let version = 9 end)
     (Stable.Action.V1)
     (Stable.Reaction.V9)

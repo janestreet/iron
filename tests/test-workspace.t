@@ -212,7 +212,7 @@ Delete a workspace.
   |-------------------------------|
   
   $ fe workspace unclean check -all
-  (errors (((feature_path root) (reason (Uncommitted_changes)))))
+  (errors (((feature_path root) (reason ("uncommitted changes")))))
   [1]
   $ rm -f $(fe workspace dir root)/FILE
   $ fe workspace unclean list
@@ -274,139 +274,12 @@ Compress a feature.
   
   6 directories, 3 files
 
-Unclean workspaces and interaction with [fe todo] and [fe show].
-
-  $ cat >>$HOME/.ferc <<EOF
-  > (workspaces (
-  >   (unclean_workspaces_detection_is_enabled false)
-  > ))
-  > EOF
-
-  $ fe workspace unclean update-server root/child2
-  Unclean workspaces detection is not enabled.
-  Consider enabling the functionality via your [.ferc], or supply -do-nothing-if-not-enabled.
-  [1]
-
-  $ fe workspace unclean update-server root/child2 -do-nothing-if-not-enabled \
-  >   -interactive true
-  Unclean workspaces detection is not enabled, and the switch -do-nothing-if-not-enabled was supplied.
-  Exiting with code 0
-
-Be silent if not interactive.
-
-  $ fe workspace unclean update-server root/child2 -do-nothing-if-not-enabled \
-  >   -interactive false
-
-  $ cat >>$HOME/.ferc <<EOF
-  > (workspaces (
-  >   (unclean_workspaces_detection_is_enabled true)
-  > ))
-  > EOF
-
-  $ touch $(fe workspace dir root/child2)/FILE
-  $ fe workspace unclean update-server root/child2
-  $ fe todo -unclean-workspaces | sed "s;$HOSTNAME;\$HOSTNAME;"
-  Unclean workspaces on $HOSTNAME:
-  |--------------------------------|
-  | feature  | reason              |
-  |----------+---------------------|
-  | root     |                     |
-  |   child2 | uncommitted changes |
-  |--------------------------------|
-
-  $ fe show root/child2 -omit-attribute-table
-  root/child2
-  ===========
-  child2
-  
-  |----------------------------------------------|
-  | unclean workspaces     | reason              |
-  |------------------------+---------------------|
-  | unix-login-for-testing | uncommitted changes |
-  |----------------------------------------------|
-
-Check that this is persisted.
-
-  $ fe-server stop
-  $ fe-server start
-
-  $ fe todo -unclean-workspaces | sed "s;$HOSTNAME;\$HOSTNAME;"
-  Unclean workspaces on $HOSTNAME:
-  |--------------------------------|
-  | feature  | reason              |
-  |----------+---------------------|
-  | root     |                     |
-  |   child2 | uncommitted changes |
-  |--------------------------------|
-
-  $ fe show root/child2 -omit-attribute-table
-  root/child2
-  ===========
-  child2
-  
-  |----------------------------------------------|
-  | unclean workspaces     | reason              |
-  |------------------------+---------------------|
-  | unix-login-for-testing | uncommitted changes |
-  |----------------------------------------------|
-
-Check that users with unclean workspaces are included in [fe remind].
-
-  $ feature_to_server root/child2 -fake-valid-obligations
-  $ echo n | fe remind root/child2 -interactive true
-  Sending mail
-  
-  ------
-  Subject: reminder for Iron feature root/child2
-  
-  |----------------------------------------------|
-  | unclean workspaces     | reason              |
-  |------------------------+---------------------|
-  | unix-login-for-testing | uncommitted changes |
-  |----------------------------------------------|
-  
-  root/child2
-  ===========
-  child2
-  ------
-  to the following users: 
-    owner
-    unix-login-for-testing
-  
-  Send mail? [y/n/e/?]: Aborted
-
-  $ rm $(fe workspace dir root/child2)/FILE
-
-When running post commit hooks, this refreshes the server state.
-
-  $ (cd $(fe workspace dir root/child2) && fe tools hg-hooks post-commit -fg &> /dev/null)
-
-  $ fe todo -unclean-workspaces | sed "s;$HOSTNAME;\$HOSTNAME;"
-  $ fe show root/child2 -omit-attribute-table
-  root/child2
-  ===========
-  child2
-  
-  |---------------------|
-  | user       | review |
-  |------------+--------|
-  | file-owner |      2 |
-  | owner      |      2 |
-  |---------------------|
-
-  $ fe remind root/child2 -just-print-recipients-and-exit
-  owner
-
-Check workspace invariants.
+Check workspace invariants is deprecated.
 
   $ fe internal invariant check-workspaces
-  $ hg pull   -q -r root --cwd $(fe workspace dir root/child2)
-  $ hg update -q -r root --cwd $(fe workspace dir root/child2)
-  $ fe internal invariant check-workspaces \
-  >    |& matches '.*root/child2/+share+.*unexpected current bookmark.*'
-  [1]
-  $ hg update -q -r root/child2  --cwd $(fe workspace dir root/child2)
-  $ fe internal invariant check-workspaces
+  This command is deprecated and will be dropped.
+  
+  Its implementation is [Deferred.unit].
 
 Archive a feature.
 

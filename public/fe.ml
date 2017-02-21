@@ -109,9 +109,9 @@ let show_supported_iron_rpcs_command =
        let open Deferred.Let_syntax in
        let rpcs names rpcs =
          let names = force names in
-         List.filter (force rpcs) ~f:(fun { Rpc_description.name; _ } ->
-           Set.mem names name)
-         |> List.sort ~cmp:Rpc_description.compare
+         List.filter (force rpcs) ~f:(fun rpc ->
+           Set.mem names (Rpc_description.name rpc))
+         |> List.sort ~cmp:Rpc_description.Compare_by_name_and_version.compare
        in
        let print_as_table rpcs =
          print_endline
@@ -128,14 +128,9 @@ let show_supported_iron_rpcs_command =
        in
        if as_sexp
        then (
-         let module M = struct
-           type t =
-             { rpcs_to_server : Rpc_description.t list
-             ; command_rpcs   : Rpc_description.t list
-             } [@@deriving sexp_of]
-         end in
-         { M.rpcs_to_server; command_rpcs }
-         |> [%sexp_of: M.t]
+         [%sexp { rpcs_to_server : Rpc_description.t list
+                ; command_rpcs   : Rpc_description.t list
+                }]
          |> Sexp.to_string
          |> print_endline)
        else (
@@ -143,8 +138,7 @@ let show_supported_iron_rpcs_command =
          print_as_table rpcs_to_server;
          print_endline "Command RPCs:";
          print_as_table command_rpcs);
-       return ()
-    )
+       return ())
 ;;
 
 let show_supported_iron_rpcs =

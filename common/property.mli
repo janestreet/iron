@@ -5,8 +5,8 @@ type t = string [@@deriving sexp_of]
 
 type comparator_witness = String.comparator_witness
 
-include Comparable.S with type t := t and type comparator_witness := comparator_witness
-include Hashable  .S with type t := t
+include Comparable.S_plain with type t := t and type comparator_witness := comparator_witness
+include Hashable  .S_plain with type t := t
 
 include Stringable.S with type t := t
 

@@ -53,6 +53,33 @@ module Stable = struct
   end
 
   module Reaction = struct
+    module V9 = struct
+      type one =
+        { feature_path      : Feature_path.V1.t
+        ; feature_id        : Feature_id.V1.t
+        ; owners            : User_name.V1.t list
+        ; review_is_enabled : bool
+        ; num_lines         : int Or_error.V1.t Or_pending.V1.t
+        ; next_steps        : Next_step.V6.t list
+        ; status            : [ `Existing
+                              | `Was_archived_at of Time.V1_round_trippable.t
+                              ]
+        }
+      [@@deriving bin_io, sexp]
+
+      type t = one list
+      [@@deriving bin_io, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: one];
+        [%expect {| c0df7bf7673bcddfd259f5f3967c248e |}];
+        print_endline [%bin_digest: t];
+        [%expect {| ea442ef7dc2fe7cdc373fb2f5352e8cd |}];
+      ;;
+
+      let of_model (m : t) = m
+    end
+
     module V8 = struct
       type one =
         { feature_path      : Feature_path.V1.t
@@ -65,22 +92,61 @@ module Stable = struct
                               | `Was_archived_at of Time.V1_round_trippable.t
                               ]
         }
-      [@@deriving bin_io, sexp]
+      [@@deriving bin_io]
+
+      type t = one list
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: one];
-        [%expect {| 4acccdbd1a3f3d12e25ec21b473a399d |}]
-      ;;
-
-      type t = one list
-      [@@deriving bin_io, sexp]
-
-      let%expect_test _ =
+        [%expect {| 4acccdbd1a3f3d12e25ec21b473a399d |}];
         print_endline [%bin_digest: t];
-        [%expect {| f19947ea15a45be8d3610debd391ee88 |}]
+        [%expect {| f19947ea15a45be8d3610debd391ee88 |}];
       ;;
 
-      let of_model m = m
+      open! Core.Std
+      open! Import
+
+      let of_model m =
+        List.map (V9.of_model m)
+          ~f:(fun { feature_path
+                  ; feature_id
+                  ; owners
+                  ; review_is_enabled
+                  ; num_lines
+                  ; next_steps
+                  ; status
+                  } ->
+               { feature_path
+               ; feature_id
+               ; owners
+               ; review_is_enabled
+               ; num_lines
+               ; next_steps = List.map next_steps ~f:Next_step.Stable.V5.of_v6
+               ; status
+               })
+      ;;
+
+      let to_v9 t =
+        List.map t
+          ~f:(fun { feature_path
+                  ; feature_id
+                  ; owners
+                  ; review_is_enabled
+                  ; num_lines
+                  ; next_steps
+                  ; status
+                  } ->
+               { V9.
+                 feature_path
+               ; feature_id
+               ; owners
+               ; review_is_enabled
+               ; num_lines
+               ; next_steps = List.map next_steps ~f:Next_step.Stable.V5.to_v6
+               ; status
+               })
+      ;;
     end
 
     module V7 = struct
@@ -92,42 +158,43 @@ module Stable = struct
         }
       [@@deriving bin_io]
 
-      let%expect_test _ =
-        print_endline [%bin_digest: one];
-        [%expect {| c64edd39e2a49fbfb397d8bb88535d29 |}]
-      ;;
-
       type t = one list
       [@@deriving bin_io]
 
       let%expect_test _ =
+        print_endline [%bin_digest: one];
+        [%expect {| c64edd39e2a49fbfb397d8bb88535d29 |}];
         print_endline [%bin_digest: t];
-        [%expect {| 2adbe7ee5e2407dd60d57b244d52e47f |}]
+        [%expect {| 2adbe7ee5e2407dd60d57b244d52e47f |}];
       ;;
 
       let of_model m =
-        List.map m ~f:(fun m ->
-          let { V8.
-                feature_path
-              ; review_is_enabled
-              ; num_lines
-              ; next_steps
-              ; _
-              } = V8.of_model m in
-          { feature_path
-          ; review_is_enabled
-          ; num_lines
-          ; next_steps
-          })
+        List.map (V8.of_model m)
+          ~f:(fun { feature_path
+                  ; review_is_enabled
+                  ; num_lines
+                  ; next_steps
+                  ; _
+                  } ->
+               { feature_path
+               ; review_is_enabled
+               ; num_lines
+               ; next_steps
+               })
       ;;
     end
 
-    module Model = V8
+    module Model = V9
   end
 end
 
 include Iron_versioned_rpc.Make
     (struct let name = "list-features" end)
+    (struct let version = 10 end)
+    (Stable.Action.V2)
+    (Stable.Reaction.V9)
+
+include Register_old_rpc
     (struct let version = 9 end)
     (Stable.Action.V2)
     (Stable.Reaction.V8)

@@ -124,7 +124,7 @@ let feature_dir archived_feature =
   in
   Relpath.of_list
     (List.map ~f:File_name.of_string
-       [ sprintf "%4d" (Date.year date)
+       [ sprintf "%4d"  (Date.year date)
        ; sprintf "%02d" (Month.to_int (Date.month date))
        ; sprintf "%02d" (Date.day date)
        ; Feature_id.to_string (Archived_feature.feature_id archived_feature)
@@ -147,7 +147,7 @@ let persist_query t query action =
     | #Action.t -> Dynamic_upgrade.U1
   in
   match Dynamic_upgrade.commit_to_upgrade t.dynamic_upgrade_state ~allowed_from with
-  | `Disabled -> ()
+  | `Not_allowed_yet -> ()
   | `Ok ->
     Serializer.append_to (serializer_exn t) ~file:queries_file
       (Query.with_action query action) (module Persist.Action_query)

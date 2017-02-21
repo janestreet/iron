@@ -21,6 +21,12 @@ module Locked : sig
 
   val is_locked_by : t -> User_name.t -> bool
   val to_protocol  : t -> Iron_protocol.Feature.Locked.t
+
+  module Compare_by_user : sig
+    type nonrec t = t
+    [@@deriving compare]
+  end
+
 end = struct
   type t =
     { by           : User_name.t
@@ -29,6 +35,12 @@ end = struct
     ; query        : unit Query.t
     }
   [@@deriving fields, sexp_of]
+
+  module Compare_by_user = struct
+    type nonrec t = t
+
+    let compare t t' = User_name.compare t.by t'.by
+  end
 
   let create ~by ~reason ~is_permanent ~query =
     { query = Query.with_action query ()
@@ -89,9 +101,13 @@ let invariant t =
 ;;
 
 let what_is_locked t =
-  List.map (Hashtbl.to_alist t.lock_by_name)
-    ~f:(fun (lock_name, locks) -> lock_name, (List.map ~f:Locked.to_protocol locks))
+  Hashtbl.to_alist t.lock_by_name
+  |> List.sort ~cmp:[%compare: Lock_name.t * Locked.Compare_by_user.t list]
+  |> List.map ~f:(fun (lock_name, locks) ->
+    lock_name, (List.map ~f:Locked.to_protocol locks))
 ;;
+
+let find t lock_name = Hashtbl.find t.lock_by_name lock_name |> Option.value ~default:[]
 
 let check_all_unlocked t =
   match Hashtbl.to_alist t.lock_by_name with

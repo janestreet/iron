@@ -23,10 +23,10 @@ Take a few locks.
 
   $ fe lock -rebase -release -release-into -reason 'test'
   $ fe show -what-is-locked
-  ((Release
+  ((Rebase
     (((by unix-login-for-testing) (reason test)
       (at (*)) (is_permanent false)))) (glob)
-   (Rebase
+   (Release
     (((by unix-login-for-testing) (reason test)
       (at (*)) (is_permanent false)))) (glob)
    (Release_into
@@ -71,13 +71,13 @@ And the user owning the lock can amend a lock.
 
   $ fe lock -release -reason 'blah'
   $ fe show -what-is-locked
-  ((Release
-    (((by unix-login-for-testing) (reason blah)
-      (at (*)) (is_permanent false)))) (glob)
-   (Rebase
+  ((Rebase
     (((by user1) (reason test) (at (*)) (glob)
       (is_permanent false))
      ((by unix-login-for-testing) (reason test)
+      (at (*)) (is_permanent false)))) (glob)
+   (Release
+    (((by unix-login-for-testing) (reason blah)
       (at (*)) (is_permanent false)))) (glob)
    (Release_into
     (((by unix-login-for-testing) (reason test)
@@ -136,12 +136,12 @@ One user unlocking doesn't unlock another's.
 
   $ fe unlock -rebase
   $ fe show -what-is-locked
-  ((Release
-    (((by unix-login-for-testing) (reason blah)
-      (at (*)) (is_permanent false)))) (glob)
-   (Rebase
+  ((Rebase
     (((by user1) (reason test) (at (*)) (glob)
       (is_permanent false))))
+   (Release
+    (((by unix-login-for-testing) (reason blah)
+      (at (*)) (is_permanent false)))) (glob)
    (Release_into
     (((by unix-login-for-testing) (reason test)
       (at (*)) (is_permanent false))))) (glob)

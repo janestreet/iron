@@ -4,16 +4,19 @@ module T = struct
 
   type t =
     | U1
+    | U2
   [@@deriving enumerate]
 
   let to_int = function
     | U1 -> 1
+    | U2 -> 2
   ;;
 
   let hash t = Int.hash (to_int t)
 
   let of_int = function
     | 1 -> U1
+    | 2 -> U2
     | n -> failwiths "Persisted_types_upgrade: version is out of range" n [%sexp_of: int]
   ;;
 
@@ -140,7 +143,7 @@ let set_exn (t : State.t) trying_to_set_as =
 
 let commit_to_upgrade (t : State.t) ~allowed_from =
   if allowed_from > t.current_value
-  then `Disabled
+  then `Not_allowed_yet
   else (
     (if allowed_from > t.committed_to
      then (

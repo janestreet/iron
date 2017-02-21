@@ -139,6 +139,23 @@ Now reviewing is restricted to whole feature reviewers.
   | unix-login-for-testing |          |         1 |
   |-----------------------------------------------|
 
+Cannot second when Second has been locked.
+
+  $ fe lock -second root -reason testing
+  $ fe todo -owned-by-me
+  Features you own:
+  |-------------------------|
+  | feature | next step     |
+  |---------+---------------|
+  | root    | unlock second |
+  |-------------------------|
+  $ fe show root -next-step
+  ((Unlock Second))
+  $ IRON_USER=seconder fe second root \
+  >     |& matches "feature lock is locked.*(feature_path root) (lock_name Second).*"
+  [1]
+  $ fe unlock -second root
+
 Second as an owner.
 
   $ fe second -even-though-owner
@@ -168,6 +185,12 @@ Second as an owner.
   | user1                  |        1 |         1 |
   | unix-login-for-testing |          |         1 |
   |-----------------------------------------------|
+
+Cannot lock Second if the feature is seconded.
+
+  $ fe lock -second root -reason testing
+  ("there were problems" ((Second (Error "Feature is already seconded."))))
+  [1]
 
 Second -even-though-empty.
 

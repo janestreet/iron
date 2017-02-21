@@ -31,8 +31,6 @@ val kill_build : t -> unit Deferred.t
 
 (** Checks *)
 
-val check_workspace_invariant : t -> unit Or_error.t Deferred.t
-
 module Unclean_status : sig
   type t =
     | Clean

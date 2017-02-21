@@ -573,7 +573,7 @@ let record t query action =
   in
   let serializer = serializer_exn t in
   match Dynamic_upgrade.commit_to_upgrade t.dynamic_upgrade_state ~allowed_from with
-  | `Disabled ->
+  | `Not_allowed_yet ->
     (* Make sure to invalidate the cache in the case where the event are not recorded.
        This is handled by the serializer directly in the other case. *)
     Serializer.invalidate_dependents serializer

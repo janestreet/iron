@@ -1,6 +1,6 @@
-open Core
-open Async
-open Import
+open! Core
+open! Async
+open! Import
 
 let strip_crs_exn format ~replace_with ~extra_cr_comment_headers file =
   let%map contents = Reader.file_contents (Abspath.to_string file) in
@@ -53,8 +53,7 @@ let command =
   let default_max_concurrent_jobs = 8 in
   let max_concurrent_jobs_switch = "-max-concurrent-jobs" in
   let in_place_switch = "-in-place" in
-  Command.async'
-    ~summary:"strip out CRs from one or more files"
+  Command.async' ~summary:"strip out CRs from one or more files"
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and replace_with =
@@ -101,5 +100,5 @@ let command =
            Writer.save (Abspath.to_string file) ~contents
          else (
            print_string contents;
-           Writer.flushed stdout)))
+           Writer.flushed (force stdout))))
 ;;

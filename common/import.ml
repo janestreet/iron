@@ -46,9 +46,9 @@ end
 
 let error_string = Or_error.error_string
 
-let stdin  = force Reader.stdin
-let stdout = force Writer.stdout
-let stderr = force Writer.stderr
+let stdin  = Reader.stdin
+let stdout = Writer.stdout
+let stderr = Writer.stderr
 
 let am_functional_testing = is_some (Sys.getenv "IRON_FUNCTIONAL_TESTING")
 

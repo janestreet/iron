@@ -2,13 +2,40 @@ module Stable = struct
   open! Core.Core_stable
   open! Import_stable
   module User_info = struct
+    module V2 = struct
+      type t =
+        { machines : Unclean_workspace.V2.t list Machine.V1.Map.t
+        ; query    : unit Query.V1.t
+        }
+      [@@deriving sexp]
+      let to_model (t : t) = t
+      let of_model (t : t) = t
+    end
     module V1 = struct
       type t =
         { machines : Unclean_workspace.V1.t list Machine.V1.Map.t
         ; query    : unit Query.V1.t
         }
       [@@deriving sexp]
+
+      open! Core.Std
+      open! Import
+
+      let to_model { machines; query } =
+        V2.to_model
+          { machines = Map.map machines ~f:(List.map ~f:Unclean_workspace.Stable.V1.to_v2)
+          ; query
+          }
+      ;;
+
+      let of_model m =
+        let { V2.machines; query } = V2.of_model m in
+        { machines = Map.map machines ~f:(List.map ~f:Unclean_workspace.Stable.V1.of_v2)
+        ; query
+        }
+      ;;
     end
+    module Model = V2
   end
 end
 
@@ -30,9 +57,10 @@ end
 module Index = Hashtbl2_pair.Make (User_name) (Feature_path)
 
 type t =
-  { entries       : By_machine.t Index.t
-  ; query_by_user : unit Query.t User_name.Table.t
-  ; serializer    : Serializer.t
+  { entries               : By_machine.t Index.t
+  ; query_by_user         : unit Query.t User_name.Table.t
+  ; dynamic_upgrade_state : Dynamic_upgrade.State.t
+  ; serializer            : Serializer.t
   }
 [@@deriving fields, sexp_of]
 
@@ -45,6 +73,7 @@ let invariant t =
                          Feature_path.invariant
                          By_machine.invariant))
       ~query_by_user:(check ignore)
+      ~dynamic_upgrade_state:(check Dynamic_upgrade.State.Reference.invariant)
       ~serializer:(check Serializer.invariant))
 ;;
 
@@ -127,15 +156,34 @@ let user_subtree user =
 
 let workspaces_file = File_name.of_string "workspaces"
 
+module Context = struct
+  type nonrec t = t [@@deriving sexp_of]
+end
+
 module Persist = struct
   module User_info = struct
-    include Persistent.Make
+    include Persistent.Make_with_context
+        (Context)
+        (struct let version = 2 end)
+        (Stable.User_info.V2)
+    include Register_read_write_old_version
         (struct let version = 1 end)
-        (Stable.User_info.V1)
+        (struct
+          include Stable.User_info.V1
+          let to_model _ t = Stable.User_info.V1.to_model t
+          let of_model _ m = Stable.User_info.V1.of_model m
+          let should_write_this_version t =
+            match
+              Dynamic_upgrade.commit_to_upgrade t.dynamic_upgrade_state
+                ~allowed_from:U2
+            with
+            | `Not_allowed_yet -> true
+            | `Ok              -> false
+        end)
   end
 end
 
-module User_info = Stable.User_info.V1
+module User_info = Stable.User_info.Model
 
 let persist_user t query user_name =
   let query = Query.with_action query () in
@@ -148,31 +196,33 @@ let persist_user t query user_name =
   Hashtbl.set t.query_by_user ~key:user_name ~data:query;
   Serializer.set_contents t.serializer
     ~file:(Relpath.extend (user_subtree user_name) workspaces_file)
-    user_info (module Persist.User_info)
+    (t, user_info) (module Persist.User_info.Writer)
 ;;
 
-let deserializer = Deserializer.with_serializer (fun serializer ->
-  let open Deserializer.Let_syntax in
-  let%map_open () = return ()
-  and users =
-    all_subdirs
-      (one (module Persist.User_info)
-         ~in_file:(Relpath.of_list [ workspaces_file ]))
-  in
-  let t =
-    { entries       = Index.create ()
-    ; query_by_user = User_name.Table.create ()
-    ; serializer
-    }
-  in
-  Map.iteri users ~f:(fun ~key:file ~data:{ User_info. machines; query } ->
-    let user_name = User_name.of_string (File_name.to_string file) in
-    Hashtbl.set t.query_by_user ~key:user_name ~data:query;
-    Map.iteri machines ~f:(fun ~key:machine ~data:unclean_workspaces ->
-      List.iter unclean_workspaces ~f:(fun { feature_path; reason } ->
-        set_reason_internal t user_name feature_path machine reason)));
-  t
-)
+let deserializer ~dynamic_upgrade_state =
+  Deserializer.with_serializer (fun serializer ->
+    let open Deserializer.Let_syntax in
+    let%map_open () = return ()
+    and users =
+      all_subdirs
+        (one (module Persist.User_info.Reader)
+           ~in_file:(Relpath.of_list [ workspaces_file ]))
+    in
+    let t =
+      { entries       = Index.create ()
+      ; query_by_user = User_name.Table.create ()
+      ; dynamic_upgrade_state
+      ; serializer
+      }
+    in
+    Map.iteri users ~f:(fun ~key:file ~data ->
+      let { User_info. machines; query } = data t in
+      let user_name = User_name.of_string (File_name.to_string file) in
+      Hashtbl.set t.query_by_user ~key:user_name ~data:query;
+      Map.iteri machines ~f:(fun ~key:machine ~data:unclean_workspaces ->
+        List.iter unclean_workspaces ~f:(fun { feature_path; reason } ->
+          set_reason_internal t user_name feature_path machine reason)));
+    t)
 ;;
 
 let remove_user_exn t _query user_name =

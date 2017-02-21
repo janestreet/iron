@@ -212,7 +212,7 @@ val lock
   -> lock_name    : Lock_name.t
   -> reason       : string
   -> is_permanent : bool
-  -> unit
+  -> unit Or_error.t
 
 val unlock
   :  t

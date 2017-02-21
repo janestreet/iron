@@ -68,24 +68,25 @@ let internal =
 
 let tools =
   Command.group ~summary: "miscellaneous commands"
-    [ "build-order-sort"         , Iron_client.Cmd_build_order_sort.command
-    ; "complete-feature-path"    , Iron_client.Cmd_complete_feature_path.command
-    ; "feature-exists"           , Iron_client.Cmd_feature_exists.command
-    ; "feature-table-of-csv"     , Iron_client.Cmd_feature_table_of_csv.command
-    ; "force-retry"              , Iron_client.Cmd_force_retry.command
-    ; "fully-reviewed-edge"      , Iron_client.Cmd_fully_reviewed_edge.tools
-    ; "fully-reviewed-revision"  , Iron_client.Cmd_fully_reviewed_revision.tools
-    ; "hg"                       , Iron_hg.Hg.hg_command
-    ; "hg-hooks"                 , Iron_client.Cmd_hg_hooks.command
-    ; "pairwise-common-revisions", Iron_client.Cmd_pairwise_common_revisions.command
-    ; "ping"                     , Iron_client.Cmd_ping.command
-    ; "restore-bookmark"         , Iron_client.Cmd_restore_bookmark.command
-    ; "review-ddiff"             , Iron_client.Cmd_review_ddiff.command
-    ; "strip-crs"                , Iron_client.Cmd_strip_crs.command
-    ; "mark-fully-reviewed"      , Iron_client.Cmd_mark_fully_reviewed.command
-    ; "unbookmarked-head"        , Iron_client.Cmd_unbookmarked_head.command
-    ; "validate-ferc"            , Iron.Client_config.validate_config
-    ; "wait-for-hydra"           , Iron_client.Cmd_wait_for_hydra.command
+    [ "build-order-sort"             , Iron_client.Cmd_build_order_sort.command
+    ; "complete-feature-path"        , Iron_client.Cmd_complete_feature_path.command
+    ; "feature-exists"               , Iron_client.Cmd_feature_exists.command
+    ; "feature-table-of-csv"         , Iron_client.Cmd_feature_table_of_csv.command
+    ; "force-retry"                  , Iron_client.Cmd_force_retry.command
+    ; "fully-reviewed-edge"          , Iron_client.Cmd_fully_reviewed_edge.tools
+    ; "fully-reviewed-revision"      , Iron_client.Cmd_fully_reviewed_revision.tools
+    ; "get-feature-email-recipients" , Iron_client.Cmd_get_feature_email_recipients.command
+    ; "hg"                           , Iron_hg.Hg.hg_command
+    ; "hg-hooks"                     , Iron_client.Cmd_hg_hooks.command
+    ; "pairwise-common-revisions"    , Iron_client.Cmd_pairwise_common_revisions.command
+    ; "ping"                         , Iron_client.Cmd_ping.command
+    ; "restore-bookmark"             , Iron_client.Cmd_restore_bookmark.command
+    ; "review-ddiff"                 , Iron_client.Cmd_review_ddiff.command
+    ; "strip-crs"                    , Iron_client.Cmd_strip_crs.command
+    ; "mark-fully-reviewed"          , Iron_client.Cmd_mark_fully_reviewed.command
+    ; "unbookmarked-head"            , Iron_client.Cmd_unbookmarked_head.command
+    ; "validate-ferc"                , Iron.Client_config.validate_config
+    ; "wait-for-hydra"               , Iron_client.Cmd_wait_for_hydra.command
     ]
 ;;
 

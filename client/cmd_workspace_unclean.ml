@@ -3,34 +3,20 @@ open! Async
 open! Import
 
 module Unclean_workspace_row = struct
-  type column = Ascii_table.Attr.t list * string
-
-  let empty_column = [], ""
+  let empty_column = ""
 
   type t =
-    { feature     : column
-    ; has         : column
+    { feature : string
+    ; reason  : string
     }
   [@@deriving fields]
 
   let empty =
     { feature = empty_column
-    ; has     = empty_column
+    ; reason  = empty_column
     }
   ;;
 end
-
-let unclean_workspace_attr_text (reason : Unclean_workspace_reason.t) =
-  let text = Unclean_workspace_reason.to_ascii_table_column_text reason in
-  let text_attr =
-    if List.exists (reason :> Unclean_workspace_reason.one_reason list) ~f:(function
-      | Error _ -> true
-      | Unpushed_changesets | Uncommitted_changes | Unsatisfied_invariant -> false)
-    then [ `Red ]
-    else []
-  in
-  text_attr, text
-;;
 
 let unclean_workspaces_columns_and_rows unclean_workspaces =
   let rows =
@@ -38,17 +24,15 @@ let unclean_workspaces_columns_and_rows unclean_workspaces =
       Unclean_workspace.feature_path
       (fun ~feature reaction ->
          match reaction with
-         | None -> { Unclean_workspace_row.empty with feature = ([], feature) }
+         | None -> { Unclean_workspace_row.empty with feature }
          | Some { feature_path = _; reason } ->
-           { Unclean_workspace_row.
-             feature = []        , feature
-           ; has     = unclean_workspace_attr_text reason
-           })
+           let reason = Unclean_workspace_reason.to_ascii_table_column_text reason in
+           { Unclean_workspace_row.feature; reason })
   in
   let columns =
     Ascii_table.Column.(
-      [ string ~header:"feature" (attr_cell Unclean_workspace_row.feature)
-      ; string ~header:"reason"  (attr_cell Unclean_workspace_row.has)
+      [ string ~header:"feature" (cell Unclean_workspace_row.feature)
+      ; string ~header:"reason"  (cell Unclean_workspace_row.reason)
       ])
   in
   columns, rows

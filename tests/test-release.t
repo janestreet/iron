@@ -115,6 +115,19 @@ Save the diff as of prior to release.
   -|a
   +|change
 
+Check that Iron won't send a release email to the parent's recipients.
+
+  $ fe change root       -add-send-email-to emails-for-root
+  $ fe change root/child -add-send-email-to emails-for-child
+
+  $ fe tools get-feature-email-recipients root/child -sent-upon release
+  emails-for-child
+  seconder
+  unix-login-for-testing
+
+  $ fe change root       -remove-send-email-to emails-for-root
+  $ fe change root/child -remove-send-email-to emails-for-child
+
 Release.  Make sure that the next step is recomputed freshly in case it is corrupted.
 
   $ fe internal cached-attributes force-set root/child -skip-post-rpc-check -next-steps '(Add_code)'

@@ -135,8 +135,13 @@ module Stable : sig
     type nonrec t = t [@@deriving sexp_of]
   end
 
-  module V20 : sig
+  module V21 : sig
     type t = Model.t [@@deriving bin_io, sexp_of]
+    val of_model : Model.t -> t
+  end
+
+  module V20 : sig
+    type t [@@deriving bin_io]
     val of_model : Model.t -> t
   end
 

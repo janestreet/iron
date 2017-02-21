@@ -551,7 +551,7 @@ let removing t ~f =
            else return (`Finished ())))
 ;;
 
-let check_workspace_invariant t =
+let check_current_bookmark t =
   let%map result =
     Monitor.try_with ~extract_exn:true (fun () ->
       match%map Hg.current_bookmark (center_repo_root t) with
@@ -597,37 +597,37 @@ let unclean_status_internal t =
   let or_error f =
     match%map Monitor.try_with_or_error ~extract_exn:true (fun () -> f ()) with
     | Ok reasons -> reasons
-    | Error err  -> [ Unclean_workspace_reason.Error err ]
+    | Error err  -> [ Unclean_workspace_reason.One_reason.Error err ]
   in
   let%map reasons =
-    Deferred.List.all
-      [ or_error (fun () ->
-          match%map Hg.status_cleanliness center_repo_root with
-          | Ok Repo_is_clean -> []
-          | Error _          -> [ Unclean_workspace_reason.Uncommitted_changes ])
-      ; or_error (fun () ->
-          (* This hack of not using [hg outgoing] is not foolproof: one can still push to
-             whatever repository they want by simply using the clone, or some share of the
-             clone not managed by workspace (we won't complain when we should), or by
-             pushing in a clone of the clone, or by pulling from the destination rather
-             than pushing to it (we may complain when we shouldn't). These situations
-             don't seem likely though. *)
-          match%map Hg.phase center_repo_root (`Feature t.feature_path) with
-          | `Public -> []
-          (* We don't give any notification here since the user would have to manually set
-             the phase of the revision to secret, so they probably already know it's
-             outgoing.
+    [ or_error (fun () ->
+        match%map Hg.status_cleanliness center_repo_root with
+        | Ok Repo_is_clean -> []
+        | Error _          -> [ Unclean_workspace_reason.One_reason.Uncommitted_changes ])
+    ; or_error (fun () ->
+        (* This hack of not using [hg outgoing] is not foolproof: one can still push to
+           whatever repository they want by simply using the clone, or some share of the
+           clone not managed by workspace (we won't complain when we should), or by
+           pushing in a clone of the clone, or by pulling from the destination rather than
+           pushing to it (we may complain when we shouldn't). These situations don't seem
+           likely though. *)
+        match%map Hg.phase center_repo_root (`Feature t.feature_path) with
+        | `Public -> []
+        (* We don't give any notification here since the user would have to manually set
+           the phase of the revision to secret, so they probably already know it's
+           outgoing.
 
-             It's also the case that this could hide an unpushed ancestor changeset in
-             draft phase. But if the user is manually setting phases, they are doing
-             something tricky and so hopefully know what they are doing.  *)
-          | `Secret -> []
-          | `Draft -> [ Unclean_workspace_reason.Unpushed_changesets ])
-      ; or_error (fun () ->
-          match%map check_workspace_invariant t with
-          | Ok ()   -> []
-          | Error _ -> [ Unclean_workspace_reason.Unsatisfied_invariant ])
-      ]
+           It's also the case that this could hide an unpushed ancestor changeset in draft
+           phase. But if the user is manually setting phases, they are doing something
+           tricky and so hopefully know what they are doing. *)
+        | `Secret -> []
+        | `Draft -> [ Unclean_workspace_reason.One_reason.Unpushed_changesets ])
+    ; or_error (fun () ->
+        match%map check_current_bookmark t with
+        | Ok ()   -> []
+        | Error _ -> [ Unclean_workspace_reason.One_reason.Invalid_current_bookmark ])
+    ]
+    |> Deferred.List.all
   in
   let reasons = List.concat reasons in
   match Unclean_workspace_reason.create reasons with

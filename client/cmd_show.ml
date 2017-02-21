@@ -494,16 +494,7 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
       ; maybe send_email_to (fun send_email_to ->
           if Set.is_empty send_email_to
           then []
-          else (
-            let attrs =
-              let enabled =
-                match send_email_upon with
-                | None -> false
-                | Some set -> not (Set.is_empty set)
-              in
-              if enabled then [] else [ `Dim ]
-            in
-            send_email_to_row ~attrs send_email_to))
+          else send_email_to_row ~attrs:[] send_email_to)
       ; maybe properties property_rows
       ; block "locks"
           (maybe locked (fun locked ->
@@ -688,8 +679,8 @@ let unclean_workspaces_table users =
   let columns =
     Ascii_table.Column.(
       [ of_to_string ~header:"unclean workspaces" User_name.to_string (cell fst)
-      ; string       ~header:"reason" (attr_cell (fun (_, reason) ->
-          Cmd_workspace_unclean.unclean_workspace_attr_text reason))
+      ; string       ~header:"reason" (cell (fun (_, reason) ->
+          Unclean_workspace_reason.to_ascii_table_column_text reason))
       ])
   in
   Ascii_table.create ~columns ~rows

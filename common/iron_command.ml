@@ -38,7 +38,7 @@ let in_async param =
            [shutdown]. *)
         let%map () =
           Deferred.List.iter ~how:`Parallel [ stdout; stderr ] ~f:(fun writer ->
-            Writer.close writer ~force_close:(Deferred.never ()))
+            Writer.close (force writer) ~force_close:(Deferred.never ()))
         in
         shutdown 0);
       (never_returns (Scheduler.go ()) : unit)

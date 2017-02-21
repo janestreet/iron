@@ -68,9 +68,8 @@ let set =
      fun () ->
        let open! Deferred.Let_syntax in
        let feature_path = ok_exn feature_path in
-       let%bind description = Reader.contents stdin in
-       set_description_exn feature_path (String.strip description)
-    )
+       let%bind description = Reader.contents (force stdin) in
+       set_description_exn feature_path (String.strip description))
 ;;
 
 let show =

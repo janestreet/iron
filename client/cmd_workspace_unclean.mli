@@ -15,10 +15,6 @@ module Workspaces_status : sig
   val compute_all : unit -> t Deferred.t
 end
 
-val unclean_workspace_attr_text
-  : Unclean_workspace_reason.t
-  -> [> `Red ] list * string
-
 val unclean_workspaces_columns_and_rows
   : Unclean_workspace.t list
   -> Unclean_workspace_row.t Ascii_table.Column.t list * Unclean_workspace_row.t list

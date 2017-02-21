@@ -140,6 +140,11 @@ open! Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "get-feature" end)
+    (struct let version = 21 end)
+    (Stable.Action.V1)
+    (Stable.Reaction.V21)
+
+include Register_old_rpc
     (struct let version = 20 end)
     (Stable.Action.V1)
     (Stable.Reaction.V20)
@@ -200,6 +205,11 @@ module Reaction  = Feature
 module By_id = struct
   include Iron_versioned_rpc.Make
       (struct let name = "get-feature-by-id" end)
+      (struct let version = 21 end)
+      (Stable.By_id.Action.V2)
+      (Stable.By_id.Reaction.V21)
+
+  include Register_old_rpc
       (struct let version = 20 end)
       (Stable.By_id.Action.V2)
       (Stable.By_id.Reaction.V20)
@@ -246,6 +256,11 @@ end
 module Maybe_archived = struct
   include Iron_versioned_rpc.Make
       (struct let name = "get-feature-maybe-archived" end)
+      (struct let version = 9 end)
+      (Stable.Maybe_archived.Action.V3)
+      (Stable.Maybe_archived.Reaction.V21)
+
+  include Register_old_rpc
       (struct let version = 8 end)
       (Stable.Maybe_archived.Action.V3)
       (Stable.Maybe_archived.Reaction.V20)

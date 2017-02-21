@@ -12,8 +12,13 @@ include Invariant.S with type t := t
 module Stable : sig
   module Model : T with type t = t
 
-  module V1 : sig
+  module V2 : sig
     include Stable_without_comparator with type t = Model.t
-    val of_model : Model.t -> t
+  end
+
+  module V1 : sig
+    include Stable_without_comparator
+    val of_v2 : V2.t -> t
+    val to_v2 : t -> V2.t
   end
 end

@@ -12,3 +12,5 @@
   (setup_script "bin/setup-script")))
 
 (enforce_style ())
+
+(jbuild_version jane_street)

@@ -7,3 +7,5 @@
     iron_hg
     iron_protocol
     iron))))
+
+(jbuild_version jane_street)

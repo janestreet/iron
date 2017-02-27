@@ -34,3 +34,5 @@
  ((name DEFAULT)
   (deps (supported-internal-rpcs-for-review
          supported-public-rpcs-for-review))))
+
+(jbuild_version jane_street)

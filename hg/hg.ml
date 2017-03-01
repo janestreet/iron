@@ -324,7 +324,7 @@ let hg_with_optional_repo_root :
         | Some working_dir -> [ "--cwd"; working_dir ]
       in
       let%bind pid =
-        Unix.fork_exec ~env ~prog:hg_executable ~args:(hg_executable :: (args @ cwd)) ()
+        Unix.fork_exec ~env ~prog:hg_executable ~argv:(hg_executable :: (args @ cwd)) ()
       in
       let%map wait_result = Unix.waitpid pid in
       match wait_result with
@@ -2026,7 +2026,7 @@ let hg_command =
        Unix.exec
          ~env
          ~prog:hg_executable
-         ~args:(hg_executable :: args) ()
+         ~argv:(hg_executable :: args) ()
        |> never_returns
     )
 ;;

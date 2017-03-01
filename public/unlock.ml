@@ -34,7 +34,7 @@ module Stable = struct
         [%expect {| 55f8e60cd5f73564afa848d4afc75e68 |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_model { feature_path

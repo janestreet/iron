@@ -90,7 +90,7 @@ module Stable = struct
       [%expect {| ca9bc57a0d113d2d47f9c3246ff1fcfe |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let rec to_v6 : t -> V6.t = function

@@ -38,7 +38,7 @@ module Stable = struct
         [%expect {| f2b57644ed1fac541aceb68307354c8c |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_model { for_

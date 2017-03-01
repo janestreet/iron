@@ -17,9 +17,9 @@ let command =
      let%map_open () = return () in
      fun () ->
        let open! Deferred.Let_syntax in
-       if Async.Std.Scheduler.is_running ()
+       if Async.Scheduler.is_running ()
        then failwith "Async scheduler is running at toplevel";
-       if not (Async.Std.Scheduler.is_ready_to_initialize ())
+       if not (Async.Scheduler.is_ready_to_initialize ())
        then failwith "Async scheduler initialized")
 ;;
 

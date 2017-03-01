@@ -31,7 +31,7 @@ module Stable = struct
       [%expect {| d2a7c7ab6c6b36e6946b39bb54fb3f14 |}];
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_v2 sexps = List.map sexps ~f:(fun sexp ->

@@ -1,3 +1,4 @@
+
 module Scope = struct
 
   module Key = Validated_string.Make (struct
@@ -224,7 +225,10 @@ module Db = struct
       ~error:(Error.create "no evidence for spec id" spec_id Spec.Id.sexp_of_t)
     >>= fun evidence_by_scope ->
     Result.of_option (Hashtbl.find evidence_by_scope scope)
-      ~error:(Error.create "no evidence for scope" scope Scope.sexp_of_t)
+      ~error:(Error.create_s [%sexp "no evidence for scope"
+                                  , { scope   : Scope.t
+                                    ; spec_id : Spec.Id.t
+                                    }])
   ;;
 
   let add_fact t spec_id scope ~asserter ~comment ~assertion_time =
@@ -258,7 +262,10 @@ module Db = struct
       ~error:(Error.create "no evidence for spec id" spec_id Spec.Id.sexp_of_t)
     >>= fun evidence_by_scope ->
     Result.of_option (Hashtbl.find evidence_by_scope scope)
-      ~error:(Error.create "no evidence for scope" scope Scope.sexp_of_t)
+      ~error:(Error.create_s [%sexp "no evidence for scope"
+                                  , { scope   : Scope.t
+                                    ; spec_id : Spec.Id.t
+                                    }])
     >>= fun _ ->
     Ok (Hashtbl.remove evidence_by_scope scope)
   ;;

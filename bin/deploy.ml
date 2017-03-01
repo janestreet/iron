@@ -22,7 +22,7 @@ let generic_deploy_arguments =
 let fork_exec_wait ~prog ~args =
   Core.Unix.waitpid_exn
     (Core.Unix.fork_exec ~prog
-       ~args:(prog :: args) ())
+       ~argv:(prog :: args) ())
 ;;
 
 let generic_deploy ~remaining_arguments ~src ~dst =

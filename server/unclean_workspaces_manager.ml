@@ -18,7 +18,7 @@ module Stable = struct
         }
       [@@deriving sexp]
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let to_model { machines; query } =

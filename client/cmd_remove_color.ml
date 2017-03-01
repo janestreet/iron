@@ -9,7 +9,7 @@ let command =
      fun () ->
        Unix.exec () ~use_path:true
          ~prog:"sed"
-         ~args:[ "sed"
+         ~argv:[ "sed"
                ; "-e"; "s,\\x1B\\[[0-9;]*[a-zA-Z],,g"
                ]
        |> never_returns

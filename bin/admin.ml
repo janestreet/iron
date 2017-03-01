@@ -10,7 +10,7 @@ let browse_disk_quota =
        let prog = "catalog" in
        never_returns
          (Unix.exec () ~prog
-            ~args:[ prog
+            ~argv:[ prog
                   ; "browse"
                   ; Fe_config.catalog_browse_path
                   ])
@@ -34,7 +34,7 @@ let last_hydra_error =
        let prog = "bash" in
        never_returns
          (Unix.exec () ~prog
-            ~args:[ prog
+            ~argv:[ prog
                   ; "-c"
                   ; "hydra internal peek | sexp select last_error_talking_to_fe | grep -v '()'"
                   ])

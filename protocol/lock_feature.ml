@@ -132,7 +132,7 @@ module Stable = struct
         [%expect {| 1b81894aede6396f94500462b05ac68b |}]
       ;;
 
-      open! Core.Std
+      open! Core
       open! Import
 
       let of_model m =

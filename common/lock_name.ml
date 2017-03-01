@@ -28,7 +28,7 @@ module Stable = struct
       [%expect {| ce2471a84a580d8a799a566d5ca014f6 |}]
     ;;
 
-    open! Core.Std
+    open! Core
     open! Import
 
     let of_v3 (v3 : V3.t) =

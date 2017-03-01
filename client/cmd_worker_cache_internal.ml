@@ -256,7 +256,9 @@ are given.
            Ascii_table.Column.(
              int ~header:module_name
                (cell (fun (line : Table_line.t) ->
-                  match List.Assoc.find line.hash_consing_stats module_name with
+                  match List.Assoc.find ~equal:String.equal
+                          line.hash_consing_stats module_name
+                  with
                   | None -> 0
                   | Some stats -> extract stats)))
          in

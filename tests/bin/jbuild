@@ -6,6 +6,7 @@
     iron_common
     iron_hg
     iron_protocol
-    iron))))
+    iron))
+  (preprocess (pps (ppx_jane)))))
 
 (jbuild_version jane_street)

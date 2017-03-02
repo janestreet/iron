@@ -17,8 +17,8 @@
     pdiff4
     re2
     topological_sort
-  ))))
+  ))
+  (preprocess (pps (ppx_jane)))))
 
-(enforce_style ())
 
 (jbuild_version jane_street)

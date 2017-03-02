@@ -9,8 +9,8 @@
     incremental
     re2
     textutils
-  ))))
+  ))
+  (preprocess (pps (ppx_jane)))))
 
-(enforce_style ())
 
 (jbuild_version jane_street)

@@ -9,8 +9,8 @@
     core
     iron_common
     iron_hg
-    ))))
+    ))
+  (preprocess (pps (ppx_jane)))))
 
-(enforce_style ())
 
 (jbuild_version jane_street)

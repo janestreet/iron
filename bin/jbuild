@@ -1,6 +1,5 @@
 (executables
  ((names (fe))
-  (review_help true)
   (libraries (async
               core
               iron_client
@@ -8,13 +7,13 @@
               iron_hg
               iron_obligations
               iron_protocol
-              iron_server))))
+              iron_server))
+  (preprocess (pps (ppx_jane)))))
 
 (install
  ((section bin)
   (files ((fe.exe as fe)))))
 
-(enforce_style ())
 
 (rule
  ((targets (supported-internal-rpcs-for-review))

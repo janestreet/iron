@@ -10,9 +10,8 @@
     iron_common
     iron_hg
     iron_protocol
-  ))))
+  ))
+  (preprocess (pps (ppx_jane)))))
 
-(enforce_style
- ((exceptions (iron_param.ml))))
 
 (jbuild_version jane_street)

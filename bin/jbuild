@@ -18,16 +18,16 @@
 (rule
  ((targets (supported-internal-rpcs-for-review))
   (deps (fe.exe))
-  (action "./fe.exe internal rpc-to-server supported-by-client \
+  (action (bash "./fe.exe internal rpc-to-server supported-by-client \
              -max-output-columns 500 \
-             >supported-internal-rpcs-for-review")))
+             >supported-internal-rpcs-for-review"))))
 
 (rule
  ((targets (supported-public-rpcs-for-review))
   (deps (fe.exe))
-  (action "./fe.exe internal show-supported-iron-rpcs \
+  (action (bash "./fe.exe internal show-supported-iron-rpcs \
              -max-output-columns 500 \
-             >supported-public-rpcs-for-review")))
+             >supported-public-rpcs-for-review"))))
 
 (alias
  ((name DEFAULT)

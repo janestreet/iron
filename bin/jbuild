@@ -8,7 +8,7 @@
               iron_obligations
               iron_protocol
               iron_server))
-  (preprocess (pps (ppx_jane)))))
+  (preprocess (pps (ppx_jane ppx_driver.runner)))))
 
 (install
  ((section bin)

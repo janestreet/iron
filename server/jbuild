@@ -10,7 +10,7 @@
     iron_hg
     iron_protocol
     ))
-  (preprocess (pps (ppx_jane)))))
+  (preprocess (pps (ppx_jane ppx_driver.runner)))))
 
 
 (jbuild_version jane_street)

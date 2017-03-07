@@ -34,4 +34,4 @@
   (deps (supported-internal-rpcs-for-review
          supported-public-rpcs-for-review))))
 
-(jbuild_version jane_street)
+(jbuild_version 1)

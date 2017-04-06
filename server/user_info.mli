@@ -4,13 +4,23 @@
    - [typos], a map from typos to user_names
    - [aliases_seen], the historical aggregation of (alias, user_name) pairs
    - [valid_users], the users that we assume look at their todo
-   - [existing_users], the users that can be used at the command line, which
-   is all the users already in the system plus all the valid users
+   - [existing_users], the users that can be used at the command line, which is all the
+   users already in the system plus all the valid users
    - [invalid_users] -- existing users that aren't valid
 
    The following invariant about these sets hold: there is no overlap between aliases,
    typos and valid user names.
-*)
+
+   Should I add an alias or a typo?
+   ================================
+
+   The difference between an alias and a typo is that we expect people to use aliases
+   deliberately, whereas we expect typos are always accidental. E.g., (jode -> jdoe)
+   is a typo but (sophia -> svonmecklenburg-strelitz) is an alias.
+
+   Obligations can be defined in terms of aliases but not typos. In contrast, CRs can use
+   either. *)
+
 
 open! Core
 open! Import

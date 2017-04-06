@@ -1,9 +1,8 @@
 (** These regexps are like regular [Re2] regexps, but they only match the entire string.
-    We make them by wrapping the pattern string with [\A...\z] to anchor the match.
-*)
-
+    We make them by wrapping the pattern string with [\A...\z] to anchor the match. *)
 
 open! Core
+open! Import
 
 type t
 

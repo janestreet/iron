@@ -179,50 +179,6 @@ module Parts = struct
       Int.bit_xor (rotate_left acc 1) (File_name.hash x))
   ;;
 
-  (* Please bear in mind that killing .. elements is not always a valid thing to do.
-     It is not necessarily the case that a/b/../c is the same as a/c -- a/b might
-     be a symbolic link, in which case we must reference the file system to find
-     where the .. takes us.
-
-     This is the semantics of the Unix filesystem. You are breaking the semantics when
-     you resolve .. path elements *independently of the filesystem*.
-
-     When is this a reasonable thing to do? In contexts where we wish to impose
-     stronger semantics on the filenames -- e.g., when dealing with filenames
-     produced from URLs that we'd like to keep inside some sandbox.
-
-     Note also that this function doesn't guarantee to kill *all* .. elements -- it
-     can produce a path with leading .. elements. E.g.:
-     kill_dotdots "a/../../b/c/../d" -> "../b/d"
-  *)
-  let kill_dotdots filenames =
-    (* Convert filenames to a (nat, File_name.t list) pair, where the
-       nat says how many ..'s to prepend to the ..-free file-name list. *)
-    let leading, filenames =
-      List.fold_right filenames ~init:(0,[]) ~f:(fun f (leading,filenames) ->
-        if File_name.equal f File_name.dotdot
-        then (leading+1, filenames)
-        else if leading > 0
-        then (leading-1,filenames)
-        else (0, f::filenames))
-      (* Now convert back to a regular path. *)
-    in
-    List.append
-      (List.init leading ~f:(Fn.const File_name.dotdot))
-      filenames
-  ;;
-
-  let%test_unit _ =
-    List.iter
-      [ ["a"; "b"; ".."; "c"] , ["a"; "c"]
-      ; ["a"; ".."; ".."; "c"], [".."; "c"]
-      ]
-      ~f:(fun (input, expected_output) ->
-        [%test_result: t]
-          (kill_dotdots (List.map ~f:File_name.of_string input))
-          ~expect:(List.map ~f:File_name.of_string expected_output))
-  ;;
-
   let of_string string =
     match T0.of_string string with
     | Abspath t -> t
@@ -404,6 +360,38 @@ module Abspath = struct
           ; exn : Exn.t
           }
         ]
+  ;;
+
+  let simplify_dotdots_syntax filenames =
+    (* Convert filenames to a (nat, File_name.t list) pair, where the
+       nat says how many ..'s to prepend to the ..-free file-name list. *)
+    let leading, filenames =
+      List.fold_right filenames ~init:(0, []) ~f:(fun f (leading, filenames) ->
+        if File_name.equal f File_name.dotdot
+        then (leading+1, filenames)
+        else if Int.(>) leading 0
+        then (leading-1, filenames)
+        else (0, f::filenames))
+    in
+    if Int.(=) 0 leading
+    then Ok filenames
+    else
+      Or_error.error_s
+        [%sexp "Abspath.simplify_dotdots_syntax: Invalid abspath"
+             , (filenames : t)]
+  ;;
+
+  let%test_unit _ =
+    List.iter
+      [ ["a"; "b"; ".."; "c"] , Some ["a"; "c"]
+      ; ["a"; ".."; ".."; "c"], None
+      ]
+      ~f:(fun (input, expected_output) ->
+        [%test_result: t option]
+          (match simplify_dotdots_syntax (List.map ~f:File_name.of_string input) with
+           | Ok t -> Some t
+           | Error _ -> None)
+          ~expect:(Option.map expected_output ~f:(List.map ~f:File_name.of_string)))
   ;;
 end
 
@@ -611,12 +599,6 @@ let%test _ = Int.(>) 0 (compare (of_string "a.c")      (of_string "b.c"))      ;
 let%test _ = Int.(>) 0 (compare (of_string "a/b.c")    (of_string "z.c"))      ;;
 let%test _ = Int.(>) 0 (compare (of_string "a")        (of_string "a/b.c"))    ;;
 let%test _ = Int.(>) 0 (compare (of_string "a")        (of_string "/a"))       ;; (* rel < abs *)
-
-let kill_dotdots p1 =
-  match p1 with
-  | Relpath fs -> Relpath (Parts.kill_dotdots fs)
-  | Abspath fs -> Abspath (Parts.kill_dotdots fs)
-;;
 
 let resolve t ~relative_to =
   match t with

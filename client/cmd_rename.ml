@@ -39,11 +39,7 @@ let main { Fe.Rename.Action.
         Hg.pull ~repo_is_clean repo_root ~from:remote_repo_path
           (`Revs [ from_tip; to_parent_tip ])
       in
-      let%map gca =
-        Hg.greatest_common_ancestor repo_root [ Revset.of_rev from_tip
-                                              ; Revset.of_rev to_parent_tip
-                                              ]
-      in
+      let%map gca = Hg.greatest_common_ancestor repo_root from_tip to_parent_tip in
       if not (Rev.equal_node_hash gca from_base)
       then
         raise_s

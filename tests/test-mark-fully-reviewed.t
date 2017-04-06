@@ -36,6 +36,12 @@ Mark, and then no review to do.
 
   $ fe tools mark-fully-reviewed root -for unix-login-for-testing
   $ fe todo
+  |----------------------------|
+  | feature | next step        |
+  |---------+------------------|
+  | root    | add w-f-reviewer |
+  |----------------------------|
+  
   Features you own:
   |----------------------------|
   | feature | next step        |

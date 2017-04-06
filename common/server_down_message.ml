@@ -18,20 +18,9 @@ end
 
 type t =
   { message           : string
-  ; temporary_message : Temporary_message.t option
+  ; temporary_message : Temporary_message.t sexp_option
   }
-
-let persist =
-  Future_proof_serializer.mapN
-    Future_proof_serializer.(
-      field       "message"           (module String) ~default:""
-      & field_opt "temporary_message" (module Temporary_message)
-      & nil)
-    ~load:(fun message temporary_message  -> { message ; temporary_message })
-    ~save:(fun f_message f_temporary_message { message ; temporary_message } ->
-      f_message message;
-      f_temporary_message temporary_message)
-;;
+[@@deriving sexp]
 
 let create message =
   { message = String.rstrip message
@@ -65,12 +54,12 @@ let clear_temporary_message t = { t with temporary_message = None }
 ;;
 
 let save_exn t ~perm file =
-  Future_proof_serializer.to_sexp persist t
-  |> Writer.save_sexp ~perm (Abspath.to_string file)
+  Writer.save_sexp ~perm (Abspath.to_string file) (sexp_of_t t)
 ;;
 
 let load_exn file =
-  Reader.load_sexp_exn (Abspath.to_string file) (Future_proof_serializer.of_sexp persist)
+  Reader.load_sexp_exn (Abspath.to_string file)
+    (Sexp.of_sexp_allow_extra_fields t_of_sexp)
 ;;
 
 let prod_path =

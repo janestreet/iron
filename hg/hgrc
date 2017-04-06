@@ -39,7 +39,7 @@ active_bookmark=/j/office/app/hg/prod/jhg/active_bookmark_v3.py
 
 # Updates the file .hg/dirstate.for-omake.txt on hg operations which
 # change the dirstate.  This file is used by jenga.
-dirstate_for_omake=/j/office/app/hg/prod/jhg/dirstate_for_omake_v4.py
+dirstate_for_omake=/j/office/app/hg/prod/jhg/dirstate_for_omake_v5.py
 
 # Causes bookmark information only to be shared for bookmarks
 # explicitly passed with [-r] or [-B] to [hg push].

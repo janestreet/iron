@@ -401,7 +401,7 @@ let feature_cr_summary t feature =
   let alternate_names = User_info.alternate_names t.user_info ~which:`All in
   Or_error.map (feature_crs t feature) ~f:(fun crs ->
     Cr_comment.Summary.create crs
-      ~feature_owner:(Feature.owner_for_crs feature) ~alternate_names)
+      ~feature_owner:(Feature.first_owner feature) ~alternate_names)
 ;;
 
 let users_with_existing_review_manager t feature =
@@ -832,6 +832,11 @@ let rec next_steps_gen t feature ~(trying_to : Trying_to.t) : Next_step.t list =
       let am_expecting_bookmark_update =
         Next_bookmark_update.am_expecting_bookmark_update next_bookmark_update
       in
+      let am_expecting_base_update =
+        match Feature.next_base_update feature with
+        | Update_expected _  -> true
+        | No_update_expected -> false
+      in
       let am_continuously_releasing_into =
         match trying_to with
         | Release -> false
@@ -941,6 +946,8 @@ let rec next_steps_gen t feature ~(trying_to : Trying_to.t) : Next_step.t list =
               then maybe_prepend_rebase [ Widen_reviewing ]
               else if am_expecting_bookmark_update
               then [ Wait_for_hydra ]
+              else if am_expecting_base_update
+              then [ Restore_base ]
               else
                 (* We can reach here if there is an unsatisfiable review obligation.
                    [Reviewed_by.eval] is supposed to prevent such things. *)
@@ -949,7 +956,10 @@ let rec next_steps_gen t feature ~(trying_to : Trying_to.t) : Next_step.t list =
             else if not (Feature.is_seconded feature)
                  || not is_fully_reviewed
                  || not (List.is_empty crs)
-            then [ Report_iron_bug ]
+            then (
+              if am_expecting_base_update
+              then [ Restore_base ]
+              else [ Report_iron_bug ])
             else (
               let lock_name : Next_step.Lock_name.t =
                 match trying_to with
@@ -1096,12 +1106,18 @@ let feature_to_protocol ?rev_zero t feature : Iron_protocol.Feature.t =
     Or_error.try_with (fun () ->
       compute_line_count_by_user_exn t feature)
   in
+  let is_rebased =
+    match find_parent t feature_path with
+    | Error _   -> true
+    | Ok parent -> Rev.equal_node_hash (Feature.tip parent) (Feature.base feature)
+  in
   Feature.to_protocol feature
     ~remote_repo_path:(remote_repo_path t feature ?rev_zero)
     ~has_children:(Feature_forest.has_children_exn t.features feature_path)
     ~cr_summary:(feature_cr_summary t feature)
     ~line_count_by_user
     ~is_archived:false
+    ~is_rebased
     ~users_with_unclean_workspaces:(users_with_unclean_workspaces t feature_path)
 ;;
 
@@ -1223,7 +1239,7 @@ let check_cached_feature_attributes t which_features ~ignore_diffs_in_errors =
 ;;
 
 let crs_by_assignee t feature crs =
-  let feature_owner = Feature.owner_for_crs feature in
+  let feature_owner = Feature.first_owner feature in
   let alternate_names = User_info.alternate_names t.user_info ~which:`All in
   List.map crs ~f:(fun cr ->
     let assignee =
@@ -1480,6 +1496,7 @@ let get_cached_or_reload_archived_feature_exn t feature_id =
         ~line_count_by_user:
           (Or_error.error_string "Line counts unavailable for archived features")
         ~is_archived:true
+        ~is_rebased:true
         ~users_with_unclean_workspaces:(users_with_unclean_workspaces t feature_path)
     in
     let feature_protocol =
@@ -2597,7 +2614,7 @@ let change_feature t feature query
   in
   let whole_feature_followers = Feature.whole_feature_followers feature in
   let whole_feature_reviewers = Feature.whole_feature_reviewers feature in
-  let owner_for_crs = Feature.owner_for_crs feature in
+  let owner_for_crs = Feature.first_owner feature in
   let owners = Feature.owners feature in
   let result = Feature.change feature query updates in
   let owners_changed =
@@ -2618,7 +2635,7 @@ let change_feature t feature query
   (if whole_feature_reviewers_changed
    || whole_feature_followers_changed
    then update_review_manager_goals t feature);
-  (if not (User_name.equal owner_for_crs (Feature.owner_for_crs feature))
+  (if not (User_name.equal owner_for_crs (Feature.first_owner feature))
    then repartition_crs_by_assignee t feature);
   result @ errors
 ;;
@@ -3014,7 +3031,11 @@ let create_feature_exn t query =
       ~whole_feature_reviewers:add_whole_feature_reviewers
   in
   change_feature_exn t feature query
-    (Batch_of_feature_changes.to_feature_updates feature batch_of_feature_changes);
+    (Batch_of_feature_changes.to_feature_updates feature batch_of_feature_changes
+     @ (if am_functional_testing
+        then
+          []
+        else [ `Set_reviewing (`Only (User_name.Set.singleton (List.hd_exn owners))) ]));
   feature
 ;;
 
@@ -3435,29 +3456,6 @@ let () =
        ; brain
        ; remote_rev_zero  = Feature.rev_zero feature
        ; remote_repo_path = remote_repo_path t feature
-       })
-;;
-
-let () =
-  let module Get_diff = Iron_protocol.Get_diff_deprecated in
-  implement_deferred_rpc ~log:false Post_check_in_features.none
-    (module Get_diff)
-    (fun t query ->
-       let open Async in
-       let { Get_diff.Action. what_feature; what_diff } = Query.action query in
-       let%map (reviewer, feature_protocol) =
-         get_maybe_archived_feature_and_reviewer_exn t ~what_feature ~what_diff
-       in
-       { Get_diff.Reaction.
-         feature_path     = feature_protocol.feature_path
-       ; feature_id       = feature_protocol.feature_id
-       ; is_archived      = feature_protocol.is_archived
-       ; diffs            = feature_protocol.diff_from_base_to_tip
-       ; reviewer
-       ; base             = feature_protocol.base
-       ; tip              = feature_protocol.tip
-       ; remote_rev_zero  = feature_protocol.rev_zero
-       ; remote_repo_path = feature_protocol.remote_repo_path
        })
 ;;
 
@@ -4511,7 +4509,7 @@ let () =
     (fun t query ->
        let { Prepare_for_crs.Action. feature_path } = Query.action query in
        let feature = find_feature_exn t feature_path in
-       { owner_for_crs   = Feature.owner_for_crs feature
+       { owner_for_crs   = Feature.first_owner feature
        ; alternate_names = User_info.alternate_names t.user_info ~which:`All
        ; aliases         = User_info.alternate_names t.user_info ~which:`Aliases
        })
@@ -5193,8 +5191,64 @@ let () =
            in
            let review_is_enabled = Feature.review_is_enabled feature in
            let user_is_reviewing = Feature.user_is_currently_reviewing feature for_ in
-           let may_second =
-             seconding_is_recommended t ~for_ feature ~even_if_locked:false
+           let next_steps = Feature.next_steps feature in
+           let assigned_next_steps : Next_step.Assigned.t =
+             (* We need this special case for [Ask_seconder] because the heuristic to
+                chose whom to assign this next step is not straight forward.  For example,
+                the owner does not get a 'second' in their todo if there is another
+                potential seconder who's not an owner -- Iron does not encourage users to
+                [second -even-though-owner].  *)
+             if seconding_is_recommended t ~for_ feature ~even_if_locked:false
+             then [ Ask_seconder ]
+             else (
+               let rebase, next_steps_skipping_rebase =
+                 match next_steps with
+                 | Rebase :: ts -> true, ts
+                 | ts -> false, ts
+               in
+               let maybe_prepend_rebase t =
+                 if rebase
+                 then [ Next_step.Rebase; t ]
+                 else [ t ]
+               in
+               let only_first_owner =
+                 if User_name.equal for_ (Feature.first_owner feature)
+                 then Fn.id
+                 else const []
+               in
+               match List.hd next_steps_skipping_rebase with
+               | None -> []
+               | Some t ->
+                 match t with
+                 | Add_whole_feature_reviewer
+                 | Report_iron_bug
+                 | Restore_base
+                 | Restore_bookmark
+                 | Widen_reviewing
+                   -> only_first_owner (maybe_prepend_rebase t)
+
+                 | Fix_build
+                 | Fix_problems
+                   ->
+                   if review_is_enabled
+                   then only_first_owner (maybe_prepend_rebase t)
+                   else []
+
+                 | Release
+
+                 | Add_code
+                 | Archive
+                 | Ask_seconder
+                 | Compress
+                 | CRs
+                 | Enable_review
+                 | In_parent _
+                 | Rebase
+                 | Review
+                 | Unlock _
+                 | Wait_for_continuous_release
+                 | Wait_for_hydra
+                   -> [])
            in
            let need_to_show_crs = function
              | `Disabled -> false
@@ -5207,7 +5261,7 @@ let () =
              || (user_is_reviewing
                  && Line_count.is_shown line_count ~show_completed_review:false)
              || Line_count.Catch_up.total line_count.catch_up > 0
-             || may_second
+             || not (List.is_empty assigned_next_steps)
            in
            if need_to_show
            then (
@@ -5217,11 +5271,11 @@ let () =
                ; feature_path_exists = true
                ; review_is_enabled
                ; user_is_reviewing
-               ; may_second
+               ; assigned_next_steps
                ; num_crs
                ; num_xcrs
                ; line_count
-               ; next_steps          = Feature.next_steps feature
+               ; next_steps
                }
              in
              r := assigned :: !r));
@@ -5233,7 +5287,7 @@ let () =
              ; feature_path_exists = Result.is_ok (find_feature t feature_path)
              ; review_is_enabled   = false
              ; user_is_reviewing   = false
-             ; may_second          = false
+             ; assigned_next_steps = []
              (* During catch up, CR work is not relevant if the feature no longer
                 exists, which is the case here, thus we use [`Disabled]. *)
              ; num_crs             = `Disabled
@@ -5541,22 +5595,6 @@ let () =
            (* If there was no error, we augment the worker cache *)
            if is_ok info then Worker_cache.augment t.worker_cache augment_worker_cache;
            result))
-;;
-
-let () =
-  let module Wait_for_hydra_deprecated = Iron_protocol.Wait_for_hydra_deprecated in
-  implement_rpc ~log:false Post_check_in_features.none
-    (module Wait_for_hydra_deprecated)
-    (fun t query ->
-       let { Wait_for_hydra_deprecated.Action. feature_path; rev_zero } =
-         Query.action query
-       in
-       let feature = find_feature_exn t feature_path in
-       { is_pending       = Next_bookmark_update.am_expecting_bookmark_update
-                              (Feature.next_bookmark_update feature)
-       ; tip              = Feature.tip feature
-       ; remote_repo_path = remote_repo_path t feature ~rev_zero
-       })
 ;;
 
 let () =

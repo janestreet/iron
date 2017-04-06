@@ -20,8 +20,8 @@ let path_in_repo_arg_type =
     | Error _ -> Path_in_repo.of_string file
     | Ok repo_root ->
       Repo_root.relativize_exn repo_root
-        (Abspath.kill_dotdots
-           (Path.resolve_relative_to_program_started_in (Path.of_string file))))
+        (ok_exn (Abspath.simplify_dotdots_syntax
+                   (Path.resolve_relative_to_program_started_in (Path.of_string file)))))
 ;;
 
 let path_in_repo_anons = "FILE" %: path_in_repo_arg_type
@@ -133,11 +133,13 @@ let resolved_file_path_arg_type =
 
 let resolved_file_path = anon ("FILE" %: resolved_file_path_arg_type)
 
-let enum_no_args m ~doc =
+let enum_no_args ?(aliases=const []) m ~doc =
   map ~f:List.filter_opt
     (params
        (List.map (enum m) ~f:(fun (name, value) ->
-          map (no_arg_flag (concat [ "-"; name ]) ~doc:(doc ~name value))
+          map (no_arg_flag (concat [ "-"; name ])
+                 ~aliases:(aliases value)
+                 ~doc:(doc ~name value))
             ~f:(fun b -> if b then Some value else None))))
 ;;
 
@@ -1123,7 +1125,7 @@ let owners =
 ;;
 
 let remote_repo_path =
-  flag Switch.remote_repo_path ~doc:"PATH path on the hg machine"
+  flag Switch.remote_repo_path ~doc:"URL location of the shared repo (e.g., ssh://...)"
     (optional
        (Arg_type.create Remote_repo_path.of_string
           ~complete:(complete [Remote_repo_path])))

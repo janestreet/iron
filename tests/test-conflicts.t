@@ -35,7 +35,7 @@ Make conflicting changes in clone
 Pull to create conflict
 
   $ hg pull | matches '+1 heads'
-  $ hg merge |& matches 'warning: conflicts during merge'
+  $ hg merge |& matches 'warning: conflicts while merging'
   [1]
 
 Now use [fe conflicts] to display the conflicts

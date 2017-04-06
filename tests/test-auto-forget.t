@@ -34,6 +34,12 @@ Mark, and then there is no review to do.
 
   $ fe session mark-file root file
   $ fe todo
+  |----------------------------|
+  | feature | next step        |
+  |---------+------------------|
+  | root    | add w-f-reviewer |
+  |----------------------------|
+  
   Features you own:
   |----------------------------|
   | feature | next step        |

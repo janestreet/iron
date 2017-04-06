@@ -1,12 +1,13 @@
-
-open Core
+open! Core
+open! Import
 
 module Elt = struct
   type 'a t =
     { check_code : int
     ; value      : 'a
     ; index      : int
-    } [@@deriving fields]
+    }
+  [@@deriving fields]
 end
 
 type 'a t =
@@ -23,11 +24,10 @@ let create list =
   let elements = Array.of_list list in
   let deleted = Array.map elements ~f:(fun _ -> false) in
   let pointer = 0 in
-  {
-    check_code = !check_code;
-    elements;
-    pointer;
-    deleted;
+  { check_code = !check_code
+  ; elements
+  ; pointer
+  ; deleted
   }
 ;;
 

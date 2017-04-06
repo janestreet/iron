@@ -55,6 +55,15 @@ val to_attrs
   -> review_is_enabled : bool
   -> Iron_ascii_table.Attr.t list
 
+module Assigned : sig
+  type nonrec t = t list [@@deriving sexp_of]
+
+  val to_attrs_and_string
+    :  t
+    -> review_is_enabled : bool
+    -> Iron_ascii_table.Attr.t list * string
+end
+
 module Stable : sig
   module Model : T with type t = t
 

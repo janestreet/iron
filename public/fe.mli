@@ -44,6 +44,7 @@ val list_table                     : Rpc_for (Fe_list.Table)                    
 val lock                           : Rpc_for (Lock)                                     .t
 val notify_on_descendant_updates   : Pipe_rpc_for (Iron_protocol.Notify_on_descendant_updates).t
 val notify_on_feature_updates      : Pipe_rpc_for (Iron_protocol.Notify_on_feature_updates)   .t
+val ping                           : Rpc_for (Iron_protocol.Ping)                       .t
 val rebase                         : Rpc_for (Rebase)                                   .t
 val release                        : Rpc_for (Release)                                  .t
 val rename                         : Rpc_for (Rename)                                   .t

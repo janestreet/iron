@@ -11,6 +11,12 @@ Creating a feature with only whitespace to read
 And no review in the todo
 
   $ fe todo
+  |----------------------------|
+  | feature | next step        |
+  |---------+------------------|
+  | root    | add w-f-reviewer |
+  |----------------------------|
+  
   Features you own:
   |----------------------------|
   | feature | next step        |

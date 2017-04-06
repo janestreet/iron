@@ -60,6 +60,12 @@ Restore bookmark is shown in next steps and the owner is alerted in his todo.
   | base                   | dc568be383d7            |
   |--------------------------------------------------|
   $ fe todo
+  |----------------------------|
+  | feature | next step        |
+  |---------+------------------|
+  | root    | restore bookmark |
+  |----------------------------|
+  
   Features you own:
   |----------------------------|
   | feature | next step        |

@@ -1,7 +1,6 @@
-open Core
-open Async
-open Import
-
+open! Core
+open! Async
+open! Import
 
 let warn text ~subject users =
   let%bind () =

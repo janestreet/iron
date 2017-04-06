@@ -82,7 +82,9 @@ module type T = sig
   val enum_anon_list : string -> 'a Enum.t -> 'a list  t
 
   val enum_list     : string -> doc:string -> 'a Enum.t -> 'a list   t
-  val enum_no_args  : 'a Enum.t -> doc:(name:string -> 'a -> string) -> 'a list t
+  val enum_no_args
+    :  ?aliases:('a -> string list)
+    -> 'a Enum.t -> doc:(name:string -> 'a -> string) -> 'a list t
   val enum_optional : string -> doc:string -> 'a Enum.t -> 'a option t
   val enum_required : string -> doc:string -> 'a Enum.t -> 'a        t
 

@@ -23,12 +23,16 @@ module Num_crs : sig
 end
 
 module Assigned : sig
+  (** [assigned_next_steps] may be different from [next_steps].  A next-step is assigned
+      if there is a clear action that we expect the assignee will want to do immediately.
+      Each assigned next step is shown only to its assignee, typically the feature's first
+      owner. *)
   type t =
     { feature_path        : Feature_path.t
     ; feature_path_exists : bool
     ; review_is_enabled   : bool
     ; user_is_reviewing   : bool
-    ; may_second          : bool
+    ; assigned_next_steps : Next_step.t list
     ; num_crs             : Num_crs.t
     ; num_xcrs            : Num_crs.t
     ; line_count          : Line_count.t

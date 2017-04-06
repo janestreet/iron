@@ -5,10 +5,6 @@ open Iron
 type t
 
 module Cmd : sig
-  module Crs : sig
-    (* val update_local_repo : t -> bool *)
-  end
-
   module List : sig
     val depth : t -> int option
   end
@@ -30,6 +26,7 @@ module Cmd : sig
   module Show : sig
     val omit_completed_review         : t -> bool
     val omit_unclean_workspaces_table : t -> bool
+    val show_feature_id               : t -> bool
     val show_inheritable_attributes   : t -> bool
     val show_lock_reasons             : t -> bool
   end

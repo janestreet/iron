@@ -9,7 +9,7 @@ Slurp in the common setup code for the rebase tests:
   $ function run_after_push() {
   >   fe show root/test-feature -display-ascii    > $temp_dir/show.txt
   >   fe show root/test-feature -next-base-update > $temp_dir/next-base-update.txt
-  >   feature_to_server root/test-feature
+  >   feature_to_server root/test-feature -fake-valid
   > }
 
   $ export -f run_after_push
@@ -23,8 +23,8 @@ Slurp in the common setup code for the rebase tests:
   $ fe show root/test-feature -next-base-update
   No_update_expected
 
-  $ cat $temp_dir/show.txt | grep '^| base'
-  | base                   | * (pending for *) | (glob)
+  $ cat $temp_dir/show.txt | grep '^| base' | single_space
+  | base | none (last known as * * ago) | (glob)
 
   $ cat $temp_dir/next-base-update.txt | sexp print -machine
   (Update_expected((rev *)(by unix-login-for-testing)(expected_since(*)))) (glob)

@@ -338,7 +338,6 @@ let files_in_build_order ~dir files =
   files, file_dependencies
 ;;
 
-
 module Compute_result = struct
   type t =
     | No_build_order of Error.t

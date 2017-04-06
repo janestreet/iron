@@ -19,14 +19,11 @@ problem.
   $ fe create root2 -description root2 -remote-repo-path $TESTTMP/remote
   ("[hg push] failed"
    ((stdout
-      "pushing to $TESTTMP/remote\
-     \nsearching for changes\
-     \nno changes found\
-     \n")
+     ("pushing to $TESTTMP/remote"
+      "searching for changes" "no changes found" ""))
     (stderr
-      "transaction abort!\
-     \nrollback completed\
-     \nabort: Permission denied: $TESTTMP/remote/.hg/.bookmarks-*\ (glob)
-     \n")
+     ("transaction abort!" "rollback completed"
+      "abort: Permission denied: $TESTTMP/remote/.hg/.bookmarks-*" (glob)
+      ""))
     (exit_status (Error (Exit_non_zero 255)))))
   [1]

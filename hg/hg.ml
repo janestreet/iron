@@ -235,7 +235,7 @@ type _ how =
 ;;
 
 let hg_executable =
-  "/j/office/app/hg/versions/3.5+hgrc_env_vars+share_cache_fix+eliminate_bookmark_race+actually_add_hgrc_env_vars/bin/hg"
+  "/j/office/app/hg/versions/3.8.2+hgrc_env_vars+share_cache_fix+eliminate_bookmark_race/bin/hg"
 ;;
 
 let hg_user_env_var = "HGUSER"
@@ -300,7 +300,7 @@ let hg_with_optional_repo_root :
       then args @
            [ "--config"
            ; "extensions.silence_lock_message=\
-              /j/office/app/hg/prod/jhg/silence_lock_message_v1.py"
+              /j/office/app/hg/prod/jhg/silence_lock_message_v2.py"
            ]
       else args
     in
@@ -467,7 +467,6 @@ module Revset = struct
     | Or  of t list
     | Not of t
     | Difference of t * t
-    | Heads of t
     | Ancestors of t
     | Descendants of t
     | First_greatest_common_ancestor of Rev.t list
@@ -520,10 +519,6 @@ module Revset = struct
 
   let first_greatest_common_ancestor revs = First_greatest_common_ancestor revs
 
-  let heads t = Heads t
-
-  let greatest_common_ancestors ts = heads (and_ (List.map ts ~f:ancestors))
-
   let limit t ~limit = Limit (t, limit)
 
   let to_string = function
@@ -558,7 +553,6 @@ module Revset = struct
         | Merge -> nullary ac "merge"
         | Ancestors   t -> unary t ac "ancestors"
         | Descendants t -> unary t ac "descendants"
-        | Heads       t -> unary t ac "heads"
         | Min         t -> unary t ac "min"
         | Max         t -> unary t ac "max"
         | Reverse     t -> unary t ac "reverse"
@@ -763,6 +757,26 @@ let current_bookmark repo_root =
     else error "there is no current bookmark" () [%sexp_of: unit]
 ;;
 
+module Shelve_description = struct
+  type t = string [@@deriving sexp_of]
+end
+
+let list_shelves_exn repo_root =
+  match%map
+    hg ~repo_root ~how:Capture_stdout "shelve"
+      ~args:[ "--list"
+            ; "--config"; "extensions.shelve="
+            ]
+  with
+  | Ok stdout -> String.split_lines stdout
+  | Error err ->
+    raise_s
+      [%sexp "cannot list the existing shelves"
+           , (repo_root : Repo_root.t)
+           , (err : Error.t)
+      ]
+;;
+
 let bookmark_exists repo_root bookmark =
   let%map result = create_revs repo_root (Revset.bookmark bookmark) in
   is_ok result
@@ -820,21 +834,29 @@ let first_greatest_common_ancestor repo_root rev1 rev2 =
          (Rev.to_string_hum rev2 ~lossy:true))
 ;;
 
-let greatest_common_ancestors repo_root revsets =
-  let%map result = create_revs repo_root (Revset.greatest_common_ancestors revsets) in
-  ok_exn result
+let greatest_common_ancestors repo_root rev1 rev2 =
+  let%map output =
+    hg ~repo_root "gcas"
+      ~args:[ "--config"; "extensions.gcas=/j/office/app/hg/dev/jhg/\
+                           greatest_common_ancestors_v1.py"
+            ; Rev.to_string_40 rev1
+            ; Rev.to_string_40 rev2
+            ]
+      ~how:Capture_stdout
+  in
+  ok_exn (output_to_revs output)
 ;;
 
-let greatest_common_ancestor repo_root revsets =
-  match%map greatest_common_ancestors repo_root revsets with
+let greatest_common_ancestor repo_root rev1 rev2 =
+  match%map greatest_common_ancestors repo_root rev1 rev2 with
   | [ gca ] -> gca
   | [] ->
-    failwiths "could not determine greatest common ancestors" revsets
-      [%sexp_of: Revset.t list]
+    raise_s [%sexp "could not determine greatest common ancestors",
+                   ([ rev1; rev2 ] : Rev.t list)]
   | _ :: _ :: _ as gcas ->
-    failwiths "multiple greatest common ancestors"
-      (revsets, `greatest_common_ancestors gcas)
-      [%sexp_of: Revset.t list * [ `greatest_common_ancestors of Rev.t list ]]
+    raise_s [%sexp "multiple greatest common ancestors",
+                   ([ rev1; rev2 ] : Rev.t list),
+                   ("greatest common ancestors", (gcas : Rev.t list))]
 ;;
 
 let is_ancestor repo_root ~ancestor ~descendant =
@@ -1747,14 +1769,11 @@ module Status = struct
   ;;
 
   module Changed = struct
-    module Between = struct
-      type t =
-        { src : Rev.t
-        ; dst : [ `Working_copy | `Rev of Rev.t ]
-        }
-    end
     type t =
-      | Between    of Between.t
+      | Between of
+          { src : Rev.t
+          ; dst : [ `Working_copy | `Rev of Rev.t ]
+          }
       | Changed_by of Rev.t
   end
 end
@@ -1942,7 +1961,7 @@ module Scaffold = struct
       | _rev -> Ok revision
       | exception exn ->
         Or_error.error "\
-scaffold file must use either a global tag or a 40-char revision hash"
+              scaffold file must use either a global tag or a 40-char revision hash"
           exn [%sexp_of: Exn.t])
   ;;
 end

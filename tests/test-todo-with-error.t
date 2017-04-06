@@ -27,11 +27,11 @@ And breaking the feature:
 And now, the owner sees the error. He also sees his existing session:
 
   $ fe todo
-  |------------------|
-  | feature | review |
-  |---------+--------|
-  | root    |      3 |
-  |------------------|
+  |---------------------------------|
+  | feature | review | next step    |
+  |---------+--------+--------------|
+  | root    |      3 | fix problems |
+  |---------------------------------|
   
   Features you own:
   |--------------------------------------|

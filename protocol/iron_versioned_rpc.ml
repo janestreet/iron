@@ -345,9 +345,10 @@ module Make_pipe_rpc
     let query = Query.create action in
     if verbose
     then Verbose.message "rpc query" (name, query) [%sexp_of: string * query];
+    (* Pipe RPCs don't use the proxy.  The proxy reduces the cost of setting up a
+       connection but pipe rpcs are long running. *)
     rpc_to_server_gen_exn
-      ~may_connect_to_proxy:
-        false
+      ~may_connect_to_proxy:false
       ~how_to_connect
       ~dispatch_callback:(fun connection ->
         Both_convert.dispatch_multi connection query)

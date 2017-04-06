@@ -37,7 +37,8 @@ But can't assert new fact whose spec has been removed
 Retract fact
   $ fe fact remove -spec-id "test" -scope "((rev 1))"
   $ fe fact show -spec-id "test" -scope "((rev 1))" 
-  (error (fact-evidence ("no evidence for scope" ((rev 1)))))
+  (error
+   (fact-evidence ("no evidence for scope" ((scope ((rev 1))) (spec_id test)))))
   [1]
 
 Add spec back, different authorization rules

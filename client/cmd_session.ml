@@ -356,7 +356,8 @@ module Attribute = struct
   end
   include T
   let sequence =
-    Command.Param.enum_no_args (module T) ~doc:(fun ~name _ -> sprintf "show %s" name)
+    Command.Param.enum_no_args (module T)
+      ~doc:(fun ~name _ -> sprintf "show %s" name)
   ;;
 end
 

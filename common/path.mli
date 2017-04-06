@@ -45,8 +45,6 @@ module Relpath : sig
 
   val chop_prefix : prefix:t -> t -> t Or_error.t
 
-  val kill_dotdots : t -> t (* See comments above. *)
-
   module Stable : sig
     module V1 : sig
       type nonrec t = t
@@ -89,8 +87,16 @@ module Abspath : sig
   val chop_prefix : prefix:t -> t                -> Relpath.t Or_error.t
   val chop_suffix : t        -> suffix:Relpath.t -> t         Or_error.t
 
-  (* Eliminate .. elements where possible. See discussion above. *)
-  val kill_dotdots : t -> t
+  (** Simplify the path by attempting to simplify all the ".." parts.  This function is
+      purely syntactic -- it does not look at all at the state of the filesystem.
+      Example:
+
+      {v
+        "/a/b/../c"  -> Ok "a/c"
+        "/a/../../b" -> Error _
+      v}
+  *)
+  val simplify_dotdots_syntax : t -> t Or_error.t
 
   val is_prefix : prefix:t -> t -> bool
 
@@ -138,24 +144,6 @@ val is_prefix   : prefix:t -> t -> bool
    To repeat: when we succeed, answer is always a relative path. *)
 val chop_prefix : prefix:t -> t -> t Or_error.t
 
-(* Please bear in mind that killing .. elements is not always a valid thing to do.
-   It is not necessarily the case that a/b/../c is the same as a/c -- a/b might
-   be a symbolic link, in which case we must reference the file system to find
-   where the .. takes us.
-
-   This is the semantics of the Unix filesystem. You are breaking the semantics when
-   you resolve .. path elements *independently of the filesystem*.
-
-   When is this a reasonable thing to do? In contexts where we wish to impose
-   stronger semantics on the filenames -- e.g., when dealing with filenames
-   produced from URLs that we'd like to keep inside some sandbox.
-
-   Note also that this function doesn't guarantee to kill *all* .. elements -- it
-   can produce a path with leading .. elements. E.g.:
-   kill_dotdots "a/../../b/c/../d" -> "../b/d"
-*)
-val kill_dotdots : t -> t
-
 val with_temp_dir
   :  ?in_dir:Abspath.t (** default to [Filename.temp_dir_name] *)
   -> File_name.t
@@ -165,7 +153,7 @@ val with_temp_dir
 (* Resolve a Path.t to an Abspath.t:
    - If the path is abspath, that's the answer.
    - If the path is relative, append it to [relative_to]
-   Does not eliminate .. elements in the path; see kill_dotdots.
+   Does not eliminate .. elements in the path; see [Abspath.simplify_dotdots_syntax].
 *)
 val resolve : t -> relative_to:Abspath.t -> Abspath.t
 

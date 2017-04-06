@@ -1,6 +1,6 @@
-open Core
-open Async
-open Import
+open! Core
+open! Async
+open! Import
 
 module Host   = String
 module Office = String
@@ -17,40 +17,6 @@ let prod_var = Abspath.extend prod_basedir (File_name.of_string "var")
 let deploy_offices : Office.t list =
   ["ves"; "tot"; "etot"; "igm"; "ldn"; "fen"; "hkg"]
 ;;
-
-module Make(T : sig type t [@@deriving of_sexp] end) = struct
-
-  let config_file_relative_to_basedir = Relpath.of_string "etc/iron-config.sexp"
-
-  let load_exn ~basedir =
-    Reader.load_sexp_exn
-      (Abspath.to_string
-         (Abspath.append basedir config_file_relative_to_basedir))
-      [%of_sexp: T.t]
-  ;;
-
-  let prod () =
-    assert (not am_functional_testing);
-    load_exn ~basedir:prod_basedir
-  ;;
-
-  let load_as_per_IRON_CONFIG () =
-    env_var_has_been_read := true;
-    match Sys.getenv env_var with
-    | Some ("prod" | "PROD") -> prod ()
-    | Some s -> return (Sexp.of_string_conv_exn s [%of_sexp: T.t])
-    | None ->
-      if String.is_prefix Core.Sys.executable_name ~prefix:"/j/office/app"
-      then prod ()
-      else
-        failwithf "\
-must define %s environment variable or call [Iron_config.use_prod_IRON_CONFIG] prior
-to forcing [as_per_IRON_CONFIG]"
-          env_var ()
-  ;;
-
-  let as_per_IRON_CONFIG = lazy (load_as_per_IRON_CONFIG ())
-end
 
 module Rpc_proxy_config : sig
 
@@ -99,60 +65,72 @@ end = struct
   ;;
 end
 
+let serializer_pause_timeout_default = Time.Span.of_min 1.
+
+(* The hydra_user is configurable so that we allow temporary changes via config pending
+   a roll, but it changes so rarely that the hard-coding this default value seems
+   perfectly fine *)
+let default_hydra_user = User_name.of_string "as-hydra"
+
+(* Serialization must have adequate backward and forward compatibility properties, given
+   the clients that need consume that type. *)
+type t =
+  { host                     : string
+  ; async_rpc_port           : Async_rpc_port.t
+  ; rpc_proxy_config         : Rpc_proxy_config.t [@default Rpc_proxy_config.no_proxy]
+  ; hgrc                     : Abspath.t
+  ; hydra_user               : User_name.t [@default default_hydra_user]
+  ; serializer_pause_timeout : Time.Span.t [@default serializer_pause_timeout_default]
+  }
+[@@deriving fields, sexp]
+
+let t_of_sexp = Sexp.of_sexp_allow_extra_fields t_of_sexp
+
+let config_file_relative_to_basedir = Relpath.of_string "etc/iron-config.sexp"
+
+let load_exn ~basedir =
+  Reader.load_sexp_exn
+    (Abspath.to_string (Abspath.append basedir config_file_relative_to_basedir))
+    t_of_sexp
+;;
+
+let prod () =
+  assert (not am_functional_testing);
+  load_exn ~basedir:prod_basedir
+;;
+
+let load_as_per_IRON_CONFIG () =
+  env_var_has_been_read := true;
+  match Sys.getenv env_var with
+  | Some ("prod" | "PROD") -> prod ()
+  | Some s -> return (Sexp.of_string_conv_exn s t_of_sexp)
+  | None ->
+    if String.is_prefix Core.Sys.executable_name ~prefix:"/j/office/app"
+    then prod ()
+    else
+      failwithf "\
+must define %s environment variable or call [Iron_config.use_prod_IRON_CONFIG] prior
+to forcing [as_per_IRON_CONFIG]"
+        env_var ()
+;;
+
+let as_per_IRON_CONFIG = lazy (load_as_per_IRON_CONFIG ())
+
 module Restricted_for_rpcs = struct
-  module T = struct
-
-    (* Partial type of iron's config.  It is partial so that clients (say hydra) don't
-       have to be rolled when the config changes. Because the type is partial, we have to
-       allow extra fields. *)
-    type t =
-      { host             : string
-      ; async_rpc_port   : Async_rpc_port.t
-      ; rpc_proxy_config : Rpc_proxy_config.t [@default Rpc_proxy_config.no_proxy]
-      }
-    [@@deriving of_sexp]
-
-    let t_of_sexp = Sexp.of_sexp_allow_extra_fields t_of_sexp
-  end
-  include T
-  include Make(T)
-
   let load_as_per_IRON_CONFIG ~may_connect_to_proxy () =
-    let%bind { host; async_rpc_port; rpc_proxy_config } = load_as_per_IRON_CONFIG () in
-    let%map port = Async_rpc_port.port async_rpc_port in
+    let%bind t = load_as_per_IRON_CONFIG () in
+    let%map port = Async_rpc_port.port t.async_rpc_port in
     let host =
       if may_connect_to_proxy
       then
-        rpc_proxy_config
+        t.rpc_proxy_config
         |> Rpc_proxy_config.find_proxy_host_for_local_office
-        |> Option.value ~default:host
-      else host
+        |> Option.value ~default:t.host
+      else t.host
     in
     Host_and_port.create ~host ~port
   ;;
 end
-
-module T = struct
-  let serializer_pause_timeout_default = Time.Span.of_min 1.
-
-  (* The hydra_user is configurable so that we allow temporary changes via config pending
-     a roll, but it changes so rarely that the hard-coding this default value seems
-     perfectly fine *)
-  let default_hydra_user = User_name.of_string "as-hydra"
-
-  type t =
-    { host                     : string
-    ; async_rpc_port           : Async_rpc_port.t
-    ; rpc_proxy_config         : Rpc_proxy_config.t [@default Rpc_proxy_config.no_proxy]
-    ; hgrc                     : Abspath.t
-    ; hydra_user               : User_name.t [@default default_hydra_user]
-    ; serializer_pause_timeout : Time.Span.t [@default serializer_pause_timeout_default]
-    }
-  [@@deriving fields, sexp]
-end
-
-include T
-include Make(T)
 
 let use_prod_IRON_CONFIG () =
   if !env_var_has_been_read

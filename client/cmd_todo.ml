@@ -85,7 +85,12 @@ let show_assigned assigned ~display_ascii ~max_output_columns =
         ; catch_up_lines ~header:"catch-up"
             (fun t -> Line_count.Catch_up.total t |> Int.to_string_hum)
         ; string ~header:"next step"
-            (if_assigned (fun { may_second; _ } -> if may_second then "second" else ""))
+            (attr_cell (fun (_, assigned_option) ->
+               match (assigned_option : Assigned.t option) with
+               | None -> ([], "")
+               | Some { review_is_enabled; assigned_next_steps; _ } ->
+                 Next_step.Assigned.to_attrs_and_string
+                   ~review_is_enabled assigned_next_steps))
         ])
     in
     print_table ~table_name:"" ~columns ~rows ~display_ascii ~max_output_columns)

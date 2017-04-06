@@ -80,10 +80,7 @@ let main { Fe.Rebase.Action.
   let%bind () =
     Hg.pull ~repo_is_clean repo_root ~from:remote_repo_path (`Rev new_base)
   in
-  let%bind gca =
-    Hg.greatest_common_ancestor repo_root
-      (List.map [ old_tip; new_base ] ~f:Revset.of_rev)
-  in
+  let%bind gca = Hg.greatest_common_ancestor repo_root old_tip new_base in
   if not (Rev.equal_node_hash old_base gca)
   then
     if Rev.equal_node_hash old_tip gca

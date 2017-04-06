@@ -60,7 +60,10 @@ module Stable = struct
       (* [reported_by] is [user] in [CR user...].  It is an [option] because the text
          might not have a valid user name.
 
-         [for_] is [user2] in [CR user1 for user2: ...]  *)
+         [for_] is [user2] in [CR user1 for user2: ...].
+
+         Names stored in [Processed.t] have not yet been dealiased, so they are stored as
+         [Unresolve_name.t]s. *)
       type t =
         { raw         : Raw.V1.t
         ; reported_by : Unresolved_name.V1.t option
@@ -407,7 +410,6 @@ module Assignee = struct
     | This unresolved_name ->
       User_name_by_alternate_name.to_user_name alternate_names unresolved_name
     | Feature_owner -> feature_owner
-    (* This is not an actual user name. *)
     | Missing_file_owner -> User_name.missing_file_owner
   ;;
 end
@@ -433,14 +435,7 @@ module Processed = struct
         | Soon | Someday ->
           match file_owner with
           | None -> Assignee.Missing_file_owner
-          (* Names stored in [Processed.t] have not yet been dealiased,
-             so they are stored as [Unresolve_name.t]s. *)
-          | Some user ->
-            let user = User_name.to_unresolved_name user in
-            if Unresolved_name.(=) user
-                 Unresolved_name.ignored_file_virtuser_fe_compatibility
-            then This (Option.value reported_by ~default:user)
-            else This user)
+          | Some user -> This (User_name.to_unresolved_name user))
   ;;
 
   let recompute_assignee t ~file_owner =

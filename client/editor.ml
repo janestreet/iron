@@ -1,23 +1,6 @@
-open Core;;
-open Async;;
+open! Core
+open! Async
 
-(* This is not such good code.
-   - with_temp_file doesn't work in the Async world. It should.
-   - invoke_editor uses Unix.system, which is to be avoided.
-*)
-
-(* Apply function [f] to the name of a freshly-created temporary file.
-   Delete the file after f returns. If [?file] is of the form
-   <path>/<base>.<extension>
-   then the filename is of the form
-   <path>/<base><salt>.<extension>
-   If no [?file] specified, the filename is of the form
-   tmp<salt>.tmp
-   in the current working directory.
-
-   CR-someday oshivers: Alas, this function frobs the filesystem outside of Async.
-   Would be good to Async-ize it.
-*)
 let with_temp_file ?file f =
   let base = match file with
     | Some file -> Filename.basename file

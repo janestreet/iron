@@ -175,6 +175,16 @@ function prepare_sample_repo {
             mv dot-fe.sexp .fe.sexp
         )
     done
+    # 2017-03-14: Jenga's (Files_recursively_in ...) does not include
+    # subdirectories with leading dots. This transformation is needed to get the
+    # .fe directory through jenga's sandboxing.
+    find . -name dot_fe \
+        | while read dot_fe; do
+        (
+            cd $(dirname $dot_fe)
+            mv dot_fe .fe
+        )
+    done
 }
 
 export -f prepare_sample_repo
@@ -202,7 +212,7 @@ function setup_repo_without_root {
         hg -q commit -m dummy
         hg rm foo
         hg -q commit --amend -m init
-    fi
+fi
 }
 
 export -f setup_repo_without_root
@@ -241,29 +251,29 @@ export -f feature_to_server
 
 function with_visible_colors {
     IRON_OPTIONS="()" "$@" |
-    sed \
-        -e 's/│/|/g' \
-        -e 's/┌/|/g' \
-        -e 's/┐/|/g' \
-        -e 's/└/|/g' \
-        -e 's/┘/|/g' \
-        -e 's/┼/|/g' \
-        -e 's/├/|/g' \
-        -e 's/┤/|/g' \
-        -e 's/─/-/g' \
-        -e 's/┬/-/g' \
-        -e 's/┴/-/g' \
-        -e 's/\[37m/<white>/g' \
-        -e 's/\[36m/<cyan>/g' \
-        -e 's/\[35m/<magenta>/g' \
-        -e 's/\[34m/<blue>/g' \
-        -e 's/\[33m/<yellow>/g' \
-        -e 's/\[32m/<green>/g' \
-        -e 's/\[31m/<red>/g' \
-        -e 's/\[30m/<black>/g' \
-        -e 's/\[0m/<off>/g' \
-        -e 's/\[2m/<dim>/g' \
-        ;
+        sed \
+            -e 's/│/|/g' \
+            -e 's/┌/|/g' \
+            -e 's/┐/|/g' \
+            -e 's/└/|/g' \
+            -e 's/┘/|/g' \
+            -e 's/┼/|/g' \
+            -e 's/├/|/g' \
+            -e 's/┤/|/g' \
+            -e 's/─/-/g' \
+            -e 's/┬/-/g' \
+            -e 's/┴/-/g' \
+            -e 's/\[37m/<white>/g' \
+            -e 's/\[36m/<cyan>/g' \
+            -e 's/\[35m/<magenta>/g' \
+            -e 's/\[34m/<blue>/g' \
+            -e 's/\[33m/<yellow>/g' \
+            -e 's/\[32m/<green>/g' \
+            -e 's/\[31m/<red>/g' \
+            -e 's/\[30m/<black>/g' \
+            -e 's/\[0m/<off>/g' \
+            -e 's/\[2m/<dim>/g' \
+            ;
 }
 
 export -f with_visible_colors

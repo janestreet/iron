@@ -419,6 +419,7 @@ let properties t = Property.Map.of_hashtbl_exn t.properties
 
 let to_protocol t
       ~is_archived
+      ~is_rebased
       ~remote_repo_path
       ~has_children
       ~cr_summary
@@ -467,6 +468,7 @@ let to_protocol t
   ; users_with_review_session_in_progress = users_with_review_session_in_progress t
   ; users_with_unclean_workspaces
   ; is_archived
+  ; is_rebased
   ; latest_release = t.latest_release
   ; inheritable_attributes
     = Feature_inheritable_attributes.to_protocol t.inheritable_attributes
@@ -675,11 +677,11 @@ let serializer_exn t =
       [%sexp_of: t * Backtrace.t]
 ;;
 
-let owner_for_crs t =
+let first_owner t =
   match t.owners with
   | owner :: _ -> owner
   | [] ->
-    failwiths "Feature.owner_for_crs encountered feature with no owners" t
+    failwiths "Feature.first_owner encountered feature with no owners" t
       [%sexp_of: t]
 ;;
 
@@ -803,7 +805,8 @@ let create_internal creation ~dynamic_upgrade_state ~serializer =
   ; indexed_diff4s = pending
   ; is_permanent
   ; review_is_enabled = false
-  ; reviewing = `Whole_feature_reviewers
+  ; reviewing =
+      `Whole_feature_reviewers
   ; allow_review_for = Ref.Permissioned.create Allow_review_for.none
   ; crs_are_enabled = true
   ; crs_shown_in_todo_only_for_users_reviewing

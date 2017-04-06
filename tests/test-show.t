@@ -46,6 +46,11 @@ Show attributes.
   $ fe show root/child -remote-repo-path
   $TESTTMP/repo
 
+Show it, with the feature id included.
+
+  $ fe show root -show-feature-id | grep '^| id ' | single_space
+  | id | * | (glob)
+
 Check that show works both when providing an id or a feature path.
 
   $ fe show root/child -feature-path

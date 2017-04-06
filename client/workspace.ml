@@ -626,6 +626,10 @@ let unclean_status_internal t =
         match%map check_current_bookmark t with
         | Ok ()   -> []
         | Error _ -> [ Unclean_workspace_reason.One_reason.Invalid_current_bookmark ])
+    ; or_error (fun () ->
+        match%map Hg.list_shelves_exn center_repo_root with
+        | []     -> []
+        | (_::_) -> [ Unclean_workspace_reason.One_reason.Shelved_changes ])
     ]
     |> Deferred.List.all
   in

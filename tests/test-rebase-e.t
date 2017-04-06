@@ -54,4 +54,8 @@ Changing the human version of the base rev is authorized even when rebase is loc
 Rebase.
 
   $ fe unlock -rebase
+  $ fe show -is-rebased root/test-feature
+  false
   $ fe rebase root/test-feature >/dev/null
+  $ fe show -is-rebased root/test-feature
+  true

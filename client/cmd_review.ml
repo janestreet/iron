@@ -82,8 +82,7 @@ let code_change_hunks_of_diff4 ~reviewer ~context ~lines_required_to_separate_dd
         match Diff4.may_review diff4 reviewer with
         | `Dropped_from_follow
         | `Dropped_from_review
-        | `Review_ownership_change ->
-          true
+        | `Review_ownership_change -> true
         | `Nothing_to_review_or_follow
         | `Follow_lines
         | `Review_lines -> false)
@@ -1332,5 +1331,4 @@ else's catch-up requires admin privileges, and may be done with:
            ~which_files ~reason review_params
     )
 ;;
-
 

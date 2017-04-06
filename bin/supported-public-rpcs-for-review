@@ -27,6 +27,7 @@ RPCs to server:
 │ get-feature                  │      19 │ d63031b12fa31079866cb8b958eb0eac │ 980d67a0879f35f4a3a33961baaa14be │
 │ get-feature                  │      20 │ d63031b12fa31079866cb8b958eb0eac │ 876bc9132654537fe0c9282c7e4ec502 │
 │ get-feature                  │      21 │ d63031b12fa31079866cb8b958eb0eac │ 18e5be7590d01a98fcfcb12cee45eb07 │
+│ get-feature                  │      22 │ d63031b12fa31079866cb8b958eb0eac │ e899d8399922d608ca5e3bbb88375c8f │
 │ get-feature-by-id            │      13 │ f89990126a03f419c9bac549dc3a86c7 │ 95790279132c9e9b992a1043ddeaf5f7 │
 │ get-feature-by-id            │      14 │ f89990126a03f419c9bac549dc3a86c7 │ 55890ebc29e3bc7644d3df416d1f0e40 │
 │ get-feature-by-id            │      15 │ 250d98c1b8df6ce6605cef63e9030c79 │ 96ba102211987a5d45fabfe1015627c4 │
@@ -36,6 +37,7 @@ RPCs to server:
 │ get-feature-by-id            │      19 │ 250d98c1b8df6ce6605cef63e9030c79 │ 980d67a0879f35f4a3a33961baaa14be │
 │ get-feature-by-id            │      20 │ 250d98c1b8df6ce6605cef63e9030c79 │ 876bc9132654537fe0c9282c7e4ec502 │
 │ get-feature-by-id            │      21 │ 250d98c1b8df6ce6605cef63e9030c79 │ 18e5be7590d01a98fcfcb12cee45eb07 │
+│ get-feature-by-id            │      22 │ 250d98c1b8df6ce6605cef63e9030c79 │ e899d8399922d608ca5e3bbb88375c8f │
 │ get-feature-maybe-archived   │       1 │ 2463dae53258ed026d4d07e15f734847 │ 96ba102211987a5d45fabfe1015627c4 │
 │ get-feature-maybe-archived   │       2 │ 2463dae53258ed026d4d07e15f734847 │ 79d4d57befb8507b28061ea5e249cd0a │
 │ get-feature-maybe-archived   │       3 │ 2463dae53258ed026d4d07e15f734847 │ abd79c00802943f89185a989e8c5852d │
@@ -45,6 +47,7 @@ RPCs to server:
 │ get-feature-maybe-archived   │       7 │ b7d8061c5d0ecdee080da8e375dfe5e8 │ 876bc9132654537fe0c9282c7e4ec502 │
 │ get-feature-maybe-archived   │       8 │ 79b69118c24870b9012fe2904367440e │ 876bc9132654537fe0c9282c7e4ec502 │
 │ get-feature-maybe-archived   │       9 │ 79b69118c24870b9012fe2904367440e │ 18e5be7590d01a98fcfcb12cee45eb07 │
+│ get-feature-maybe-archived   │      10 │ 79b69118c24870b9012fe2904367440e │ e899d8399922d608ca5e3bbb88375c8f │
 │ list-feature-names           │       1 │ 750e8afc119d51c727e74a6bab667829 │ 764cf11edecaeddf987fcc90c93fff55 │
 │ list-feature-names           │       2 │ c7983df1101b8fe277320399a3ff5e21 │ 764cf11edecaeddf987fcc90c93fff55 │
 │ list-features                │       7 │ 750e8afc119d51c727e74a6bab667829 │ f111f21eee6f98a530a3a911a627cbd7 │
@@ -58,6 +61,8 @@ RPCs to server:
 │ notify-on-feature-updates    │       3 │ 9bfaf5356f8b0b9459b5ead746a4c5c5 │ 4faeee981f5c00b481e950f98de1acc2 │
 │ notify-on-feature-updates    │       4 │ 9bfaf5356f8b0b9459b5ead746a4c5c5 │ 11de53876015e833851146f66028a5ee │
 │ notify-on-feature-updates    │       5 │ 9bfaf5356f8b0b9459b5ead746a4c5c5 │ e4304799c16aa34eab3f6bb850bbdf1e │
+│ notify-on-feature-updates    │       6 │ 9bfaf5356f8b0b9459b5ead746a4c5c5 │ f11de4aa7cdf2fd7b04703c81a6ee0bb │
+│ ping                         │       1 │ 6c1da307710653a873e04f24a65edbfb │ fd5dbc46a73d557852ead1bdf82a69a7 │
 │ revision-is-fully-reviewed   │       1 │ f44ced4f51cdd06188972b5a2f5734a9 │ fd5dbc46a73d557852ead1bdf82a69a7 │
 │ second                       │       3 │ e809b5da26f18197659e6d6e7074cd2e │ fd5dbc46a73d557852ead1bdf82a69a7 │
 │ second                       │       4 │ 3cd0e3e977ef04e2d7368bcf4b060f42 │ fd5dbc46a73d557852ead1bdf82a69a7 │

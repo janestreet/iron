@@ -33,9 +33,9 @@ Create some features.
 
 The rev graph looks like:
 
- 1-->2
- |
- --->3-->4
+|        1--2
+|         \
+|          3--4
 
 The feature revs are:
 

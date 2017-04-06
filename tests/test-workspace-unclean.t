@@ -66,6 +66,41 @@ Be silent if not interactive.
   > ))
   > EOF
 
+Check shelves.
+
+  $ ROOT=$PWD
+  $ cd $(fe workspace dir root/child2)
+
+  $ hg shelve --list         --config extensions.shelve=
+  $ echo 'foo' > foo
+
+  $ hg shelve -A foo -n foo  --config extensions.shelve=
+  shelved as foo
+  0 files updated, 0 files merged, 1 files removed, 0 files unresolved
+
+  $ fe workspace unclean check root/child2
+  (errors (((feature_path root/child2) (reason ("shelved changes")))))
+  [1]
+
+  $ list_unclean_workspaces
+  Unclean workspaces on $HOSTNAME:
+  |----------------------------|
+  | feature  | reason          |
+  |----------+-----------------|
+  | root     |                 |
+  |   child2 | shelved changes |
+  |----------------------------|
+
+  $ hg unshelve  --config extensions.shelve=
+  unshelving change 'foo'
+  $ rm foo
+  $ hg rm -A foo
+
+  $ cd ${ROOT}
+
+  $ fe workspace unclean check root/child2
+  $ list_unclean_workspaces
+
 Detect uncommitted changes.
 
   $ touch $(fe workspace dir root/child2)/FILE

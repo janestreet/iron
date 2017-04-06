@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Wait for jenga to finish before this script runs. Note that nothing stops a
+# polling jenga from rebuilding while (or after) this script runs.
+jenga monitor -exit-on-finish || true
+
 set -e -o pipefail
 
 get_rev () {
@@ -11,15 +15,5 @@ export -f get_rev
 root=$(hg root --cwd $(readlink -f $(dirname $BASH_SOURCE)))
 
 prod=$(get_rev fe)
-dev=$(get_rev ${root}/app/fe/bin/fe.exe)
 
-hg diff -r ${prod} -r ${dev%%+} ${root}/app/fe/bin/supported-*-rpcs-for-review
-
-case ${dev} in
-    *\+)
-        echo "WARNING! Don't roll this binary.  It has a plus revision: ${dev}" >/dev/stderr
-        ;;
-    *)
-        ;;
-esac
-# We assume we didn't roll a prod binary off a plus revision.
+hg diff --option -c --option 0 -r ${prod} ${root}/app/fe/bin/supported-*-rpcs-for-review

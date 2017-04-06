@@ -125,7 +125,6 @@ module Revset : sig
   val not        : t -> t
 
   val first_greatest_common_ancestor : Rev.t list -> t
-  val greatest_common_ancestors : t list -> t
 
   val max : t -> t
   val min : t -> t
@@ -226,8 +225,8 @@ val commit
 
 val first_greatest_common_ancestor : Repo_root.t -> Rev.t -> Rev.t -> Rev.t Deferred.t
 
-val greatest_common_ancestor  : Repo_root.t -> Revset.t list -> Rev.t      Deferred.t
-val greatest_common_ancestors : Repo_root.t -> Revset.t list -> Rev.t list Deferred.t
+val greatest_common_ancestor  : Repo_root.t -> Rev.t -> Rev.t -> Rev.t      Deferred.t
+val greatest_common_ancestors : Repo_root.t -> Rev.t -> Rev.t -> Rev.t list Deferred.t
 
 val is_ancestor : Repo_root.t -> ancestor:Rev.t -> descendant:Rev.t -> bool Deferred.t
 
@@ -430,14 +429,11 @@ module Status : sig
   val dst_path_in_repo : t list -> Path_in_repo.t list
 
   module Changed : sig
-    module Between : sig
-      type t =
-        { src : Rev.t
-        ; dst : [ `Working_copy | `Rev of Rev.t ]
-        }
-    end
     type t =
-      | Between    of Between.t
+      | Between of
+          { src : Rev.t
+          ; dst : [ `Working_copy | `Rev of Rev.t ]
+          }
       | Changed_by of Rev.t
   end
 end
@@ -447,6 +443,12 @@ val status
   :  Repo_root.t
   -> Status.Changed.t
   -> Status.t list Deferred.t
+
+module Shelve_description : sig
+  type t [@@deriving sexp_of]
+end
+
+val list_shelves_exn : Repo_root.t -> Shelve_description.t list Deferred.t
 
 module Clean_after_update : sig
   (* When a user updates a tree across a change to the .hgignore (for instance when there

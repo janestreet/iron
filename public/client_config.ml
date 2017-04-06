@@ -16,24 +16,6 @@ module Make_client_config = Iron_common.Std.Make_client_config
 *)
 
 
-module Cmd_crs = struct
-  type t =
-    { mutable update_local_repo : bool
-    }
-
-  let update t =
-    let open Make_client_config.Utils in
-    empty
-    +> no_arg "-update-local-repo"
-         (fun () -> t.update_local_repo <- true)
-  ;;
-
-  let create () =
-    { update_local_repo = false
-    }
-  ;;
-end
-
 module Cmd_list = struct
   type t =
     { mutable depth : int option
@@ -115,6 +97,7 @@ module Cmd_show = struct
   type t =
     { mutable omit_completed_review         : bool
     ; mutable omit_unclean_workspaces_table : bool
+    ; mutable show_feature_id               : bool
     ; mutable show_inheritable_attributes   : bool
     ; mutable show_lock_reasons             : bool
     }
@@ -126,6 +109,7 @@ module Cmd_show = struct
     +> no_arg "-omit-completed-review" (fun () -> t.omit_completed_review <- true)
     +> no_arg "-omit-unclean-workspaces-table"
          (fun () -> t.omit_unclean_workspaces_table <- true)
+    +> no_arg "-show-feature-id"       (fun () -> t.show_feature_id       <- true)
     +> no_arg "-show-inheritable-attributes"
          (fun () -> t.show_inheritable_attributes <- true)
     +> no_arg "-show-lock-reasons"     (fun () -> t.show_lock_reasons     <- true)
@@ -134,6 +118,7 @@ module Cmd_show = struct
   let create () =
     { omit_completed_review         = false
     ; omit_unclean_workspaces_table = false
+    ; show_feature_id               = false
     ; show_inheritable_attributes   = false
     ; show_lock_reasons             = false
     }
@@ -246,7 +231,6 @@ module Workspace_config = struct
     ; mutable unclean_workspaces_detection_max_concurrent_jobs : int
     }
 
-
   let create () =
     { are_enabled      = `default
     ; auto_update_clean_workspaces_is_enabled = false
@@ -305,8 +289,7 @@ module M = struct
   let home_basename = ".ferc"
 
   type t =
-    { cmd_crs                                              : Cmd_crs.t
-    ; cmd_list                                             : Cmd_list.t
+    { cmd_list                                             : Cmd_list.t
     ; cmd_obligations_show                                 : Cmd_obligations_show.t
     ; cmd_rebase                                           : Cmd_rebase.t
     ; cmd_review                                           : Cmd_review.t
@@ -327,8 +310,7 @@ module M = struct
 
   module Statement = struct
     type cmd =
-      [ `crs
-      | `list
+      [ `list
       | `obligations_show
       | `rebase
       | `review
@@ -367,8 +349,7 @@ module M = struct
   end
 
   let create () =
-    { cmd_crs    = Cmd_crs.create ()
-    ; cmd_list   = Cmd_list.create ()
+    { cmd_list   = Cmd_list.create ()
     ; cmd_obligations_show = Cmd_obligations_show.create ()
     ; cmd_rebase = Cmd_rebase.create ()
     ; cmd_review = Cmd_review.create ()
@@ -410,7 +391,6 @@ module M = struct
     | `show_commit_session_warning bool -> t.show_commit_session_warning <- bool
     | `add_flag_to (cmd, args) ->
       (match cmd with
-       | `crs    -> Cmd_crs.update    t.cmd_crs    args
        | `list   -> Cmd_list.update   t.cmd_list   args
        | `obligations_show -> Cmd_obligations_show.update t.cmd_obligations_show args
        | `rebase -> Cmd_rebase.update t.cmd_rebase args
@@ -427,10 +407,6 @@ include M
 include Make_client_config.Make (M)
 
 module Cmd = struct
-  module Crs = struct
-    let _update_local_repo t = t.cmd_crs.update_local_repo
-  end
-
   module List = struct
     let depth t = t.cmd_list.depth
   end
@@ -452,6 +428,7 @@ module Cmd = struct
   module Show = struct
     let omit_completed_review         t = t.cmd_show.omit_completed_review
     let omit_unclean_workspaces_table t = t.cmd_show.omit_unclean_workspaces_table
+    let show_feature_id               t = t.cmd_show.show_feature_id
     let show_inheritable_attributes   t = t.cmd_show.show_inheritable_attributes
     let show_lock_reasons             t = t.cmd_show.show_lock_reasons
   end

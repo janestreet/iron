@@ -80,6 +80,26 @@ module Stable = struct
 
   module Assigned = struct
 
+    module V11 = struct
+      type t =
+        { feature_path        : Feature_path.V1.t
+        ; feature_path_exists : bool
+        ; review_is_enabled   : bool
+        ; user_is_reviewing   : bool
+        ; assigned_next_steps : Next_step.V6.t list
+        ; num_crs             : Num_crs.V1.t
+        ; num_xcrs            : Num_crs.V1.t
+        ; line_count          : Line_count.V5.t
+        ; next_steps          : Next_step.V6.t list
+        }
+      [@@deriving bin_io, fields, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b52def8e14823cd0130f53778c7ad0da |}]
+      ;;
+    end
+
     module V10 = struct
       type t =
         { feature_path        : Feature_path.V1.t
@@ -92,11 +112,39 @@ module Stable = struct
         ; line_count          : Line_count.V5.t
         ; next_steps          : Next_step.V6.t list
         }
-      [@@deriving bin_io, fields, sexp]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
         [%expect {| 7cac5c26366796280ebed11700ee3d64 |}]
+      ;;
+
+      let of_v11 { V11.
+                   feature_path
+                 ; feature_path_exists
+                 ; review_is_enabled
+                 ; user_is_reviewing
+                 ; assigned_next_steps
+                 ; num_crs
+                 ; num_xcrs
+                 ; line_count
+                 ; next_steps
+                 } =
+        let may_second =
+          List.exists assigned_next_steps ~f:(function
+            | Ask_seconder -> true
+            | _ -> false)
+        in
+        { feature_path
+        ; feature_path_exists
+        ; review_is_enabled
+        ; user_is_reviewing
+        ; may_second
+        ; num_crs
+        ; num_xcrs
+        ; line_count
+        ; next_steps
+        }
       ;;
     end
 
@@ -395,7 +443,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V10
+    module Model = V11
   end
 
   module Rev_facts = struct
@@ -485,9 +533,9 @@ module Stable = struct
 
   module Reaction = struct
 
-    module V15 = struct
+    module V16 = struct
       type t =
-        { assigned                  : Assigned.V10.t list
+        { assigned                  : Assigned.V11.t list
         ; unclean_workspaces        : Unclean_workspace.V2.t list Machine.V1.Map.t
         ; owned                     : Feature_info.V7.t list
         ; watched                   : Feature_info.V7.t list
@@ -499,10 +547,47 @@ module Stable = struct
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
-        [%expect {| 8c78ba3a4e9383271e461886ea916712 |}]
+        [%expect {| af350bd796405912874eca557a29955a |}]
       ;;
 
       let of_model (m : t) = m
+    end
+
+    module V15 = struct
+      type t =
+        { assigned                  : Assigned.V10.t list
+        ; unclean_workspaces        : Unclean_workspace.V2.t list Machine.V1.Map.t
+        ; owned                     : Feature_info.V7.t list
+        ; watched                   : Feature_info.V7.t list
+        ; cr_soons                  : Cr_soon_multiset.V1.t
+        ; bookmarks_without_feature : (Remote_repo_path.V1.t
+                                       * Bookmark_without_feature.V1.t list) list
+        }
+      [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 8c78ba3a4e9383271e461886ea916712 |}]
+      ;;
+
+      let of_model m =
+        let { V16.
+              assigned
+            ; unclean_workspaces
+            ; owned
+            ; watched
+            ; cr_soons
+            ; bookmarks_without_feature
+            } = V16.of_model m in
+        let assigned = List.map assigned ~f:Assigned.V10.of_v11 in
+        { assigned
+        ; unclean_workspaces
+        ; owned
+        ; watched
+        ; cr_soons
+        ; bookmarks_without_feature
+        }
+      ;;
     end
 
     module V14 = struct
@@ -750,7 +835,7 @@ module Stable = struct
       ;;
     end
 
-    module Model = V15
+    module Model = V16
   end
 end
 
@@ -759,6 +844,11 @@ open! Import
 
 include Iron_versioned_rpc.Make
     (struct let name = "todo" end)
+    (struct let version = 17 end)
+    (Stable.Action.V3)
+    (Stable.Reaction.V16)
+
+include Register_old_rpc
     (struct let version = 16 end)
     (Stable.Action.V3)
     (Stable.Reaction.V15)

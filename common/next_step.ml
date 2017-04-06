@@ -195,8 +195,8 @@ let rec to_string_hum = function
   | Fix_build                   -> "fix build"
   | Fix_problems                -> "fix problems"
   | In_parent t                 -> to_string_hum t ^ " in parent"
-  | Rebase                     -> "rebase"
-  | Release                    -> "release"
+  | Rebase                      -> "rebase"
+  | Release                     -> "release"
   | Report_iron_bug             -> "report Iron bug"
   | Restore_base                -> "restore base"
   | Restore_bookmark            -> "restore bookmark"
@@ -273,3 +273,45 @@ let to_attrs_and_string ts ~review_is_enabled =
   let text = concat ~sep:", " (List.map ts ~f:to_string_hum) in
   attrs, text
 ;;
+
+module Assigned = struct
+  type nonrec t = t list [@@deriving sexp_of]
+
+  let t_to_string_hum = to_string_hum
+
+  let rec to_string_hum t =
+    match t with
+    | In_parent t               -> to_string_hum t ^ " in parent"
+    | Ask_seconder              -> "second"
+    | Add_code
+    | Add_whole_feature_reviewer
+    | Archive
+    | Compress
+    | CRs
+    | Enable_review
+    | Fix_build
+    | Fix_problems
+    | Rebase
+    | Release
+    | Report_iron_bug
+    | Restore_base
+    | Restore_bookmark
+    | Review
+    | Unlock _
+    | Wait_for_continuous_release
+    | Wait_for_hydra
+    | Widen_reviewing
+      -> t_to_string_hum t
+  ;;
+
+  let to_attrs_and_string ts ~review_is_enabled =
+    let attrs = to_attrs ts ~review_is_enabled in
+    let text = concat ~sep:", " (List.map ts ~f:to_string_hum) in
+    attrs, text
+  ;;
+
+  let%expect_test _ =
+    print_endline (to_string_hum (In_parent Report_iron_bug));
+    [%expect {| report Iron bug in parent |}]
+  ;;
+end

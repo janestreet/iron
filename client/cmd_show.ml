@@ -69,14 +69,15 @@ module Attribute = struct
       | Base
       | Crs_are_enabled
       | Crs_shown_in_todo_only_for_users_reviewing
+      | Feature_id
       | Feature_path
       | First_owner
       | Has_bookmark
-      | Id
       | Included_features
       | Inheritable_attributes
-      | Is_permanent
       | Is_archived
+      | Is_permanent
+      | Is_rebased
       | Is_seconded
       | Next_base_update
       | Next_bookmark_update
@@ -85,10 +86,10 @@ module Attribute = struct
       | Properties
       | Release_process
       | Remote_repo_path
-      | Rev_zero
-      | Review_is_enabled
       | Reviewers
       | Reviewing
+      | Review_is_enabled
+      | Rev_zero
       | Seconder
       | Send_email_to
       | Send_email_upon
@@ -110,7 +111,10 @@ module Attribute = struct
   let args =
     let open Command.Let_syntax in
     let%map_open () = return ()
-    and ts = enum_no_args (module T) ~doc:(fun ~name _ -> sprintf "show %s" name)
+    and ts =
+      enum_no_args (module T)
+        ~aliases:(function Feature_id -> [ "id" ] | _ -> [])
+        ~doc:(fun ~name _ -> sprintf "show %s" name)
     and user_defined = properties_list_option ~switch:"property" ~verb:"show"
     in
     let user_defined =
@@ -145,13 +149,14 @@ module Attribute = struct
     | Feature_path            -> feature.feature_path |> [%sexp_of: Feature_path.t]
     | First_owner             -> List.hd_exn feature.owners |> [%sexp_of: User_name.t]
     | Has_bookmark            -> feature.has_bookmark |> [%sexp_of: bool]
-    | Id                      -> feature.feature_id |> [%sexp_of: Feature_id.t]
+    | Feature_id              -> feature.feature_id |> [%sexp_of: Feature_id.t]
     | Included_features       ->
       List.map (Feature.released_features feature ~sorted_by:included_features_order)
         ~f:Released_feature.feature_path
       |> [%sexp_of: Feature_path.t list]
-    | Is_permanent            -> feature.is_permanent |> [%sexp_of: bool]
     | Is_archived             -> feature.is_archived |> [%sexp_of: bool]
+    | Is_permanent            -> feature.is_permanent |> [%sexp_of: bool]
+    | Is_rebased              -> feature.is_rebased |> [%sexp_of: bool]
     | Is_seconded             -> is_some feature.seconder |> [%sexp_of: bool]
     | Inheritable_attributes  ->
       feature.inheritable_attributes |> [%sexp_of: Inheritable_attributes.Sexp_hum.t]
@@ -245,12 +250,15 @@ let or_pending ~is_archived name or_pending rows_a =
 
 let rev_facts ~is_archived =
   let maybe opt f = Option.value_map opt ~default:[] ~f in
-  fun ?update_expected_since name rev rev_facts_or_pending ->
+  fun ?last_known_at name rev rev_facts_or_pending ->
     [ name
-    , (match update_expected_since with
+    , (match last_known_at with
        | None -> [], Rev.to_string_hum rev
        | Some since ->
-         [`Yellow], sprintf "%s (%s)" (Rev.to_string_hum rev) (pending_for ~since))
+         [`Yellow],
+         sprintf "none (last known as %s %s ago)"
+           (Rev.to_string_hum rev)
+           (Time.Span.to_short_string (how_long ~since)))
     ]
     @ maybe rev_facts_or_pending (fun rev_facts_or_pending ->
       or_pending ~is_archived (concat [ name; " facts" ]) rev_facts_or_pending
@@ -467,12 +475,12 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
            | false -> show `Red "false")
       ; maybe tip  (fun tip  -> rev_facts "tip"  tip  tip_facts)
       ; maybe base (fun base ->
-          let update_expected_since =
+          let last_known_at =
             match (next_base_update : Next_base_update.t option) with
             | Some Update_expected { expected_since; _} -> Some expected_since
             | None | Some No_update_expected -> None
           in
-          rev_facts "base" base base_facts ?update_expected_since)
+          rev_facts "base" base base_facts ?last_known_at)
       ; maybe3 base tip base_is_ancestor_of_tip (fun base tip base_is_ancestor_of_tip ->
           or_pending "base is ancestor of tip" base_is_ancestor_of_tip
             (fun is_ancestor ->
@@ -591,6 +599,7 @@ let attribute_table ~display_ascii ~max_output_columns
       ; description               = _
       ; is_permanent
       ; is_archived
+      ; is_rebased                = _
       ; seconder
       ; review_is_enabled
       ; reviewing
@@ -695,7 +704,7 @@ let show_whole_feature
       (feature : Feature.t)
       ~display_ascii ~max_output_columns ~show_attribute_table ~show_description
       ~show_included_feature_details ~included_features_order ~show_inheritable_attributes
-      ~show_completed_review ~show_lock_reasons
+      ~show_completed_review ~show_feature_id ~show_lock_reasons
       ~show_review_sessions_in_progress_table
       ~show_unclean_workspaces_table
   =
@@ -705,7 +714,7 @@ let show_whole_feature
    then (
      printf "\n%s"
        (attribute_table feature ~display_ascii ~max_output_columns
-          ~show_feature_id:false
+          ~show_feature_id
           ~show_lock_reasons
           ~show_inheritable_attributes
           ~show_next_steps:true)));
@@ -799,8 +808,8 @@ let display_included_features_org_mode (feature : Feature.t) ~depth
 
 let show_org_mode (feature : Feature.t) ~show_attribute_table
       ~show_description ~show_diff_stat ~show_included_feature_details
-      ~included_features_order ~show_lock_reasons ~show_inheritable_attributes
-      ~show_next_steps =
+      ~included_features_order ~show_feature_id ~show_lock_reasons
+      ~show_inheritable_attributes ~show_next_steps =
   let display_ascii = true in
   let max_output_columns = Int.max_value in
   let feature_path = feature.feature_path in
@@ -812,7 +821,7 @@ let show_org_mode (feature : Feature.t) ~show_attribute_table
      print_string (org_header ~depth:(depth + 1) "Attributes");
      print_string
        (attribute_table feature ~display_ascii ~max_output_columns
-          ~show_feature_id:false ~show_lock_reasons ~show_inheritable_attributes
+          ~show_feature_id ~show_lock_reasons ~show_inheritable_attributes
           ~show_next_steps)));
   display_included_features_org_mode feature ~depth ~show_description
     ~show_diff_stat ~show_included_feature_details ~included_features_order;
@@ -868,6 +877,8 @@ let command =
          ~doc:"show inheritable attributes in attributes table"
      and sexp =
        no_arg_flag "-sexp" ~doc:"print [Feature.t] as a sexp and exit"
+     and show_feature_id =
+       no_arg_flag "-show-feature-id" ~doc:"show feature id as well"
      and show_lock_reasons =
        no_arg_flag "-show-lock-reasons" ~doc:"show lock reasons as well"
      in
@@ -877,6 +888,9 @@ let command =
        let show_completed_review =
          not (omit_completed_review
               || Client_config.Cmd.Show.omit_completed_review client_config)
+       in
+       let show_feature_id =
+         show_feature_id || Client_config.Cmd.Show.show_feature_id client_config
        in
        let show_lock_reasons =
          show_lock_reasons || Client_config.Cmd.Show.show_lock_reasons client_config
@@ -946,7 +960,7 @@ let command =
              if org_mode
              then show_org_mode feature ~show_attribute_table
                     ~show_description ~show_diff_stat ~show_included_feature_details
-                    ~included_features_order ~show_lock_reasons
+                    ~included_features_order ~show_feature_id ~show_lock_reasons
                     ~show_inheritable_attributes
                     ~show_next_steps:true
              else (
@@ -954,7 +968,7 @@ let command =
                  ~show_attribute_table ~show_description ~show_included_feature_details
                  ~included_features_order ~show_inheritable_attributes
                  ~show_completed_review
-                 ~show_lock_reasons
+                 ~show_feature_id ~show_lock_reasons
                  ~show_review_sessions_in_progress_table
                  ~show_unclean_workspaces_table;
                return ())

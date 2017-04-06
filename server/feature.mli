@@ -23,7 +23,7 @@ val indexed_diff4s            : t -> Indexed_diff4s.t Or_error.t Or_pending.t
 val inheritable_attributes    : t -> Feature_inheritable_attributes.t
 val is_permanent              : t -> bool
 val owners                    : t -> User_name.t list
-val owner_for_crs             : t -> User_name.t
+val first_owner               : t -> User_name.t
 val feature_id                : t -> Feature_id.t
 val feature_path              : t -> Feature_path.t
 val line_count_by_user_cached : t -> Line_count.Cached_in_feature.By_user.t Cached.t
@@ -73,6 +73,7 @@ val user_is_currently_reviewing : t -> User_name.t -> bool
 val to_protocol
   :  t
   -> is_archived        : bool
+  -> is_rebased         : bool
   -> remote_repo_path   : Remote_repo_path.t
   -> has_children       : bool
   -> cr_summary         : Cr_comment.Summary.t Or_error.t

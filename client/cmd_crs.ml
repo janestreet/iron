@@ -1,6 +1,6 @@
-open Core
-open Async
-open Import
+open! Core
+open! Async
+open! Import
 
 let grep repo_root ~aliases =
   let below = Repo_root.relativize_exn repo_root Abspath.program_started_in in

@@ -1270,7 +1270,8 @@
 :   [-owners OWNER[,OWNER...]]                     the owner(s) of the feature
 :   [-permanent]                                   make this feature permanent
 :   [-property ATTR=SEXP]                          user-defined properties
-:   [-remote-repo-path PATH]                       path on the hg machine
+:   [-remote-repo-path URL]                        location of the shared repo
+:                                                  (e.g., ssh://...)
 :   [-tip REV]                                     the tip revision of the feature
 :                                                  (default is base)
 :   [-help]                                        print this help text and exit
@@ -1986,10 +1987,10 @@
 : 
 : === flags ===
 : 
-:   [-for USER|all]           for user (default is unix login)
-:   [-remote-repo-path PATH]  path on the hg machine
-:   [-help]                   print this help text and exit
-:                             (alias: -?)
+:   [-for USER|all]          for user (default is unix login)
+:   [-remote-repo-path URL]  location of the shared repo (e.g., ssh://...)
+:   [-help]                  print this help text and exit
+:                            (alias: -?)
 
 **** feature
 
@@ -3737,15 +3738,17 @@
 :                                                          recently archived
 :                                                          feature if the feature
 :                                                          does not exist
+:   [-feature-id]                                          show feature-id
+:                                                          (alias: -id)
 :   [-feature-path]                                        show feature-path
 :   [-first-owner]                                         show first-owner
 :   [-has-bookmark]                                        show has-bookmark
-:   [-id]                                                  show id
 :   [-included-features]                                   show included-features
 :   [-inheritable-attributes]                              show
 :                                                          inheritable-attributes
 :   [-is-archived]                                         show is-archived
 :   [-is-permanent]                                        show is-permanent
+:   [-is-rebased]                                          show is-rebased
 :   [-is-seconded]                                         show is-seconded
 :   [-max-output-columns INT]                              maximum column width
 :                                                          for table output
@@ -3794,6 +3797,7 @@
 :   [-show-diff-stat]                                      compute and show [hg
 :                                                          diff --stat] in
 :                                                          org-mode output
+:   [-show-feature-id]                                     show feature id as well
 :   [-show-included-feature-details]                       show included-feature
 :                                                          descriptions and
 :                                                          attributes

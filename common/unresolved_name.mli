@@ -30,5 +30,3 @@ open! Core
 open! Import
 
 include Validated_string.S
-
-val ignored_file_virtuser_fe_compatibility : t

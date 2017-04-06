@@ -1,28 +1,20 @@
 open! Core
 open! Import
 
-module Partially_known = struct
-  type 'a t =
-    { to_finish_session        : 'a
-    ; from_session_end_to_goal : Error.t Or_pending.t
-    }
-  [@@deriving compare, fields, sexp_of]
-end
-
 type 'a t =
-  | Fully_known     of 'a
-  | Partially_known of 'a Partially_known.t
+  | Fully_known of 'a
+  | Partially_known of
+      { to_finish_session        : 'a
+      ; from_session_end_to_goal : Error.t Or_pending.t
+      }
 [@@deriving compare, sexp_of]
 
 let invariant invariant t =
   Invariant.invariant [%here] t [%sexp_of: _ t] (fun () ->
     match t with
     | Fully_known a -> invariant a
-    | Partially_known { to_finish_session
-                      ; from_session_end_to_goal = _
-                      }
-      -> invariant to_finish_session
-  )
+    | Partially_known { to_finish_session = a; from_session_end_to_goal = _ } ->
+      invariant a)
 ;;
 
 let map t ~f =

@@ -1,7 +1,7 @@
 open Core
 
 module Ansi_terminal = struct
-  include Textutils.Std.Console.Ansi
+  include Textutils.Console.Ansi
 
   let apply_string attributes string =
     if Iron_common.Iron_options.display_ascii_always

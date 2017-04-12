@@ -2,8 +2,8 @@ open! Core
 open! Import
 
 module Action : sig
-  (** [tip] is given so that if there are cached information about that tip on the
-      server it will be included it in the reaction *)
+  (** When [tip] is given the server will include in the reaction's [worker_cache] field
+      any cached information it may hold for that revision. *)
   type t =
     { feature_path : Feature_path.t
     ; rev_zero     : Rev.t

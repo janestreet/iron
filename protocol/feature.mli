@@ -137,12 +137,12 @@ module Stable : sig
   end
 
   module V22 : sig
-    type t = Model.t [@@deriving bin_io, sexp_of]
+    type t = Model.t [@@deriving bin_io, sexp]
     val of_model : Model.t -> t
   end
 
   module V21 : sig
-    type t [@@deriving bin_io]
+    type t [@@deriving bin_io, sexp]
     val of_model : Model.t -> t
   end
 

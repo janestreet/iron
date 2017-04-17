@@ -10,7 +10,7 @@ module Stable = struct
         ; at           : Time.V1_round_trippable.t
         ; is_permanent : bool
         }
-      [@@deriving bin_io, sexp_of]
+      [@@deriving bin_io, sexp]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -126,7 +126,7 @@ module Stable = struct
       ; inheritable_attributes    : Inheritable_attributes.V1.t
       }
 
-    [@@deriving bin_io, fields, sexp_of]
+    [@@deriving bin_io, fields, sexp]
 
     let%expect_test _ =
       print_endline [%bin_digest: t];
@@ -181,7 +181,7 @@ module Stable = struct
       ; inheritable_attributes    : Inheritable_attributes.V1.t
       }
 
-    [@@deriving bin_io]
+    [@@deriving bin_io, sexp]
 
     let%expect_test _ =
       print_endline [%bin_digest: t];

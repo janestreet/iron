@@ -10,6 +10,16 @@ module Action : sig
   [@@deriving fields, sexp_of]
 end
 
+module Status : sig
+  type t =
+    | Existing
+    | Archived of
+        { archived_at          : Time.t
+        ; reason_for_archiving : string
+        }
+  [@@deriving sexp_of]
+end
+
 module Reaction : sig
   type one =
     { feature_path      : Feature_path.t
@@ -18,14 +28,18 @@ module Reaction : sig
     ; review_is_enabled : bool
     ; num_lines         : int Or_error.t Or_pending.t
     ; next_steps        : Next_step.t list
-    ; status            : [ `Existing | `Was_archived_at of Time.t ]
+    ; status            : Status.t
     }
   type t = one list
   [@@deriving sexp_of]
 
   module Stable : sig
-    module V9 : sig
+    module V10 : sig
       type nonrec t = t [@@deriving bin_io, sexp]
+    end
+    module V9 : sig
+      type t [@@deriving bin_io]
+      val to_v10 : t -> V10.t
     end
     module V8 : sig
       type t [@@deriving bin_io]

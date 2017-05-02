@@ -71,7 +71,10 @@ If no [-file] switches are provided, the diff for all files is shown.
          (* When looking at a diff, you often don't need to do any further operations in
             the repo, so just use the root clone instead of a share. *)
          Cmd_workspace.repo_for_hg_operations_and_kind_exn feature_path
-           ~use:(if is_archived then `Clone else `Share_or_clone_if_share_does_not_exist)
+           ~use:
+             (match is_archived with
+              | Yes _ -> `Clone
+              | No    -> `Share_or_clone_if_share_does_not_exist)
        in
        let reviewer =
          match what_diff with
@@ -98,12 +101,13 @@ If no [-file] switches are provided, the diff for all files is shown.
        else (
          match diff4s with
          | Pending_since since ->
-           if is_archived
-           then failwith "[fe diff -archived] is not available for this archived feature"
-           else
-             die "diffs have been pending for"
-               (Time.Span.to_short_string (how_long ~since))
-               [%sexp_of: string]
+           (match is_archived with
+            | Yes _ ->
+              failwith "[fe diff -archived] is not available for this archived feature"
+            | No ->
+              die "diffs have been pending for"
+                (Time.Span.to_short_string (how_long ~since))
+                [%sexp_of: string])
          | Known (Error error) ->
            die "diffs cannot be computed" error [%sexp_of: Error.t];
          | Known (Ok diff4s) ->

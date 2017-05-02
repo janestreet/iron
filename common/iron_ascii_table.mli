@@ -46,6 +46,7 @@ module Column : sig
     :  ?show_zero:bool (** = true *)
     -> ?show  : [ `Yes | `No | `If_not_empty ]  (** default is [`If_not_empty] *)
     -> ?min_width : int
+    -> ?truncate_after_n_char: int
     -> ?align : Align.t  (** default is [Left] *)
     -> header : string
     -> ('row, string) cell

@@ -58,8 +58,8 @@ let create_repo_if_it_does_not_exist name ~repo_root_abspath ~create_repo =
           ~f:(fun () ->
             let%bind () =
               match Clock.Event.abort waiting_for_lock_event () with
-              | `Ok | `Previously_aborted () -> return ()
-              | `Previously_happened continue ->
+              | Ok | Previously_aborted () -> return ()
+              | Previously_happened continue ->
                 let%bind () = continue in
                 Async_interactive.printf !"done waiting for lock on %s\n" name
             in

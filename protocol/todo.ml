@@ -536,7 +536,7 @@ module Stable = struct
     module V16 = struct
       type t =
         { assigned                  : Assigned.V11.t list
-        ; unclean_workspaces        : Unclean_workspace.V2.t list Machine.V1.Map.t
+        ; unclean_workspaces        : Unclean_workspace.V2.t list Machine_name.V1.Map.t
         ; owned                     : Feature_info.V7.t list
         ; watched                   : Feature_info.V7.t list
         ; cr_soons                  : Cr_soon_multiset.V1.t
@@ -556,7 +556,7 @@ module Stable = struct
     module V15 = struct
       type t =
         { assigned                  : Assigned.V10.t list
-        ; unclean_workspaces        : Unclean_workspace.V2.t list Machine.V1.Map.t
+        ; unclean_workspaces        : Unclean_workspace.V2.t list Machine_name.V1.Map.t
         ; owned                     : Feature_info.V7.t list
         ; watched                   : Feature_info.V7.t list
         ; cr_soons                  : Cr_soon_multiset.V1.t
@@ -593,7 +593,7 @@ module Stable = struct
     module V14 = struct
       type t =
         { assigned                  : Assigned.V9.t list
-        ; unclean_workspaces        : Unclean_workspace.V1.t list Machine.V1.Map.t
+        ; unclean_workspaces        : Unclean_workspace.V1.t list Machine_name.V1.Map.t
         ; owned                     : Feature_info.V6.t list
         ; watched                   : Feature_info.V6.t list
         ; cr_soons                  : Cr_soon_multiset.V1.t
@@ -638,7 +638,7 @@ module Stable = struct
     module V13 = struct
       type t =
         { assigned                  : Assigned.V8.t list
-        ; unclean_workspaces        : Unclean_workspace.V1.t list Machine.V1.Map.t
+        ; unclean_workspaces        : Unclean_workspace.V1.t list Machine_name.V1.Map.t
         ; owned                     : Feature_info.V6.t list
         ; watched                   : Feature_info.V6.t list
         ; cr_soons                  : Cr_soon_multiset.V1.t
@@ -674,7 +674,7 @@ module Stable = struct
     module V12 = struct
       type t =
         { assigned                  : Assigned.V7.t list
-        ; unclean_workspaces        : Unclean_workspace.V1.t list Machine.V1.Map.t
+        ; unclean_workspaces        : Unclean_workspace.V1.t list Machine_name.V1.Map.t
         ; owned                     : Feature_info.V6.t list
         ; watched                   : Feature_info.V6.t list
         ; cr_soons                  : Cr_soon_multiset.V1.t

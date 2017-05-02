@@ -101,24 +101,51 @@ Can't archive a permanent feature.
 
 Can't archive a feature with children.
 
-  $ fe create root/child -d '' -allow-non-cr-clean-base
+  $ fe create root/child -d 'Hello Description.' -allow-non-cr-clean-base
   $ fe archive root
   (error
    (archive-feature (Failure "cannot archive a feature that has children")))
   [1]
-  $ fe archive root/child
+
+Archive the child, give a reason.  Check that the email sent contains that reason.
+
+  $ REASON="Reason for archiving that feature."
+  $ fe internal render-archive-email root/child -reason "${REASON}"
+  Reason for archiving: Reason for archiving that feature.
+  
+  root/child
+  ==========
+  Hello Description.
+  
+  |----------------------------------------------------------------|
+  | attribute               | value                                |
+  |-------------------------+--------------------------------------|
+  | id                      | * | (glob)
+  | owner                   | unix-login-for-testing               |
+  | whole-feature reviewer  | unix-login-for-testing               |
+  | seconder                | not seconded                         |
+  | review is enabled       | false                                |
+  | CRs are enabled         | true                                 |
+  | reviewing               | whole-feature reviewers              |
+  | is permanent            | false                                |
+  | bookmark update         | * | (glob)
+  | tip                     | * | (glob)
+  | tip facts               | * | (glob)
+  | base                    | * | (glob)
+  | base facts              | * | (glob)
+  | base is ancestor of tip | * | (glob)
+  |----------------------------------------------------------------|
+
+  $ fe archive root/child -reason "${REASON}"
 
 Archive it.
 
   $ fe archive root
   $ fe list
-  $ fe list -archived -depth max
-  |------------------------------------------------------------------------------|
-  | feature | feature id                           | archived at                 |
-  |---------+--------------------------------------+-----------------------------|
-  | root    | * | * | (glob)
-  |   child | * | * | (glob)
-  |------------------------------------------------------------------------------|
+  $ COLUMNS=500 fe list -archived -depth max | grep -v -- ------ | single_space
+  | feature | feature id | archived at | reason for archiving |
+  | root | * | * | | (glob)
+  | child | * | * | Reason for archiving that feature. | (glob)
 
 The bookmark is gone.
 
@@ -146,13 +173,10 @@ Unarchive.
   |---------+-------+-----------|
   | root    |     1 | CRs       |
   |-----------------------------|
-  $ fe list -archived -depth max
-  |------------------------------------------------------------------------------|
-  | feature | feature id                           | archived at                 |
-  |---------+--------------------------------------+-----------------------------|
-  | root    |                                      |                             |
-  |   child | * | * | (glob)
-  |------------------------------------------------------------------------------|
+  $ COLUMNS=500 fe list -archived -depth max | grep -v -- ------ | single_space
+  | feature | feature id | archived at | reason for archiving |
+  | root | | | | (glob)
+  | child | * | * | * | (glob)
 
   $ fe show root
   root

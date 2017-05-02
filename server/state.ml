@@ -1116,7 +1116,7 @@ let feature_to_protocol ?rev_zero t feature : Iron_protocol.Feature.t =
     ~has_children:(Feature_forest.has_children_exn t.features feature_path)
     ~cr_summary:(feature_cr_summary t feature)
     ~line_count_by_user
-    ~is_archived:false
+    ~is_archived:No
     ~is_rebased
     ~users_with_unclean_workspaces:(users_with_unclean_workspaces t feature_path)
 ;;
@@ -1495,7 +1495,7 @@ let get_cached_or_reload_archived_feature_exn t feature_id =
           (Or_error.error_string "CRs unavailable for archived features")
         ~line_count_by_user:
           (Or_error.error_string "Line counts unavailable for archived features")
-        ~is_archived:true
+        ~is_archived:(Archived_feature.to_is_archived archived_feature)
         ~is_rebased:true
         ~users_with_unclean_workspaces:(users_with_unclean_workspaces t feature_path)
     in
@@ -1519,9 +1519,10 @@ let restrict_diff_from_base_to_tip
     | None
     | Whole_diff | Whole_diff_plus_ignored -> Reviewer.synthetic_whole_feature_reviewer
     | For user_name ->
-      if not feature_protocol.is_archived
-      then ignore (find_review_manager t (force existing_feature) user_name
-                   |> ok_exn : Review_manager.t);
+      (match feature_protocol.is_archived with
+       | Yes _ -> ()
+       | No -> ignore (find_review_manager t (force existing_feature) user_name
+                       |> ok_exn : Review_manager.t));
       Iron_protocol.Feature.reviewer_in_feature feature_protocol user_name
   in
   let diff_from_base_to_tip =
@@ -2418,12 +2419,15 @@ let ensure_can_archive feature ~for_ ~must_be_owner =
   then failwith "cannot archive a permanent feature";
 ;;
 
-let archive_feature t query feature ~for_ ~must_be_owner =
+let archive_feature t query feature ~for_ ~must_be_owner ~reason_for_archiving =
   let feature_path = Feature.feature_path feature in
   ensure_can_archive feature ~must_be_owner ~for_;
   if Feature_forest.has_children_exn t.features (Feature.feature_path feature)
   then failwith "cannot archive a feature that has children";
-  let archived_feature = Archived_feature.create feature ~archived_at:(Query.at query) in
+  let archived_feature =
+    Archived_feature.create feature ~archived_at:(Query.at query)
+      ~reason_for_archiving
+  in
   Feature_updates_manager.on_archive t.feature_updates_manager feature;
   Feature_forest.remove_exn t.features feature_path;
   Hashtbl.remove t.features_by_id (Feature.feature_id feature);
@@ -2451,12 +2455,13 @@ let () =
     Post_check_in_features.none
     (module Archive_feature)
     (fun t query ->
-       let { Archive_feature.Action. feature_path; rev_zero; for_ } =
-         Query.action query
+       let { Archive_feature.Action.
+             feature_path; rev_zero; for_; reason_for_archiving
+           } = Query.action query
        in
        let feature = find_feature_exn t feature_path in
        let remote_repo_path = remote_repo_path t feature ~rev_zero in
-       archive_feature t query feature ~for_ ~must_be_owner:true;
+       archive_feature t query feature ~for_ ~must_be_owner:true ~reason_for_archiving;
        let send_email_to =
          Email_address.Set.union_list
            [ feature_email feature ~sent_upon:Archive
@@ -3200,7 +3205,7 @@ let () =
          archive_feature t query feature ~for_
            (* [must_be_owner:true] is already checked in [prepare_to_compress] and thus
               cannot fail here. *)
-           ~must_be_owner:true))
+           ~must_be_owner:true ~reason_for_archiving:"compressed"))
 ;;
 
 let () =
@@ -3632,7 +3637,13 @@ let () =
           | `Up_to_date -> `Up_to_date
           | `Catch_up_session session ->
             let is_archived =
-              not (Hashtbl.mem t.features_by_id (Catch_up_session.feature_id session))
+              let feature_id = Catch_up_session.feature_id session in
+              if Hashtbl.mem t.features_by_id feature_id
+              then Is_archived.No
+              else (
+                match Archived_features.find_by_id t.archived_features feature_id with
+                | Ok archived_feature -> Archived_feature.to_is_archived archived_feature
+                | Error _ -> Yes { reason_for_archiving = "" })
             in
             let lines_required_to_separate_ddiff_hunks =
               lines_required_to_separate_ddiff_hunks t feature_path
@@ -4086,7 +4097,7 @@ let () =
     (fun t query ->
        let { Hydra_worker.Action. feature_path; rev_zero; tip } = Query.action query in
        let feature = find_feature_exn t feature_path in
-       Feature.set_has_bookmark feature query true;
+       Feature.set_has_bookmark feature query ~compilation_status:`Keep_any_known_value;
        (match Feature.next_base_update feature with
         | No_update_expected -> ()
         | Update_expected update_expected ->
@@ -4241,7 +4252,7 @@ let () =
                |> Or_pending.map ~f:(Result.map_error ~f:(fun _ ->
                  Error.of_string "problems in the feature"))
            ; next_steps        = Feature.next_steps feature
-           ; status            = `Existing
+           ; status            = Existing
            }))
 ;;
 
@@ -4287,7 +4298,7 @@ let () =
            reaction (find_feature_exn t feature_path))
        in
        let features =
-         List.dedup (List.concat (features :: subtree_features))
+         List.dedup_and_sort (List.concat (features :: subtree_features))
            ~compare:(fun (f1 : List_feature_revisions.Reaction.one) f2 ->
              Feature_path.compare f1.feature_path f2.feature_path)
        in
@@ -4775,7 +4786,8 @@ let () =
             `Released_and_cleared
               (Release.Reasons_for_not_archiving.create reasons_for_not_archiving)
           else (
-            archive_feature t query feature ~for_ ~must_be_owner:false;
+            archive_feature t query feature ~for_ ~must_be_owner:false
+              ~reason_for_archiving:"released";
             `Released_and_archived)
       in
       { disposition
@@ -5092,11 +5104,12 @@ let () =
            let feature_path = Feature.feature_path feature in
            let bookmark = Feature_path.to_string feature_path in
            match Hashtbl.find_and_remove state_by_bookmark bookmark with
-           | None -> Feature.set_has_bookmark feature query false;
+           | None -> Feature.set_has_no_bookmark feature query;
            | Some { bookmark = _; rev_info = { rev_author_or_error = _; first_12_of_rev }
-                  ; status; continuous_release_status = _; compilation_status = _ } ->
+                  ; status; continuous_release_status = _; compilation_status } ->
              let next_bookmark_update_before = Feature.next_bookmark_update feature in
-             Feature.set_has_bookmark feature query true;
+             Feature.set_has_bookmark feature query
+               ~compilation_status:(`Update_with compilation_status);
              (match
                 Feature.synchronize_with_hydra feature
                   ~hydra_tip:first_12_of_rev

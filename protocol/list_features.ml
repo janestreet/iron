@@ -52,8 +52,43 @@ module Stable = struct
     module Model = V2
   end
 
+  module Status = struct
+    module V2 = struct
+      type t =
+        | Existing
+        | Archived of
+            { archived_at          : Time.V1_round_trippable.t
+            ; reason_for_archiving : string
+            }
+      [@@deriving bin_io, sexp]
+    end
+
+    module V1 = struct
+      type t =
+        [ `Existing
+        | `Was_archived_at of Time.V1_round_trippable.t
+        ]
+      [@@deriving bin_io]
+
+      let of_v2 : V2.t -> t = function
+        | Existing   -> `Existing
+        | Archived t -> `Was_archived_at t.archived_at
+      ;;
+
+      let to_v2 : t -> V2.t = function
+        | `Existing -> Existing
+        | `Was_archived_at archived_at ->
+          Archived { archived_at
+                   ; reason_for_archiving = ""
+                   }
+      ;;
+    end
+
+    module Model = V2
+  end
+
   module Reaction = struct
-    module V9 = struct
+    module V10 = struct
       type one =
         { feature_path      : Feature_path.V1.t
         ; feature_id        : Feature_id.V1.t
@@ -61,9 +96,7 @@ module Stable = struct
         ; review_is_enabled : bool
         ; num_lines         : int Or_error.V1.t Or_pending.V1.t
         ; next_steps        : Next_step.V6.t list
-        ; status            : [ `Existing
-                              | `Was_archived_at of Time.V1_round_trippable.t
-                              ]
+        ; status            : Status.V2.t
         }
       [@@deriving bin_io, sexp]
 
@@ -72,12 +105,79 @@ module Stable = struct
 
       let%expect_test _ =
         print_endline [%bin_digest: one];
+        [%expect {| 1c25f42b38f2192c5adc7d7949a31277 |}];
+        print_endline [%bin_digest: t];
+        [%expect {| fe91e2b56beb8d0dae14a7c8db4d0496 |}];
+      ;;
+
+      let of_model (m : t) = m
+    end
+
+    module V9 = struct
+      type one =
+        { feature_path      : Feature_path.V1.t
+        ; feature_id        : Feature_id.V1.t
+        ; owners            : User_name.V1.t list
+        ; review_is_enabled : bool
+        ; num_lines         : int Or_error.V1.t Or_pending.V1.t
+        ; next_steps        : Next_step.V6.t list
+        ; status            : Status.V1.t
+        }
+      [@@deriving bin_io]
+
+      type t = one list
+      [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: one];
         [%expect {| c0df7bf7673bcddfd259f5f3967c248e |}];
         print_endline [%bin_digest: t];
         [%expect {| ea442ef7dc2fe7cdc373fb2f5352e8cd |}];
       ;;
 
-      let of_model (m : t) = m
+      open! Core
+      open! Import
+
+      let of_model m =
+        List.map (V10.of_model m)
+          ~f:(fun { feature_path
+                  ; feature_id
+                  ; owners
+                  ; review_is_enabled
+                  ; num_lines
+                  ; next_steps
+                  ; status
+                  } ->
+               { feature_path
+               ; feature_id
+               ; owners
+               ; review_is_enabled
+               ; num_lines
+               ; next_steps
+               ; status = Status.V1.of_v2 status
+               })
+      ;;
+
+      let to_v10 t =
+        List.map t
+          ~f:(fun { feature_path
+                  ; feature_id
+                  ; owners
+                  ; review_is_enabled
+                  ; num_lines
+                  ; next_steps
+                  ; status
+                  } ->
+               { V10.
+                 feature_path
+               ; feature_id
+               ; owners
+               ; review_is_enabled
+               ; num_lines
+               ; next_steps
+               ; status = Status.V1.to_v2 status
+               })
+      ;;
     end
 
     module V8 = struct
@@ -88,9 +188,7 @@ module Stable = struct
         ; review_is_enabled : bool
         ; num_lines         : int Or_error.V1.t Or_pending.V1.t
         ; next_steps        : Next_step.V5.t list
-        ; status            : [ `Existing
-                              | `Was_archived_at of Time.V1_round_trippable.t
-                              ]
+        ; status            : Status.V1.t
         }
       [@@deriving bin_io]
 
@@ -184,12 +282,17 @@ module Stable = struct
       ;;
     end
 
-    module Model = V9
+    module Model = V10
   end
 end
 
 include Iron_versioned_rpc.Make
     (struct let name = "list-features" end)
+    (struct let version = 11 end)
+    (Stable.Action.V2)
+    (Stable.Reaction.V10)
+
+include Register_old_rpc
     (struct let version = 10 end)
     (Stable.Action.V2)
     (Stable.Reaction.V9)
@@ -209,7 +312,9 @@ include Register_old_rpc
     (Stable.Action.V1)
     (Stable.Reaction.V7)
 
-module Action   = Stable.Action.Model
+module Status = Stable.Status.Model
+
+module Action = Stable.Action.Model
 
 module Reaction = struct
   module Stable = Stable.Reaction

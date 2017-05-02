@@ -44,17 +44,20 @@ let add t users ~whole_feature_reviewers =
   normalize t ~whole_feature_reviewers
 ;;
 
-let mem t user ~whole_feature_reviewers ~whole_feature_followers =
+let mem t user ~whole_feature_reviewers ~whole_feature_followers ~is_seconded =
+  let t =
+    match t with
+    | ( `All | `All_but _ | `Only _ ) as t -> t
+    | `Whole_feature_reviewers -> `Only whole_feature_reviewers
+  in
   match t with
-  | `All                     -> true
-  | `Whole_feature_reviewers ->
-    User_name.Set.mem whole_feature_reviewers user
-    || User_name.Set.mem whole_feature_followers user
-  | `Only permitted          ->
+  | `All               -> true
+  | `All_but forbidden -> not (Set.mem forbidden user)
+  | `Only permitted    ->
     Set.mem permitted user
-    || (User_name.Set.mem whole_feature_followers user
+    || (Set.mem whole_feature_followers user
+        && (is_seconded || Set.length whole_feature_reviewers > 1)
         && Set.is_subset whole_feature_reviewers ~of_:permitted)
-  | `All_but forbidden       -> not (Set.mem forbidden user)
 ;;
 
 let to_sexp_hum = function

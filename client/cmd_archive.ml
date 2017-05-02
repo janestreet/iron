@@ -2,7 +2,7 @@ open! Core
 open! Async
 open! Import
 
-let main { Fe.Archive.Action. feature_path; for_ } =
+let main { Fe.Archive.Action. feature_path; for_; reason_for_archiving } =
   let%bind repo_root =
     Cmd_workspace.repo_for_hg_operations_exn feature_path ~use:`Clone
   in
@@ -16,7 +16,8 @@ let main { Fe.Archive.Action. feature_path; for_ } =
     Get_feature.rpc_to_server_exn { feature_path; rev_zero  = Some rev_zero }
   in
   let%bind { remote_repo_path; send_email_to } =
-    Archive_feature.rpc_to_server_exn { feature_path; rev_zero; for_ }
+    Archive_feature.rpc_to_server_exn
+      { feature_path; rev_zero; for_; reason_for_archiving }
   in
   let%bind () =
     Cmd_unbookmarked_head.prune
@@ -34,23 +35,24 @@ let main { Fe.Archive.Action. feature_path; for_ } =
   && Set.mem feature.send_email_upon Archive
   then
     Sendmail.send
-      (Cmd_show.render_email_body feature ~included_features_order:`Name)
+      (Cmd_show.render_email_body feature
+         ~included_features_order:`Name
+         ~event:(Archived { reason_for_archiving }))
       ~subject:(sprintf !"feature was archived: %{Feature_path}" feature_path)
       ~recipients:(List.map (Set.to_list send_email_to) ~f:Email_address.to_string);
   return ()
 ;;
 
 let command =
-  Command.async'
-    ~summary:"archive a feature (it can later be unarchived)"
+  Command.async' ~summary:"archive a feature (it can later be unarchived)"
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and feature_path = feature_path
      and for_ = for_
+     and reason_for_archiving = reason_for_archiving
      in
      fun () ->
        let open! Deferred.Let_syntax in
        let feature_path = ok_exn feature_path in
-       main { feature_path; for_ }
-    )
+       main { feature_path; for_; reason_for_archiving })
 ;;

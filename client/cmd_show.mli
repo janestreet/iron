@@ -14,6 +14,7 @@ val attribute_table
   -> show_lock_reasons                : bool
   -> show_inheritable_attributes      : bool
   -> show_next_steps                  : bool
+  -> show_full_compilation_status     : bool
   -> Feature.t
   -> string
 
@@ -22,6 +23,7 @@ val attribute_table_with_fields
   -> max_output_columns                           : int
   (** [~next_steps:(Some [])] will cause [Report_iron_bug] to be displayed. *)
   -> next_steps                                   : Next_step.t list option
+  -> ?compilation_status_to_display               : Compilation_status_to_display.t
   -> ?feature_id                                  : Feature_id.t
   -> ?whole_feature_followers                     : User_name.Set.t
   -> ?whole_feature_reviewers                     : User_name.Set.t
@@ -38,7 +40,7 @@ val attribute_table_with_fields
   -> ?tip_facts                                   : Rev_facts.t Or_pending.t
   -> ?base_is_ancestor_of_tip                     : Rev_facts.Is_ancestor.t Or_pending.t
   -> ?is_permanent                                : bool
-  -> ?is_archived                                 : bool
+  -> ?is_archived                                 : Is_archived.t
   -> ?seconder                                    : User_name.t option
   -> ?review_is_enabled                           : bool
   -> ?reviewing                                   : Reviewing.t
@@ -63,11 +65,19 @@ val header_and_description : Feature_path.t -> description:string -> string
 
 val command : Command.t
 
+module Event : sig
+  type t =
+    | Released
+    | Archived of { reason_for_archiving : string }
+end
+
 val render_email_body
   :  Feature.t
   -> included_features_order : Feature.Sorted_by.t
+  -> event:Event.t
   -> string
 
 val render_release_email_command : Command.t
+val render_archive_email_command : Command.t
 
 val show_lines_required_to_separate_ddiff_hunks : Command.t

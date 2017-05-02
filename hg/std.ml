@@ -4,6 +4,7 @@ open! Import
 module Attributed_file               = Attributed_file
 module Brain                         = Brain
 module Catch_up_session              = Catch_up_session
+module Compilation_status            = Hydra_state_for_bookmark.Compilation_status
 module Cr_comment                    = Cr_comment
 module Cr_soon                       = Cr_soon
 module Cr_soon_in_feature            = Cr_soon_multiset.Cr_soon_in_feature
@@ -18,6 +19,8 @@ module Diff4s                        = Diff4s
 module Diff4s_for_diamond            = Diff4s_for_diamond
 module File_tree_consing             = File_tree_consing
 module Hg                            = Hg
+module Hydra_compilation_status      = Hydra_state_for_bookmark.Hydra_compilation_status
+module Hydra_state_for_bookmark      = Hydra_state_for_bookmark
 module Indexed_diff4s                = Indexed_diff4s
 module Latest_release                = Latest_release
 module Maybe_archived_feature_spec   = Maybe_archived_feature_spec

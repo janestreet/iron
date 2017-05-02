@@ -26,7 +26,9 @@ module Cmd : sig
   module Show : sig
     val omit_completed_review         : t -> bool
     val omit_unclean_workspaces_table : t -> bool
+    val show_compilation_status       : t -> bool
     val show_feature_id               : t -> bool
+    val show_full_compilation_status  : t -> bool
     val show_inheritable_attributes   : t -> bool
     val show_lock_reasons             : t -> bool
   end

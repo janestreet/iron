@@ -9,6 +9,7 @@ open! Import
 type t =
   | U1
   | U2
+  | U3
 [@@deriving compare, sexp_of]
 
 include Enum.S with type t := t

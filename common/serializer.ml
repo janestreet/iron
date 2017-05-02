@@ -74,8 +74,8 @@ end = struct
         let timeout_event = Clock.Event.after with_timeout in
         don't_wait_for
           (match%map Clock.Event.fired timeout_event with
-           | `Aborted  () -> ()
-           | `Happened () ->
+           | Aborted  () -> ()
+           | Happened () ->
              match t.state with
              | Not_paused
              | Timed_out -> ()
@@ -87,7 +87,7 @@ end = struct
         don't_wait_for
           (let%map () = Ivar.read resume in
            match Clock.Event.abort timeout_event () with
-           | `Ok | `Previously_aborted () | `Previously_happened () -> ()))
+           | Ok | Previously_aborted () | Previously_happened () -> ()))
   ;;
 
   let resume_exn t =

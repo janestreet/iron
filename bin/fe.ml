@@ -19,6 +19,7 @@ let server_state_invariant =
 let invariant =
   Command.group ~summary:"check invariant"
     [ "check-workspaces"  , Iron_client.Cmd_workspace.check_workspaces_invariant_command
+    ; "included-features" , Iron_client.Cmd_internal_invariant_included_features.command
     ; "server-state"      , server_state_invariant
     ]
 ;;
@@ -48,6 +49,7 @@ let internal =
     ; "notify-on-feature-updates"    , Iron_client.Cmd_notify_on_feature_updates.command
     ; "push-events"                  , Iron_client.Cmd_push_events.command
     ; "remove-color"                 , Iron_client.Cmd_remove_color.command
+    ; "render-archive-email"         , Iron_client.Cmd_show.render_archive_email_command
     ; "render-release-email"         , Iron_client.Cmd_show.render_release_email_command
     ; "rpc-to-server"                , Iron_client.Cmd_internal_rpc_to_server.command
     ; "scaffold"                     , Iron_client.Cmd_scaffold_internal.command

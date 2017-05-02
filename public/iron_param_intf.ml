@@ -179,6 +179,7 @@ module type T = sig
   val which_session                    : Which_session.t            t
   val session_id_required              : Session_id.t               t
   val review_reason                    : string                     t
+  val reason_for_archiving             : string                     t
   val diff4_in_session_ids             : Diff4_in_session.Id.t list t
   val lock_names                       : Lock_name.t list           t
   val lock_reason                      : string                     t

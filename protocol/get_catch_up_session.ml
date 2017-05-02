@@ -23,6 +23,36 @@ module Stable = struct
   end
 
   module Catch_up_session = struct
+    module V6 = struct
+      type t =
+        { catch_up_session_id              : Session_id.V1.t
+        ; catch_up_session_tip             : Rev.V1.t
+        ; creation_time                    : Time.V1_round_trippable.t
+        ; reviewer_in_session              : Reviewer.V2.t
+        ; diff4s_to_catch_up               : Diff4_to_catch_up.V3.t list
+        ; line_count_remaining_to_catch_up : Line_count.Catch_up.V1.t
+        ; remote_rev_zero                  : Rev.V1.t
+        ; remote_repo_path                 : Remote_repo_path.V1.t
+        ; feature_path                     : Feature_path.V1.t
+        ; feature_id                       : Feature_id.V1.t
+        ; whole_feature_reviewers          : User_name.V1.Set.t
+        ; owners                           : User_name.V1.t list
+        ; base                             : Rev.V1.t
+        ; tip                              : Rev.V1.t
+        ; description                      : string
+        ; is_permanent                     : bool
+        ; is_archived                      : Is_archived.V1.t
+        ; seconder                         : User_name.V1.t option
+        ; lines_required_to_separate_ddiff_hunks : int
+        }
+      [@@deriving bin_io, sexp_of]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 149b1c9200a3a0e86f98ab59d4f9e48f |}]
+      ;;
+    end
+
     module V5 = struct
       type t =
         { catch_up_session_id              : Session_id.V1.t
@@ -45,11 +75,58 @@ module Stable = struct
         ; seconder                         : User_name.V1.t option
         ; lines_required_to_separate_ddiff_hunks : int
         }
-      [@@deriving bin_io, sexp_of]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
         [%expect {| 28258a680554a97f026a9b004b26e495 |}]
+      ;;
+
+      open! Core
+      open! Import
+
+      let of_v6
+            { V6.
+              catch_up_session_id
+            ; catch_up_session_tip
+            ; creation_time
+            ; reviewer_in_session
+            ; diff4s_to_catch_up
+            ; line_count_remaining_to_catch_up
+            ; remote_rev_zero
+            ; remote_repo_path
+            ; feature_path
+            ; feature_id
+            ; whole_feature_reviewers
+            ; owners
+            ; base
+            ; tip
+            ; description
+            ; is_permanent
+            ; is_archived
+            ; seconder
+            ; lines_required_to_separate_ddiff_hunks
+            } =
+        { catch_up_session_id
+        ; catch_up_session_tip
+        ; creation_time
+        ; reviewer_in_session
+        ; diff4s_to_catch_up
+        ; line_count_remaining_to_catch_up
+        ; remote_rev_zero
+        ; remote_repo_path
+        ; feature_path
+        ; feature_id
+        ; whole_feature_reviewers
+        ; owners
+        ; base
+        ; tip
+        ; description
+        ; is_permanent
+        ; is_archived = Is_archived.Stable.V1.to_bool is_archived
+        ; seconder
+        ; lines_required_to_separate_ddiff_hunks
+        }
       ;;
     end
 
@@ -276,23 +353,42 @@ module Stable = struct
       ;;
     end
 
-    module Model = V5
+    module Model = V6
   end
 
   module Reaction = struct
+    module V6 = struct
+      type t =
+        [ `Up_to_date
+        | `Catch_up_session of Catch_up_session.V6.t
+        ]
+      [@@deriving bin_io, sexp_of]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 444c84e444f72a4e50a94b67c82a24a7 |}]
+      ;;
+
+      let of_model m = m
+    end
+
     module V5 = struct
       type t =
         [ `Up_to_date
         | `Catch_up_session of Catch_up_session.V5.t
         ]
-      [@@deriving bin_io, sexp_of]
+      [@@deriving bin_io]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
         [%expect {| cca2f20b1058574c30d37eebba9c5318 |}]
       ;;
 
-      let of_model m = m
+      let of_model m =
+        match V6.of_model m with
+        | `Up_to_date as t -> t
+        | `Catch_up_session v6 -> `Catch_up_session (Catch_up_session.V5.of_v6 v6)
+      ;;
     end
 
     module V4 = struct
@@ -359,12 +455,17 @@ module Stable = struct
       ;;
     end
 
-    module Model = V5
+    module Model = V6
   end
 end
 
 include Iron_versioned_rpc.Make
     (struct let name = "get-catch-up-session" end)
+    (struct let version = 6 end)
+    (Stable.Action.V1)
+    (Stable.Reaction.V6)
+
+include Register_old_rpc
     (struct let version = 5 end)
     (Stable.Action.V1)
     (Stable.Reaction.V5)

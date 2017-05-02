@@ -97,7 +97,9 @@ module Cmd_show = struct
   type t =
     { mutable omit_completed_review         : bool
     ; mutable omit_unclean_workspaces_table : bool
+    ; mutable show_compilation_status       : bool
     ; mutable show_feature_id               : bool
+    ; mutable show_full_compilation_status  : bool
     ; mutable show_inheritable_attributes   : bool
     ; mutable show_lock_reasons             : bool
     }
@@ -105,20 +107,25 @@ module Cmd_show = struct
   let update t =
     let open Make_client_config.Utils in
     empty
+    +> no_arg "-show-compilation-status" (fun () -> t.show_compilation_status <- true)
     +> no_arg "-show-completed-review" (fun () -> t.omit_completed_review <- false)
     +> no_arg "-omit-completed-review" (fun () -> t.omit_completed_review <- true)
+    +> no_arg "-show-full-compilation-status"
+         (fun () -> t.show_full_compilation_status <- true)
     +> no_arg "-omit-unclean-workspaces-table"
          (fun () -> t.omit_unclean_workspaces_table <- true)
-    +> no_arg "-show-feature-id"       (fun () -> t.show_feature_id       <- true)
+    +> no_arg "-show-feature-id" (fun () -> t.show_feature_id       <- true)
     +> no_arg "-show-inheritable-attributes"
          (fun () -> t.show_inheritable_attributes <- true)
-    +> no_arg "-show-lock-reasons"     (fun () -> t.show_lock_reasons     <- true)
+    +> no_arg "-show-lock-reasons" (fun () -> t.show_lock_reasons     <- true)
   ;;
 
   let create () =
     { omit_completed_review         = false
     ; omit_unclean_workspaces_table = false
+    ; show_compilation_status       = false
     ; show_feature_id               = false
+    ; show_full_compilation_status  = false
     ; show_inheritable_attributes   = false
     ; show_lock_reasons             = false
     }
@@ -428,7 +435,9 @@ module Cmd = struct
   module Show = struct
     let omit_completed_review         t = t.cmd_show.omit_completed_review
     let omit_unclean_workspaces_table t = t.cmd_show.omit_unclean_workspaces_table
+    let show_compilation_status       t = t.cmd_show.show_compilation_status
     let show_feature_id               t = t.cmd_show.show_feature_id
+    let show_full_compilation_status  t = t.cmd_show.show_full_compilation_status
     let show_inheritable_attributes   t = t.cmd_show.show_inheritable_attributes
     let show_lock_reasons             t = t.cmd_show.show_lock_reasons
   end

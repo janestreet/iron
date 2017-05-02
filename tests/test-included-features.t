@@ -456,6 +456,8 @@ Check that [fe show] displays the base and tip as of before the latest release.
   $ [ ${nested_child_base} = $(fe show root/app/child/nested -archived -base) ]
   $ [ ${nested_child_tip}  = $(fe show root/app/child/nested -archived -tip)  ]
 
+  $ old_tip=$(fe show -tip root)
+
   $ hg update root >/dev/null
   $ fe create root/aap2 -d "another app"
   $ echo 5 > file; hg commit -m 5
@@ -491,3 +493,21 @@ Check that [fe show] displays the base and tip as of before the latest release.
    -order-included-features-by-decreasing-release-time
    -order-included-features-by-release-time)
   [1]
+
+Check that tips of included features are ancestors of feature tip.
+
+  $ feature_to_server root -fake-valid
+  $ new_tip=$(fe show -tip root)
+  $ fe internal invariant included-features root/aap2
+  ("no such feature" root/aap2)
+  [1]
+  $ fe internal invariant included-features root
+  $ hg bookmark -f -r ${old_tip} root
+  $ feature_to_server root -fake-valid
+  $ fe internal invariant included-features root
+  (root "has tip" 5553da8f2039
+   "which does not descend from these included features:" (root/aap2))
+  [1]
+  $ hg bookmark -f -r ${new_tip} root
+  $ feature_to_server root -fake-valid
+

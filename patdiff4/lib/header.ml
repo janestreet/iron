@@ -46,7 +46,7 @@ module Source = struct
     let name =
       t.other_names
       |> List.filter ~f:(fun name -> not (String.equal name t.name))
-      |> List.dedup ~compare:String.compare
+      |> List.dedup_and_sort ~compare:String.compare
       |> sort_heuristic
       |> (fun names -> names @ [ t.name ]) (* the last name is followed by its range *)
       |> String.concat ~sep:", "

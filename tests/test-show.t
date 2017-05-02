@@ -16,6 +16,29 @@ Create feature.
   $ fe create root -description 'root' -remote-repo-path $(pwd)
   $ feature_to_server root -fake-valid
 
+  $ REV12=$(hg id | cut -d ' ' -f 1)
+
+  $ fe internal rpc-to-server call synchronize-state <<EOF
+  > ((remote_repo_path $PWD)
+  >  (bookmarks
+  >   (((bookmark root)
+  >     (rev_info
+  >      ((first_12_of_rev $REV12)
+  >       (rev_author_or_error (Ok unix-login-for-testing))))
+  >     (status Done)
+  >     (continuous_release_status Not_working_on_it)
+  >     (compilation_status
+  >      ((root
+  >        ((finished
+  >          ((Working
+  >            ((first_12_of_rev 1d4af7f6474e)
+  >             (rev_author_or_error (Ok unix-login-for-testing))))))
+  >         (pending
+  >          (((first_12_of_rev $REV12)
+  >            (rev_author_or_error (Ok unix-login-for-testing)))))))))))))
+  > EOF
+  ((bookmarks_to_rerun ()))
+
 Show it.
 
   $ fe show root
@@ -23,28 +46,155 @@ Show it.
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | add code                |
-  | owner                  | unix-login-for-testing  |
-  | whole-feature reviewer | unix-login-for-testing  |
-  | seconder               | not seconded            |
-  | review is enabled      | false                   |
-  | CRs are enabled        | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | false                   |
-  | tip                    | 04da3968e088            |
-  | base                   | 04da3968e088            |
-  |--------------------------------------------------|
+  |---------------------------------------------------------------------|
+  | attribute              | value                                      |
+  |------------------------+--------------------------------------------|
+  | next step              | add code                                   |
+  | compilation status     | 1d4af7f6474e compiles, tip pending for 42s |
+  | owner                  | unix-login-for-testing                     |
+  | whole-feature reviewer | unix-login-for-testing                     |
+  | seconder               | not seconded                               |
+  | review is enabled      | false                                      |
+  | CRs are enabled        | true                                       |
+  | reviewing              | whole-feature reviewers                    |
+  | is permanent           | false                                      |
+  | tip                    | 04da3968e088                               |
+  | base                   | 04da3968e088                               |
+  |---------------------------------------------------------------------|
 
-Show attributes.
+  $ fe show -compilation-status
+  ((root
+    ((finished
+      ((Working
+        ((first_12_of_rev 1d4af7f6474e)
+         (rev_author_or_error (Ok unix-login-for-testing))))))
+     (pending
+      (((first_12_of_rev 04da3968e088)
+        (rev_author_or_error (Ok unix-login-for-testing))
+        (pending_since
+         ((human_readable (*)) (glob)
+          (int_ns_since_epoch *))))))))) (glob)
+
+Check that if there are no changes affecting the feature during synchronize-state, there
+is no spurious cache invalidation happening.
+
+  $ function last_changed_at () {
+  >     fe internal dump feature root | sexp query '(field cache_invalidator)(field last_changed_at)'
+  > }
+
+  $ CACHE_1=$(last_changed_at)
+  $ fe internal rpc-to-server call synchronize-state <<EOF
+  > ((remote_repo_path $PWD)
+  >  (bookmarks
+  >   (((bookmark root)
+  >     (rev_info
+  >      ((first_12_of_rev $REV12)
+  >       (rev_author_or_error (Ok unix-login-for-testing))))
+  >     (status Done)
+  >     (continuous_release_status Not_working_on_it)
+  >     (compilation_status
+  >      ((root
+  >        ((finished
+  >          ((Working
+  >            ((first_12_of_rev 1d4af7f6474e)
+  >             (rev_author_or_error (Ok unix-login-for-testing))))))
+  >         (pending
+  >          (((first_12_of_rev $REV12)
+  >            (rev_author_or_error (Ok unix-login-for-testing)))))))))))))
+  > EOF
+  ((bookmarks_to_rerun ()))
+  $ CACHE_2=$(last_changed_at)
+  $ test ${CACHE_1} -eq ${CACHE_2}
+
+However, compilation-status changes correctly trigger a cache invalidation in the feature.
+
+  $ fe internal rpc-to-server call synchronize-state <<EOF
+  > ((remote_repo_path $PWD)
+  >  (bookmarks
+  >   (((bookmark root)
+  >     (rev_info
+  >      ((first_12_of_rev $REV12)
+  >       (rev_author_or_error (Ok unix-login-for-testing))))
+  >     (status Done)
+  >     (continuous_release_status Not_working_on_it)
+  >     (compilation_status
+  >      ((root
+  >        ((finished
+  >          ((Working
+  >            ((first_12_of_rev 2a5549ec7742)
+  >             (rev_author_or_error (Ok unix-login-for-testing))))))
+  >         (pending
+  >          (((first_12_of_rev $REV12)
+  >            (rev_author_or_error (Ok unix-login-for-testing)))))))))))))
+  > EOF
+  ((bookmarks_to_rerun ()))
+  $ CACHE_2=$(last_changed_at)
+  $ test ${CACHE_1} -eq ${CACHE_2}
+  [1]
 
   $ fe create root/child -desc child1
   $ fe show root -remote-repo-path
   $TESTTMP/repo
   $ fe show root/child -remote-repo-path
   $TESTTMP/repo
+
+  $ fe internal rpc-to-server call synchronize-state <<EOF
+  > ((remote_repo_path $PWD)
+  >  (bookmarks 
+  >   (((bookmark root/child)
+  >     (rev_info
+  >      ((first_12_of_rev $REV12)
+  >       (rev_author_or_error (Ok unix-login-for-testing))))
+  >     (status Done) (continuous_release_status Not_working_on_it)
+  >     (compilation_status
+  >      ((root-release
+  >        ((finished
+  >          ((Working
+  >            ((first_12_of_rev 6f38410a5738)
+  >             (rev_author_or_error (Ok unix-login-for-testing))))))
+  >         (pending
+  >          (((first_12_of_rev $REV12)
+  >            (rev_author_or_error (Ok unix-login-for-testing)))))))
+  >       (root
+  >        ((finished
+  >          ((Broken
+  >            ((last_working
+  >              (((first_12_of_rev $REV12)
+  >                (rev_author_or_error (Ok unix-login-for-testing)))))
+  >             (first_broken
+  >              ((first_12_of_rev 2a5549ec7742)
+  >               (rev_author_or_error (Ok unix-login-for-testing))))
+  >             (last_broken
+  >              ((first_12_of_rev $REV12)
+  >               (rev_author_or_error (Ok unix-login-for-testing))))))))
+  >         (pending
+  >          (((first_12_of_rev $REV12)
+  >            (rev_author_or_error (Ok unix-login-for-testing)))))))))))))
+  > EOF
+  ((bookmarks_to_rerun (root/child)))
+
+  $ fe show -show-full-compilation-status | grep -v '| pending for'
+  root/child
+  ==========
+  child1
+  
+  |----------------------------------------------------------------------|
+  | attribute               | value                                      |
+  |-------------------------+--------------------------------------------|
+  | next step               | wait for hydra                             |
+  | compilation status      |                                            |
+  |   root                  | tip broken, retrying for 42s               |
+  |   root-release          | 6f38410a5738 compiles, tip pending for 42s |
+  | owner                   | unix-login-for-testing                     |
+  | whole-feature reviewer  | unix-login-for-testing                     |
+  | seconder                | not seconded                               |
+  | review is enabled       | false                                      |
+  | CRs are enabled         | true                                       |
+  | reviewing               | whole-feature reviewers                    |
+  | is permanent            | false                                      |
+  | tip                     | 04da3968e088                               |
+  | base                    | 04da3968e088                               |
+  |----------------------------------------------------------------------|
 
 Show it, with the feature id included.
 

@@ -124,6 +124,8 @@ Detect uncommitted changes.
   | unix-login-for-testing | uncommitted changes |
   |----------------------------------------------|
 
+  $ grep -q -F 'hg_status"? FILE\n' $(fe workspace dir root/child2)/.hg/iron.*.log
+
 Check that this is persisted.
 
   $ fe-server stop

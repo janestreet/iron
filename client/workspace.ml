@@ -585,6 +585,34 @@ module Unclean_status = struct
     | Unclean of Unclean_workspace_reason.t
 end
 
+module Log_in_dot_hg : sig
+  val sexp
+    :  ?level : Log.Level.t
+    -> ?tags : (string * string) list
+    -> Repo_root.t
+    -> Sexp.t
+    -> unit
+end = struct
+
+  let filename repo_root =
+    Unix.getpid ()
+    |> sprintf !".hg/iron.%{Pid}.log"
+    |> Path_in_repo.of_string
+    |> Repo_root.append repo_root
+    |> Abspath.to_string
+  ;;
+
+  let get_log = Memo.general ~hashable:Repo_root.Hash_by_path.hashable (fun repo_root ->
+    let output = Log.Output.file `Sexp ~filename:(filename repo_root) in
+    Log.create ~level:`Debug ~output:[ output ] ~on_error:`Raise)
+  ;;
+
+  let sexp ?level ?tags repo_root sexp =
+    (* Logs automatically flush when they are collected or when async shuts down. *)
+    Log.sexp ?level ?tags (get_log repo_root) sexp;
+  ;;
+end
+
 let unclean_status_throttle = Memo.unit (fun () ->
   let max_concurrent_jobs =
     Client_config.(get () |> Workspaces.unclean_workspaces_detection_max_concurrent_jobs)
@@ -603,7 +631,10 @@ let unclean_status_internal t =
     [ or_error (fun () ->
         match%map Hg.status_cleanliness center_repo_root with
         | Ok Repo_is_clean -> []
-        | Error _          -> [ Unclean_workspace_reason.One_reason.Uncommitted_changes ])
+        | Error error      ->
+          Log_in_dot_hg.sexp center_repo_root
+            [%sexp "Uncommitted changes", (error : Error.t)];
+          [ Unclean_workspace_reason.One_reason.Uncommitted_changes ])
     ; or_error (fun () ->
         (* This hack of not using [hg outgoing] is not foolproof: one can still push to
            whatever repository they want by simply using the clone, or some share of the

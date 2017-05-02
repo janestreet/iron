@@ -20,6 +20,7 @@ val mem
   -> User_name.t
   -> whole_feature_reviewers : User_name.Set.t
   -> whole_feature_followers : User_name.Set.t
+  -> is_seconded:bool
   -> bool
 
 val to_sexp_hum : t -> Sexp.t

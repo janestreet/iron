@@ -1023,7 +1023,7 @@ let catch_up_review_loop ~warn_if_no_session ~repo_root ~repo_root_kind ~feature
           ~display_ascii ~max_output_columns;
         let%map result =
           review_or_catch_up
-            ~is_catch_up_on_archived_feature:is_archived
+            ~is_catch_up_on_archived_feature:(Is_archived.to_bool is_archived)
             ~mark_as_reviewed
             ~repo_root
             ~repo_root_kind
@@ -1075,7 +1075,8 @@ let review_loop ~repo_root ~repo_root_kind ~feature_path ~create_catch_up_for_me
                   ~display_ascii ~max_output_columns
                   ~show_feature_id:false ~show_lock_reasons:false
                   ~show_inheritable_attributes:false
-                  ~show_next_steps:false);
+                  ~show_next_steps:false
+                  ~show_full_compilation_status:false);
   printf "\n";
   let only_print_session =
     raw || (display_ascii && not !Async_interactive.interactive)

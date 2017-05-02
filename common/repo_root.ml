@@ -5,9 +5,21 @@ type t =
   { path           : Abspath.t
   ; human_readable : string option
   }
-[@@deriving compare]
+[@@deriving compare, fields]
 
 let sexp_of_t t = t.path |> [%sexp_of: Abspath.t]
+
+module Hash_by_path = struct
+  module T = struct
+    type nonrec t = t [@@deriving sexp_of]
+
+    let compare = Comparable.lift [%compare: Abspath.t] ~f:path
+
+    let hash t = Abspath.hash t.path
+  end
+  include T
+  include Hashable.Make_plain(T)
+end
 
 let with_human_readable t name =
   { t with human_readable = Some name }

@@ -101,7 +101,7 @@ let to_ascii_table_column_text t =
 let dedup_and_sort t =
   t
   |> List.sort ~cmp:Sexp.compare
-  |> List.dedup ~compare:Sexp.compare
+  |> List.dedup_and_sort ~compare:Sexp.compare
 ;;
 
 let add t1 t2 = dedup_and_sort (List.rev_append t1 t2)

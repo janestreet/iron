@@ -405,7 +405,7 @@ let run_without_server
   =
   let review_edge_from_base_to_base = { Review_edge. base; tip = base } in
   let need_diff4s_starting_from =
-    List.dedup ~compare:Review_edge.compare
+    List.dedup_and_sort ~compare:Review_edge.compare
       (review_edge_from_base_to_base :: need_diff4s_starting_from)
   in
   event "start";

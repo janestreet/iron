@@ -126,7 +126,7 @@ it directly with:
 ;;
 
 let compute_and_update_server_exn ~for_ which_features =
-  let machine = Unix.gethostname () |> Machine.of_string in
+  let machine_name = Unix.gethostname () |> Machine_name.of_string in
   match which_features with
   | `All_features ->
     let%bind { unclean_workspaces; clean_workspaces = _ } =
@@ -134,7 +134,7 @@ let compute_and_update_server_exn ~for_ which_features =
     in
     Update_unclean_workspaces.rpc_to_server_exn
       { for_
-      ; machine
+      ; machine_name
       ; unclean_workspaces
       ; clean_workspaces   = `Complement_of_those_listed_as_unclean
       }
@@ -145,7 +145,7 @@ let compute_and_update_server_exn ~for_ which_features =
     in
     Update_unclean_workspaces.rpc_to_server_exn
       { for_
-      ; machine
+      ; machine_name
       ; unclean_workspaces
       ; clean_workspaces = `At_least_these clean_workspaces
       }
@@ -306,7 +306,7 @@ The command needs to be run by the USER, otherwise admin privileges are required
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and for_ = for_
-     and machine = anon ("MACHINE" %: (Arg_type.create Machine.of_string))
+     and machine = anon ("MACHINE" %: (Arg_type.create Machine_name.of_string))
      in
      fun () ->
        With_unclean_workspaces.rpc_to_server_exn (Remove_machine (for_, machine)))

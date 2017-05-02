@@ -67,6 +67,7 @@ module Attribute = struct
     type t =
       | Allow_review_for
       | Base
+      | Compilation_status
       | Crs_are_enabled
       | Crs_shown_in_todo_only_for_users_reviewing
       | Feature_id
@@ -140,21 +141,23 @@ module Attribute = struct
       feature.allow_review_for
       |> [%sexp_of: Allow_review_for.t]
     | Base                    -> Rev.node_hash feature.base |> [%sexp_of: Node_hash.t]
+    | Compilation_status      -> feature.compilation_status
+                                 |> [%sexp_of: Compilation_status.t]
     | Crs_are_enabled         ->
       feature.crs_are_enabled
       |> [%sexp_of: bool]
     | Crs_shown_in_todo_only_for_users_reviewing ->
       feature.crs_shown_in_todo_only_for_users_reviewing
       |> [%sexp_of: bool]
+    | Feature_id              -> feature.feature_id |> [%sexp_of: Feature_id.t]
     | Feature_path            -> feature.feature_path |> [%sexp_of: Feature_path.t]
     | First_owner             -> List.hd_exn feature.owners |> [%sexp_of: User_name.t]
     | Has_bookmark            -> feature.has_bookmark |> [%sexp_of: bool]
-    | Feature_id              -> feature.feature_id |> [%sexp_of: Feature_id.t]
     | Included_features       ->
       List.map (Feature.released_features feature ~sorted_by:included_features_order)
         ~f:Released_feature.feature_path
       |> [%sexp_of: Feature_path.t list]
-    | Is_archived             -> feature.is_archived |> [%sexp_of: bool]
+    | Is_archived -> Is_archived.to_bool feature.is_archived |> [%sexp_of: bool]
     | Is_permanent            -> feature.is_permanent |> [%sexp_of: bool]
     | Is_rebased              -> feature.is_rebased |> [%sexp_of: bool]
     | Is_seconded             -> is_some feature.seconder |> [%sexp_of: bool]
@@ -342,6 +345,7 @@ let block name = function
 ;;
 
 let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
+      ?compilation_status_to_display
       ?feature_id
       ?whole_feature_followers
       ?whole_feature_reviewers
@@ -390,16 +394,24 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
          else "all"
         ) ]
     in
-    let is_known_to_be_archived = Option.value is_archived ~default:false in
+    let is_known_to_be_archived =
+      Option.value_map ~default:false ~f:Is_archived.to_bool is_archived
+    in
     let rev_facts  = rev_facts  ~is_archived:is_known_to_be_archived in
     let or_pending = or_pending ~is_archived:is_known_to_be_archived in
     List.concat
       [ maybe feature_id (fun feature_id ->
           [ "id", ([], Feature_id.to_string feature_id )])
       ; maybe is_archived (fun is_archived ->
+          let is_archived = Is_archived.to_bool is_archived in
           if is_archived || show_is_archived_if_not_archived
           then [ "is archived", ([ `Yellow ], Bool.to_string is_archived) ]
           else [])
+      ; maybe is_archived (fun is_archived ->
+          match is_archived with
+          | No | Yes { reason_for_archiving = "" } -> []
+          | Yes { reason_for_archiving } ->
+            [ "reason for archiving", ([], reason_for_archiving) ])
       ; maybe next_steps (if is_known_to_be_archived then const [] else (fun next_steps ->
           [ "next step",
             let next_steps =
@@ -410,6 +422,8 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
             Next_step.to_attrs_and_string next_steps
               ~review_is_enabled:(Option.value ~default:false review_is_enabled)
           ]))
+      ; maybe compilation_status_to_display
+          Compilation_status_to_display.to_ascii_table_rows
       ; maybe owners (user_list "owner")
       ; maybe whole_feature_reviewers (user_set "whole-feature reviewer")
       ; maybe seconder (fun seconder ->
@@ -473,7 +487,7 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
            function
            | true -> []
            | false -> show `Red "false")
-      ; maybe tip  (fun tip  -> rev_facts "tip"  tip  tip_facts)
+      ; maybe tip  (fun tip  -> rev_facts "tip" tip tip_facts)
       ; maybe base (fun base ->
           let last_known_at =
             match (next_base_update : Next_base_update.t option) with
@@ -576,9 +590,10 @@ let attribute_table_with_fields ~display_ascii ~max_output_columns ~next_steps
 
 let attribute_table ~display_ascii ~max_output_columns
       ~show_feature_id ~show_lock_reasons ~show_inheritable_attributes ~show_next_steps
+      ~show_full_compilation_status
       { Feature.
         feature_id
-      ; feature_path              = _
+      ; feature_path
       ; rev_zero                  = _
       ; whole_feature_followers
       ; whole_feature_reviewers
@@ -619,9 +634,11 @@ let attribute_table ~display_ascii ~max_output_columns
       ; users_with_unclean_workspaces = _
       ; latest_release = _
       ; inheritable_attributes
+      ; compilation_status
       } =
   attribute_table_with_fields ~display_ascii ~max_output_columns
-    ?feature_id:(if (show_feature_id || is_archived) then Some feature_id else None)
+    ?feature_id:(Option.some_if (show_feature_id || Is_archived.to_bool is_archived)
+                   feature_id)
     ~next_steps:(Option.some_if show_next_steps next_steps)
     ~whole_feature_followers
     ~whole_feature_reviewers
@@ -653,6 +670,14 @@ let attribute_table ~display_ascii ~max_output_columns
     ~show_inheritable_attributes
     ~is_archived
     ~show_is_archived_if_not_archived:false
+    ?compilation_status_to_display:(
+      if am_functional_testing
+      || Client_config.(get () |> Cmd.Show.show_compilation_status)
+      then
+        Some (Compilation_status_to_display.of_compilation_status compilation_status
+                feature_path ~feature_tip:tip ~show_full_compilation_status)
+      else
+        None)
     ()
 ;;
 
@@ -707,6 +732,7 @@ let show_whole_feature
       ~show_completed_review ~show_feature_id ~show_lock_reasons
       ~show_review_sessions_in_progress_table
       ~show_unclean_workspaces_table
+      ~show_full_compilation_status
   =
   print_string (header feature.feature_path);
   (if show_description then printf "%s\n" feature.description);
@@ -717,6 +743,7 @@ let show_whole_feature
           ~show_feature_id
           ~show_lock_reasons
           ~show_inheritable_attributes
+          ~show_full_compilation_status
           ~show_next_steps:true)));
   (match feature.cr_summary with
    | Ok cr_summary -> print_cr_table cr_summary ~display_ascii ~max_output_columns
@@ -776,7 +803,7 @@ let display_included_features_org_mode (feature : Feature.t) ~depth
   else (
     print_string (org_header ~depth "Included feature names");
     List.map included_features ~f:Released_feature.feature_path
-    |> List.dedup ~compare:Feature_path.compare
+    |> List.dedup_and_sort ~compare:Feature_path.compare
     |> List.iter ~f:(fun feature_path ->
       printf "- %s\n" (Feature_path.to_string feature_path));
     if not show_included_feature_details
@@ -809,7 +836,7 @@ let display_included_features_org_mode (feature : Feature.t) ~depth
 let show_org_mode (feature : Feature.t) ~show_attribute_table
       ~show_description ~show_diff_stat ~show_included_feature_details
       ~included_features_order ~show_feature_id ~show_lock_reasons
-      ~show_inheritable_attributes ~show_next_steps =
+      ~show_inheritable_attributes ~show_full_compilation_status ~show_next_steps =
   let display_ascii = true in
   let max_output_columns = Int.max_value in
   let feature_path = feature.feature_path in
@@ -822,7 +849,7 @@ let show_org_mode (feature : Feature.t) ~show_attribute_table
      print_string
        (attribute_table feature ~display_ascii ~max_output_columns
           ~show_feature_id ~show_lock_reasons ~show_inheritable_attributes
-          ~show_next_steps)));
+          ~show_next_steps ~show_full_compilation_status)));
   display_included_features_org_mode feature ~depth ~show_description
     ~show_diff_stat ~show_included_feature_details ~included_features_order;
 ;;
@@ -881,6 +908,9 @@ let command =
        no_arg_flag "-show-feature-id" ~doc:"show feature id as well"
      and show_lock_reasons =
        no_arg_flag "-show-lock-reasons" ~doc:"show lock reasons as well"
+     and show_full_compilation_status =
+       no_arg_flag "-show-full-compilation-status"
+         ~doc:"show compilation status for all repo controllers"
      in
      fun () ->
        let open! Deferred.Let_syntax in
@@ -894,6 +924,10 @@ let command =
        in
        let show_lock_reasons =
          show_lock_reasons || Client_config.Cmd.Show.show_lock_reasons client_config
+       in
+       let show_full_compilation_status =
+         show_full_compilation_status
+         || Client_config.Cmd.Show.show_full_compilation_status client_config
        in
        let show_inheritable_attributes =
          show_inheritable_attributes
@@ -961,7 +995,7 @@ let command =
              then show_org_mode feature ~show_attribute_table
                     ~show_description ~show_diff_stat ~show_included_feature_details
                     ~included_features_order ~show_feature_id ~show_lock_reasons
-                    ~show_inheritable_attributes
+                    ~show_inheritable_attributes ~show_full_compilation_status
                     ~show_next_steps:true
              else (
                show_whole_feature feature ~display_ascii ~max_output_columns
@@ -970,7 +1004,8 @@ let command =
                  ~show_completed_review
                  ~show_feature_id ~show_lock_reasons
                  ~show_review_sessions_in_progress_table
-                 ~show_unclean_workspaces_table;
+                 ~show_unclean_workspaces_table
+                 ~show_full_compilation_status;
                return ())
            | [ Reviewers ] ->
              Feature.reviewers_exn feature ~sort:`Decreasing_review |> print_user_list;
@@ -996,14 +1031,28 @@ let header_and_description feature_path ~description =
   sprintf "%s%s\n" (header feature_path) description;
 ;;
 
-let render_email_body (feature : Feature.t) ~included_features_order =
+module Event = struct
+  type t =
+    | Released
+    | Archived of { reason_for_archiving : string }
+end
+
+let render_email_body (feature : Feature.t) ~included_features_order ~event =
   let display_ascii = true in
   let max_output_columns = 70 in
-  sprintf "%s\n%s%s"
+  let reason =
+    match (event : Event.t) with
+    | Released -> ""
+    | Archived { reason_for_archiving } ->
+      if String.is_empty reason_for_archiving
+      then ""
+      else sprintf "Reason for archiving: %s\n\n" reason_for_archiving
+  in
+  sprintf "%s%s\n%s%s" reason
     (header_and_description feature.feature_path ~description:feature.description)
     (attribute_table feature ~display_ascii ~max_output_columns
        ~show_feature_id:true ~show_lock_reasons:false ~show_inheritable_attributes:false
-       ~show_next_steps:false)
+       ~show_next_steps:false ~show_full_compilation_status:false)
     (render_included_features feature ~display_ascii
        ~max_output_columns
        ~show_attribute_table:true
@@ -1012,13 +1061,14 @@ let render_email_body (feature : Feature.t) ~included_features_order =
        ~included_features_order)
 ;;
 
-let render_release_email_command =
+let make_render_email_command name event_param =
   Command.async'
-    ~summary:"output the body of the release email for a feature"
+    ~summary:(sprintf "output the body of the %s email for a feature" name)
     (let open Command.Let_syntax in
      let%map_open () = return ()
      and feature_path = feature_path_or_current_bookmark
      and included_features_order = included_features_order
+     and event = event_param
      in
      fun () ->
        let open! Deferred.Let_syntax in
@@ -1027,9 +1077,19 @@ let render_release_email_command =
        let%bind feature =
          Get_feature.rpc_to_server_exn { feature_path; rev_zero = None }
        in
-       printf "%s" (render_email_body feature ~included_features_order);
-       return ()
-    )
+       printf "%s" (render_email_body feature ~included_features_order ~event);
+       return ())
+;;
+
+let render_release_email_command =
+  make_render_email_command "release" (Command.Param.return Event.Released)
+;;
+
+let render_archive_email_command =
+  make_render_email_command "archive"
+    (let open Command.Let_syntax in
+     let%map_open reason_for_archiving = reason_for_archiving in
+     Event.Archived { reason_for_archiving })
 ;;
 
 let show_lines_required_to_separate_ddiff_hunks =

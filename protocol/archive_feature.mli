@@ -3,9 +3,10 @@ open! Import
 
 module Action : sig
   type t =
-    { feature_path : Feature_path.t
-    ; rev_zero     : Rev.t
-    ; for_         : User_name.t
+    { feature_path         : Feature_path.t
+    ; rev_zero             : Rev.t
+    ; for_                 : User_name.t
+    ; reason_for_archiving : string
     }
   [@@deriving fields, sexp_of]
 end

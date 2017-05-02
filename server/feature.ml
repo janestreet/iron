@@ -300,6 +300,7 @@ type t =
      synchronize-state RPC. *)
   ; mutable hydra_master_state        : Hydra_master_state.t option
   ; mutable has_bookmark              : bool
+  ; mutable compilation_status : Compilation_status.one Repo_controller_name.Table.t
   ; mutable is_permanent              : bool
   ; mutable release_process           : Release_process.t
   ; mutable review_is_enabled         : bool
@@ -472,6 +473,7 @@ let to_protocol t
   ; latest_release = t.latest_release
   ; inheritable_attributes
     = Feature_inheritable_attributes.to_protocol t.inheritable_attributes
+  ; compilation_status = Repo_controller_name.Map.of_hashtbl_exn t.compilation_status
   }
 ;;
 
@@ -621,6 +623,7 @@ let invariant t =
                   (compute_next_bookmark_update t))))
       ~hydra_master_state:ignore
       ~has_bookmark:ignore
+      ~compilation_status:(check (Hashtbl.iter ~f:Compilation_status.invariant))
       ~tip:(check Rev.invariant)
       ~tip_facts:
         (check (Or_pending.invariant (fun tip_facts ->
@@ -710,6 +713,7 @@ let user_is_currently_reviewing t user =
   && Reviewing.mem t.reviewing user
        ~whole_feature_reviewers:t.whole_feature_reviewers
        ~whole_feature_followers:t.whole_feature_followers
+       ~is_seconded:(Option.is_some t.seconder)
 ;;
 
 let allow_review_for_file = Relpath.of_string "allow-review-for"
@@ -798,6 +802,7 @@ let create_internal creation ~dynamic_upgrade_state ~serializer =
   ; next_bookmark_update = Update_expected_since (Time.now ())
   ; hydra_master_state = None
   ; has_bookmark = true
+  ; compilation_status = Repo_controller_name.Table.create ()
   ; tip
   ; tip_facts = pending
   ; base_is_ancestor_of_tip = pending
@@ -1007,12 +1012,54 @@ let set_feature_path t query feature_path =
   Feature_locks.set_feature_path t.locks feature_path;
 ;;
 
-let set_has_bookmark t query has_bookmark =
-  let should_set = not (Bool.equal t.has_bookmark has_bookmark) in
-  if should_set
+let set_has_bookmark_internal t query has_bookmark =
+  if not (Bool.equal t.has_bookmark has_bookmark)
   then (
     record t query (`Set_has_bookmark has_bookmark);
     t.has_bookmark <- has_bookmark)
+;;
+
+let set_has_no_bookmark t query = set_has_bookmark_internal t query false
+
+let set_has_bookmark t query ~compilation_status =
+  let had_bookmark_before = t.has_bookmark in
+  set_has_bookmark_internal t query true;
+  match compilation_status with
+  | `Keep_any_known_value -> ()
+  | `Update_with (new_compilation_status : Hydra_compilation_status.t) ->
+    let now = Query.at query in
+    let has_changed = ref (not had_bookmark_before) in
+    Map.iteri new_compilation_status ~f:(fun ~key ~data:{ finished; pending } ->
+      let pending =
+        let known_pending =
+          match Hashtbl.find t.compilation_status key with
+          | None -> []
+          | Some { Compilation_status.finished = _; pending } -> pending
+        in
+        List.map pending ~f:(fun { first_12_of_rev; rev_author_or_error } ->
+          let the_one (t : Compilation_status.Pending_rev.t) =
+            Node_hash.First_12.equal first_12_of_rev t.first_12_of_rev
+          in
+          match List.find known_pending ~f:the_one with
+          | Some x -> x
+          | None   -> { first_12_of_rev; rev_author_or_error; pending_since = now })
+      in
+      let new_compilation_status = { Compilation_status. finished; pending } in
+      Hashtbl.update t.compilation_status key ~f:(fun previous_compilation_status ->
+        (has_changed :=
+           !has_changed ||
+           (match previous_compilation_status with
+            | None -> true
+            | Some previous_compilation_status ->
+              not (Compilation_status.equal
+                     previous_compilation_status
+                     new_compilation_status)));
+        new_compilation_status));
+    (* If the [compilation_status] has changed as a result of this new compilation status,
+       we need to make sure to invalidate the feature caches.  If the feature had no
+       bookmark previously, the invalidation has already happened in
+       [set_has_bookmark_internal _]. *)
+    if had_bookmark_before && !has_changed then invalidate_dependents t
 ;;
 
 let set_lines_required_to_separate_ddiff_hunks t query
@@ -1441,7 +1488,7 @@ let apply_change_internal t query (action : Action.t) =
     set_whole_feature_followers t query users; Ok ()
   | `Set_whole_feature_reviewers users ->
     set_whole_feature_reviewers t query users; Ok ()
-  | `Set_has_bookmark bool -> set_has_bookmark t query bool; Ok ()
+  | `Set_has_bookmark bool -> set_has_bookmark_internal t query bool; Ok ()
   | `Set_is_permanent bool -> set_is_permanent t query bool; Ok ()
   | `Set_owners users -> set_owners t query users
   | `Set_properties alist -> set_properties t query alist; Ok ()

@@ -15,7 +15,15 @@ let prod_etc = Abspath.extend prod_basedir (File_name.of_string "etc")
 let prod_var = Abspath.extend prod_basedir (File_name.of_string "var")
 
 let deploy_offices : Office.t list =
-  ["ves"; "tot"; "etot"; "igm"; "ldn"; "fen"; "hkg"]
+  [ "etot"
+  ; "fen"
+  ; "hk1"
+  ; "hkg"
+  ; "igm"
+  ; "ldn"
+  ; "tot"
+  ; "ves"
+  ]
 ;;
 
 module Rpc_proxy_config : sig

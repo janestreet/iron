@@ -110,7 +110,7 @@ let main { Fe.Release.Action. feature_path; for_; included_features_order } =
         in
         let module Sendmail = Core_extended.Std.Sendmail.Deprecated_use_async_smtp_std_simplemail in
         Sendmail.send
-          (Cmd_show.render_email_body feature ~included_features_order)
+          (Cmd_show.render_email_body feature ~included_features_order ~event:Released)
           ?reply_to
           ~subject:(sprintf !"feature was released: %{Feature_path}" feature_path)
           ~recipients:(List.map (Set.to_list send_release_email_to)

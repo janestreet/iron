@@ -42,7 +42,7 @@ val find_all_for_feature_path : t -> Feature_path.t -> Catch_up_session.t list
 val to_protocol
   :  t
   -> Catch_up_session.t
-  -> is_archived:bool
+  -> is_archived:Is_archived.t
   -> lines_required_to_separate_ddiff_hunks:int
   -> Iron_protocol.Get_catch_up_session.Catch_up_session.t
 

@@ -78,7 +78,7 @@ let merge t1 t2 =
     | None, None          -> None
     | None, (Some _ as s) -> s
     | (Some _ as s), None -> s
-    | Some t1, Some t2    -> Some (List.dedup ~compare:Verbose_tag.compare (t1 @ t2))
+    | Some t1, Some t2    -> Some (List.dedup_and_sort ~compare:Verbose_tag.compare (t1 @ t2))
   in
   Fields.map
     ~display_ascii_always:override

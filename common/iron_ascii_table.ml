@@ -22,7 +22,21 @@ module Column = struct
 
   let lift cell ~f a1 = cell (f a1)
 
-  let string ?(show_zero = true) ?(show = `If_not_empty) ?min_width ?align ~header f =
+  let string ?(show_zero = true) ?(show = `If_not_empty) ?min_width
+        ?truncate_after_n_char ?align ~header f =
+    let f =
+      match truncate_after_n_char with
+      | None -> f
+      | Some n ->
+        (fun res ->
+           let (attrs, str) = f res in
+           let str =
+             if String.length str <= n
+             then str
+             else sprintf "%s ..." (String.sub str ~pos:0 ~len:n)
+           in
+           attrs, str)
+    in
     let f_no_zero res =
       let attrs, str = f res in
       let str = if String.(=) str "0" then "" else str in

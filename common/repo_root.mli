@@ -8,6 +8,8 @@ open! Import
 
 type t [@@deriving compare, sexp_of]
 
+module Hash_by_path : Hashable.S_plain with type t = t
+
 (** [human_readable] might be used for example to talk about satellites repos in a
     scaffold.  It helps producing better messages than using the raw directory names. *)
 val of_abspath : ?human_readable:string -> Abspath.t -> t

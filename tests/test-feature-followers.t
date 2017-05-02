@@ -103,26 +103,53 @@ Check what a whole-feature follower sees when a file is deleted in the feature.
   | user2                  |        |     11 |
   |------------------------------------------|
 
-Check that when the whole-feature-reviewers are reviewing the feature followers
-are reviewing too.
+If there is only one w-f-reviewer, having them in the reviewing set is not enough to
+implicitly enable the w-f-followers.  This allows owners to review their changes on their
+own first.
+
+  $ fe show -whole-feature-reviewers
+  (unix-login-for-testing)
 
   $ fe show -reviewing
   "whole-feature reviewers"
 
   $ fe show -who-can-review
   unix-login-for-testing
+
+However, when more w-f-reviewers are enabled, the w-f-followers are enabled too, even
+prior to seconding.  The feature is starting to see some collobarative work being done,
+this may interest the w-f-followers.
+
+  $ fe change -add-whole-feature-reviewers file-owner
+  $ fe change -set-reviewing-whole-feature-only
+
+  $ fe show -who-can-review
+  file-owner
+  unix-login-for-testing
   user2
 
-Check that adding another user in addition to w-f-reviewers does not
-accidentally remove the followers.
+Check that adding another reviewing user does not accidentally disable the followers.
 
   $ fe change -add-reviewing user1
   $ fe show -who-can-review
+  file-owner
   unix-login-for-testing
   user1
   user2
 
+Another case is when the feature is seconded, even when there is only 1 w-f-reviewer.
+
+  $ fe change -remove-whole-feature-reviewers file-owner
   $ fe second -even-though-owner
+  $ fe change -set-reviewing-whole-feature-only
+
+  $ fe show -who-can-review
+  unix-login-for-testing
+  user2
+
+When all are enabled, this obviously includes the w-f-followers as well.
+
+  $ fe change -set-reviewing-all
 
   $ fe show -reviewing
   all

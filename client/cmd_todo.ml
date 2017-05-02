@@ -97,7 +97,7 @@ let show_assigned assigned ~display_ascii ~max_output_columns =
 ;;
 
 let show_unclean_workspaces
-      (unclean_workspaces_on_machine : Unclean_workspace.t list Machine.Map.t)
+      (unclean_workspaces_on_machine : Unclean_workspace.t list Machine_name.Map.t)
       ~display_ascii ~max_output_columns=
   Map.iteri unclean_workspaces_on_machine ~f:(fun ~key:machine ~data:unclean_workspaces ->
     let columns, rows =
@@ -105,7 +105,7 @@ let show_unclean_workspaces
         unclean_workspaces
     in
     print_table
-      ~table_name:(sprintf "Unclean workspaces on %s" (Machine.to_string machine))
+      ~table_name:(sprintf "Unclean workspaces on %s" (Machine_name.to_string machine))
       ~columns ~rows ~display_ascii ~max_output_columns)
 ;;
 
@@ -376,7 +376,7 @@ let command =
            in
            { assigned =
                List.filter reaction.assigned ~f:(fun t -> should_include t.next_steps)
-           ; unclean_workspaces = Machine.Map.empty
+           ; unclean_workspaces = Machine_name.Map.empty
            ; owned =
                List.filter reaction.owned    ~f:(fun t -> should_include t.next_steps)
            ; watched =

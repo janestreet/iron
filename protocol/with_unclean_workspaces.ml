@@ -6,7 +6,7 @@ module Stable = struct
     module V1 = struct
       type t =
         | Remove_user    of User_name.V1.t
-        | Remove_machine of User_name.V1.t * Machine.V1.t
+        | Remove_machine of User_name.V1.t * Machine_name.V1.t
       [@@deriving bin_io, sexp]
 
       let%expect_test _ =

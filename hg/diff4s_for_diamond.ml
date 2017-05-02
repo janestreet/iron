@@ -94,7 +94,7 @@ module Cache = struct
 
   let fill_in_status_cache t =
     let all_pairs = List.concat_map t.rev_diamonds ~f:Diamond.edges in
-    let all_pairs = List.dedup ~compare:Rev_pair.compare all_pairs in
+    let all_pairs = List.dedup_and_sort ~compare:Rev_pair.compare all_pairs in
     Deferred.List.iter ~how:(`Max_concurrent_jobs 4) all_pairs
       ~f:(fun ((src, dst) as key) ->
         let%map status = Hg.status t.repo_root (Between { src; dst = `Rev dst }) in

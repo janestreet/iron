@@ -72,7 +72,7 @@ val user_is_currently_reviewing : t -> User_name.t -> bool
 
 val to_protocol
   :  t
-  -> is_archived        : bool
+  -> is_archived        : Is_archived.t
   -> is_rebased         : bool
   -> remote_repo_path   : Remote_repo_path.t
   -> has_children       : bool
@@ -131,7 +131,21 @@ val fire_next_base_update_expiration_if_applicable
   -> expiration_id:Timed_event.Id.t
   -> unit
 
-val set_has_bookmark : t -> _ Query.t -> bool -> unit
+(** [set_has_no_bookmark] does not erase currently known compilation status if any - this
+    is a deliberate choice that allows fe to display previously known build info during
+    situations of potential bookmark flickering (e.g. possibly [fe rename]). *)
+val set_has_no_bookmark : t -> _ Query.t -> unit
+
+(** [set_has_bookmark] allows one to enforce [has_bookmark = true] in call sites that
+    don't have access to a compilation status (initialization of the server, right after
+    [fe create], update-bookmark RPC, etc.). *)
+val set_has_bookmark
+  :  t
+  -> _ Query.t
+  -> compilation_status: [ `Update_with of Hydra_compilation_status.t
+                         | `Keep_any_known_value
+                         ]
+  -> unit
 
 val set_properties : t -> _ Query.t -> Properties.t -> unit
 

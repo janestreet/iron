@@ -879,9 +879,10 @@
 : 
 : === flags ===
 : 
-:   [-for USER]  for user (default is unix login)
-:   [-help]      print this help text and exit
-:                (alias: -?)
+:   [-for USER]       for user (default is unix login)
+:   [-reason REASON]  why you are archiving this feature
+:   [-help]           print this help text and exit
+:                     (alias: -?)
 
 ** brain
 
@@ -1622,6 +1623,8 @@
 :   push-events                                  push events stored on the server
 :   remove-color                                 Filter color escape chars from
 :                                                stdin and output to stdout
+:   render-archive-email                         output the body of the archive
+:                                                email for a feature
 :   render-release-email                         output the body of the release
 :                                                email for a feature
 :   rpc-to-server                                dealing with RPCs
@@ -2343,15 +2346,28 @@
 : 
 : === subcommands ===
 : 
-:   check-workspaces  DEPRECATED
-:   server-state      check server-state invariant
-:   help              explain a given subcommand (perhaps recursively)
+:   check-workspaces   DEPRECATED
+:   included-features  check that feature tip descends from every included
+:                      feature's tip
+:   server-state       check server-state invariant
+:   help               explain a given subcommand (perhaps recursively)
 
 **** check-workspaces
 
 : DEPRECATED
 : 
 :   fe.exe internal invariant check-workspaces [FEATURE]
+: 
+: === flags ===
+: 
+:   [-help]  print this help text and exit
+:            (alias: -?)
+
+**** included-features
+
+: check that feature tip descends from every included feature's tip
+: 
+:   fe.exe internal invariant included-features [FEATURE]
 : 
 : === flags ===
 : 
@@ -2529,6 +2545,26 @@
 : 
 :   [-help]  print this help text and exit
 :            (alias: -?)
+
+*** render-archive-email
+
+: output the body of the archive email for a feature
+: 
+:   fe.exe internal render-archive-email [FEATURE]
+: 
+: === flags ===
+: 
+:   [-order-included-features-by-decreasing-release-time]  display included
+:                                                          features from newest to
+:                                                          oldest
+:   [-order-included-features-by-release-time]             display included
+:                                                          features from oldest to
+:                                                          newest
+:   [-reason REASON]                                       why you are archiving
+:                                                          this feature
+:   [-help]                                                print this help text
+:                                                          and exit
+:                                                          (alias: -?)
 
 *** render-release-email
 
@@ -3727,6 +3763,7 @@
 :   [-archived]                                            lookup only among
 :                                                          archived features
 :   [-base]                                                show base
+:   [-compilation-status]                                  show compilation-status
 :   [-crs-are-enabled]                                     show crs-are-enabled
 :   [-crs-shown-in-todo-only-for-users-reviewing]          show
 :                                                          crs-shown-in-todo-only-for-users-reviewing
@@ -3798,6 +3835,9 @@
 :                                                          diff --stat] in
 :                                                          org-mode output
 :   [-show-feature-id]                                     show feature id as well
+:   [-show-full-compilation-status]                        show compilation status
+:                                                          for all repo
+:                                                          controllers
 :   [-show-included-feature-details]                       show included-feature
 :                                                          descriptions and
 :                                                          attributes

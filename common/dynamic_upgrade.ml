@@ -5,11 +5,13 @@ module T = struct
   type t =
     | U1
     | U2
+    | U3
   [@@deriving enumerate]
 
   let to_int = function
     | U1 -> 1
     | U2 -> 2
+    | U3 -> 3
   ;;
 
   let hash t = Int.hash (to_int t)
@@ -17,6 +19,7 @@ module T = struct
   let of_int = function
     | 1 -> U1
     | 2 -> U2
+    | 3 -> U3
     | n -> failwiths "Persisted_types_upgrade: version is out of range" n [%sexp_of: int]
   ;;
 

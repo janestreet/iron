@@ -1,6 +1,6 @@
-open Core
-open Async
-open Import
+open! Core
+open! Async
+open! Import
 
 let table { Fe.List.Table.Action.
             features
@@ -13,20 +13,22 @@ let table { Fe.List.Table.Action.
     type column = Ascii_table.Attr.t list * string
 
     type t =
-      { feature     : column
-      ; feature_id  : column
-      ; archived_at : column
-      ; lines       : column
-      ; next_steps  : column
+      { feature              : column
+      ; feature_id           : column
+      ; archived_at          : column
+      ; reason_for_archiving : column
+      ; lines                : column
+      ; next_steps           : column
       }
     [@@deriving fields]
 
     let empty =
-      { feature     = empty_column
-      ; feature_id  = empty_column
-      ; archived_at = empty_column
-      ; lines       = empty_column
-      ; next_steps  = empty_column
+      { feature              = empty_column
+      ; feature_id           = empty_column
+      ; archived_at          = empty_column
+      ; reason_for_archiving = empty_column
+      ; lines                = empty_column
+      ; next_steps           = empty_column
       }
     ;;
   end in
@@ -46,18 +48,23 @@ let table { Fe.List.Table.Action.
                 } ->
            let feature_id =
              match status with
-             | `Existing             -> empty_column
-             | `Was_archived_at _    -> [], Feature_id.to_string feature_id
+             | Existing   -> empty_column
+             | Archived _ -> [], Feature_id.to_string feature_id
            in
            let archived_at =
              match status with
-             | `Existing             -> empty_column
-             | `Was_archived_at time -> ([ `Yellow ], Time.to_string time)
+             | Existing   -> empty_column
+             | Archived t -> ([ `Yellow ], Time.to_string t.archived_at)
+           in
+           let reason_for_archiving =
+             match status with
+             | Existing   -> empty_column
+             | Archived t -> ([], t.reason_for_archiving)
            in
            let lines =
              match status with
-             | `Was_archived_at _ -> empty_column
-             | `Existing ->
+             | Archived _ -> empty_column
+             | Existing ->
                match num_lines with
                | Pending_since _ -> ([ `Yellow ], "pending")
                | Known (Error _) -> ([ `Red    ], "error")
@@ -65,13 +72,14 @@ let table { Fe.List.Table.Action.
            in
            let (attr, _) as next_steps =
              match status with
-             | `Was_archived_at _ -> empty_column
-             | `Existing -> Next_step.to_attrs_and_string next_steps ~review_is_enabled
+             | Archived _ -> empty_column
+             | Existing -> Next_step.to_attrs_and_string next_steps ~review_is_enabled
            in
            { Line.
              feature    = (attr, feature)
            ; feature_id
            ; archived_at
+           ; reason_for_archiving
            ; lines
            ; next_steps
            })
@@ -82,6 +90,8 @@ let table { Fe.List.Table.Action.
       ; string ~header:"feature id"  (attr_cell Line.feature_id)
           ~min_width:Feature_id.length_of_string_repr
       ; string ~header:"archived at" (attr_cell Line.archived_at)
+      ; string ~header:"reason for archiving" (attr_cell Line.reason_for_archiving)
+          ~truncate_after_n_char:40
       ; string ~header:"lines"       (attr_cell Line.lines) ~align:Right
       ; string ~header:"next step"   (attr_cell Line.next_steps)
       ])
@@ -150,11 +160,12 @@ let command =
                then
                  (fun f1 f2 ->
                     match f1.status, f2.status with
-                    | `Existing, `Existing ->
+                    | Existing, Existing ->
                       Feature_path.compare f1.feature_path f2.feature_path
-                    | `Existing           , `Was_archived_at _  -> (-1)
-                    | `Was_archived_at _  , `Existing           -> 1
-                    | `Was_archived_at t1 , `Was_archived_at t2 -> Time.compare t2 t1)
+                    | Existing    , Archived _  -> (-1)
+                    | Archived _  , Existing    -> 1
+                    | Archived t1 , Archived t2 ->
+                      Time.compare t2.archived_at t1.archived_at)
                else
                  (fun (f1 : List_features.Reaction.one) f2 ->
                     Feature_path.compare f1.feature_path f2.feature_path)

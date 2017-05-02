@@ -837,7 +837,7 @@ let first_greatest_common_ancestor repo_root rev1 rev2 =
 let greatest_common_ancestors repo_root rev1 rev2 =
   let%map output =
     hg ~repo_root "gcas"
-      ~args:[ "--config"; "extensions.gcas=/j/office/app/hg/dev/jhg/\
+      ~args:[ "--config"; "extensions.gcas=/j/office/app/hg/prod/jhg/\
                            greatest_common_ancestors_v1.py"
             ; Rev.to_string_40 rev1
             ; Rev.to_string_40 rev2
@@ -1144,9 +1144,14 @@ let with_temp_share ?in_dir repo_root ~f =
           in
           ignore (ok_exn result : string)
       in
-      f (Repo_root.of_abspath
-           ~human_readable:("temp share of " ^ Repo_root.to_string_hum repo_root)
-           temp_dir))
+      let human_readable =
+        let prefix = "temp share of " in
+        let human_readable = Repo_root.to_string_hum repo_root in
+        if String.is_prefix ~prefix human_readable
+        then human_readable
+        else prefix ^ human_readable
+      in
+      f (Repo_root.of_abspath ~human_readable temp_dir))
 ;;
 
 (* close to the destination because rename fails if the source and destination aren't on
@@ -1752,7 +1757,7 @@ module Status = struct
 
   let src_path_in_repo diffs =
     (* A file can be appear up to N + 1 times, if it is modified and copied N times. *)
-    List.dedup ~compare:Path_in_repo.compare
+    List.dedup_and_sort ~compare:Path_in_repo.compare
       (List.filter_map diffs ~f:(function
          | Added _ -> None
          | Removed file -> Some file
@@ -1873,7 +1878,7 @@ let cat repo_root rev files ~dir =
   | [] -> return Path_in_repo.Map.empty (* hg cat returns 1 when there are no files *)
   | _ :: _ ->
     let dirs_to_build =
-      List.dedup ~compare:Relpath.compare
+      List.dedup_and_sort ~compare:Relpath.compare
         (List.map files ~f:(fun file ->
            let file = Path_in_repo.to_relpath file in
            match Relpath.parent file with

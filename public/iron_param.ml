@@ -778,6 +778,11 @@ let review_reason =
     ~doc:"REASON why you are reviewing this for someone else"
 ;;
 
+let reason_for_archiving =
+  flag Switch.reason (optional_with_default "" string)
+    ~doc:"REASON why you are archiving this feature"
+;;
+
 let for_or_all_required =
   flag Switch.for_ (required user_name_or_all) ~doc:User_name.Or_all.arg_doc
 ;;

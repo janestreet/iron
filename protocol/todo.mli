@@ -71,7 +71,7 @@ end
 module Reaction : sig
   type t =
     { assigned                  : Assigned.t list
-    ; unclean_workspaces        : Unclean_workspace.t list Machine.Map.t
+    ; unclean_workspaces        : Unclean_workspace.t list Machine_name.Map.t
     ; owned                     : Feature_info.t list
     ; watched                   : Feature_info.t list
     ; cr_soons                  : Cr_soon_multiset.t

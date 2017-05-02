@@ -17,7 +17,7 @@ val dump
 val find_user
   : t
   -> User_name.t
-  -> Unclean_workspace.t list Machine.Map.t
+  -> Unclean_workspace.t list Machine_name.Map.t
 
 val update
   : t
@@ -29,7 +29,7 @@ val remove_machine_exn
   : t
   -> _ Query.t
   -> User_name.t
-  -> Machine.t
+  -> Machine_name.t
   -> unit
 
 val remove_user_exn

@@ -29,7 +29,7 @@ module Catch_up_session : sig
     ; tip                              : Rev.t
     ; description                      : string
     ; is_permanent                     : bool
-    ; is_archived                      : bool
+    ; is_archived                      : Is_archived.t
     ; seconder                         : User_name.t option
     ; lines_required_to_separate_ddiff_hunks : int
     }

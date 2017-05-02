@@ -2,7 +2,19 @@ module Stable = struct
   open! Core.Core_stable
   open! Import_stable
 
-  module Archived_feature = Archived_feature.Stable
+  module Archived_feature = struct
+    module V1 = struct
+      type t = Archived_feature.t =
+        { feature_id           : Feature_id.V1.t
+        ; feature_path         : Feature_path.V1.t
+        ; rev_zero             : Rev.V1.t
+        ; owners               : User_name.V1.t list
+        ; archived_at          : Time.V1_round_trippable.t
+        ; reason_for_archiving : string [@default ""] [@sexp_drop_if Core.String.is_empty]
+        }
+      [@@deriving sexp]
+    end
+  end
 
   module Action = struct
     module V1 = struct
@@ -149,6 +161,22 @@ let persist_query t query action =
   match Dynamic_upgrade.commit_to_upgrade t.dynamic_upgrade_state ~allowed_from with
   | `Not_allowed_yet -> ()
   | `Ok ->
+    let action =
+      let map (archived_feature : Archived_feature.t) =
+        if String.is_empty archived_feature.reason_for_archiving
+        then archived_feature
+        else (
+          match
+            Dynamic_upgrade.commit_to_upgrade t.dynamic_upgrade_state ~allowed_from:U3
+          with
+          | `Not_allowed_yet -> { archived_feature with reason_for_archiving = "" }
+          | `Ok -> archived_feature)
+      in
+      match action with
+      | `Add    archived_feature -> `Add    (map archived_feature)
+      | `Remove archived_feature -> `Remove (map archived_feature)
+      | `Set_max_cache_size _ as action -> action
+    in
     Serializer.append_to (serializer_exn t) ~file:queries_file
       (Query.with_action query action) (module Persist.Action_query)
 ;;

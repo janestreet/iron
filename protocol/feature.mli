@@ -62,10 +62,11 @@ type t =
   ; next_steps                     : Next_step.t list
   ; users_with_review_session_in_progress : User_name.Set.t Or_error.t
   ; users_with_unclean_workspaces  : Unclean_workspace_reason.t User_name.Map.t
-  ; is_archived                    : bool
+  ; is_archived                    : Is_archived.t
   ; is_rebased                     : bool
   ; latest_release                 : Latest_release.t option
   ; inheritable_attributes         : Inheritable_attributes.t
+  ; compilation_status             : Compilation_status.t
   }
 [@@deriving fields, sexp_of]
 
@@ -136,13 +137,18 @@ module Stable : sig
     type nonrec t = t [@@deriving sexp_of]
   end
 
+  module V23 : sig
+    type t = Model.t [@@deriving bin_io, sexp_of]
+    val of_model : Model.t -> t
+  end
+
   module V22 : sig
-    type t = Model.t [@@deriving bin_io, sexp]
+    type t [@@deriving bin_io]
     val of_model : Model.t -> t
   end
 
   module V21 : sig
-    type t [@@deriving bin_io, sexp]
+    type t [@@deriving bin_io]
     val of_model : Model.t -> t
   end
 

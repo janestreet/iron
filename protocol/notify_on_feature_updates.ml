@@ -39,18 +39,35 @@ module Stable = struct
   end
 
   module Reaction = struct
-    module V6 = struct
-      type t = [ `Updated of Feature.Stable.V22.t
+    module V7 = struct
+      type t = [ `Updated of Feature.Stable.V23.t
                | `Archived
                ]
       [@@deriving bin_io, sexp_of]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
-        [%expect {| 624ffd95dff870cebe7ba6c4652af1b4 |}]
+        [%expect {| e43da3bf60b43478d0db1e81b5a6bc87 |}]
       ;;
 
       let of_model t = t
+    end
+
+    module V6 = struct
+      type t = [ `Updated of Feature.Stable.V22.t
+               | `Archived
+               ]
+      [@@deriving bin_io]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 624ffd95dff870cebe7ba6c4652af1b4 |}]
+      ;;
+
+      let of_model = function
+        | `Updated feature -> `Updated (Feature.Stable.V22.of_model feature)
+        | `Archived as t -> t
+      ;;
     end
 
     module V5 = struct
@@ -138,12 +155,17 @@ module Stable = struct
       ;;
     end
 
-    module Model = V6
+    module Model = V7
   end
 end
 
 include Iron_versioned_rpc.Make_pipe_rpc
     (struct let name = "notify-on-feature-updates" end)
+    (struct let version = 7 end)
+    (Stable.Action.V2)
+    (Stable.Reaction.V7)
+
+include Register_old_rpc
     (struct let version = 6 end)
     (Stable.Action.V2)
     (Stable.Reaction.V6)

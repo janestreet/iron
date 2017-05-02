@@ -4,9 +4,9 @@ module Table = struct
     open! Import_stable
 
     module Action = struct
-      module V2 = struct
+      module V3 = struct
         type t =
-          { features                : Iron_protocol.List_features.Reaction.Stable.V9.t
+          { features                : Iron_protocol.List_features.Reaction.Stable.V10.t
           ; preserve_input_ordering : bool
           ; display_ascii           : bool
           ; max_output_columns      : int
@@ -15,10 +15,39 @@ module Table = struct
 
         let%expect_test _ =
           print_endline [%bin_digest: t];
-          [%expect {| 69fe1854488a4271239720e4577d614f |}]
+          [%expect {| d248970c6a3a95998a29eed335a3b8b8 |}]
         ;;
 
         let to_model (m : t) = m
+      end
+
+      module V2 = struct
+        type t =
+          { features                : Iron_protocol.List_features.Reaction.Stable.V9.t
+          ; preserve_input_ordering : bool
+          ; display_ascii           : bool
+          ; max_output_columns      : int
+          }
+        [@@deriving bin_io]
+
+        let%expect_test _ =
+          print_endline [%bin_digest: t];
+          [%expect {| 69fe1854488a4271239720e4577d614f |}]
+        ;;
+
+        let to_model { features
+                     ; preserve_input_ordering
+                     ; display_ascii
+                     ; max_output_columns
+                     } =
+          let features = Iron_protocol.List_features.Reaction.Stable.V9.to_v10 features in
+          V3.to_model
+            { features
+            ; preserve_input_ordering
+            ; display_ascii
+            ; max_output_columns
+            }
+        ;;
       end
 
       module V1 = struct
@@ -50,7 +79,7 @@ module Table = struct
         ;;
       end
 
-      module Model = V2
+      module Model = V3
     end
 
     module Reaction = struct
@@ -71,6 +100,11 @@ module Table = struct
 
   include Iron_command_rpc.Make
       (struct let name = "list-table" end)
+      (struct let version = 3 end)
+      (Stable.Action.V3)
+      (Stable.Reaction.V1)
+
+  include Register_old_rpc
       (struct let version = 2 end)
       (Stable.Action.V2)
       (Stable.Reaction.V1)

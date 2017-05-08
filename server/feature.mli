@@ -15,6 +15,7 @@ val next_base_update          : t -> Next_base_update.t
 val base_is_ancestor_of_tip   : t -> Rev_facts.Is_ancestor.t Or_pending.t
 val base_facts                : t -> Rev_facts.t Or_pending.t
 val cache_invalidator         : t -> Cached.Invalidator.t
+val continuous_release_status : t -> Continuous_release_status.t
 val crs_are_enabled           : t -> bool
 val description               : t -> string
 val diff_from_base_to_tip     : t -> Diff2s.t Or_error.t Or_pending.t
@@ -117,6 +118,11 @@ val rename_non_root : t -> _ Query.t -> to_:Feature_path.t -> unit
 val review_goal : t -> Review_goal.t Or_error.t
 
 val set_base : t -> _ Query.t -> Rev.t -> unit
+
+val set_continuous_release_status
+  : t
+  -> Continuous_release_status.t
+  -> unit
 
 (** [expect_next_base_update_exn t ~for_ expected_base] is rejected if expected_base is
     equal to the current feature base. *)

@@ -29,9 +29,9 @@ module T = struct
     let t = to_string t in
     if String.is_empty t then failwith "file name must be nonempty";
     if String.contains t '/'
-    then failwiths "a file name may not contain '/'"     t [%sexp_of: string];
+    then raise_s [%sexp "a file name may not contain '/'", (t : string)];
     if String.contains t '\000'
-    then failwiths "a file name may not contain '\\000'" t [%sexp_of: string];
+    then raise_s [%sexp "a file name may not contain '\\000'", (t : string)];
   ;;
 
   let of_string s =

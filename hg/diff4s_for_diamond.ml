@@ -239,13 +239,12 @@ let attributed_files_diamonds cache revs attributed_files_by_paths
           Diamond.map2 d1 d2 ~f:(fun x y ->
             match Attributed_file.is_present x, Attributed_file.is_present y with
             | true, true ->
-              failwiths "Tried to take into account a renaming but couldn't"
-                [ `Renaming renaming
-                ; `Clash_on (x, y)
-                ; `In_diamonds (d1, d2) ]
-                [%sexp_of: [ `Renaming of Renaming.t
-                           | `Clash_on of Attributed_file.t * Attributed_file.t
-                           | `In_diamonds of Attributed_file.t Diamond.t * Attributed_file.t Diamond.t ] list]
+              raise_s [%sexp "Tried to take into account a renaming but couldn't"
+                           , Renaming (renaming : Renaming.t)
+                           , Clash_on ((x : Attributed_file.t), (y : Attributed_file.t))
+                           , In_diamonds
+                               ( (d1 : Attributed_file.t Diamond.t)
+                               , (d2 : Attributed_file.t Diamond.t))]
             | false, true -> y
             | true, false -> x
             | false, false ->

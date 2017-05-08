@@ -546,8 +546,7 @@ let run_without_server
       Ok (List.map diffs ~f:(fun diff4 ->
         match Diff4.as_from_scratch_to_diff2 diff4 with
         | Some diff2 -> diff2
-        | None -> failwiths "diff4 should have been a diff2" diff4
-                    [%sexp_of: Diff4.t]))
+        | None -> raise_s [%sexp "diff4 should have been a diff2", (diff4 : Diff4.t)]))
   in
   let base_allow_review_for =
     Result.map obligations_at_base
@@ -595,8 +594,7 @@ let run repo_root fake_attribute ~run_between_rpcs =
     | None ->
       (* Can happen when using 'hydra compile', but this case simply shouldn't happen
          (because there is no reason to use it). *)
-      failwiths "BOOKMARK isn't set, fe worker can't continue"
-        (`Rev tip) [%sexp_of: [ `Rev of Rev.t ]]
+      raise_s [%sexp "BOOKMARK isn't set, fe worker can't continue", Rev (tip : Rev.t)]
     | Some bookmark ->
       event "before feature";
       let stop e =

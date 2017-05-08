@@ -16,6 +16,28 @@ module Make_client_config = Iron_common.Std.Make_client_config
 *)
 
 
+module Cmd_create = struct
+  type t =
+    { mutable reviewing : [ `Whole_feature_reviewers
+                          | `First_owner
+                          ] option
+    }
+
+  let update t =
+    let open Make_client_config.Utils in
+    empty
+    +> no_arg Switch.set_reviewing_whole_feature_only
+         (function () -> t.reviewing <- Some `Whole_feature_reviewers)
+    +> no_arg Switch.set_reviewing_first_owner_only
+         (function () -> t.reviewing <- Some `First_owner)
+  ;;
+
+  let create () =
+    { reviewing = None
+    }
+  ;;
+end
+
 module Cmd_list = struct
   type t =
     { mutable depth : int option
@@ -224,6 +246,7 @@ module Workspace_config = struct
       | `do_not_auto_update of Feature_path.Stable.V1.Set.t
       | `unclean_workspaces_detection_is_enabled of bool
       | `unclean_workspaces_detection_max_concurrent_jobs of int
+      | `unclean_workspaces_detection_includes_shelved_changes of bool
       ]
     [@@deriving of_sexp]
   end
@@ -236,6 +259,7 @@ module Workspace_config = struct
     ; mutable do_not_auto_update : Feature_path.Hash_set.t
     ; mutable unclean_workspaces_detection_is_enabled : bool
     ; mutable unclean_workspaces_detection_max_concurrent_jobs : int
+    ; mutable unclean_workspaces_detection_includes_shelved_changes : bool
     }
 
   let create () =
@@ -251,6 +275,7 @@ module Workspace_config = struct
     ; do_not_auto_update = Feature_path.Hash_set.create ()
     ; unclean_workspaces_detection_is_enabled = false
     ; unclean_workspaces_detection_max_concurrent_jobs = 5
+    ; unclean_workspaces_detection_includes_shelved_changes = true
     }
   ;;
 
@@ -275,6 +300,8 @@ module Workspace_config = struct
       t.unclean_workspaces_detection_is_enabled <- is_enabled
     | `unclean_workspaces_detection_max_concurrent_jobs max_concurrent_jobs ->
       t.unclean_workspaces_detection_max_concurrent_jobs <- max_concurrent_jobs
+    | `unclean_workspaces_detection_includes_shelved_changes value ->
+      t.unclean_workspaces_detection_includes_shelved_changes <- value
   ;;
 end
 
@@ -296,7 +323,8 @@ module M = struct
   let home_basename = ".ferc"
 
   type t =
-    { cmd_list                                             : Cmd_list.t
+    { cmd_create                                           : Cmd_create.t
+    ; cmd_list                                             : Cmd_list.t
     ; cmd_obligations_show                                 : Cmd_obligations_show.t
     ; cmd_rebase                                           : Cmd_rebase.t
     ; cmd_review                                           : Cmd_review.t
@@ -317,7 +345,8 @@ module M = struct
 
   module Statement = struct
     type cmd =
-      [ `list
+      [ `create
+      | `list
       | `obligations_show
       | `rebase
       | `review
@@ -356,7 +385,8 @@ module M = struct
   end
 
   let create () =
-    { cmd_list   = Cmd_list.create ()
+    { cmd_create = Cmd_create.create ()
+    ; cmd_list   = Cmd_list.create ()
     ; cmd_obligations_show = Cmd_obligations_show.create ()
     ; cmd_rebase = Cmd_rebase.create ()
     ; cmd_review = Cmd_review.create ()
@@ -389,7 +419,7 @@ module M = struct
           | exn -> Some exn)
       in
       if not (List.is_empty exns)
-      then failwiths "invalid workspaces statements" exns [%sexp_of: Exn.t list]
+      then raise_s [%sexp "invalid workspaces statements", (exns : Exn.t list)]
     | `may_infer_feature_path_from_current_bookmark bool ->
       t.may_infer_feature_path_from_current_bookmark <- bool
     | `pager_for_review string -> t.pager_for_review <- Some (unix_wordexp_resolve string)
@@ -398,6 +428,7 @@ module M = struct
     | `show_commit_session_warning bool -> t.show_commit_session_warning <- bool
     | `add_flag_to (cmd, args) ->
       (match cmd with
+       | `create -> Cmd_create.update t.cmd_create args
        | `list   -> Cmd_list.update   t.cmd_list   args
        | `obligations_show -> Cmd_obligations_show.update t.cmd_obligations_show args
        | `rebase -> Cmd_rebase.update t.cmd_rebase args
@@ -414,6 +445,10 @@ include M
 include Make_client_config.Make (M)
 
 module Cmd = struct
+  module Create = struct
+    let reviewing t = t.cmd_create.reviewing
+  end
+
   module List = struct
     let depth t = t.cmd_list.depth
   end
@@ -483,6 +518,10 @@ working on.  For more information, including how to start using workspaces, see:
 
   let unclean_workspaces_detection_max_concurrent_jobs t =
     t.workspaces.unclean_workspaces_detection_max_concurrent_jobs
+  ;;
+
+  let unclean_workspaces_detection_includes_shelved_changes t =
+    t.workspaces.unclean_workspaces_detection_includes_shelved_changes
   ;;
 
   let get_exn t =

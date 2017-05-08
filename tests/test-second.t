@@ -18,6 +18,7 @@ Create feature.
   $ fe change -add-whole-feature-reviewer user1
   $ feature_to_server root -fake-valid-obligations
   $ fe enable-review root
+  $ fe change -set-reviewing-whole-feature-only
 
 Unseconding a not seconded feature fails.
 

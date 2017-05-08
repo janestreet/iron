@@ -44,21 +44,21 @@ Restore bookmark is shown in next steps and the owner is alerted in his todo.
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | restore bookmark        |
-  | owner                  | unix-login-for-testing  |
-  | whole-feature reviewer | unix-login-for-testing  |
-  | seconder               | not seconded            |
-  | review is enabled      | false                   |
-  | CRs are enabled        | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | true                    |
-  | has bookmark           | false                   |
-  | tip                    | dc568be383d7            |
-  | base                   | dc568be383d7            |
-  |--------------------------------------------------|
+  |-------------------------------------------------|
+  | attribute              | value                  |
+  |------------------------+------------------------|
+  | next step              | restore bookmark       |
+  | owner                  | unix-login-for-testing |
+  | whole-feature reviewer | unix-login-for-testing |
+  | seconder               | not seconded           |
+  | review is enabled      | false                  |
+  | CRs are enabled        | true                   |
+  | reviewing              | unix-login-for-testing |
+  | is permanent           | true                   |
+  | has bookmark           | false                  |
+  | tip                    | dc568be383d7           |
+  | base                   | dc568be383d7           |
+  |-------------------------------------------------|
   $ fe todo
   |----------------------------|
   | feature | next step        |

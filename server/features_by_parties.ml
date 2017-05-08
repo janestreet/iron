@@ -21,8 +21,7 @@ module Users_by_feature_id = struct
 
   let ensure_equal ~actual ~expected =
     if not (equal actual expected)
-    then failwiths "mismatch" (`actual actual, `expected expected )
-           [%sexp_of: [ `actual of t ] * [ `expected of t ]]
+    then raise_s [%sexp "mismatch", { actual : t; expected : t }]
   ;;
 end
 

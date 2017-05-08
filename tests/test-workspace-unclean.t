@@ -78,6 +78,18 @@ Check shelves.
   shelved as foo
   0 files updated, 0 files merged, 1 files removed, 0 files unresolved
 
+  $ cp $HOME/.ferc $HOME/.ferc.backup
+  $ cat >>$HOME/.ferc <<EOF
+  > (workspaces (
+  >   (unclean_workspaces_detection_includes_shelved_changes false)
+  > ))
+  > EOF
+
+  $ fe workspace unclean check root/child2
+  $ list_unclean_workspaces
+
+  $ mv $HOME/.ferc.backup $HOME/.ferc
+
   $ fe workspace unclean check root/child2
   (errors (((feature_path root/child2) (reason ("shelved changes")))))
   [1]

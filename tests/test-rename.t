@@ -180,6 +180,7 @@ Review managers test.
   $ hg add f2.txt
   $ hg commit -m "0"
   $ fe enable-review -add-whole-feature-reviewer user1,user2
+  $ fe change -set-reviewing-whole-feature-only
   $ feature_to_server root/baz -fake-valid
   $ fe tools mark-fully-reviewed root/baz -for user2 -reason reason
   $ fe todo -for user1

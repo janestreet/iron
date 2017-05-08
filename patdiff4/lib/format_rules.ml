@@ -42,9 +42,11 @@ let t_of_sexp sexp =
       |> function
       | Ok old_config -> Patdiff_lib.Configuration.Old_config.to_new_config old_config
       | Error as_old_config_exn ->
-        failwiths "invalid config"
-          (`as_new_config as_new_config_exn, `as_old_config as_old_config_exn)
-          [%sexp_of: [ `as_new_config of Exn.t ] * [ `as_old_config of Exn.t ]]
+        raise_s
+          [%sexp "invalid config"
+               , { as_new_config_exn : Exn.t
+                 ; as_old_config_exn : Exn.t
+                 }]
   in
   Patdiff_lib.Configuration.parse config
   |> fun t -> t.Patdiff_lib.Configuration.rules

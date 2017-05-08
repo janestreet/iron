@@ -95,7 +95,7 @@ let invariant t =
       ~lock_by_name:
         (check (Hashtbl.iteri ~f:(fun ~key:lock_name ~data:locks ->
            if List.is_empty locks
-           then failwiths "empty locks list" lock_name [%sexp_of: Lock_name.t];
+           then raise_s [%sexp "empty locks list", (lock_name : Lock_name.t)];
            List.iter locks ~f:Locked.invariant)))
   )
 ;;

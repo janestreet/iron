@@ -20,6 +20,7 @@ Release a child into test-root
   $ fe create test-root/feat1 -desc "child feature desc"
   $ fe change -add-whole-feature-reviewers user1
   $ fe enable-review test-root/feat1
+  $ fe change -set-reviewing-whole-feature-only
   $ seq 1 3 > a
   $ hg commit -m "add some lines"
   $ feature_to_server test-root/feat1 -fake-valid-obligations

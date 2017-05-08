@@ -8,7 +8,7 @@ let log ~level sexp =
 module Description = struct
   module T = struct
     include Rpc.Description
-    let t_of_sexp _ = failwiths "t_of_sexp unimplemented" () [%sexp_of: unit]
+    let t_of_sexp _ = failwith "t_of_sexp unimplemented"
     let hash (t : t) = Hashtbl.hash t
   end
   include T

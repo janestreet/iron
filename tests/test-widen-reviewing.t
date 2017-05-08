@@ -16,20 +16,20 @@ Setup a repo with two files:
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | enable-review           |
-  | owner                  | unix-login-for-testing  |
-  | whole-feature reviewer | unix-login-for-testing  |
-  | seconder               | not seconded            |
-  | review is enabled      | false                   |
-  | CRs are enabled        | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | true                    |
-  | tip                    | 225d4bac9981            |
-  | base                   | 0f5b3abd13b6            |
-  |--------------------------------------------------|
+  |-------------------------------------------------|
+  | attribute              | value                  |
+  |------------------------+------------------------|
+  | next step              | enable-review          |
+  | owner                  | unix-login-for-testing |
+  | whole-feature reviewer | unix-login-for-testing |
+  | seconder               | not seconded           |
+  | review is enabled      | false                  |
+  | CRs are enabled        | true                   |
+  | reviewing              | unix-login-for-testing |
+  | is permanent           | true                   |
+  | tip                    | 225d4bac9981           |
+  | base                   | 0f5b3abd13b6           |
+  |-------------------------------------------------|
   
   |---------------------------------|
   | user                   | review |

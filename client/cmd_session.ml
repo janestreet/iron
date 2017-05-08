@@ -298,8 +298,8 @@ This command is deprecated and has been subsumed by " ; subsumed_by ; ".
        in
        match status with
        | `Up_to_date | `Bookmark_update_is_pending ->
-         failwiths "review is up to date, cannot mark file" paths_in_repo
-           [%sexp_of: Path_in_repo.t list]
+         raise_s [%sexp "review is up to date, cannot mark file"
+                      , (paths_in_repo : Path_in_repo.t list)]
        | `Review_session
            { Get_review_session.Review_session.
              review_session_id
@@ -319,8 +319,8 @@ This command is deprecated and has been subsumed by " ; subsumed_by ; ".
          let invalid_files =
            if List.is_empty invalid_files
            then Ok ()
-           else failwiths "file not found in the current session" invalid_files
-                  [%sexp_of: Path_in_repo.t list]
+           else Or_error.error_s [%sexp "file not found in the current session"
+                                      , (invalid_files : Path_in_repo.t list)]
          in
          let%bind result =
            Reviewed_diffs.rpc_to_server
@@ -333,8 +333,7 @@ This command is deprecated and has been subsumed by " ; subsumed_by ; ".
              ; diff4_in_session_ids = List.map ids_to_mark ~f:Diff4_in_session.id
              }
          in
-         return (ok_exn (Or_error.combine_errors_unit [ invalid_files ; result ]))
-    )
+         return (ok_exn (Or_error.combine_errors_unit [ invalid_files ; result ])))
 ;;
 
 module Attribute = struct

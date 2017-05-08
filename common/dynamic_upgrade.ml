@@ -20,7 +20,7 @@ module T = struct
     | 1 -> U1
     | 2 -> U2
     | 3 -> U3
-    | n -> failwiths "Persisted_types_upgrade: version is out of range" n [%sexp_of: int]
+    | n -> raise_s [%sexp "Dynamic_upgrade: version is out of range", (n : int)]
   ;;
 
   let sexp_of_t t = sexp_of_int (to_int t)

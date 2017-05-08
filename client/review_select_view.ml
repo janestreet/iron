@@ -84,8 +84,7 @@ let%test_unit _ =
     let result =
       match parse_input input with
       | Error str ->
-        failwiths "parse error" (input, str)
-          [%sexp_of: string * string]
+        raise_s [%sexp "parse error", { input : string; str : string}]
       | Ok res ->
         match res with
         | `Toggle_indexes hset -> Hash_set.mem hset (pred index)
@@ -93,9 +92,11 @@ let%test_unit _ =
           Regex.matches regex file
     in
     if not (Bool.equal is_match result)
-    then failwiths "invalid result"
-           (index, file, input)
-           [%sexp_of: int * string * string]
+    then raise_s [%sexp "invalid result"
+                      , { index : int
+                        ; file  : string
+                        ; input : string
+                        }]
   in
   check true  (1, "path/to/file") "file";
   check true  (1, "path/to/file") "1";

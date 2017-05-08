@@ -19,6 +19,7 @@ module Catch_up_kind               = Catch_up_kind
 module Cleanup                     = Cleanup
 module Command                     = Iron_command
 module Constants                   = Constants
+module Continuous_release_status   = Continuous_release_status
 module Cr_comment_format           = Cr_comment_format
 module Deserializer                = Deserializer
 module Diamond                     = Diamond
@@ -126,8 +127,7 @@ let check_hash_exn s ~length =
   [%test_result: int] (String.length s) ~expect:length;
   String.iter s ~f:(function
     | '0'..'9' | 'a'..'f' -> ()
-    | c -> failwiths "unexpected non hexadecimal digit" (c, s)
-             [%sexp_of: char * string])
+    | c -> raise_s [%sexp "unexpected non hexadecimal digit", (c : char), (s : string)])
 ;;
 
 let repo_mismatch remote_repo_path =

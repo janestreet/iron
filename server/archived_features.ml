@@ -148,7 +148,7 @@ let queries_file = Relpath.of_string "queries"
 let serializer_exn t =
   match t.serializer with
   | Some s -> s
-  | None -> failwiths "serializer isn't defined" t [%sexp_of: t]
+  | None -> raise_s [%sexp "serializer isn't defined", (t : t)]
 ;;
 
 let persist_query t query action =

@@ -74,9 +74,11 @@ let main { Fe.Rebase.Action.
   in
   let local_feature = ok_exn local_feature in
   if not (Rev.equal_node_hash old_tip local_feature)
-  then failwiths "local bookmark is not the same as Iron server's"
-         (`local local_feature, `iron_server old_tip)
-         [%sexp_of: [ `local of Rev.t ] * [ `iron_server of Rev.t ]];
+  then raise_s
+         [%sexp "local bookmark is not the same as Iron server's"
+              , { local       = (local_feature : Rev.t)
+                ; iron_server = (old_tip       : Rev.t)
+                }];
   let%bind () =
     Hg.pull ~repo_is_clean repo_root ~from:remote_repo_path (`Rev new_base)
   in

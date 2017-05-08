@@ -5,8 +5,8 @@ open! Import
 let apply_updates_exn (type update) ~sexp_of_update ~rpc_to_server_exn
       ?(verbose = false) ~feature_path ~(updates : update list) () =
   if List.is_empty updates
-  then failwiths (sprintf "must request at least one change") feature_path
-         [%sexp_of: Feature_path.t];
+  then raise_s [%sexp (sprintf "must request at least one change" : string)
+                    , (feature_path : Feature_path.t)];
   let%map result = rpc_to_server_exn ~feature_path ~updates in
   let print result =
     result
@@ -75,7 +75,7 @@ let command =
      and set_reviewing_none =
        no_arg_flag "-set-reviewing-none" ~doc:""
      and set_reviewing_whole_feature_only =
-       no_arg_flag "-set-reviewing-whole-feature-only" ~doc:""
+       no_arg_flag Switch.set_reviewing_whole_feature_only ~doc:""
      and set_whole_feature_followers =
        users_option ~switch:"-set-whole-feature-followers"
      and set_whole_feature_reviewers =

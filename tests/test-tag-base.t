@@ -34,7 +34,7 @@ Create a child, and it has a nice name for its base.
   | seconder               | not seconded               |
   | review is enabled      | false                      |
   | CRs are enabled        | true                       |
-  | reviewing              | whole-feature reviewers    |
+  | reviewing              | unix-login-for-testing     |
   | is permanent           | false                      |
   | tip                    | root-111.12 [289e0fc393fa] |
   | base                   | root-111.12 [289e0fc393fa] |
@@ -63,7 +63,7 @@ The base gets a nice name even if the rev is not present when [fe create] starts
   | seconder               | not seconded               |
   | review is enabled      | false                      |
   | CRs are enabled        | true                       |
-  | reviewing              | whole-feature reviewers    |
+  | reviewing              | unix-login-for-testing     |
   | is permanent           | false                      |
   | tip                    | root-111.12 [289e0fc393fa] |
   | base                   | root-111.12 [289e0fc393fa] |

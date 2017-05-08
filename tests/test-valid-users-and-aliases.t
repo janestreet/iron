@@ -121,21 +121,21 @@ Dump _accumulated_ aliases.
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | CRs                     |
-  | owner                  | unix-login-for-testing  |
-  | whole-feature reviewer | unix-login-for-testing  |
-  | seconder               | not seconded            |
-  | review is enabled      | false                   |
-  | CRs are enabled        | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | false                   |
-  | tip                    | 0ff569637015            |
-  |   tip is cr clean      | false                   |
-  | base                   | 0f5b3abd13b6            |
-  |--------------------------------------------------|
+  |-------------------------------------------------|
+  | attribute              | value                  |
+  |------------------------+------------------------|
+  | next step              | CRs                    |
+  | owner                  | unix-login-for-testing |
+  | whole-feature reviewer | unix-login-for-testing |
+  | seconder               | not seconded           |
+  | review is enabled      | false                  |
+  | CRs are enabled        | true                   |
+  | reviewing              | unix-login-for-testing |
+  | is permanent           | false                  |
+  | tip                    | 0ff569637015           |
+  |   tip is cr clean      | false                  |
+  | base                   | 0f5b3abd13b6           |
+  |-------------------------------------------------|
   
   |---------------------|
   | user  | CRs | total |

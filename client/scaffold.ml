@@ -65,7 +65,7 @@ end = struct
             match id with
             | Some id -> id
             | None ->
-              failwiths "id expected for satellite" on_disk [%sexp_of: On_disk.t]
+              raise_s [%sexp "id expected for satellite", (on_disk : On_disk.t)]
           in
           `Satellite { Satellite_internal.
                        remote_repo_path = Remote_repo_path.of_string repo
@@ -75,8 +75,8 @@ end = struct
       let subtrees =
         List.map others ~f:(fun sub ->
           match sub.dir with
-          | None -> failwiths "dir expected for satellite" (on_disk, sub)
-                      [%sexp_of: On_disk.t * On_disk.t]
+          | None -> raise_s [%sexp "dir expected for satellite"
+                                 , (on_disk : On_disk.t), (sub : On_disk.t)]
           | Some dir ->
             Relpath.of_string dir, aux sub)
         |> Relpath.Map.of_alist_exn

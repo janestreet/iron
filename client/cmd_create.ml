@@ -42,6 +42,7 @@ let main { Fe.Create.Action.
          ; remote_repo_path
          ; no_bookmark
          ; add_whole_feature_reviewers
+         ; reviewing
          ; allow_non_cr_clean_base
          ; properties
          } =
@@ -160,6 +161,7 @@ let main { Fe.Create.Action.
       ; tip
       ; add_whole_feature_reviewers =
           Option.value add_whole_feature_reviewers ~default:User_name.Set.empty
+      ; reviewing
       ; rev_zero
       ; remote_repo_path
       ; allow_non_cr_clean_base
@@ -221,6 +223,10 @@ let command =
      and no_bookmark = no_bookmark
      and add_whole_feature_reviewers =
        users_option ~switch:Switch.add_whole_feature_reviewers
+     and set_reviewing_first_owner_only =
+       no_arg_flag Switch.set_reviewing_first_owner_only ~doc:""
+     and set_reviewing_whole_feature_only =
+       no_arg_flag Switch.set_reviewing_whole_feature_only ~doc:""
      and allow_non_cr_clean_base =
        no_arg_flag Switch.allow_non_cr_clean_base
          ~doc:"proceed even though the base of the new feature won't be CR clean"
@@ -228,8 +234,27 @@ let command =
        property_values_flag ~switch:"property" ~doc:"user-defined properties"
      in
      fun () ->
-       let feature_path = ok_exn feature_path in
-       main { feature_path
+       let reviewing =
+         if set_reviewing_whole_feature_only
+         && set_reviewing_first_owner_only
+         then
+           failwithf "The switches [%s] and [%s] are mutually exclusive"
+             Switch.set_reviewing_first_owner_only
+             Switch.set_reviewing_whole_feature_only ()
+         else
+         if set_reviewing_whole_feature_only
+         then `Whole_feature_reviewers
+         else if set_reviewing_first_owner_only
+         then `First_owner
+         else
+           match Client_config.(get () |> Cmd.Create.reviewing) with
+           | Some value -> value
+           | None ->
+             if am_functional_testing
+             then `First_owner
+             else `Whole_feature_reviewers
+       in
+       main { feature_path = ok_exn feature_path
             ; base
             ; tip
             ; description
@@ -238,8 +263,8 @@ let command =
             ; remote_repo_path
             ; no_bookmark
             ; add_whole_feature_reviewers
+            ; reviewing
             ; allow_non_cr_clean_base
             ; properties
-            }
-    )
+            })
 ;;

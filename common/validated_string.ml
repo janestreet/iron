@@ -27,8 +27,8 @@ module Make (M : sig
           match check_valid string with
           | Ok () -> shared_t string
           | Error error ->
-            failwiths "invalid" (module_name, string, error)
-              [%sexp_of: (string * string * Error.t)];
+            raise_s [%sexp "invalid", (module_name : string)
+                           , (string : string), (error : Error.t)];
         ;;
       end
 

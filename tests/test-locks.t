@@ -87,25 +87,25 @@ And the user owning the lock can amend a lock.
   ====
   root
   
-  |----------------------------------------------------|
-  | attribute                | value                   |
-  |--------------------------+-------------------------|
-  | next step                | add code                |
-  | owner                    | unix-login-for-testing  |
-  | whole-feature reviewer   | unix-login-for-testing  |
-  | seconder                 | not seconded            |
-  | review is enabled        | false                   |
-  | CRs are enabled          | true                    |
-  | reviewing                | whole-feature reviewers |
-  | is permanent             | true                    |
-  | tip                      | dc568be383d7            |
-  | base                     | dc568be383d7            |
-  | locks                    |                         |
-  |   rebase locked by       | unix-login-for-testing  |
-  |   rebase locked by       | user1                   |
-  |   release locked by      | unix-login-for-testing  |
-  |   release-into locked by | unix-login-for-testing  |
-  |----------------------------------------------------|
+  |---------------------------------------------------|
+  | attribute                | value                  |
+  |--------------------------+------------------------|
+  | next step                | add code               |
+  | owner                    | unix-login-for-testing |
+  | whole-feature reviewer   | unix-login-for-testing |
+  | seconder                 | not seconded           |
+  | review is enabled        | false                  |
+  | CRs are enabled          | true                   |
+  | reviewing                | unix-login-for-testing |
+  | is permanent             | true                   |
+  | tip                      | dc568be383d7           |
+  | base                     | dc568be383d7           |
+  | locks                    |                        |
+  |   rebase locked by       | unix-login-for-testing |
+  |   rebase locked by       | user1                  |
+  |   release locked by      | unix-login-for-testing |
+  |   release-into locked by | unix-login-for-testing |
+  |---------------------------------------------------|
 
   $ fe show -show-lock-reasons
   root
@@ -121,7 +121,7 @@ And the user owning the lock can amend a lock.
   | seconder                 | not seconded                 |
   | review is enabled        | false                        |
   | CRs are enabled          | true                         |
-  | reviewing                | whole-feature reviewers      |
+  | reviewing                | unix-login-for-testing       |
   | is permanent             | true                         |
   | tip                      | dc568be383d7                 |
   | base                     | dc568be383d7                 |

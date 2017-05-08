@@ -82,8 +82,7 @@ module Make (X : Config) = struct
          | `Result () -> Ok ()
          | `Error (exc, annot) -> Error (Sexp.Annotated.get_conv_exn ~file ~exc annot)
        in
-       failwiths "unexpected" (List.map ~f:map res)
-         [%sexp_of: (unit, Exn.t) Result.t list])
+       raise_s [%sexp "unexpected", (List.map ~f:map res : (unit, Exn.t) Result.t list)])
   ;;
 
   let get () =
@@ -128,8 +127,7 @@ are expected to be found.
          List.iter errors ~f:(fun exn ->
            eprintf "%s\n" (Error.to_string_hum exn)
          );
-         Shutdown.exit (if List.is_empty errors then 0 else 1)
-      )
+         Shutdown.exit (if List.is_empty errors then 0 else 1))
   ;;
 end
 
@@ -138,7 +136,7 @@ module Utils = struct
 
   let empty sexps =
     if not (List.is_empty sexps)
-    then failwiths "invalid arguments" sexps [%sexp_of: Sexp.t list]
+    then raise_s [%sexp "invalid arguments", (sexps : Sexp.t list)]
   ;;
 
   type flag = Sexp.t list -> Sexp.t list

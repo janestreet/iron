@@ -87,7 +87,7 @@ open! Import
 let assert_working_copy_of ?repo_is_clean repo_root ~is:rev =
   let%bind parent = Hg.parent repo_root in
   if not (Rev.equal_node_hash parent rev)
-  then failwiths "unexpected working directory parent" parent [%sexp_of: Rev.t];
+  then raise_s [%sexp "unexpected working directory parent", (parent : Rev.t)];
   let%map result = Hg.status_cleanliness ?repo_is_clean repo_root in
   ok_exn result
 ;;

@@ -168,7 +168,7 @@ is review_enabled
 reviewing
 
   $ fe show root -reviewing
-  "whole-feature reviewers"
+  (unix-login-for-testing)
   $ fe change root -set-reviewing ''
   $ fe show root -reviewing
   ()

@@ -107,6 +107,8 @@ If there is only one w-f-reviewer, having them in the reviewing set is not enoug
 implicitly enable the w-f-followers.  This allows owners to review their changes on their
 own first.
 
+  $ fe change -set-reviewing-whole-feature-only
+
   $ fe show -whole-feature-reviewers
   (unix-login-for-testing)
 

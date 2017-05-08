@@ -21,5 +21,5 @@ let open_file file =
     in
     match%map Process.run ~prog:"emacsclient" ~args:[ "-e"; elisp ] () with
     | Ok (_ : string) -> ()
-    | Error e -> failwiths "problem with emacs" e [%sexp_of: Error.t]
+    | Error e -> raise_s [%sexp "problem with emacs", (e : Error.t)]
 ;;

@@ -42,21 +42,21 @@ The feature is there.
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | CRs                     |
-  | owner                  | unix-login-for-testing  |
-  | whole-feature reviewer | unix-login-for-testing  |
-  | seconder               | not seconded            |
-  | review is enabled      | false                   |
-  | CRs are enabled        | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | false                   |
-  | tip                    | 570d1cbcb724            |
-  |   tip is cr clean      | false                   |
-  | base                   | 9bc08b7747e4            |
-  |--------------------------------------------------|
+  |-------------------------------------------------|
+  | attribute              | value                  |
+  |------------------------+------------------------|
+  | next step              | CRs                    |
+  | owner                  | unix-login-for-testing |
+  | whole-feature reviewer | unix-login-for-testing |
+  | seconder               | not seconded           |
+  | review is enabled      | false                  |
+  | CRs are enabled        | true                   |
+  | reviewing              | unix-login-for-testing |
+  | is permanent           | false                  |
+  | tip                    | 570d1cbcb724           |
+  |   tip is cr clean      | false                  |
+  | base                   | 9bc08b7747e4           |
+  |-------------------------------------------------|
   
   |--------------------------------------|
   | user                   | CRs | total |
@@ -126,7 +126,7 @@ Archive the child, give a reason.  Check that the email sent contains that reaso
   | seconder                | not seconded                         |
   | review is enabled       | false                                |
   | CRs are enabled         | true                                 |
-  | reviewing               | whole-feature reviewers              |
+  | reviewing               | unix-login-for-testing               |
   | is permanent            | false                                |
   | bookmark update         | * | (glob)
   | tip                     | * | (glob)
@@ -183,21 +183,21 @@ Unarchive.
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | CRs                     |
-  | owner                  | unix-login-for-testing  |
-  | whole-feature reviewer | unix-login-for-testing  |
-  | seconder               | not seconded            |
-  | review is enabled      | false                   |
-  | CRs are enabled        | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | false                   |
-  | tip                    | 570d1cbcb724            |
-  |   tip is cr clean      | false                   |
-  | base                   | 9bc08b7747e4            |
-  |--------------------------------------------------|
+  |-------------------------------------------------|
+  | attribute              | value                  |
+  |------------------------+------------------------|
+  | next step              | CRs                    |
+  | owner                  | unix-login-for-testing |
+  | whole-feature reviewer | unix-login-for-testing |
+  | seconder               | not seconded           |
+  | review is enabled      | false                  |
+  | CRs are enabled        | true                   |
+  | reviewing              | unix-login-for-testing |
+  | is permanent           | false                  |
+  | tip                    | 570d1cbcb724           |
+  |   tip is cr clean      | false                  |
+  | base                   | 9bc08b7747e4           |
+  |-------------------------------------------------|
   
   |--------------------------------------|
   | user                   | CRs | total |

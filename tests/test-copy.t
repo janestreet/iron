@@ -58,7 +58,7 @@ Copy a feature.
   | whole-feature reviewers | unix-login-for-testing, user1 |
   | seconder                | not seconded                  |
   | review is enabled       | true                          |
-  | reviewing               | whole-feature reviewers       |
+  | reviewing               | unix-login-for-testing        |
   | is permanent            | false                         |
   | tip                     | 9bc08b7747e4                  |
   | base                    | 9bc08b7747e4                  |
@@ -76,7 +76,7 @@ Copy a feature.
   | whole-feature reviewers | unix-login-for-testing, user1 |
   | seconder                | not seconded                  |
   | review is enabled       | true                          |
-  | reviewing               | whole-feature reviewers       |
+  | reviewing               | unix-login-for-testing        |
   | is permanent            | false                         |
   | tip                     | 9bc08b7747e4                  |
   | base                    | 9bc08b7747e4                  |

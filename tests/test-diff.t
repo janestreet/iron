@@ -137,6 +137,29 @@ The actual diff, not a summary.
   | +|change
   |_
 
+Use [-base] and [-tip].
+
+  $ fe diff -base $(fe show -base) -tip $(fe show -base)
+
+  $ diff \
+  >  <(fe diff -summary -even-ignored) \
+  >  <(fe diff -summary -base $(fe show -base) -tip $(fe show -tip))
+
+  $ diff -U 0 \
+  >  <(fe diff -even-ignored                               | fe internal remove-color) \
+  >  <(fe diff -base $(fe show -base) -tip $(fe show -tip) | fe internal remove-color) \
+  >  | sed -r 1,2d
+  @@ -3 +3 @@
+  -scrutiny ignored
+  +scrutiny scrutiny
+  @@ -13 +13 @@
+  -scrutiny normal
+  +scrutiny scrutiny
+  @@ -22 +22 @@
+  -scrutiny normal
+  +scrutiny scrutiny
+  [1]
+
 Check that one can still get the diff of an archived feature.
 
   $ fe change -set-is-permanent false root

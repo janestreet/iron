@@ -422,11 +422,9 @@ module Reviewable_diff4s = struct
       Array.iter t ~f:(fun d -> Reviewable_diff4.invariant d reviewer);
       for i = 0 to pred (Array.length t) do
         let index = t.(i).index in
-        if i <> index then
-          failwiths "invalid index" (index, `expected i)
-            [%sexp_of: int * [`expected of int ]]
-      done;
-    )
+        if i <> index
+        then raise_s [%sexp "invalid index", { index : int; expected = (i : int)}]
+      done)
   ;;
 
   let set_to_nothing_reviewed (t : t) reviewer =
@@ -560,8 +558,7 @@ let serializer_exn t =
   match t.serializer with
   | Some s -> s
   | None ->
-    failwiths "serializer isn't defined" (t, Backtrace.get ())
-      [%sexp_of: t * Backtrace.t]
+    raise_s [%sexp "serializer isn't defined", (t : t), (Backtrace.get () : Backtrace.t)]
 ;;
 
 let record t query action =

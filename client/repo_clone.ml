@@ -41,10 +41,7 @@ let force_memo =
       (match feature_exists with
        | Yes (_ : Feature_id.t) -> ()
        | No ->
-         raise_s
-           [%sexp
-             "root feature doesn't exist", (root_feature : Feature_name.t)
-           ]);
+         raise_s [%sexp "root feature doesn't exist", (root_feature : Feature_name.t)]);
       let%bind { remote_repo_path; tip = tip_on_server; _ } =
         Get_feature_revs.rpc_to_server_exn
           { feature_path

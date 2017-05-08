@@ -221,8 +221,8 @@ let create ~path_in_repo ~rev ~file review_attributes =
 let with_path_in_repo t path_in_repo =
   match t.attributes with
   | `Present _ ->
-    failwiths "with_path_in_repo should only be used on absent files"
-      (t, path_in_repo) [%sexp_of: t * Path_in_repo.t]
+    raise_s [%sexp "with_path_in_repo should only be used on absent files"
+                 , (t : t), (path_in_repo : Path_in_repo.t)]
   | `Absent ->
     { t with path_in_repo }
 ;;

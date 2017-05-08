@@ -60,8 +60,7 @@ let simple_diff ~from ~to_ =
   | (`old_base , `new_tip)  -> `old_base_to_new_tip
   | (`old_tip  , `new_tip)  -> `old_tip_to_new_tip
   | (`new_base , `new_tip)  -> `new_base_to_new_tip
-  | (a, b) -> failwiths "invalid diff" (a, b)
-                [%sexp_of: Diamond.Node.t * Diamond.Node.t]
+  | (a, b) -> raise_s [%sexp "invalid diff", (a : Diamond.Node.t), (b : Diamond.Node.t)]
 ;;
 
 let to_string = function

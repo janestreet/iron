@@ -12,6 +12,9 @@ module Action : sig
     ; remote_repo_path            : Iron.Remote_repo_path.t option
     ; no_bookmark                 : bool
     ; add_whole_feature_reviewers : Iron.User_name.Set.t option
+    ; reviewing                   : [ `Whole_feature_reviewers
+                                    | `First_owner
+                                    ]
     ; allow_non_cr_clean_base     : bool
     ; properties                  : Iron.Properties.t option
     }

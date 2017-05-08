@@ -4,6 +4,7 @@ Creating a feature with some review, and a current session for the seconder:
 
   $ setup_repo_and_root a
   $ fe enable -add-whole-feature-reviewer seconder,user1
+  $ fe change -set-reviewing-whole-feature-only
   $ echo aa > a; touch b; hg add b; hg commit -m b
   $ feature_to_server root -fake-valid
   $ fe session  mark-file root b -for seconder -reason reason

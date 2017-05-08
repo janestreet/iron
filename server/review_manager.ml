@@ -519,8 +519,8 @@ let forget_from_brain_internal_exn t ~what_to_forget =
           ~f:(fun (path_in_repo, used) -> if !used then None else Some path_in_repo)
       in
       if not (List.is_empty unused_files_to_forget)
-      then failwiths "there is no diff in your brain for" unused_files_to_forget
-             [%sexp_of: Path_in_repo.t list];
+      then raise_s [%sexp "there is no diff in your brain for"
+                        , (unused_files_to_forget : Path_in_repo.t list)];
       brain
   in
   set_brain t { brain; at_review_goal = None }

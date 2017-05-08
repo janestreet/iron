@@ -48,8 +48,6 @@ let command =
            else `All)
        in
        if Reviewing.equal feature.reviewing reviewing
-       then failwiths "report Iron bug in widen-reviewing" feature
-              [%sexp_of: Feature.t];
-       Cmd_change.change_feature ~feature_path ~updates:[ `Set_reviewing reviewing ] ()
-    )
+       then raise_s [%sexp "report Iron bug in widen-reviewing", (feature : Feature.t)];
+       Cmd_change.change_feature ~feature_path ~updates:[ `Set_reviewing reviewing ] ())
 ;;

@@ -81,6 +81,7 @@ Command RPCs:
 │ archive                 │       2 │ d062de2d22c8e473e10b885cef1e989b │ 86ba5df747eec837f0b391dd49f33f9e │
 │ compress                │       1 │ caa8c6bc0b63d59c3c306d8e2483b33e │ 86ba5df747eec837f0b391dd49f33f9e │
 │ create                  │       1 │ ea6032921af2f1817d8b7b14ebc5f6d7 │ 86ba5df747eec837f0b391dd49f33f9e │
+│ create                  │       2 │ b9bfba6d0e4296c129084d6140aedb16 │ 86ba5df747eec837f0b391dd49f33f9e │
 │ feature-table-of-csv    │       1 │ 8f5e5acb0ffb376da2d11a28cc68da79 │ d9a8da25d5656b016fb4dbdc2e4197fb │
 │ list-table              │       1 │ b76a51ced87216fd0de6a05d4b7717d2 │ d9a8da25d5656b016fb4dbdc2e4197fb │
 │ list-table              │       2 │ 69fe1854488a4271239720e4577d614f │ d9a8da25d5656b016fb4dbdc2e4197fb │

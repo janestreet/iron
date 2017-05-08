@@ -35,6 +35,14 @@ Create some features.
   $ feature_to_server root/a/aa -fake-valid
 
   $ fe todo
+  |---------------------|
+  | feature | next step |
+  |---------+-----------|
+  | root    |           |
+  |   a     |           |
+  |     aa  | release   |
+  |---------------------|
+  
   Features you own:
   |---------------------|
   | feature | next step |

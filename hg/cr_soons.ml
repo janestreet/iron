@@ -188,8 +188,9 @@ module In_feature = struct
   let rename_non_root ({ feature_path; info } as t) ~to_ =
     match info with
     | Root _ ->
-      failwiths "Cr_soons.In_feature_tree.rename_non_root cannot rename root feature"
-        (t.feature_path, to_) [%sexp_of: Feature_path.t * Feature_path.t]
+      raise_s [%sexp "Cr_soons.In_feature_tree.rename_non_root cannot rename root feature"
+                   , (t.feature_path : Feature_path.t)
+                   , (to_ : Feature_path.t)]
     | Non_root non_root ->
       { feature_path = to_
       ; info         = Non_root (Non_root.rename_feature non_root ~from:feature_path ~to_)

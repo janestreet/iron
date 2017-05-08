@@ -16,7 +16,7 @@ let to_int = function
 let of_int = function
   | 1 -> V1
   | 2 -> V2_sql_xml
-  | n -> failwiths "Cr_comment_format: version is out of range" n [%sexp_of: int]
+  | n -> raise_s [%sexp "Cr_comment_format: version is out of range", (n : int)]
 ;;
 
 let sexp_of_t t = sexp_of_int (to_int t)

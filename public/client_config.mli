@@ -5,6 +5,12 @@ open Iron
 type t
 
 module Cmd : sig
+  module Create : sig
+    val reviewing : t -> [ `Whole_feature_reviewers
+                         | `First_owner
+                         ] option
+  end
+
   module List : sig
     val depth : t -> int option
   end
@@ -54,6 +60,8 @@ module Workspaces : sig
   val unclean_workspaces_detection_max_concurrent_jobs : t -> int
 
   val auto_update_clean_workspaces_is_enabled : t -> bool
+
+  val unclean_workspaces_detection_includes_shelved_changes : t -> bool
 
   (* The rest of the accessors raise if workspaces are not enabled. *)
   val are_enabled_exn    : t -> unit

@@ -34,6 +34,12 @@ Start test.
   $ feature_to_server root/child -fake-valid
 
   $ fe todo
+  |---------------------|
+  | feature | next step |
+  |---------+-----------|
+  | root    | release   |
+  |---------------------|
+  
   Features you own:
   |---------------------|
   | feature | next step |

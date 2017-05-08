@@ -291,7 +291,7 @@ let extend (brain : t) ~(with_ : Diff4s.t)
         | None ->
           match Diff4.as_from_scratch_to_diff2 diff4 with
           | Some diff2 -> make_marked_diff2 diff2 ~previous_mark_kind:None
-          | None -> failwiths "inapplicable diff4" diff4 [%sexp_of: Diff4.t])
+          | None -> raise_s [%sexp "inapplicable diff4", (diff4 : Diff4.t)])
     in
     let untouched_brain =
       List.filter_map (Hashtbl.data brain) ~f:(fun (marked_diff2, used) ->

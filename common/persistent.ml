@@ -55,7 +55,7 @@ module Make_with_context
 
   let add_version_exn ((version, _) as of_sexp) =
     match find_version version with
-    | Some _ -> failwiths "Persistent version already present" version [%sexp_of: int]
+    | Some _ -> raise_s [%sexp "Persistent version already present", (version : int)]
     | None   -> of_sexps := of_sexp :: !of_sexps
   ;;
 
@@ -132,8 +132,8 @@ module Make_with_context
 
     let () =
       if Option.is_some !to_sexp_override
-      then failwiths "Register_read_write_old_version called more than once"
-             Version.version [%sexp_of: int];
+      then raise_s [%sexp "Register_read_write_old_version called more than once"
+                        , (Version.version : int)];
       let sexp_of_model context model =
         Conv.of_model context model |> Conv.sexp_of_t
       in

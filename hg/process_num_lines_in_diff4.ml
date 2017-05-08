@@ -24,13 +24,13 @@ let compute input =
   let args = [ "internal" ; internal_group; Sexp.to_string (Action.sexp_of_t input) ] in
   match%map Process.run ~prog ~args () with
   | Error error ->
-    failwiths "line count computation error"
-      (input, error)
-      [%sexp_of: Action.t * Error.t]
+    raise_s [%sexp "line count computation error"
+                 , (input : Action.t), (error : Error.t)]
   | Ok stdout ->
     try Sexp.of_string_conv_exn stdout Reaction.t_of_sexp
     with exn ->
-      failwiths "line count process parse sexp error"
-        (input, stdout, exn)
-        [%sexp_of: Action.t * string * Exn.t]
+      raise_s [%sexp "line count process parse sexp error"
+                   , (input  : Action.t)
+                   , (stdout : string)
+                   , (exn    : Exn.t)]
 ;;

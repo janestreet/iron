@@ -20,19 +20,19 @@ Advance the feature.
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | review                  |
-  | owner                  | unix-login-for-testing  |
-  | whole-feature reviewer | unix-login-for-testing  |
-  | seconder               | not seconded            |
-  | review is enabled      | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | true                    |
-  | tip                    | 38cde75947b4            |
-  | base                   | dc568be383d7            |
-  |--------------------------------------------------|
+  |-------------------------------------------------|
+  | attribute              | value                  |
+  |------------------------+------------------------|
+  | next step              | review                 |
+  | owner                  | unix-login-for-testing |
+  | whole-feature reviewer | unix-login-for-testing |
+  | seconder               | not seconded           |
+  | review is enabled      | true                   |
+  | reviewing              | unix-login-for-testing |
+  | is permanent           | true                   |
+  | tip                    | 38cde75947b4           |
+  | base                   | dc568be383d7           |
+  |-------------------------------------------------|
   
   |---------------------------------|
   | user                   | review |

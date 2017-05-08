@@ -16,8 +16,7 @@ let name_filter_diffs ~which_files (diff4s : Diff4.t list) =
     in
     let unused = Hash_set.to_list unused in
     if not (List.is_empty unused)
-    then failwiths "-file selections not found" unused
-           [%sexp_of: Path_in_repo.t list];
+    then raise_s [%sexp "-file selections not found", (unused : Path_in_repo.t list)];
     keep
 ;;
 
@@ -38,6 +37,10 @@ If no [-file] switches are provided, the diff for all files is shown.
      and which_files =
        which_files
      and context = context ()
+     and base_switch =
+       flag "-base" (optional rev_arg_type) ~doc:"REV show the diff from -base to -tip"
+     and tip_switch =
+       flag "-tip" (optional rev_arg_type)  ~doc:"REV show the diff from -base to -tip"
      and max_output_columns = max_output_columns
      and may_modify_local_repo = may_modify_local_repo
      and raw =
@@ -82,15 +85,29 @@ If no [-file] switches are provided, the diff for all files is shown.
          | Whole_diff | None -> `Reviewer Reviewer.synthetic_whole_feature_reviewer
          | For user_name -> `Reviewer (Feature.reviewer_in_feature feature user_name)
        in
-       let diff4s =
-         match diff_from_base_to_tip with
-         | Pending_since _ | Known (Error _ ) as x -> x
-         | Known (Ok diffs) ->
-           let diff4s =
-             name_filter_diffs ~which_files
-               (diffs |> List.map ~f:Diff4.create_from_scratch_to_diff2)
+       let%bind diff4s =
+         match base_switch, tip_switch with
+         | None, None ->
+           return (
+             match diff_from_base_to_tip with
+             | Pending_since _ | Known (Error _ ) as x -> x
+             | Known (Ok diffs) ->
+               let diff4s =
+                 name_filter_diffs ~which_files
+                   (diffs |> List.map ~f:Diff4.create_from_scratch_to_diff2)
+               in
+               Known (Ok diff4s))
+         | Some _, None -> raise_s [%sexp "must supply [-tip] along with [-base]"]
+         | None, Some _ -> raise_s [%sexp "must supply [-base] along with [-tip]"]
+         | Some base, Some tip ->
+           let%bind diff4s =
+             Diff4s_for_diamond.create_using_fake_obligations
+               repo_root
+               (Diamond.of_one_edge base tip)
+               ~lines_required_to_separate_ddiff_hunks:
+                 Constants.lines_required_to_separate_ddiff_hunks_default
            in
-           Known (Ok diff4s)
+           return (Known diff4s)
        in
        if raw
        then (

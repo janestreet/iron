@@ -65,8 +65,8 @@ end = struct
   let pause_exn t ~query:by ~with_timeout =
     match t.state with
     | Paused { by; _ } ->
-      failwiths "serializer is already paused" (`By_previous_query by)
-        [%sexp_of: [ `By_previous_query of unit Query.t ]]
+      raise_s [%sexp "serializer is already paused"
+                   , By_previous_query (by : unit Query.t)]
     | Not_paused | Timed_out ->
       Deferred.create (fun resume ->
         let paused = { Paused.resume; by } in

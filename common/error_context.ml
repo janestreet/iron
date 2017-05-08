@@ -17,7 +17,7 @@ let within (type ok) ~file (f : t -> ok) : ok Or_error.t =
         Ok (f { return; file; info = None; sexp = None; annotated_sexp = None })))
   with
   | Ok (_ as x) -> x
-  | Error e -> failwiths "Iron bug" (e, file) [%sexp_of: Error.t * Path.t]
+  | Error e -> raise_s [%sexp "Iron bug", [%here], (e : Error.t), (file : Path.t)]
 ;;
 
 let raise_x t x sexp_of_x =

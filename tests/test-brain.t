@@ -2,7 +2,8 @@
   $ setup_repo_and_root file
   $ echo z >file2; hg add file2; echo change >file; hg com -m 'changes'
   $ feature_to_server root -fake-valid
-  $ fe enable -add-whole-feature-reviewers user1
+  $ fe enable-review -add-whole-feature-reviewers user1
+  $ fe change -set-reviewing-whole-feature-only
 
 Brain starts empty.
 

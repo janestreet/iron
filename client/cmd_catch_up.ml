@@ -55,8 +55,7 @@ This command fails if any of the following are true:
          ; for_
          ; ok_if_nothing_cleared
          ; only_those_reviewed_by
-         }
-    )
+         })
 ;;
 
 let get_catch_up_session_exn feature_path for_ =
@@ -184,8 +183,8 @@ This command is deprecated and has been subsumed by " ; subsumed_by ; ".
        let feature_path = ok_exn feature_path in
        match%bind Get_catch_up_session.rpc_to_server_exn { feature_path; for_ } with
        | `Up_to_date ->
-         failwiths "catch up is up to date, cannot mark file" paths_in_repo
-           [%sexp_of: Path_in_repo.t list]
+         raise_s [%sexp "catch up is up to date, cannot mark file"
+                      , (paths_in_repo : Path_in_repo.t list)]
        | `Catch_up_session
            { Get_catch_up_session.Catch_up_session.
              catch_up_session_id
@@ -208,9 +207,9 @@ This command is deprecated and has been subsumed by " ; subsumed_by ; ".
              | None       -> `Snd path_in_repo
              | Some diff4 -> `Fst (Diff4_in_session.id diff4))
          in
-         if not (List.is_empty invalid_files)
-         then failwiths "files not found in the current session" invalid_files
-                [%sexp_of: Path_in_repo.t list];
+         (if not (List.is_empty invalid_files)
+          then raise_s [%sexp "files not found in the current session"
+                            , (invalid_files : Path_in_repo.t list)]);
          Catch_up_diffs.rpc_to_server_exn
            { for_
            ; feature_path

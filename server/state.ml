@@ -364,8 +364,8 @@ let remote_repo_path ?rev_zero t feature =
     match Feature.remote_repo_path root_feature with
     | Some x -> x
     | None ->
-      failwiths "Iron bug: root feature missing remote_repo_path"
-        (Feature.feature_path root_feature) [%sexp_of: Feature_path.t]
+      raise_s [%sexp "Iron bug: root feature missing remote_repo_path"
+                   , (Feature.feature_path root_feature : Feature_path.t)]
   in
   let feature_rev_zero = Feature.rev_zero feature in
   (match rev_zero with
@@ -376,10 +376,24 @@ let remote_repo_path ?rev_zero t feature =
   remote_repo_path
 ;;
 
+(* [find_parent] does not distinguish between these cases:
+
+   1. [feature_path] is a root and should is expected to have no parent
+
+   2. [feature_path] has a parent but we can't find it
+
+   In new code we should consider whether (2) is a bug, and if so use [find_parent_exn].
+*)
 let find_parent t feature_path =
   match Feature_path.parent feature_path with
   | Ok parent_path -> find_feature t parent_path
   | Error _ as e -> e
+;;
+
+let find_parent_exn t feature_path =
+  match Feature_path.parent feature_path with
+  | Ok parent_path -> Some (ok_exn (find_feature t parent_path))
+  | Error _ -> None
 ;;
 
 let feature_crs t feature =
@@ -1673,16 +1687,9 @@ let get_maybe_archived_feature_exn t what_feature =
   feature_protocol
 ;;
 
-let parent_owners_are_responsible ~parent =
-  match Feature.who_can_release_into_me parent with
-  | My_owners_and_child_owners ->
-    `Never
-  | My_owners ->
-    `If (fun ~child ->
-      List.mem
-        (Feature.next_steps child)
-        Release
-        ~equal:Next_step.equal)
+let assigned_release_or_rebase t feature =
+  Assigned_release_or_rebase.create feature
+    ~parent:(find_parent_exn t (Feature.feature_path feature))
 ;;
 
 let execute_timed_event t id (action : Timed_event.Action.t) =
@@ -2017,13 +2024,14 @@ let implement_pipe_rpc ?override_sexp_of_action ~log m f =
 ;;
 
 let only_server_user_is_authorized_exn query =
-  let user = Query.by query in
-  if not (User_name.equal user User_name.unix_login)
+  let query_user = Query.by query in
+  let authorized_user = User_name.unix_login in
+  if not (User_name.equal query_user authorized_user)
   then
-    failwiths "Unauthorized rpc for user"
-      (`query_user user, `authorized_user User_name.unix_login)
-      [%sexp_of: [ `query_user      of User_name.t ]
-                 * [ `authorized_user of User_name.t ]]
+    raise_s [%sexp "Unauthorized rpc for user"
+                 , { query_user      : User_name.t
+                   ; authorized_user : User_name.t
+                   }]
 ;;
 
 let users_with_admin_privileges t =
@@ -2964,6 +2972,7 @@ let create_feature_exn t query =
       ; base
       ; tip
       ; add_whole_feature_reviewers
+      ; reviewing
       ; rev_zero
       ; remote_repo_path            = remote_repo_path_opt
       ; allow_non_cr_clean_base
@@ -3035,12 +3044,15 @@ let create_feature_exn t query =
     Batch_of_feature_changes.add_whole_feature_reviewers changes
       ~whole_feature_reviewers:add_whole_feature_reviewers
   in
+  let set_reviewing =
+    match reviewing with
+    | `Whole_feature_reviewers -> []
+    | `First_owner ->
+      [ `Set_reviewing (`Only (User_name.Set.singleton (List.hd_exn owners))) ]
+  in
   change_feature_exn t feature query
     (Batch_of_feature_changes.to_feature_updates feature batch_of_feature_changes
-     @ (if am_functional_testing
-        then
-          []
-        else [ `Set_reviewing (`Only (User_name.Set.singleton (List.hd_exn owners))) ]));
+     @ set_reviewing);
   feature
 ;;
 
@@ -3077,10 +3089,10 @@ let renames_exn t ~from_feature ~to_ ~to_may_exist ~check_rename_lock =
   let from = Feature.feature_path from_feature in
   ok_exn (Feature_path.check_renameable ~from ~to_);
   if not to_may_exist && is_ok (find_feature t to_)
-  then failwiths "cannot rename to an existing feature" to_ [%sexp_of: Feature_path.t];
+  then raise_s [%sexp "cannot rename to an existing feature", (to_ : Feature_path.t)];
   if is_error (find_parent t to_)
-  then failwiths "the parent of the target feature has to exist" to_
-         [%sexp_of: Feature_path.t];
+  then raise_s [%sexp "the parent of the target feature has to exist"
+                    , (to_ : Feature_path.t)];
   let from_features =
     from_feature :: ok_exn (Feature_forest.strict_descendants t.features
                               (Feature.feature_path from_feature))
@@ -3258,8 +3270,8 @@ let () =
        let feature = find_feature_exn t from_ in
        match find_feature t to_ with
        | Ok _ ->
-         failwiths "feature that is being copied to already exists" to_
-           [%sexp_of: Feature_path.t]
+         raise_s [%sexp "feature that is being copied to already exists"
+                      , (to_ : Feature_path.t)]
        | Error _ ->
          let from_parent = ok_exn (find_parent t from_) in
          let to_parent   = ok_exn (find_parent t to_)   in
@@ -3267,7 +3279,7 @@ let () =
                    (Feature.feature_id from_parent) (Feature.feature_id to_parent))
          then failwith "parents must be the same to copy.  Consider using copy then rename.";
          if Feature_forest.has_children_exn t.features from_
-         then failwiths "feature has children" from_ [%sexp_of: Feature_path.t];
+         then raise_s [%sexp "feature has children", (from_ : Feature_path.t)];
          (match
             without_copying_review,
             create_fully_reviewed_edge rev_zero feature ~even_if_release_is_locked:true
@@ -3299,7 +3311,7 @@ let () =
                             will not be copied -- consider using "
                           ; Switch.without_copying_review
                           ] : string),
-                  { who_has_done_some_review = (who_has_done_some_review : User_name.t list)
+                  { who_has_done_some_review : User_name.t list
                   }
                 ]);
          );
@@ -3313,6 +3325,7 @@ let () =
              ; base                        = Some (Feature.base feature)
              ; tip                         = Some (Feature.tip feature)
              ; add_whole_feature_reviewers = Feature.whole_feature_reviewers feature
+             ; reviewing                   = `First_owner
              ; rev_zero
              ; remote_repo_path            = Feature.remote_repo_path feature
              ; allow_non_cr_clean_base     = true
@@ -3338,9 +3351,9 @@ let () =
 let check_user_is_enabled_exn feature user_name =
   let feature_path = Feature.feature_path feature in
   if not (Feature.review_is_enabled feature)
-  then failwiths "review is not enabled for" feature_path [%sexp_of: Feature_path.t];
+  then raise_s [%sexp "review is not enabled for", (feature_path : Feature_path.t)];
   if not (Feature.user_is_currently_reviewing feature user_name)
-  then failwiths "user is not reviewing" user_name [%sexp_of: User_name.t];
+  then raise_s [%sexp "user is not reviewing", (user_name : User_name.t)];
 ;;
 
 let () =
@@ -3851,8 +3864,8 @@ let () =
        if Feature.has_bookmark feature
        then Feature.force_hydra_retry feature
        else
-         failwiths "feature's bookmark is missing"
-           feature_path [%sexp_of: Feature_path.t])
+         raise_s [%sexp "feature's bookmark is missing"
+                      , (feature_path : Feature_path.t)])
 ;;
 
 let () =
@@ -3931,10 +3944,11 @@ let () =
        let with_timeout =
          let max_timeout_span = Iron_config.serializer_pause_timeout t.server_config in
          if Time.Span.(>) with_timeout max_timeout_span
-         then failwiths "requested timeout is too big"
-                (`requested with_timeout, `max_configured max_timeout_span)
-                [%sexp_of: [ `requested      of Time.Span.t ]
-                           * [ `max_configured of Time.Span.t ]]
+         then
+           raise_s [%sexp "requested timeout is too big"
+                        , { requested      = (with_timeout     : Time.Span.t)
+                          ; max_configured = (max_timeout_span : Time.Span.t)
+                          }]
          else with_timeout
        in
        Serializer.pause_exn (serializer_exn t) ~query ~with_timeout)
@@ -4308,8 +4322,8 @@ let () =
          let root = Feature_path.root feature_path in
          List.iter features ~f:(fun { feature_path = feature_path2; _ } ->
            if not (Feature_name.equal root (Feature_path.root feature_path2)) then
-             failwiths "features must be in the same tree but aren't"
-               [ feature_path; feature_path2 ] [%sexp_of: Feature_path.t list]);
+             raise_s [%sexp "features must be in the same tree but aren't"
+                          , ([ feature_path; feature_path2 ] : Feature_path.t list)]);
          let remote_repo_path =
            remote_repo_path t (find_feature_exn t feature_path) ~rev_zero
          in
@@ -4573,12 +4587,14 @@ Iron server doesn't yet know whether it is valid to rebase (pending for %s)."
                let new_base_facts = parent_tip_facts in
                if not (ok_exn (Rev_facts.Is_conflict_free.check
                                  new_base_facts.is_conflict_free new_base))
-               then failwiths "new base is not conflict free" (parent_path, new_base)
-                      [%sexp_of: Feature_path.t * Rev.t];
+               then raise_s [%sexp "new base is not conflict free"
+                                 , (parent_path : Feature_path.t)
+                                 , (new_base    : Rev.t)];
                if not (ok_exn (Rev_facts.Obligations_are_valid.check
                                  new_base_facts.obligations_are_valid new_base))
-               then failwiths "new base obligations are invalid" (parent_path, new_base)
-                      [%sexp_of: Feature_path.t * Rev.t];
+               then raise_s [%sexp "new base obligations are invalid"
+                                 , (parent_path : Feature_path.t)
+                                 , (new_base    : Rev.t)];
                if not (ok_exn (Rev_facts.Is_cr_clean.check
                                  new_base_facts.is_cr_clean new_base))
                && not allow_non_cr_clean_new_base
@@ -4593,12 +4609,13 @@ new base is not cr clean -- use -allow-non-cr-clean-new-base to override";
            let old_tip = child_tip in
            let old_tip_facts = child_tip_facts in
            if Rev.equal_node_hash old_base new_base
-           then failwiths "feature is already rebased" child_path
-                  [%sexp_of: Feature_path.t];
+           then raise_s [%sexp "feature is already rebased"
+                             , (child_path : Feature_path.t)];
            if not (ok_exn (Rev_facts.Is_conflict_free.check
                              old_tip_facts.is_conflict_free child_tip))
-           then failwiths "feature is not conflict free" (child_path, old_tip)
-                  [%sexp_of: Feature_path.t * Rev.t];
+           then raise_s [%sexp "feature is not conflict free"
+                             , (child_path : Feature_path.t)
+                             , (old_tip    : Rev.t)];
            { old_tip
            ; old_base
            ; new_base
@@ -4622,8 +4639,8 @@ let () =
              synchronize state query we consider [has_bookmark = true].  But this is for
              the best, we wait at least one synchronize state query before allowing to
              restore bookmarks. *)
-          Error.failwiths "feature has a bookmark" (Feature.feature_path feature)
-            [%sexp_of: Feature_path.t]);
+          raise_s [%sexp "feature has a bookmark"
+                       , (Feature.feature_path feature : Feature_path.t)]);
        { tip              = Feature.tip feature
        ; remote_repo_path = remote_repo_path t feature ~rev_zero
        })
@@ -4824,7 +4841,7 @@ let () =
     (fun t query ->
        let { Revision_is_fully_reviewed.Action. rev } = Query.action query in
        if not (revision_is_fully_reviewed t rev)
-       then failwiths "revision is not fully reviewed" rev [%sexp_of: Rev.t])
+       then raise_s [%sexp "revision is not fully reviewed", (rev : Rev.t)])
 ;;
 
 let () =
@@ -4865,10 +4882,10 @@ let () =
        in
        check_catch_up_for_exn t ~for_ ~by:(Query.by query);
        match Hashtbl2_pair.find t.catch_up_managers feature_path for_ with
-       | None -> failwiths "no pending catch up for user" for_ [%sexp_of: User_name.t]
+       | None -> raise_s [%sexp "no pending catch up for user", (for_ : User_name.t)]
        | Some catch_up_manager ->
          match Catch_up_manager.find catch_up_manager id with
-         | None -> failwiths "invalid catch-up session id" id [%sexp_of: Session_id.t]
+         | None -> raise_s [%sexp "invalid catch-up session id", (id : Session_id.t)]
          | Some catch_up_session ->
            catch_up_in_session t query feature_path catch_up_manager catch_up_session
              diff4_in_session_ids for_)
@@ -4991,19 +5008,6 @@ let () =
       List.map (Cr_comment.Summary.rows cr_summary) ~f:Cr_comment.Summary.Row.assignee
       |> User_name.Set.of_list
     in
-    let maybe_parent_owners =
-      match find_parent t feature_path with
-      | Error _ -> User_name.Set.empty
-      | Ok parent ->
-        let parent_owners_are_responsible =
-          match parent_owners_are_responsible ~parent with
-          | `Never -> false
-          | `If f  -> f ~child:feature
-        in
-        if parent_owners_are_responsible
-        then User_name.Set.of_list (Feature.owners parent)
-        else User_name.Set.empty
-    in
     let users_with_review_session_in_progress =
       Feature.users_with_review_session_in_progress feature
     in
@@ -5023,11 +5027,14 @@ let () =
         | Fix_build
         | Fix_problems
         | Rebase
-        | Release
         | Report_iron_bug
         | Restore_base
         | Restore_bookmark
         | Widen_reviewing -> owners
+        | Release ->
+          (match assigned_release_or_rebase t feature with
+           | None -> owners
+           | Some { assignee; assigned = _ } -> Set.add owners assignee)
         | Ask_seconder -> Feature.whole_feature_reviewers feature
         | CRs -> cr_users
         | In_parent next_step_in_parent ->
@@ -5051,7 +5058,6 @@ let () =
       User_name.Set.union_list
         [ cr_users
         ; next_step_users
-        ; maybe_parent_owners
         ; owners
         ; review_users
         ; (match users_with_review_session_in_progress with
@@ -5066,8 +5072,8 @@ let () =
       | Some_active only_email ->
         let active, inactive = Set.partition_tf only_email ~f:(Set.mem active_users) in
         if not (Set.is_empty inactive)
-        then failwiths "some requested users have nothing to do" inactive
-               [%sexp_of: User_name.Set.t];
+        then raise_s [%sexp "some requested users have nothing to do"
+                          , (inactive : User_name.Set.t)];
         active
     in
     let users = Set.union requested_active_users owners in
@@ -5106,8 +5112,9 @@ let () =
            match Hashtbl.find_and_remove state_by_bookmark bookmark with
            | None -> Feature.set_has_no_bookmark feature query;
            | Some { bookmark = _; rev_info = { rev_author_or_error = _; first_12_of_rev }
-                  ; status; continuous_release_status = _; compilation_status } ->
+                  ; status; continuous_release_status; compilation_status } ->
              let next_bookmark_update_before = Feature.next_bookmark_update feature in
+             Feature.set_continuous_release_status feature continuous_release_status;
              Feature.set_has_bookmark feature query
                ~compilation_status:(`Update_with compilation_status);
              (match
@@ -5153,6 +5160,30 @@ let () =
        let { Todo.Action. for_; include_active_cr_soons; include_all_owned_features }
          = Query.action query in
        User_info.ensure_user_exists t.user_info for_;
+       let all_owned_feature_ids =
+         Features_by_parties.find t.features_by_parties for_ Owners
+       in
+       let features_not_owned_yet_assigned_to_release =
+         let table = Feature_id.Table.create () in
+         List.iter all_owned_feature_ids ~f:(fun feature_id ->
+           let feature = find_feature_by_id_exn t feature_id in
+           match Feature.who_can_release_into_me feature with
+           | My_owners_and_child_owners -> ()
+           | My_owners ->
+             Feature_forest.iter_children t.features (Feature.feature_path feature)
+               ~f:(fun child ->
+                 if List.mem (Feature.next_steps child) Release ~equal:Next_step.equal
+                 then (
+                   match
+                     Assigned_release_or_rebase.create child ~parent:(Some feature)
+                   with
+                   | None -> ()
+                   | Some { assignee; assigned } ->
+                     if User_name.(=) for_ assignee
+                     then Hashtbl.set table ~key:(Feature.feature_id child)
+                            ~data:(child, assigned))));
+         table
+       in
        let assigned =
          let catch_up_lines_by_feature = build_catch_up_lines_by_feature t for_ in
          (* Make the initial set of [assigned] table rows from the user's review managers.
@@ -5164,6 +5195,7 @@ let () =
                || Feature.user_is_currently_reviewing feature for_)
          in
          iter_review_managers_of_user t for_ ~f:(fun feature_id review_manager ->
+           Hashtbl.remove features_not_owned_yet_assigned_to_release feature_id;
            let feature = find_feature_by_id_exn t feature_id in
            let feature_path = Feature.feature_path feature in
            let make_num_crs for_users_reviewing_only crs =
@@ -5214,13 +5246,13 @@ let () =
              if seconding_is_recommended t ~for_ feature ~even_if_locked:false
              then [ Ask_seconder ]
              else (
-               let rebase, next_steps_skipping_rebase =
+               let need_rebase, next_steps_skipping_rebase =
                  match next_steps with
                  | Rebase :: ts -> true, ts
                  | ts -> false, ts
                in
                let maybe_prepend_rebase t =
-                 if rebase
+                 if need_rebase
                  then [ Next_step.Rebase; t ]
                  else [ t ]
                in
@@ -5231,23 +5263,29 @@ let () =
                in
                match List.hd next_steps_skipping_rebase with
                | None -> []
-               | Some t ->
-                 match t with
+               | Some next_step ->
+                 match next_step with
                  | Add_whole_feature_reviewer
                  | Report_iron_bug
                  | Restore_base
                  | Restore_bookmark
                  | Widen_reviewing
-                   -> only_first_owner (maybe_prepend_rebase t)
+                   -> only_first_owner (maybe_prepend_rebase next_step)
 
                  | Fix_build
                  | Fix_problems
                    ->
                    if review_is_enabled
-                   then only_first_owner (maybe_prepend_rebase t)
+                   then only_first_owner (maybe_prepend_rebase next_step)
                    else []
 
-                 | Release
+                 | Release ->
+                   (match assigned_release_or_rebase t feature with
+                    | None -> []
+                    | Some { assignee; assigned } ->
+                      if User_name.(<>) for_ assignee
+                      then []
+                      else assigned)
 
                  | Add_code
                  | Archive
@@ -5292,7 +5330,7 @@ let () =
                }
              in
              r := assigned :: !r));
-         (* Now add rows for all surviving elements in the [catch_up_lines_by_feature]. *)
+         (* Add rows for all surviving elements in the [catch_up_lines_by_feature]. *)
          Hashtbl.iteri catch_up_lines_by_feature ~f:(fun ~key:feature_path ~data ->
            let assigned =
              { Todo.Assigned.
@@ -5301,16 +5339,39 @@ let () =
              ; review_is_enabled   = false
              ; user_is_reviewing   = false
              ; assigned_next_steps = []
-             (* During catch up, CR work is not relevant if the feature no longer
-                exists, which is the case here, thus we use [`Disabled]. *)
+             (* Maybe there is an existing feature with that feature_path, however if the
+                user had some assigments other than catch-up for it the entry would have
+                already been removed from [catch_up_lines_by_feature] and the feature
+                already processed in the iteration by review managers above.  Thus here we
+                only populate the catch up lines.  That's all that matters to that user
+                for that feature_path. *)
              ; num_crs             = `Disabled
              ; num_xcrs            = `Disabled
              ; line_count          = Line_count.catch_up_only data
              ; next_steps          = []
              }
            in
-           r := assigned :: !r
-         );
+           r := assigned :: !r);
+         (* Add surviving elements of [assigned_to_release_instead_of_child_owner]. *)
+         Hashtbl.iter features_not_owned_yet_assigned_to_release
+           ~f:(fun (feature, assigned_next_steps) ->
+             let assigned =
+               { Todo.Assigned.
+                 feature_path        = Feature.feature_path feature
+               ; feature_path_exists = true
+               ; review_is_enabled   = Feature.review_is_enabled feature
+               ; user_is_reviewing   = Feature.user_is_currently_reviewing feature for_
+               ; assigned_next_steps
+               (* If that user had CRs or lines to review, they would have a
+                  review-manager and this feature would have been processed as part of the
+                  previous review_manager iteration. *)
+               ; num_crs             = `Disabled
+               ; num_xcrs            = `Disabled
+               ; line_count          = Line_count.zero
+               ; next_steps          = Feature.next_steps feature
+               }
+             in
+             r := assigned :: !r);
          !r
        in
        let unclean_workspaces =
@@ -5382,9 +5443,6 @@ let () =
          ; next_steps                          = Feature.next_steps feature
          }
        in
-       let all_owned_feature_ids =
-         Features_by_parties.find t.features_by_parties for_ Owners
-       in
        let can_be_hidden feature =
          let is_empty_umbrella_feature () =
            List.exists (Feature.next_steps feature)
@@ -5426,17 +5484,6 @@ let () =
                && not (can_be_hidden (find_feature_by_id_exn t feature_id))
                then Hash_set.add watched_ids feature_id
              ));
-         List.iter all_owned_feature_ids ~f:(fun feature_id ->
-           let feature = find_feature_by_id_exn t feature_id in
-           match parent_owners_are_responsible ~parent:feature with
-           | `Never -> ()
-           | `If f  ->
-             Feature_forest.iter_children t.features (Feature.feature_path feature)
-               ~f:(fun child ->
-                 let child_id = Feature.feature_id child in
-                 if not (Hash_set.mem feature_ids_already_shown_in_the_own_table child_id)
-                 && f ~child
-                 then Hash_set.add watched_ids child_id));
          List.map (Hash_set.to_list watched_ids) ~f:make_feature_info
        in
        let cr_soons =
@@ -5467,14 +5514,14 @@ let () =
          Query.action query
        in
        (if is_ok (find_feature t feature_path)
-        then failwiths "a feature with that name already exists" feature_path
-               [%sexp_of: Feature_path.t]);
+        then raise_s [%sexp "a feature with that name already exists"
+                          , (feature_path : Feature_path.t)]);
        (match Feature_path.parent feature_path with
         | Error _ -> ()
         | Ok parent_path ->
           if is_error (find_feature t parent_path)
-          then failwiths "parent feature doesn't exist" parent_path
-                 [%sexp_of: Feature_path.t]);
+          then raise_s [%sexp "parent feature doesn't exist"
+                            , (parent_path : Feature_path.t)]);
        let archived_feature =
          ok_exn (Archived_features.find_by_id t.archived_features feature_id)
        in

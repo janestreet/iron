@@ -13,7 +13,7 @@ module Stable = struct
 
     let invariant t =
       if t < 0 || t > 100
-      then failwiths "a scrutiny level must be in [0,100]" t [%sexp_of: int];
+      then raise_s [%sexp "a scrutiny level must be in [0,100]", (t : int)];
     ;;
 
     let t_of_sexp sexp =

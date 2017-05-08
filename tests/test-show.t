@@ -56,7 +56,7 @@ Show it.
   | seconder               | not seconded                               |
   | review is enabled      | false                                      |
   | CRs are enabled        | true                                       |
-  | reviewing              | whole-feature reviewers                    |
+  | reviewing              | unix-login-for-testing                     |
   | is permanent           | false                                      |
   | tip                    | 04da3968e088                               |
   | base                   | 04da3968e088                               |
@@ -190,7 +190,7 @@ However, compilation-status changes correctly trigger a cache invalidation in th
   | seconder                | not seconded                               |
   | review is enabled       | false                                      |
   | CRs are enabled         | true                                       |
-  | reviewing               | whole-feature reviewers                    |
+  | reviewing               | unix-login-for-testing                     |
   | is permanent            | false                                      |
   | tip                     | 04da3968e088                               |
   | base                    | 04da3968e088                               |
@@ -308,7 +308,7 @@ next steps, and that CRs and line count are not available.
   | seconder               | not seconded                         |
   | review is enabled      | false                                |
   | CRs are enabled        | true                                 |
-  | reviewing              | whole-feature reviewers              |
+  | reviewing              | unix-login-for-testing               |
   | is permanent           | false                                |
   | tip                    | 04da3968e088                         |
   | base                   | 04da3968e088                         |

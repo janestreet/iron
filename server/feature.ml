@@ -301,6 +301,7 @@ type t =
   ; mutable hydra_master_state        : Hydra_master_state.t option
   ; mutable has_bookmark              : bool
   ; mutable compilation_status : Compilation_status.one Repo_controller_name.Table.t
+  ; mutable continuous_release_status : Continuous_release_status.t
   ; mutable is_permanent              : bool
   ; mutable release_process           : Release_process.t
   ; mutable review_is_enabled         : bool
@@ -624,6 +625,7 @@ let invariant t =
       ~hydra_master_state:ignore
       ~has_bookmark:ignore
       ~compilation_status:(check (Hashtbl.iter ~f:Compilation_status.invariant))
+      ~continuous_release_status:(check ignore)
       ~tip:(check Rev.invariant)
       ~tip_facts:
         (check (Or_pending.invariant (fun tip_facts ->
@@ -676,16 +678,14 @@ let serializer_exn t =
   match t.serializer with
   | Some s -> s
   | None ->
-    failwiths "serializer isn't defined" (t, Backtrace.get ())
-      [%sexp_of: t * Backtrace.t]
+    raise_s [%sexp "serializer isn't defined", (t : t), (Backtrace.get () : Backtrace.t)]
 ;;
 
 let first_owner t =
   match t.owners with
   | owner :: _ -> owner
   | [] ->
-    failwiths "Feature.first_owner encountered feature with no owners" t
-      [%sexp_of: t]
+    raise_s [%sexp "Feature.first_owner encountered feature with no owners", (t : t)]
 ;;
 
 let is_empty t = Rev.equal_node_hash t.base t.tip
@@ -803,6 +803,7 @@ let create_internal creation ~dynamic_upgrade_state ~serializer =
   ; hydra_master_state = None
   ; has_bookmark = true
   ; compilation_status = Repo_controller_name.Table.create ()
+  ; continuous_release_status = `Not_working_on_it
   ; tip
   ; tip_facts = pending
   ; base_is_ancestor_of_tip = pending
@@ -1006,6 +1007,13 @@ let set_base t query rev =
   refresh_next_bookmark_update t;
 ;;
 
+let set_continuous_release_status t status =
+  if not (Continuous_release_status.equal t.continuous_release_status status)
+  then (
+    invalidate_dependents t;
+    t.continuous_release_status <- status)
+;;
+
 let set_feature_path t query feature_path =
   record t query (`Set_feature_path feature_path);
   t.feature_path <- feature_path;
@@ -1019,7 +1027,10 @@ let set_has_bookmark_internal t query has_bookmark =
     t.has_bookmark <- has_bookmark)
 ;;
 
-let set_has_no_bookmark t query = set_has_bookmark_internal t query false
+let set_has_no_bookmark t query =
+  set_continuous_release_status t `Not_working_on_it;
+  set_has_bookmark_internal t query false
+;;
 
 let set_has_bookmark t query ~compilation_status =
   let had_bookmark_before = t.has_bookmark in

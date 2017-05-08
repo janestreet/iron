@@ -23,20 +23,20 @@ Create hg repo.
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | CRs, review             |
-  | owner                  | owner                   |
-  | whole-feature reviewer | owner                   |
-  | seconder               | not seconded            |
-  | review is enabled      | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | false                   |
-  | tip                    | 493a6eeffeb0            |
-  |   tip is cr clean      | false                   |
-  | base                   | 04da3968e088            |
-  |--------------------------------------------------|
+  |---------------------------------------|
+  | attribute              | value        |
+  |------------------------+--------------|
+  | next step              | CRs, review  |
+  | owner                  | owner        |
+  | whole-feature reviewer | owner        |
+  | seconder               | not seconded |
+  | review is enabled      | true         |
+  | reviewing              | owner        |
+  | is permanent           | false        |
+  | tip                    | 493a6eeffeb0 |
+  |   tip is cr clean      | false        |
+  | base                   | 04da3968e088 |
+  |---------------------------------------|
   
   |---------------------|
   | user  | CRs | total |
@@ -127,7 +127,7 @@ Create hg repo.
   true
   $ fe change -set-crs-shown-in-todo-only-for-users-reviewing true
   $ fe show | grep 'shown in todo'
-  | CRs shown in todo for  | users reviewing only    |
+  | CRs shown in todo for  | users reviewing only |
   $ fe todo -for user2
   $ fe change -add-reviewing user2
   $ fe todo -for user2

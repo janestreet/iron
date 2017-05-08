@@ -364,8 +364,8 @@ let remove_alternate_names_exn t alternate_names_to_remove ~which =
   match unremoved with
   | [] -> ()
   | _ :: _ ->
-    failwiths (sprintf "The following %s were not removed: " name) unremoved
-      [%sexp_of: Alternate_name.t list]
+    raise_s [%sexp (sprintf "The following %s were not removed: " name : string)
+                 , (unremoved : Alternate_name.t list)]
 ;;
 
 let typo_conflict typo means =

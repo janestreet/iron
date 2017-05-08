@@ -37,11 +37,9 @@ module T = struct
         match Hashtbl.find heap_as_table id with
         | Some session' ->
           if not (phys_equal session session')
-          then failwiths "session mismatch" id [%sexp_of: Session_id.t]
+          then raise_s [%sexp "session mismatch", (id : Session_id.t)]
         | None ->
-          failwiths "session missing from the heap" id [%sexp_of: Session_id.t]
-      );
-    )
+          raise_s [%sexp "session missing from the heap", (id : Session_id.t)]))
   ;;
 
   let mem t catch_up_session =

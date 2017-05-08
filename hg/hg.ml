@@ -197,8 +197,13 @@ module Tag = struct
       if not (Bool.equal expect
                 (is_nice_name t
                    ~for_tree_rooted_at:(Feature_name.of_string for_tree_rooted_at)))
-      then failwiths "mismatch" (t, for_tree_rooted_at, expect)
-             [%sexp_of: t * string * bool])
+      then
+        raise_s
+          [%sexp "mismatch"
+               , { t : t
+                 ; for_tree_rooted_at : string
+                 ; expect : bool
+                 }])
       [ "jane-111.13"                                  , "jane"        , true
       ; "foo-jane-111.13"                              , "jane"        , false
       ; "jane-111.13"                                  , "trader-tools", false
@@ -649,14 +654,17 @@ let get_remote_rev remote_repo_path what_rev =
             ]
   in
   match one_line stdout with
-  | `Error e ->
-    failwiths (sprintf "cannot find rev %s of remote repo" rev)
-      (remote_repo_path, e) [%sexp_of: Remote_repo_path.t * Error.t]
-  | `Not_one_line lines ->
-    failwiths (sprintf "wrong output while finding rev %s of remote repo" rev)
-      (remote_repo_path, `Lines lines)
-      [%sexp_of: Remote_repo_path.t * [ `Lines of string list ]]
   | `One_line first_12 -> Node_hash.First_12.of_string first_12
+  | `Error e ->
+    raise_s
+      [%sexp (sprintf "cannot find rev %s of remote repo" rev : string)
+           , (remote_repo_path : Remote_repo_path.t)
+           , (e : Error.t)]
+  | `Not_one_line lines ->
+    raise_s
+      [%sexp (sprintf "wrong output while finding rev %s of remote repo" rev : string)
+           , (remote_repo_path : Remote_repo_path.t)
+           , `Lines (lines : string list)]
 ;;
 
 let get_remote_rev_zero remote_repo_path =
@@ -812,8 +820,8 @@ let commit ?(metadata = String.Map.empty) repo_root ~message =
   let metadata_args =
     List.concat_map (String.Map.to_alist metadata) ~f:(fun (key,value) ->
       if String.mem key '='
-      then failwiths "Cannot have a metadata key with '=' in it" metadata
-             [%sexp_of: string String.Map.t];
+      then raise_s [%sexp "Cannot have a metadata key with '=' in it"
+                        , (metadata : string String.Map.t)];
       [ "--metadata"; key ^ "=" ^ value ])
   in
   let args = "-m" :: message :: metadata_args in
@@ -1747,12 +1755,12 @@ module Status = struct
       | ('A', file) :: rest -> aux (Added    (Path_in_repo.of_string file) :: acc) rest
       | ('R', file) :: rest -> aux (Removed  (Path_in_repo.of_string file) :: acc) rest
       | ('M', file) :: rest -> aux (Modified (Path_in_repo.of_string file) :: acc) rest
-      | pair :: _ -> failwiths "bad line" pair [%sexp_of: char * string]
+      | pair :: _ -> raise_s [%sexp "bad line", (pair : char * string)]
     in
     try aux [] (List.map lines ~f:split_line)
     with exn ->
-      failwiths "failed to parse output of hg status" (lines, exn)
-        [%sexp_of: string list * exn]
+      raise_s [%sexp "failed to parse output of hg status"
+                   , (lines : string list), (exn : Exn.t)]
   ;;
 
   let src_path_in_repo diffs =
@@ -1917,8 +1925,10 @@ let cat repo_root rev files ~dir =
        would blow up trying to read the filename we stick in the map, so we are fine. *)
     (match output with
      | { exit_status = Ok (); stdout = ""; stderr = _ } -> ()
-     | _ -> failwiths "hg cat failed" (hg_executable, "cat" :: args, output)
-              [%sexp_of: string * string list * Process.Output.t]);
+     | _ -> raise_s [%sexp "hg cat failed"
+                         , (hg_executable : string)
+                         , (("cat" :: args) : string list)
+                         , (output : Process.Output.t)]);
     return
       (Path_in_repo.Map.of_alist_exn
          (List.map files ~f:(fun file ->

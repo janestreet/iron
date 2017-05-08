@@ -10,9 +10,11 @@ Setup a repo with two files:
   $ hg init
   $ remote="$PWD"
   $ hg add -q .
-  $ hg commit -m "init"
+  $ echo 'init' >a; hg commit -m "_"; echo '' >a; hg commit -m "_"
+  $ rev1=$(hg log -r . --template {node})
+  $ echo 'init' >a; hg commit -m "_"; echo '' >a; hg commit -m "_"
   $ hg bookmark test
-  $ fe create -no-bookmark -tip . test -remote "$remote" -desc 'root for test'
+  $ fe create -no-bookmark -base . -tip . test -remote "$remote" -desc 'root for test'
   $ feature_to_server test
   $ fe enable-review test
   $ fe second -even-though-owner -even-though-empty test
@@ -61,6 +63,7 @@ Right now, there's no reviewing on, so only user2 (who has a CR) needs email:
 Now, enable reviewing.
 
   $ fe enable-review test/a
+  $ fe change -set-reviewing-whole-feature-only
 
 Let's have the seconder complete some review so we can check that the remind
 email show completed lines as well as review sessions in progress.
@@ -170,23 +173,28 @@ Second the feature, make it releasable.
   $ fe show -next-steps
   (Release)
 
-When the feature is releasable, send the reminder to the child owners and the
-parent owners, since only them can do the release.
+When the feature is releasable, if any child owners are also parent owners,
+assign one of them to do the release:
 
-  $ fe show test   -owners
-  (unix-login-for-testing)
-
-  $ fe show test/a -owners
-  (owner)
-
+  $ fe change test/a -set-owners owner,user1
+  $ fe change test   -set-owners unix-login-for-testing,user1
   $ fe remind test/a -just-print-recipients-and-exit
   owner
-  unix-login-for-testing
+  user1
 
-Make sure the feature is in the parent's todo, in the 'Features you watch' table.
+Make sure the feature is in the parent's todo assigned table.
 
-  $ fe todo
-  Features you watch:
+  $ fe todo -for unix-login-for-testing
+
+  $ fe todo -for user1
+  |--------------------------------|
+  | feature | catch-up | next step |
+  |---------+----------+-----------|
+  | test    |          |           |
+  |   a     |        3 | release   |
+  |--------------------------------|
+  
+  Features you own:
   |---------------------|
   | feature | next step |
   |---------+-----------|
@@ -203,10 +211,111 @@ Make sure the feature is in the parent's todo, in the 'Features you watch' table
   |   a     | release   |
   |---------------------|
 
+If the parent and child have no owners in common, assign the first parent owner.
+So the reminder goes to the child owners and the release assignee.
+
+  $ fe change test/a -set-owners owner
+  $ fe change test   -set-owners unix-login-for-testing,user1
+  $ fe remind test/a -just-print-recipients-and-exit
+  owner
+  unix-login-for-testing
+
+Make sure the feature is in the parent's todo assigned table.
+
+  $ fe todo -for unix-login-for-testing
+  |---------------------|
+  | feature | next step |
+  |---------+-----------|
+  | test    |           |
+  |   a     | release   |
+  |---------------------|
+
+  $ fe todo -for user1
+  |--------------------|
+  | feature | catch-up |
+  |---------+----------|
+  | test    |          |
+  |   a     |        3 |
+  |--------------------|
+
+  $ fe todo -for owner
+  Features you own:
+  |---------------------|
+  | feature | next step |
+  |---------+-----------|
+  | test    |           |
+  |   a     | release   |
+  |---------------------|
+
 If the child owner can do the release, no need to involve the parent owner.
 
   $ fe change test -set-who-can-release-into-me my-owners-and-child-owners
   $ fe remind test/a -just-print-recipients-and-exit
   owner
 
-  $ fe todo
+  $ fe todo -for unix-login-for-testing
+  $ fe todo -for owner
+  |---------------------|
+  | feature | next step |
+  |---------+-----------|
+  | test    |           |
+  |   a     | release   |
+  |---------------------|
+  
+  Features you own:
+  |---------------------|
+  | feature | next step |
+  |---------+-----------|
+  | test    |           |
+  |   a     | release   |
+  |---------------------|
+
+However, if the feature needs to be rebased first things are different.
+
+  $ fe change test -set-who-can-release-into-me my-owners
+  $ fe change test/a -set-base ${rev1}
+  $ feature_to_server test/a
+
+  $ fe show test/a -next-steps
+  (Rebase Release)
+
+  $ fe remind test/a -just-print-recipients-and-exit
+  owner
+
+  $ fe todo -for unix-login-for-testing
+  $ fe todo -for owner
+  |---------------------|
+  | feature | next step |
+  |---------+-----------|
+  | test    |           |
+  |   a     | rebase    |
+  |---------------------|
+  
+  Features you own:
+  |---------------------------|
+  | feature | next step       |
+  |---------+-----------------|
+  | test    |                 |
+  |   a     | rebase, release |
+  |---------------------------|
+
+  $ fe change test -set-who-can-release-into-me my-owners-and-child-owners
+  $ fe remind test/a -just-print-recipients-and-exit
+  owner
+
+  $ fe todo -for unix-login-for-testing
+  $ fe todo -for owner
+  |---------------------------|
+  | feature | next step       |
+  |---------+-----------------|
+  | test    |                 |
+  |   a     | rebase, release |
+  |---------------------------|
+  
+  Features you own:
+  |---------------------------|
+  | feature | next step       |
+  |---------+-----------------|
+  | test    |                 |
+  |   a     | rebase, release |
+  |---------------------------|

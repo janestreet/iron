@@ -55,9 +55,9 @@ let invariant t =
       | At_least_wide (k, users) ->
         Set.iter users ~f:User_name.invariant;
         if k <= 0
-        then failwiths "At_least_wide with k <= 0" t [%sexp_of: t];
+        then raise_s [%sexp "At_least_wide with k <= 0", (t : t)];
         if k > Set.length users
-        then failwiths "unsatisfiable At_least_wide" t [%sexp_of: t];
+        then raise_s [%sexp "unsatisfiable At_least_wide", (t : t)];
       | And ts -> List.iter ts ~f:aux
       | Or_wide ts ->
         if List.is_empty ts then failwith "empty Or_wide";
@@ -413,7 +413,7 @@ module Stable = struct
           | At_least_wide (k, users) -> At_least_wide (k, users)
           | And ts                   -> And     (List.map ts ~f:of_stable_format)
           | Or_wide  ts              -> Or_wide (List.map ts ~f:of_stable_format)
-          | v1 -> failwiths "Review_obligation.of_stable" v1 [%sexp_of: V1.t]
+          | v1 -> raise_s [%sexp "Review_obligation.of_stable", (v1 : V1.t)]
         ;;
       end)
 

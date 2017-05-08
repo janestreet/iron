@@ -127,5 +127,5 @@ let%test_unit _ = (* no side effects with [~should_do_effects:false] *)
       let%bind () = prior_changes_synced_to_file_system t in
       match%bind Sys.ls_dir (Abspath.to_string (root_directory t)) with
       | [] -> return ()
-      | files -> failwiths "unexpectedly nonempty dir" files [%sexp_of: string list]))
+      | files -> raise_s [%sexp "unexpectedly nonempty dir", (files : string list)]))
 ;;

@@ -10,6 +10,9 @@ module Action : sig
     ; base                        : Rev.t option
     ; tip                         : Rev.t option
     ; add_whole_feature_reviewers : User_name.Set.t
+    ; reviewing                   : [ `Whole_feature_reviewers
+                                    | `First_owner
+                                    ]
     ; rev_zero                    : Rev.t
     ; remote_repo_path            : Remote_repo_path.t option
     ; allow_non_cr_clean_base     : bool

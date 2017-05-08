@@ -60,12 +60,17 @@ let%test_unit _ =
       let c = alphabetic_compare s1 s2 in
       let is_correct =
         match relation with
-        | `less -> c < 0
+        | `less  -> c < 0
         | `equal -> c = 0
       in
       if not is_correct
-      then failwiths "bug" (s1, relation, s2, c)
-             [%sexp_of: string * [ `less | `equal ] * string * int])
+      then raise_s
+             [%sexp "bug"
+                  , { s1       : string
+                    ; relation : [ `less | `equal ]
+                    ; s2       : string
+                    ; c        : int
+                    }])
 ;;
 
 include String

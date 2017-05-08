@@ -11,7 +11,8 @@ include Stringable.S       with type t := t
 include Hashable.S_plain   with type t := t
 include Comparable.S_plain with type t := t
 
-val of_feature_name : Feature_name.t -> t
+val submissions        : Feature_path.t -> t
+val continuous_release : Feature_path.t -> t
 
 module Stable : sig
   module V1 : sig

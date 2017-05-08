@@ -450,7 +450,7 @@ let staged_sort repo_root list (path_in_repo : _ -> Path_in_repo.t) =
         let path = path_in_repo x in
         match Hashtbl.find build_index_by_path (to_path_in_project path) with
         | Some i -> i
-        | None -> failwiths "Build_order.sort missing" path [%sexp_of: Path_in_repo.t]
+        | None -> raise_s [%sexp "Build_order.sort missing", (path : Path_in_repo.t)]
       in
       Build_order
         (fun list ->

@@ -29,6 +29,7 @@ Start trying to release.
   [1]
   $ fe change -add-whole-feature-reviewers seconder
   $ fe enable-review
+  $ fe change -set-reviewing-whole-feature-only
   $ fe is-releasable |& matches "feature is not releasable.*Review"
   [1]
   $ fe tools mark-fully-reviewed root/child -for unix-login-for-testing
@@ -45,6 +46,7 @@ Start trying to release.
   $ fe release |& matches "feature is not releasable.*In_parent Review"
   [1]
   $ fe tools mark-fully-reviewed root -for unix-login-for-testing
+  $ fe widen-reviewing root
   $ fe release |& matches "feature is not releasable.*In_parent Review"
   [1]
   $ fe tools mark-fully-reviewed root -for seconder -reason reason
@@ -92,6 +94,13 @@ Tag child tip.
 Look for releasable features in the todo.
 
   $ fe todo -releasable
+  |---------------------|
+  | feature | next step |
+  |---------+-----------|
+  | root    | release   |
+  |   child | release   |
+  |---------------------|
+  
   Features you own:
   |---------------------|
   | feature | next step |

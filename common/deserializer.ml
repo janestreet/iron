@@ -141,11 +141,11 @@ module T = struct
               in
               child_name, a
             | `File ->
-              failwiths "expected a directory but got a file" (child, t)
-                [%sexp_of: Abspath.t * _ t]
+              raise_s [%sexp "expected a directory but got a file", (child : Abspath.t)
+                             , (t : _ t)]
             | `Char | `Block | `Link | `Fifo | `Socket ->
-              failwiths "unexpected file kind" (child, stat.kind, t)
-                [%sexp_of: Abspath.t * Unix.File_kind.t * _ t])
+              raise_s [%sexp "unexpected file kind", (child : Abspath.t)
+                             , (stat.kind : Unix.File_kind.t), (t : _ t)])
     in
     load t ~root_directory ~serializer;
   ;;

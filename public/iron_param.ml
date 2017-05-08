@@ -1111,8 +1111,9 @@ let property_values_flag ~switch ~doc =
          (listed (Arg_type.create (fun x ->
             match String.lsplit2 x ~on:separator with
             | None ->
-              failwiths (sprintf "expected key value pair of the form %s but got" syntax) x
-                [%sexp_of: string]
+              raise_s
+                [%sexp (sprintf "expected key value pair of the form %s but got"
+                          syntax : string), (x : string)]
             | Some (key, value) ->
               (key, Sexp.of_string value)
           ))))

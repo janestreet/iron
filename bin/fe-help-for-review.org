@@ -1273,6 +1273,8 @@
 :   [-property ATTR=SEXP]                          user-defined properties
 :   [-remote-repo-path URL]                        location of the shared repo
 :                                                  (e.g., ssh://...)
+:   [-set-reviewing-first-owner-only]
+:   [-set-reviewing-whole-feature-only]
 :   [-tip REV]                                     the tip revision of the feature
 :                                                  (default is base)
 :   [-help]                                        print this help text and exit
@@ -1377,6 +1379,7 @@
 : === flags ===
 : 
 :   [-archived]                            lookup only among archived features
+:   [-base REV]                            show the diff from -base to -tip
 :   [-context N]                           number of lines of context to show
 :                                          (default 12)
 :   [-do-not-modify-local-repo]            don't run hg commands that modify the
@@ -1393,6 +1396,7 @@
 :   [-sort-build-order]                    attempt to sort files in build order,
 :                                          computed via build artifacts
 :   [-summary]                             show a summary of the diff
+:   [-tip REV]                             show the diff from -base to -tip
 :   [-help]                                print this help text and exit
 :                                          (alias: -?)
 

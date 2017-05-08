@@ -240,12 +240,12 @@ let%test_unit _ =
     List.iter groups ~f:(fun group ->
       List.iter group ~f:(fun node ->
         let r = get' diamond node in
-        if !r then failwiths "node already visited" diff4_class Diff4_class.sexp_of_t;
+        if !r then raise_s [%sexp "node already visited", (diff4_class : Diff4_class.t)];
         r := true
       ));
-    if exists diamond ~f:(fun r -> not !r) then
-      failwiths "unvisited node" diff4_class Diff4_class.sexp_of_t
-  )
+    if exists diamond ~f:(fun r -> not !r)
+    then
+      raise_s [%sexp "unvisited node", (diff4_class : Diff4_class.t)])
 ;;
 
 let classify ~equal { b1 ; b2 ; f1 ; f2 } =

@@ -190,8 +190,9 @@ let change_exn t feature_path f = Node.change (find_node_exn t feature_path) f
 let remove_exn t feature_path =
   let node = find_node_exn t feature_path in
   if Node.has_children node
-  then failwiths "feature has children" (Hashtbl.keys (Node.children node))
-         [%sexp_of: Feature_name.t list];
+  then raise_s [%sexp "feature has children"
+                    , ((Hashtbl.keys (Node.children node) |> Feature_name.Set.of_list)
+                       : Feature_name.Set.t)];
   Hashtbl.remove t.node_by_path feature_path;
   match Feature_path.parent_and_basename feature_path with
   | None, root         -> Hashtbl.remove t.root_by_name root

@@ -26,20 +26,20 @@ Show it.
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | enable-review           |
-  | owner                  | unix-login-for-testing  |
-  | whole-feature reviewer | unix-login-for-testing  |
-  | seconder               | not seconded            |
-  | review is enabled      | false                   |
-  | CRs are enabled        | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | false                   |
-  | tip                    | 46fab6465033            |
-  | base                   | 04da3968e088            |
-  |--------------------------------------------------|
+  |-------------------------------------------------|
+  | attribute              | value                  |
+  |------------------------+------------------------|
+  | next step              | enable-review          |
+  | owner                  | unix-login-for-testing |
+  | whole-feature reviewer | unix-login-for-testing |
+  | seconder               | not seconded           |
+  | review is enabled      | false                  |
+  | CRs are enabled        | true                   |
+  | reviewing              | unix-login-for-testing |
+  | is permanent           | false                  |
+  | tip                    | 46fab6465033           |
+  | base                   | 04da3968e088           |
+  |-------------------------------------------------|
   
   |---------------------------------|
   | user                   | review |

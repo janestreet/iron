@@ -48,6 +48,10 @@ let reason = "-reason"
 
 let remote_repo_path = "-remote-repo-path"
 
+let set_reviewing_first_owner_only = "-set-reviewing-first-owner-only"
+
+let set_reviewing_whole_feature_only = "-set-reviewing-whole-feature-only"
+
 let show_diff_stat = "-show-diff-stat"
 
 let update_local_repo = "-update-local-repo"

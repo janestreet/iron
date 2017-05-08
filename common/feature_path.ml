@@ -41,7 +41,7 @@ module Stable_workaround = struct
         in
         try List.rev_map (String.split string ~on:'/') ~f:Feature_name.V1.of_string
         with exn ->
-          failwiths "Invalid feature path" (string, exn) [%sexp_of: string * exn]
+          raise_s [%sexp "Invalid feature path", (string : string), (exn : exn)]
       ;;
     end
     module T1 = struct
@@ -194,8 +194,8 @@ let compress_parent_exn t =
   match List.rev (parts t) with
   | part :: _ :: parts -> of_parts_exn (List.rev (part :: parts))
   | _ ->
-    failwiths "Feature_path.compress_parent_exn got feature without enough parts"
-      t [%sexp_of: t]
+    raise_s [%sexp "Feature_path.compress_parent_exn got feature without enough parts"
+                 , (t : t)]
 ;;
 
 let%test_unit _ =

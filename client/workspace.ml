@@ -417,7 +417,7 @@ let unix_find_dirs_exn ~in_ args : Relpath.t list Deferred.t =
       match Abspath.chop_prefix ~prefix:in_ line with
       | Ok dir -> dir
       | Error err ->
-        failwiths "unexpected path returned by find" err [%sexp_of: Error.t])
+        raise_s [%sexp "unexpected path returned by find", (err : Error.t)])
 ;;
 
 let character_not_leading_feature_names = '+'
@@ -658,9 +658,15 @@ let unclean_status_internal t =
         | Ok ()   -> []
         | Error _ -> [ Unclean_workspace_reason.One_reason.Invalid_current_bookmark ])
     ; or_error (fun () ->
-        match%map Hg.list_shelves_exn center_repo_root with
-        | []     -> []
-        | (_::_) -> [ Unclean_workspace_reason.One_reason.Shelved_changes ])
+        match
+          Client_config.
+            (get () |> Workspaces.unclean_workspaces_detection_includes_shelved_changes)
+        with
+        | false -> return []
+        | true  ->
+          match%map Hg.list_shelves_exn center_repo_root with
+          | []     -> []
+          | (_::_) -> [ Unclean_workspace_reason.One_reason.Shelved_changes ])
     ]
     |> Deferred.List.all
   in

@@ -323,8 +323,8 @@ let invariant t =
       ~diff4s_to_catch_up:(check (fun diff4s_to_catch_up ->
         Hashtbl.iteri diff4s_to_catch_up ~f:(fun ~key:id ~data:diff4_to_catch_up ->
           if not (Hash_set.mem ids_in_session id)
-          then failwiths "unknown id in to catch up"
-                 diff4_to_catch_up [%sexp_of: Diff4_to_catch_up.t];
+          then raise_s [%sexp "unknown id in to catch up", [%here]
+                              , (diff4_to_catch_up : Diff4_to_catch_up.t)];
           [%test_result: Diff4_in_session.Id.t] ~expect:id
             (Diff4_to_catch_up.id diff4_to_catch_up))))
       ~serializer:(check (Option.iter ~f:Serializer.invariant));
@@ -348,7 +348,7 @@ let diff4s_in_session_by_id diff4s_in_session =
 let serializer_exn t =
   match t.serializer with
   | Some s -> s
-  | None -> failwiths "serializer isn't defined" t [%sexp_of: t]
+  | None -> raise_s [%sexp "serializer isn't defined", [%here], (t : t)]
 ;;
 
 let record t query action =

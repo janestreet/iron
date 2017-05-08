@@ -32,7 +32,7 @@ let of_int = function
   | 2 -> V2
   | 3 -> V3
   | 4 -> V4
-  | n -> failwiths "Obligations_version: version is out of range" n [%sexp_of: int]
+  | n -> raise_s [%sexp "Obligations_version: version is out of range", (n : int)]
 ;;
 
 let sexp_of_t t = sexp_of_int (to_int t)

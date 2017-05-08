@@ -399,7 +399,7 @@ let values_at_rev t ~rev =
 let obligations_at_rev t ~rev =
   match By_rev.find t.worker_obligations rev with
   | Some cache -> Worker_obligations.On_server.dump_obligations cache
-  | None -> failwiths "revision not found in obligations cache" rev [%sexp_of: Rev.t]
+  | None -> raise_s [%sexp "revision not found in obligations cache", (rev : Rev.t)]
 ;;
 
 module What_to_dump = struct

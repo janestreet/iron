@@ -158,8 +158,8 @@ module Make
       with
       | Ok () -> ()
       | Error str ->
-        failwiths "map_reaction_in_client cannot be registered multiple time"
-          (Name.name, str) [%sexp_of: string * string];
+        raise_s [%sexp "map_reaction_in_client cannot be registered multiple time"
+                     , (Name.name : string), (str : string)];
     ;;
   end
 
@@ -275,8 +275,8 @@ module Make
         Response.Stable.V1.map response ~f:(Or_error.Stable.V1.map ~f:Reaction.of_model)
       ;;
       let unsupported () =
-        failwiths "it is not supported to use a new client with an old Iron server"
-          Name.name [%sexp_of: string]
+        raise_s [%sexp "it is not supported to use a new client with an old Iron server"
+                     , (Name.name : string)]
       ;;
       let query_of_caller_model    _ = unsupported ()
       let caller_model_of_response _ = unsupported ()
@@ -336,8 +336,8 @@ module Make_pipe_rpc
       with
       | Ok () -> ()
       | Error str ->
-        failwiths "map_reaction_in_client cannot be registered multiple time"
-          (Name.name, str) [%sexp_of: string * string];
+        raise_s [%sexp "map_reaction_in_client cannot be registered multiple time"
+                     , (Name.name : string), (str : string)];
     ;;
   end
 
@@ -441,8 +441,8 @@ module Make_pipe_rpc
       ;;
       let error_of_callee_model = Fn.id
       let unsupported () =
-        failwiths "it is not supported to use a new client with an old Iron server"
-          Name.name [%sexp_of: string]
+        raise_s [%sexp "it is not supported to use a new client with an old Iron server"
+                     , (Name.name : string)]
       ;;
       let query_of_caller_model    _ = unsupported ()
       let caller_model_of_response _ = unsupported ()

@@ -57,16 +57,16 @@ module Stable = struct
          list whose first element is either "/" or ".".  - [File_name.of_string] will
          check the path elements for nul chars, for us. *)
       match Filename.parts string with
-      | [] -> failwiths "Filename.parts returned empty list." string [%sexp_of: string]
+      | [] -> raise_s [%sexp "Filename.parts returned empty list.", (string : string)]
       | d1 :: rest ->
         let elts = List.map rest ~f:File_name.of_string in
         match d1 with
         | "." -> Relpath elts
         | "/" -> Abspath elts
         | _   ->
-          failwiths
+          raise_s [%sexp
             "Filename.parts produced unexpected list, not beginning with '.' or '/'."
-            (d1::rest) [%sexp_of: string list]
+          , ((d1::rest) : string list)]
     ;;
 
     include Sexpable.Of_stringable.V1 (struct
@@ -92,8 +92,7 @@ module Stable = struct
         match V1.of_string string with
         | Abspath file_names -> file_names
         | Relpath _ ->
-          Core.failwiths "Abspath.of_string got relative path"
-            string [%sexp_of: string]
+          Core.raise_s [%sexp "Abspath.of_string got relative path", (string : string)]
       ;;
 
       include Sexpable.Of_stringable.V1 (struct
@@ -119,8 +118,7 @@ module Stable = struct
         match V1.of_string string with
         | Relpath file_names -> file_names
         | Abspath _ ->
-          Core.failwiths "Relpath.of_string got absolute path"
-            string [%sexp_of: string]
+          Core.raise_s [%sexp "Relpath.of_string got absolute path", (string  : string)]
       ;;
 
       include Sexpable.Of_stringable.V1 (struct

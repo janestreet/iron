@@ -16,20 +16,20 @@ Setup a repo with two files:
   ====
   root
   
-  |--------------------------------------------------|
-  | attribute              | value                   |
-  |------------------------+-------------------------|
-  | next step              | enable-review           |
-  | owner                  | unix-login-for-testing  |
-  | whole-feature reviewer | unix-login-for-testing  |
-  | seconder               | not seconded            |
-  | review is enabled      | false                   |
-  | CRs are enabled        | true                    |
-  | reviewing              | whole-feature reviewers |
-  | is permanent           | true                    |
-  | tip                    | 225d4bac9981            |
-  | base                   | 0f5b3abd13b6            |
-  |--------------------------------------------------|
+  |-------------------------------------------------|
+  | attribute              | value                  |
+  |------------------------+------------------------|
+  | next step              | enable-review          |
+  | owner                  | unix-login-for-testing |
+  | whole-feature reviewer | unix-login-for-testing |
+  | seconder               | not seconded           |
+  | review is enabled      | false                  |
+  | CRs are enabled        | true                   |
+  | reviewing              | unix-login-for-testing |
+  | is permanent           | true                   |
+  | tip                    | 225d4bac9981           |
+  | base                   | 0f5b3abd13b6           |
+  |-------------------------------------------------|
   
   |---------------------------------|
   | user                   | review |
@@ -42,13 +42,17 @@ Setup a repo with two files:
 When reviewing not enabled should have blank output.
 
   $ fe show -who-can-review
-  $ fe enable
+  $ fe enable-review
   $ fe show -who-can-review
   unix-login-for-testing
 
 Now add in whole feature reviewers.
 
   $ fe change -add-whole-feature-reviewers jdoe3
+  $ fe show -who-can-review
+  unix-login-for-testing
+
+  $ fe widen-reviewing
   $ fe show -who-can-review
   jdoe3
   unix-login-for-testing

@@ -245,7 +245,7 @@ let pull_and_update_for_catch_up_on_archived_feature
 ;;
 
 let cannot_pull cleanliness_error =
-  failwiths "Iron needs to pull but won't" cleanliness_error [%sexp_of: Error.t]
+  Error.create_s [%sexp "Iron needs to pull but won't", (cleanliness_error : Error.t)]
 ;;
 
 let pull_and_update
@@ -326,8 +326,8 @@ let pull_and_update
     else (
       match%bind Lazy_deferred.force_exn is_clean with
       | Error cleanliness_error ->
-        failwiths "Iron needs to [hg update] but won't" cleanliness_error
-          [%sexp_of: Error.t]
+        raise_s [%sexp "Iron needs to [hg update] but won't"
+                     , (cleanliness_error : Error.t)]
       | Ok repo_is_clean ->
         Hg.update repo_root (`Feature feature_path)
           ~clean_after_update:(Yes repo_is_clean))

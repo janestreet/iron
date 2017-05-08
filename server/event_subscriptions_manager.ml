@@ -63,7 +63,7 @@ end = struct
       let no_empty_bags t =
         Hashtbl.iteri t ~f:(fun ~key ~data:bag ->
           if Bag.is_empty bag
-          then failwiths "bag is empty for key" key [%sexp_of: Key.t])
+          then raise_s [%sexp "bag is empty for key", (key : Key.t)])
       in
       no_empty_bags t)
   ;;

@@ -1,13 +1,18 @@
 open! Core
 open! Import
 
+(** [Must_review] review that must be done for the feature to be releasable. This kind of
+    review can become follow review depending on what others have read, or other
+    conditions (like changes being reverted).
+
+    [Follow] review that doesn't block release.
+
+    [May_review] review for diff4s that you could read, but have already been read by
+    sufficiently many other people that you are not needed anymore. *)
 type t =
-  | Must_review (* Review that must be done for the feature to be releasable. This kind of
-                   review can become follow review depending on what others have read, or
-                   other conditions (like changes being reverted). *)
-  | Follow      (* Review that doesn't block release. *)
-  | May_review  (* Review for diff4s that you could read, but have already been read by
-                   sufficiently many other people that you are not needed anymore. *)
+  | Must_review
+  | Follow
+  | May_review
   | Ownership_change
 [@@deriving compare, sexp_of]
 

@@ -2,10 +2,10 @@ open! Core
 open! Import
 
 module Action : sig
+  (** [for_] is for testing only.  Prod Iron will reject locking on behalf of someone
+      else. *)
   type t =
     { feature_path : Feature_path.t
-    (* [for_] is for testing only.  Prod Iron will reject locking on behalf of someone
-       else. *)
     ; for_         : User_name.t
     ; lock_names   : Lock_name.t list
     ; reason       : string

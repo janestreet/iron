@@ -19,7 +19,7 @@ val complete : _ t -> prefix:string -> [ `Of_partial_name | `Of_full_name ] -> s
 val find_root : 'a t -> Feature_name.t -> 'a Or_error.t
 val root_of   : 'a t -> Feature_path.t -> 'a Or_error.t
 
-(* [check_add] returns [Ok] if [path] can be added to [t], i.e. if [path] is a leaf. *)
+(** [check_add] returns [Ok] if [path] can be added to [t], i.e. if [path] is a leaf. *)
 val check_add : 'a t -> Feature_path.t -> unit Or_error.t
 
 (** [add_exn t path a] raises if [not (is_ok (check_add t path))] *)

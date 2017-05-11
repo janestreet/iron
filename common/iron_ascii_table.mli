@@ -39,7 +39,7 @@ module Column : sig
 
   val lift : ('row2, 'field) cell -> f:('row1 -> 'row2) -> ('row1, 'field) cell
 
-  (* include module type of Textutils.Ascii_table.Column *)
+  (** include module type of Textutils.Ascii_table.Column *)
   type 'row t
 
   val string

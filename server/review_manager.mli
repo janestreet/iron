@@ -93,11 +93,11 @@ module Goal_subset : sig
 end
 
 module Review_authorization : sig
-  (* A value of this type is a witness of the context under which it is allowed to perform
-     some operations on a given review manager.
+  (** A value of this type is a witness of the context under which it is allowed to
+      perform some operations on a given review manager.
 
-     This also allows breaking circular dependency between [Review_manager], [State] and
-     [User_info] *)
+      This also allows breaking circular dependency between [Review_manager], [State] and
+      [User_info] *)
   type t
   type review_manager
 

@@ -39,6 +39,7 @@ module Compilation_status : sig
       }
     [@@deriving sexp_of]
   end
+
   (** [pending] is not a rev map to preserve the ordering supplied by Hydra. *)
   type one =
     { finished : Finished_compilation.t option

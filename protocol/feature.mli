@@ -1,9 +1,9 @@
 open! Core
 open! Import
 
-(* Default values for certain fields on creation, put here to be shared between the client
-   and the server logic.  For example in the client, we do not [fe show] certain fields if
-   they are equal to their default while we experiment *)
+(** Default values for certain fields on creation, put here to be shared between the
+    client and the server logic.  For example in the client, we do not [fe show] certain
+    fields if they are equal to their default while we experiment *)
 module Default_values : sig
   val crs_shown_in_todo_only_for_users_reviewing  : bool
   val xcrs_shown_in_todo_only_for_users_reviewing : bool
@@ -19,6 +19,9 @@ module Locked : sig
   [@@deriving sexp_of]
 end
 
+(** [diff_from_base_to_tip] is not always populated, or sometimes is the diff for a
+    particular user only.  Depends on what RPC is used, and what is the value requested
+    [What_diff.t] in the query sent. *)
 type t =
   { feature_id                     : Feature_id.t
   ; feature_path                   : Feature_path.t
@@ -37,11 +40,7 @@ type t =
   ; tip                            : Rev.t
   ; tip_facts                      : Rev_facts.t Or_pending.t
   ; base_is_ancestor_of_tip        : Rev_facts.Is_ancestor.t Or_pending.t
-  ; diff_from_base_to_tip :
-      (* Not always populated, or sometimes is the diff for a particular user only.
-         Depends on what RPC is used, and what is the value requested [What_diff.t] in the
-         query sent *)
-      Diff2s.t Or_error.t Or_pending.t
+  ; diff_from_base_to_tip          : Diff2s.t Or_error.t Or_pending.t
   ; description                    : string
   ; is_permanent                   : bool
   ; seconder                       : User_name.t option

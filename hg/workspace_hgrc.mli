@@ -41,7 +41,7 @@ val extract_root_feature_from_hgrc : Repo_root.t -> Feature_name.t Or_error.t De
 
 module Info : sig
   type t = private
-    { generated_by     : string (* Version_util.version *)
+    { generated_by     : string (** Version_util.version *)
     ; remote_repo_path : Remote_repo_path.t
     ; kind             : Kind.t
     }

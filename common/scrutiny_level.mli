@@ -17,7 +17,7 @@ val hash : t -> int
 val of_int : int -> t
 val to_int : t -> int
 
-val ignored : t         (* Zero -- this scrutiny level means "ignore the file." *)
+val ignored : t (** Zero -- this scrutiny level means "ignore the file." *)
 
 val to_string_hum : t -> string
 

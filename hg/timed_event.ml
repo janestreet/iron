@@ -100,7 +100,7 @@ module Table = struct
 
   let execute t id action =
     Hashtbl.remove t.events id;
-    try (Set_once.get_exn t.execute) id action
+    try (Set_once.get_exn t.execute [%here]) id action
     with exn ->
       add_error t
         (Error.create_s
@@ -127,7 +127,7 @@ let the_table = Memo.unit (fun () ->
 ;;
 
 let set_execute_exn ~execute =
-  Set_once.set_exn (the_table ()).execute execute
+  Set_once.set_exn (the_table ()).execute [%here] execute
 ;;
 
 let abort_if_possible t =

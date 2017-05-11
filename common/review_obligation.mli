@@ -31,8 +31,8 @@ val all_of        : User_name.Set.t -> t
 
 val at_least_wide : Error_context.t -> int -> User_name.Set.t -> t
 
-(* [and_] normalizes, e.g. combines user sets and sorts conjuncts, to reduce spurious
-   displays of review-obligation changes that are just reorderings. *)
+(** [and_] normalizes, e.g. combines user sets and sorts conjuncts, to reduce spurious
+    displays of review-obligation changes that are just reorderings. *)
 val and_          : t list -> t
 
 val or_wide       : Error_context.t -> t list -> t

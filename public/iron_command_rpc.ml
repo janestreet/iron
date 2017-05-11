@@ -44,12 +44,13 @@ module Make
   = struct
     let () =
       match
-        Set_once.set map_reaction_in_client Map_reaction_in_client.of_command_reaction
+        Set_once.set map_reaction_in_client [%here]
+          Map_reaction_in_client.of_command_reaction
       with
       | Ok () -> ()
-      | Error str ->
+      | Error error ->
         raise_s [%sexp "map_reaction_in_client cannot be registered multiple time"
-                     , (Name.name : string), (str : string)];
+                     , (Name.name : string), (error : Error.t)];
     ;;
   end
 

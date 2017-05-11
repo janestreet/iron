@@ -34,7 +34,6 @@ end
 module Declaration = struct
   type u = (syntax, Sexp.t) And_sexp.t
   and syntax =
-    (** Specifying attributes *)
     | Build_projections        of Build_projection_name.t sexp_list
     | Owner                    of Unresolved_name.t
     | Followers                of Followers.t sexp_list
@@ -43,11 +42,8 @@ module Declaration = struct
     | Tags                     of Tag.t sexp_list
     | Fewer_than_min_reviewers of bool
     | More_than_max_reviewers  of bool
-    (** Apply current attribute values to a set of files. *)
     | Apply_to                 of File_set.t
-    (** Enter a local scope for specifying attributes. *)
     | Local                    of u sexp_list
-    (** Use this .fe.sexp in at least one subdirectory. *)
     | Used_in_subdirectory
   [@@deriving sexp]
 

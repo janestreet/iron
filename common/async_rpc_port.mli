@@ -4,7 +4,7 @@ open! Import
 
 type t =
   | Static  of int
-  | Dynamic of string (* file *)
+  | Dynamic of string (** file *)
 [@@deriving sexp]
 
 val port : t -> int Deferred.t

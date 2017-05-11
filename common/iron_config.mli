@@ -23,13 +23,13 @@ module Restricted_for_rpcs : sig
     -> Host_and_port.t Deferred.t
 end
 
+(** [hydra_user] determines how [fe release] works with continuous release.  For ordinary
+    users, [fe release] does [Hg.push], but hydra, it does a direct release. *)
 type t = private
   { host                       : string
   ; async_rpc_port             : Async_rpc_port.t
   ; rpc_proxy_config           : Rpc_proxy_config.t
   ; hgrc                       : Abspath.t
-  (* [hydra_user] determines how [fe release] works with continuous release.  For
-     ordinary users, [fe release] does [Hg.push], but hydra, it does a direct release. *)
   ; hydra_user                 : User_name.t
   ; serializer_pause_timeout   : Time.Span.t
   }

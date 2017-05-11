@@ -213,8 +213,8 @@ module type T = sig
   val verbose                          : bool                       t
   val which_diffs                      : Which_diffs.t t
   val which_features
-    : ?allow_rec_flag:bool (* default true *)
-    -> ?allow_unexisting_features:bool (* default to false *)
+    : ?allow_rec_flag:bool (** default true *)
+    -> ?allow_unexisting_features:bool (** default to false *)
     -> allow_empty_selection:bool
     -> default_to_current_bookmark:bool
     -> unit

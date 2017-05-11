@@ -16,7 +16,7 @@ val alphabetic_compare : t -> t -> int
     based on file suffixes, so that e.g. [foo.mli] appears before [foo.ml]. *)
 val default_review_compare : t -> t -> int
 
-(* Special Unix filenames *)
+(** Special Unix filenames *)
 val dot    : t
 val dotdot : t
 

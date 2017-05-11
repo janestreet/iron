@@ -1,8 +1,8 @@
 open! Core
 
-(* A header is just some text that looks something like:
+(** A header is just some text that looks something like:
 
-   @@@@@@@ -name 10,20 +name 20,30 @@@@@@@@ *)
+    @@@@@@@ -name 10,20 +name 20,30 @@@@@@@@ *)
 module Source : sig
   type t =
     { name        : string

@@ -3,12 +3,12 @@ open Import
 
 module type S = sig
 
-  (* [t] is a type used on the server to aggregate data for files within a given
-     directory.  This module uses a hash consing on the path in repos and directory
-     contents in order to obtain memory sharing across multiple values of type
-     [Obligations.t] or [CRs] sent by the workers.  The goal is to limit the memory growth
-     of the server cache and still allow the number of revisions/features cached to be
-     significant. *)
+  (** [t] is a type used on the server to aggregate data for files within a given
+      directory.  This module uses a hash consing on the path in repos and directory
+      contents in order to obtain memory sharing across multiple values of type
+      [Obligations.t] or [CRs] sent by the workers.  The goal is to limit the memory
+      growth of the server cache and still allow the number of revisions/features cached
+      to be significant. *)
 
   type t [@@deriving sexp_of]
   type data

@@ -4,8 +4,8 @@ open! Core
 open! Import
 
 module Action : sig
-  (* [for_] is for admin only.  Clearing catch-up for other is rejected if requested by
-     non special users. *)
+  (** [for_] is for admin only.  Clearing catch-up for other is rejected if requested by
+      non special users. *)
   type t =
     { feature_path           : Feature_path.t
     ; for_                   : User_name.t

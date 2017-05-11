@@ -1,4 +1,4 @@
-(** All locks for a feature, at most one for each pair [User_name * [Lock_name]. *)
+(** All locks for a feature, at most one for each pair [User_name * Lock_name]. *)
 
 open! Core
 open! Import
@@ -53,11 +53,11 @@ val unlock
   -> even_if_permanent : bool
   -> unit Or_error.t
 
-(* The versioning of these types is done separately:
+(*_ The versioning of these types is done separately:
 
-   - in [feature.ml] limited to [sexp], because it is much more flexible than [bin_io],
-   and we will probably be able to get by using [sexp_option] and such.
+  - in [feature.ml] limited to [sexp], because it is much more flexible than [bin_io],
+  and we will probably be able to get by using [sexp_option] and such.
 
-   - in [protocol/lock_feature.ml], and we will decide what version we want to support
-   there.  Could be different from the persistent versions kept alive.
+  - in [protocol/lock_feature.ml], and we will decide what version we want to support
+  there.  Could be different from the persistent versions kept alive.
 *)

@@ -17,7 +17,7 @@ val to_abspath : t -> Abspath.t
 
 val to_string : t -> string
 
-(* Defaults to [to_string] if no human readable name is set *)
+(** Defaults to [to_string] if no human readable name is set *)
 val to_string_hum      : t -> string
 
 val with_human_readable : t -> string -> t

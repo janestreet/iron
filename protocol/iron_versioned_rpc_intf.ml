@@ -46,10 +46,10 @@ module type S_pipe_rpc = sig
 
   include Name
 
-  (* The pipe returned by the server may contain an [Error] value, in which case it will
-     be the last value handed to the client and will close the pipe.  This is to furnish a
-     way to pass in some termination value in case of an Error, as opposed to just closing
-     the pipe. *)
+  (** The pipe returned by the server may contain an [Error] value, in which case it will
+      be the last value handed to the client and will close the pipe.  This is to furnish
+      a way to pass in some termination value in case of an Error, as opposed to just
+      closing the pipe. *)
   val implement_deferred_rpc
     :  ('state
         -> version : int

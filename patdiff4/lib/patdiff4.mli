@@ -18,14 +18,13 @@ module View_ids_computed : sig
     | Compute_only_in_that_order of Diff_algo_id.t list
 end
 
-(* Note about the rev_names argument and contents.
-   For optimization purposes, the implementation assumes the following property:
+(** Note about the rev_names argument and contents.
+    For optimization purposes, the implementation assumes the following property:
 
-   P: Forall a, b in the input Diamonds,
-   ( rev_name(a) = rev_name(b) ) => ( contents(a) = contents(b) )
+    P: Forall a, b in the input Diamonds,
+    ( rev_name(a) = rev_name(b) ) => ( contents(a) = contents(b) )
 
-   If [P] does not hold, the behavior of that module is unspecified.
-*)
+    If [P] does not hold, the behavior of that module is unspecified. *)
 
 
 val hunks
@@ -41,8 +40,8 @@ val hunks
   -> unit
   -> Hunk.t list
 
-(* This performs all the steps of a full diff, returning a colorized string list with the
-   diff output. *)
+(** This performs all the steps of a full diff, returning a colorized string list with the
+    diff output. *)
 val diff
   :  ?verbose:bool
   -> view_ids_shown:Hunk.View_ids_shown.t

@@ -22,7 +22,8 @@ val to_relpath : t -> Relpath.t
 val of_parts_exn : Feature_name.t list -> t
 
 val num_parts : t -> int
-(* [is_root t] <=> [num_parts t = 1] *)
+
+(** [is_root t] <=> [num_parts t = 1] *)
 val is_root   : t -> bool
 val root      : t -> Feature_name.t
 val root_path : t -> t

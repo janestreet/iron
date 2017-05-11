@@ -6,7 +6,7 @@ open! Async
     coordinate (with equality determined by [to_string]), with the following exception: if
     this list is empty, [available] is returned instead. *)
 val select
-  :  to_string: ('a -> string) (* should be injective *)
+  :  to_string: ('a -> string) (** should be injective *)
   -> available: ('a * 'b) list
   -> configuration: 'a list
   -> ('a * 'b) list
@@ -17,7 +17,7 @@ val select
     its intersection with [available] is taken.) *)
 val toggle
   :  menu_name:string
-  -> to_string: ('a -> string) (* should be injective *)
+  -> to_string: ('a -> string) (** should be injective *)
   -> display_prefix_in_list: ('a -> string) option
   -> available: 'a list
   -> configuration: 'a list
@@ -34,7 +34,7 @@ val toggle
     [configuration] is returned.
 
  * If [`Pred_view] is passed, the element in [available] before the minimum element of
-    [configuration is returned.
+    [configuration] is returned.
 
     Comparisons are done via the [to_string] function.
 
@@ -45,7 +45,7 @@ val toggle
     After entering the circle, navigate is called with [configuration:[current_view]]
 *)
 val navigate
-  :  to_string: ('a -> string) (* should be injective *)
+  :  to_string: ('a -> string) (** should be injective *)
   -> available: 'a list
   -> configuration: 'a list
   -> [ `Pred_view | `Succ_view ]

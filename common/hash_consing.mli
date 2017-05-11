@@ -43,6 +43,7 @@ val dump : t -> What_to_dump.t -> Sexp.t
 
 module type Unshared = sig
   type t [@@deriving compare, sexp_of]
+
   (** The hash function should be good, because it is passed to Weak.Make, which falls
       back to linear search in case of conflict. *)
   val hash : t -> int

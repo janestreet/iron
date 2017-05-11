@@ -18,13 +18,14 @@ open! Async
 open! Import
 
 module Satellite : sig
+  (** [repo_root] is relative to enclosing root of the scaffolded structure.
+      [human_readable] is a name in the context of the scaffold structure.  [revision] is
+      resolved later, when we have access to a repo.  It can be a global tag or 40-char
+      rev. *)
   type t = private
-    { (** [repo_root] is relative to enclosing root of the scaffolded structure. *)
-      repo_root        : Relpath.t
+    { repo_root        : Relpath.t
     ; remote_repo_path : Remote_repo_path.t
-    ; human_readable   : string (** a name in the context of the scaffold structure *)
-    (** [revision] is resolved later, when we have access to a repo.  It can be a global
-        tag or 40-char rev. *)
+    ; human_readable   : string
     ; revision         : string
     }
   [@@deriving sexp_of]

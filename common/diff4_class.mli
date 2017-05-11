@@ -42,7 +42,7 @@ type t =
   ]
 [@@deriving sexp, compare, enumerate]
 
-(* sexp is used in .patdiff4 config files *)
+(** sexp is used in .patdiff4 config files *)
 
 include Comparable with type t := t
 include Hashable   with type t := t

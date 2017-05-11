@@ -19,5 +19,4 @@ val commands
   -> log_format:Log.Output.format
   -> start_spec:('a, basedir:string -> unit Deferred.t) Command.Spec.t
   -> start_main:'a
-  (* A list of start/stop/status commands *)
   -> (string * Command.t) list

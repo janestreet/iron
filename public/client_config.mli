@@ -48,7 +48,7 @@ module Cmd : sig
     val update_local_repo : t -> bool
   end
 
-  (* Common to multiple commands *)
+  (** Common to multiple commands *)
   val context : t -> int option
 end
 
@@ -63,7 +63,8 @@ module Workspaces : sig
 
   val unclean_workspaces_detection_includes_shelved_changes : t -> bool
 
-  (* The rest of the accessors raise if workspaces are not enabled. *)
+  (** The rest of the accessors raise if workspaces are not enabled. *)
+
   val are_enabled_exn    : t -> unit
   val basedir            : t -> Abspath.t
   val do_not_distclean   : t -> Feature_path.Set.t
@@ -82,8 +83,7 @@ end
     ]}
 
     Additional edges may cause cycles in the dependency graph and cause the topological
-    sort to fail.
-*)
+    sort to fail. *)
 val directory_order : t -> Path_in_repo.t list list
 
 val may_infer_feature_path_from_current_bookmark : t -> bool

@@ -11,7 +11,7 @@ open! Core
 open! Async
 open! Import
 
-val clone_file_name : File_name.t (* ["+clone+"] *)
+val clone_file_name : File_name.t (** ["+clone+"] *)
 
 type t [@@deriving sexp_of]
 

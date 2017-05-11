@@ -58,7 +58,7 @@ val wait_for_hydra                 : Rpc_for (Wait_for_hydra)                   
 
 val command_rpc_names : String.Set.t Lazy.t
 
-(* Executables can export this command somewhere in their command to help keeping track of
-   what version of the lib they have linked.  The string is a suggested name for the
-   subcommand so that we have some consistency across binaries. *)
+(** Executables can export this command somewhere in their command to help keeping track
+    of what version of the lib they have linked.  The string is a suggested name for the
+    subcommand so that we have some consistency across binaries. *)
 val show_supported_iron_rpcs : string * Command.t

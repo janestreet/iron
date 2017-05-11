@@ -215,9 +215,10 @@ val cat_from_scaffold
      | `Scaffold_exists of string Or_error.t
      ] Deferred.t
 
+(** The [key, value] pairs of [metadata] will be added to the metadata in the changeset,
+    which is accessible from python hg extensions and viewable with, e.g., [hg log
+    --debug]. *)
 val commit
-  (** These (key,value) pairs will be added to the metadata in the changeset, which is
-      accessible from python hg extensions and viewable with, e.g., [hg log --debug]. *)
   :  ?metadata:string String.Map.t
   -> Repo_root.t
   -> message:string
@@ -246,7 +247,7 @@ module Cleanliness_witness : sig
   type t = private Repo_is_clean
 end
 
-(* [Ok witness] is clean; [Error] if unclean; raise if check fails. *)
+(** [Ok witness] is clean; [Error] if unclean; raise if check fails. *)
 val status_cleanliness
   :  ?repo_is_clean:Cleanliness_witness.t
   -> Repo_root.t
@@ -438,7 +439,7 @@ module Status : sig
   end
 end
 
-(* Doesn't show missing, unknown and ignored files. *)
+(** Doesn't show missing, unknown and ignored files. *)
 val status
   :  Repo_root.t
   -> Status.Changed.t
@@ -451,12 +452,13 @@ end
 val list_shelves_exn : Repo_root.t -> Shelve_description.t list Deferred.t
 
 module Clean_after_update : sig
-  (* When a user updates a tree across a change to the .hgignore (for instance when there
-     is a directory renaming), files that used to be ignored but aren't anymore end up
-     polluting the [hg status] as untracked files, causing subsequent commands to fail if
-     they require the tree to be in a clean state.  To avoid this, if the [update] is
-     executed from a clean state, it is safe to clean the repository after the update to
-     get rid of these untracked files (assuming no one is changing files concurrently). *)
+  (** When a user updates a tree across a change to the .hgignore (for instance when there
+      is a directory renaming), files that used to be ignored but aren't anymore end up
+      polluting the [hg status] as untracked files, causing subsequent commands to fail if
+      they require the tree to be in a clean state.  To avoid this, if the [update] is
+      executed from a clean state, it is safe to clean the repository after the update to
+      get rid of these untracked files (assuming no one is changing files
+      concurrently). *)
   type t =
     | Yes of Cleanliness_witness.t
     | No

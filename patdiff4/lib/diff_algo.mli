@@ -6,7 +6,7 @@ open! Import
 module Id : (module type of Diff_algo_id with type t = Diff_algo_id.t)
 
 type t
-[@@deriving sexp_of] (* show the id only just for debugging purposes *)
+[@@deriving sexp_of] (** show the id only just for debugging purposes *)
 
 module Block : sig
   type t =

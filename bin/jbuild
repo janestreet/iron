@@ -8,7 +8,7 @@
               iron_obligations
               iron_protocol
               iron_server))
-  (preprocess (pps (ppx_jane -dont-apply=sexp_message ppx_driver.runner)))))
+  (preprocess (pps (ppx_jane -dont-apply=sexp_message -check-doc-comments ppx_driver.runner)))))
 
 (install
  ((section bin)

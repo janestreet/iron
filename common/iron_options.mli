@@ -13,10 +13,14 @@ val workspaces_are_enabled__forced_value : bool option
 module Verbose : sig
   val build_order  : bool
   val deserializer : bool
-  val command      : bool (* Verbose top-level command processing. *)
+
+  (** Verbose top-level command processing. *)
+  val command      : bool
   val command_rpc  : bool
   val cr_comment   : bool
-  val hg           : bool (* Noisy hg invocations. *)
+
+  (** Noisy hg invocations. *)
+  val hg           : bool
   val knowledge    : bool
   val patdiff4     : bool
   val rpc          : bool

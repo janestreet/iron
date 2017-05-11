@@ -4,7 +4,7 @@ open! Core
 open! Async
 open! Import
 
-type abspath (* For forward reference to Abspath.t from Relpath module. *)
+type abspath (** For forward reference to Abspath.t from Relpath module. *)
 
 module Relpath : sig
 
@@ -13,7 +13,7 @@ module Relpath : sig
   include Identifiable with type t := t
   include Invariant.S  with type t := t
 
-  val empty : t (* AKA "dot" *)
+  val empty : t (** AKA "dot" *)
 
   val is_empty : t -> bool
 
@@ -63,7 +63,7 @@ module Abspath : sig
 
   val alphabetic_compare : t -> t -> int
 
-  val root : t (* The root path: / *)
+  val root : t (** The root path: / *)
 
   val dev_null : t
 
@@ -123,25 +123,26 @@ include Identifiable with type t := t
 val alphabetic_compare : t -> t -> int
 
 val root  : t  (** abspath *)
+
 val empty : t  (** relative *)
 
-(* Relocate p2, if it's relative, to p1. If p2 is abspath, just return p2.
-   Examples: "a/b"  "c/d"  -> "a/b/c/d"         rel + rel -> rel
-   "/a/b" "c/d"  -> "/a/b/c/d"        abs + rel -> abs
-   "a/b"  "/c/d" -> "/c/d"            any + abs -> abs
-   "/a/b" "/c/d" -> "/c/d"            any + abs -> abs
-   "a"    "."    -> "a"               Boundary case
-   "."    "a"    -> "a"               Boundary case
+(** Relocate p2, if it's relative, to p1. If p2 is abspath, just return p2.
+    Examples: "a/b"  "c/d"  -> "a/b/c/d"         rel + rel -> rel
+    "/a/b" "c/d"  -> "/a/b/c/d"        abs + rel -> abs
+    "a/b"  "/c/d" -> "/c/d"            any + abs -> abs
+    "/a/b" "/c/d" -> "/c/d"            any + abs -> abs
+    "a"    "."    -> "a"               Boundary case
+    "."    "a"    -> "a"               Boundary case
 *)
 val append : t -> t -> t
 
 val is_prefix   : prefix:t -> t -> bool
 
-(* If (1) the prefix & main path are either both Relpath, or both Abspath, and
-   (2) the prefix is truly a prefix of the main path,
-   then remove the prefix path and return Some of the relative-path remainder.
-   Otherwise, None.
-   To repeat: when we succeed, answer is always a relative path. *)
+(** If (1) the prefix & main path are either both Relpath, or both Abspath, and
+    (2) the prefix is truly a prefix of the main path,
+    then remove the prefix path and return Some of the relative-path remainder.
+    Otherwise, None.
+    To repeat: when we succeed, answer is always a relative path. *)
 val chop_prefix : prefix:t -> t -> t Or_error.t
 
 val with_temp_dir
@@ -150,11 +151,10 @@ val with_temp_dir
   -> f:(Abspath.t -> 'a Deferred.t)
   -> 'a Deferred.t
 
-(* Resolve a Path.t to an Abspath.t:
-   - If the path is abspath, that's the answer.
-   - If the path is relative, append it to [relative_to]
-   Does not eliminate .. elements in the path; see [Abspath.simplify_dotdots_syntax].
-*)
+(** Resolve a Path.t to an Abspath.t:
+    - If the path is abspath, that's the answer.
+    - If the path is relative, append it to [relative_to]
+    Does not eliminate .. elements in the path; see [Abspath.simplify_dotdots_syntax]. *)
 val resolve : t -> relative_to:Abspath.t -> Abspath.t
 
 val resolve_relative_to_program_started_in : t -> Abspath.t

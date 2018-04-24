@@ -1,1 +1,19 @@
-Jane street's code review system.
+Iron is Jane Street's internal code review tool.
+
+For more on the design of iron, see the following blog posts:
+
+https://blog.janestreet.com/code-review-that-isnt-boring/
+https://blog.janestreet.com/scrutinizing-your-code-in-style/
+https://blog.janestreet.com/ironing-out-your-release-process/
+https://blog.janestreet.com/putting-the-i-back-in-ide-towards-a-github-explorer/
+
+A key design decision was to review diffs rather than patches:
+
+https://blog.janestreet.com/designing-a-code-review-tool-part-2-patches-or-diffs/
+https://blog.janestreet.com/patch-review-vs-diff-review-revisited/
+
+We no longer release the code of iron, not because the code is proprietary
+but
+because one couldn't run the code elsewhere without first reproducing many
+trivial features of our internal environment. We're still happy to share or
+discuss the code, though: just email opensource@janestreet.com.

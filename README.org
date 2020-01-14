@@ -12,7 +12,7 @@ A key design decision was to review diffs rather than patches:
 - https://blog.janestreet.com/designing-a-code-review-tool-part-2-patches-or-diffs/
 - https://blog.janestreet.com/patch-review-vs-diff-review-revisited/
 
-We no longer release the code of iron, not because the code is proprietary
-but because one couldn't run the code elsewhere without first reproducing many
-trivial features of our internal environment. We're still happy to share or
-discuss the code, though: just email opensource@janestreet.com.
+We no longer release the code of Iron, and do not expect that will change.
+It was never possible to run outside of Jane Street, and is not plausible
+that it ever will, due to dependencies on many aspects of our internal
+environment.
